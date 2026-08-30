@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowUpRight,
   ExternalLink,
+  Github,
   Home,
   Info,
   MapPin,
@@ -71,6 +72,7 @@ const overviewBounds = L.latLngBounds(riverPath).pad(0.18);
 const pmdrfUrl = "https://pmdrf.nchl.com.np/";
 const pmoAppealUrl = "https://opmcm.gov.np/content/586/heartfelt-appeal/";
 const onlyUtilsUrl = "https://onlyutils.com";
+const githubUrl = "https://github.com/onlyutils/verified-nepal";
 const opmcmMissingPersonUrl = "https://rescue.opmcm.gov.np/person-lost-found?type=lost";
 const opmcmAskHelpUrl = "https://rescue.opmcm.gov.np/ask-help";
 const opmcmUpdatesUrl = "https://rescue.opmcm.gov.np/government-efforts";
@@ -199,6 +201,16 @@ function Header({
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t.githubAria}
+            className="inline-flex min-h-10 items-center gap-2 border border-nepal-line bg-white px-3 text-sm font-semibold text-nepal-slate transition hover:bg-nepal-blueSoft hover:text-nepal-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson"
+          >
+            <Github size={17} aria-hidden="true" />
+            <span>{t.github}</span>
+          </a>
           <div
             className="inline-flex overflow-hidden border border-nepal-line"
             aria-label={t.language}
@@ -324,6 +336,9 @@ function Footer({ language, navigate }: { language: Language; navigate: (page: P
             </a>
             <a className="block hover:text-white" href={pmoAppealUrl} target="_blank" rel="noreferrer">
               {t.donateTitle}
+            </a>
+            <a className="block hover:text-white" href={githubUrl} target="_blank" rel="noopener noreferrer">
+              {t.sourceCodeOnGithub}
             </a>
           </div>
         </div>
