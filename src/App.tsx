@@ -310,6 +310,18 @@ function Footer({ language, navigate }: { language: Language; navigate: (page: P
         <div>
           <img src="/brand/logo-horizontal-light.svg" alt="verifiedNepal" className="h-10 w-auto" />
           <p className="mt-5 max-w-md text-sm leading-6">{t.aboutBody}</p>
+          <p className="mt-4 max-w-md text-sm leading-6">
+            {t.contributeCta}{" "}
+            <a
+              className="inline-flex items-center gap-1 font-semibold text-white underline underline-offset-2 hover:text-nepal-onDark focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              href={githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Github size={14} aria-hidden="true" />
+              {t.contributeLink}
+            </a>
+          </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="text-sm leading-6">
