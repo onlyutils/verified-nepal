@@ -1,0 +1,13 @@
+{
+  "synced_at": "2026-08-29T19:32:46.043Z",
+  "source_url": "https://ndrrma.gov.np/api/v1/rescues/",
+  "counts": {
+    "rescued_count": 6633,
+    "verified_records": 2189,
+    "nepali_count": 2034,
+    "foreign_count": 155,
+    "rescued_person_records": 2189,
+    "rescued_locations": 21,
+    "stationed_locations": 11
+  }
+}

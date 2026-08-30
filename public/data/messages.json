@@ -1,0 +1,15 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "title": "This system contains only the verified names of rescued people.",
+      "title_ne": "यस प्रणालीमा उद्धार गरिएका व्यक्तिहरूको प्रमाणित नामावली मात्र समावेश गरिएको छ।"
+    },
+    {
+      "title": "The list is being continuously verified and updated.",
+      "title_ne": "नयाँ नामहरू आधिकारिक रूपमा प्रमाणित हुनेबित्तिकै सूचीमा थपिनेछन्।"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "country": "nepali",
+    "count": 2034
+  },
+  {
+    "country": "India",
+    "count": 103
+  },
+  {
+    "country": "China",
+    "count": 26
+  },
+  {
+    "country": "South Korea",
+    "count": 9
+  },
+  {
+    "country": "Italy",
+    "count": 4
+  },
+  {
+    "country": "Malta",
+    "count": 4
+  },
+  {
+    "country": "USA",
+    "count": 3
+  },
+  {
+    "country": "Turkey",
+    "count": 2
+  },
+  {
+    "country": "foreign",
+    "count": 1
+  },
+  {
+    "country": "Oman",
+    "count": 1
+  },
+  {
+    "country": "Russia",
+    "count": 1
+  },
+  {
+    "country": "Switzerland",
+    "count": 1
+  }
+]

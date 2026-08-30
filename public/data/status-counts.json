@@ -1,0 +1,25 @@
+{
+  "total_count": 2189,
+  "nepali_count": 2034,
+  "foreign_count": 155,
+  "status_counts": [
+    {
+      "id": 1,
+      "title": "Safe",
+      "title_ne": "सुरक्षित",
+      "count": 0
+    },
+    {
+      "id": 3,
+      "title": "Under Medical Care",
+      "title_ne": "उपचाररत",
+      "count": 8
+    },
+    {
+      "id": 4,
+      "title": "Obtained Rescued Name List",
+      "title_ne": "उद्दार गरिएको प्राप्त नामावली",
+      "count": 2181
+    }
+  ]
+}

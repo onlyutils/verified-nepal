@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* "only" opts out of Chrome auto-dark, which lightens our navy panels and washes out the white text on them. */
+  color-scheme: only light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #dc143c;
+  color: #fff;
+}
+
+/* Thin, on-brand scrollbars for the panel lists. */
+.overflow-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #c7d2e8 transparent;
+}
+
+/* --- Leaflet ------------------------------------------------------------ */
+
+.leaflet-container {
+  font-family: inherit;
+  background: #0b1220;
+}
+
+.leaflet-control-attribution {
+  background: rgba(11, 18, 32, 0.7) !important;
+  color: #94a3b8 !important;
+  font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+  color: #cbd5e1 !important;
+}
+
+.leaflet-bar a {
+  background: #101a2e;
+  color: #e2e8f0;
+  border-bottom-color: #24324d;
+}
+
+.leaflet-bar a:hover {
+  background: #17233c;
+  color: #fff;
+}
+
+.leaflet-tooltip {
+  background: #0b1220;
+  border: 1px solid #2b3a57;
+  border-radius: 0;
+  color: #f1f5f9;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  padding: 6px 9px;
+}
+
+.leaflet-tooltip-top::before {
+  border-top-color: #2b3a57;
+}
+
+/* Custom pins: a drop shadow lifts them off the dark basemap. */
+.vn-pin {
+  background: none;
+  border: 0;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
+  transition: filter 150ms ease;
+}
+
+.vn-pin--active {
+  filter: drop-shadow(0 0 10px rgba(220, 20, 60, 0.8)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+  animation: vn-pin-drop 400ms ease-out;
+}
+
+@keyframes vn-pin-drop {
+  from {
+    transform: translateY(-10px);
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
