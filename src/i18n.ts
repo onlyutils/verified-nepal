@@ -86,6 +86,7 @@ export const labels = {
     contributeCta:
       "Developer? This site is open source — contribute anything that would help people using it.",
     contributeLink: "Contribute on GitHub",
+    contactUs: "Contact",
     respondersTitle: "Relief response",
     respondersBody:
       "Relief organisations have public Nepal response information. Always rely on official authorities for rescue records and urgent decisions.",
@@ -218,6 +219,7 @@ export const labels = {
     contributeCta:
       "डेभलपर हुनुहुन्छ? यो साइट खुला स्रोत हो — प्रयोगकर्ताहरूलाई सहयोग पुग्ने जे पनि थपेर योगदान गर्नुहोस्।",
     contributeLink: "GitHub मा योगदान गर्नुहोस्",
+    contactUs: "सम्पर्क",
     respondersTitle: "राहत प्रतिक्रिया",
     respondersBody:
       "राहत संस्थाहरूले नेपाल सम्बन्धी सार्वजनिक जानकारी राखेका छन्। उद्धार अभिलेख र आकस्मिक निर्णयका लागि सधैं आधिकारिक निकायमा भर पर्नुहोस्।",
