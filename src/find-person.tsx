@@ -1,8 +1,8 @@
 import { ExternalLink, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { data } from "./data";
 import { labels, textForLanguage } from "./i18n";
-import { fetchMissingPersons, useLiveData } from "./live";
+import { useLiveData } from "./live";
 import type { Language, MissingPersonRecord, PersonRecord } from "./types";
 import { opmcmMissingPersonUrl } from "./urls";
 import {
@@ -15,6 +15,8 @@ import {
   statusTone,
 } from "./utils";
 import { Kicker } from "./ui";
+import useFetchMissingPersons from "./hooks/useFetchMissingPersons";
+import useFetchRescuedPersons from "./hooks/useFetchRescuedPersons";
 
 type PersonSearchResult =
   | { kind: "rescued"; person: PersonRecord }
@@ -24,83 +26,36 @@ export function FindPerson({ language }: { language: Language }) {
   const t = labels[language];
   const liveData = useLiveData();
   const [query, setQuery] = useState("");
-  const [persons, setPersons] = useState<PersonRecord[] | null>(null);
-  const [missingPersons, setMissingPersons] = useState<MissingPersonRecord[] | null>(null);
-  const [rescuedLoading, setRescuedLoading] = useState(false);
-  const [missingLoading, setMissingLoading] = useState(false);
-  const [rescuedError, setRescuedError] = useState(false);
-  const [missingError, setMissingError] = useState(false);
   const normalizedQuery = query.trim();
   const searched = normalizedQuery.length >= 2;
+  const {
+    data: rescuedPersons,
+    isLoading: rescuedLoading,
+    error: rescuedError,
+  } = useFetchRescuedPersons(searched);
 
-  useEffect(() => {
-    if (!searched || persons || rescuedLoading || rescuedError) return;
-    let cancelled = false;
-    setRescuedLoading(true);
-    fetch("/data/rescued-persons.json")
-      .then((response) => {
-        if (!response.ok) throw new Error(`Failed to load person records: ${response.status}`);
-        return response.json() as Promise<{ results: PersonRecord[] }>;
-      })
-      .then((payload) => {
-        if (!cancelled) setPersons(payload.results);
-      })
-      .catch((error) => {
-        console.warn("Rescued records fetch failed", error);
-        if (!cancelled) setRescuedError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setRescuedLoading(false);
-      });
+  const {
+    data: missingPersons,
+    isLoading: missingLoading,
+    error: missingError,
+  } = useFetchMissingPersons(searched);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [persons, rescuedError, rescuedLoading, searched]);
 
-  useEffect(() => {
-    if (!searched || missingPersons || missingLoading || missingError) return;
-    let cancelled = false;
-    const controller = new AbortController();
-    setMissingLoading(true);
+  const results = useMemo(() => {
+    if (!searched) return [];
+    const missingResults: PersonSearchResult[] = missingPersons
+      ? missingPersons
+          .filter((person) => matchesPerson(person, normalizedQuery))
+          .map((person) => ({ kind: "missing", person }))
+      : [];
+    const rescuedResults: PersonSearchResult[] = rescuedPersons
+      ? rescuedPersons
+          .filter((person) => matchesPerson(person, normalizedQuery))
+          .map((person) => ({ kind: "rescued", person }))
+      : [];
+    return [...missingResults, ...rescuedResults].slice(0, 50);
+  }, [missingPersons, normalizedQuery, rescuedPersons, searched]);
 
-    fetchMissingPersons(controller.signal)
-      .then((payload) => {
-        if (!cancelled) setMissingPersons(payload.results);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          console.warn("Missing-person records fetch failed", error);
-          if (!cancelled) setMissingError(true);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setMissingLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [missingError, missingLoading, missingPersons, searched]);
-
-  const results = useMemo(
-    () => {
-      if (!searched) return [];
-      const missingResults: PersonSearchResult[] = missingPersons
-        ? missingPersons
-            .filter((person) => matchesPerson(person, normalizedQuery))
-            .map((person) => ({ kind: "missing", person }))
-        : [];
-      const rescuedResults: PersonSearchResult[] = persons
-        ? persons
-            .filter((person) => matchesPerson(person, normalizedQuery))
-            .map((person) => ({ kind: "rescued", person }))
-        : [];
-      return [...missingResults, ...rescuedResults].slice(0, 50);
-    },
-    [missingPersons, normalizedQuery, persons, searched],
-  );
   const disclaimers = liveData.messages
     .map((message) => messageText(message, language))
     .filter(Boolean);
@@ -113,13 +68,21 @@ export function FindPerson({ language }: { language: Language }) {
         <h1 className="mt-4 text-3xl font-bold tracking-display text-nepal-ink sm:text-4xl">
           {t.searchTitle}
         </h1>
-        <p className="mt-3 max-w-2xl leading-7 text-nepal-slate">{t.searchIntro}</p>
+        <p className="mt-3 max-w-2xl leading-7 text-nepal-slate">
+          {t.searchIntro}
+        </p>
         <div className="mt-6">
-          <label htmlFor="person-search" className="block text-sm font-semibold text-nepal-ink">
+          <label
+            htmlFor="person-search"
+            className="block text-sm font-semibold text-nepal-ink"
+          >
             {t.searchLabel}
           </label>
           <div className="mt-2 flex border border-nepal-line bg-white focus-within:border-nepal-crimson focus-within:ring-2 focus-within:ring-nepal-crimson/20">
-            <span className="flex min-h-12 items-center px-3 text-nepal-slate" aria-hidden="true">
+            <span
+              className="flex min-h-12 items-center px-3 text-nepal-slate"
+              aria-hidden="true"
+            >
               <Search size={19} />
             </span>
             <input
@@ -132,9 +95,13 @@ export function FindPerson({ language }: { language: Language }) {
               className="min-h-12 w-full border-0 bg-transparent px-1 py-3 text-base text-nepal-ink outline-none placeholder:text-nepal-slate/60"
             />
           </div>
-          <p className="mt-2 text-sm text-nepal-slate">{t.searchLanguageHint}</p>
+          <p className="mt-2 text-sm text-nepal-slate">
+            {t.searchLanguageHint}
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-            <span className="text-nepal-slate">{t.reportMissingPersonHint}</span>
+            <span className="text-nepal-slate">
+              {t.reportMissingPersonHint}
+            </span>
             <a
               href={opmcmMissingPersonUrl}
               target="_blank"
@@ -148,7 +115,9 @@ export function FindPerson({ language }: { language: Language }) {
         </div>
       </section>
 
-      {searched ? <DisclaimerBlock language={language} disclaimers={disclaimers} /> : null}
+      {searched ? (
+        <DisclaimerBlock language={language} disclaimers={disclaimers} />
+      ) : null}
 
       <section aria-live="polite" className="space-y-4">
         {!searched ? (
@@ -157,12 +126,20 @@ export function FindPerson({ language }: { language: Language }) {
           </div>
         ) : (
           <>
-            {rescuedLoading ? (
+            {rescuedError ? (
+              <div className="border border-nepal-crimson bg-nepal-crimsonSoft p-4 text-sm font-semibold text-nepal-crimson">
+                {t.errorVerifiedRecords}
+              </div>
+            ) : rescuedLoading ? (
               <div className="border border-nepal-line bg-white p-4 text-sm font-semibold text-nepal-slate">
                 {t.loadingVerifiedRecords}
               </div>
             ) : null}
-            {missingLoading ? (
+            {missingError ? (
+              <div className="border border-nepal-crimson bg-nepal-crimsonSoft p-3 text-sm text-nepal-crimson">
+                {t.errorMissingRecords}
+              </div>
+            ) : missingLoading ? (
               <div className="border border-nepal-line bg-white p-3 text-sm text-nepal-slate">
                 {t.loadingMissingRecords}
               </div>
@@ -180,7 +157,7 @@ export function FindPerson({ language }: { language: Language }) {
                   />
                 ))}
               </>
-            ) : !anyLoading ? (
+            ) : !anyLoading && !rescuedError && !missingError ? (
               <div className="border border-nepal-line bg-white p-6 leading-7 text-nepal-slate">
                 {t.noMatch}
               </div>
@@ -192,7 +169,13 @@ export function FindPerson({ language }: { language: Language }) {
   );
 }
 
-function DisclaimerBlock({ language, disclaimers }: { language: Language; disclaimers: string[] }) {
+function DisclaimerBlock({
+  language,
+  disclaimers,
+}: {
+  language: Language;
+  disclaimers: string[];
+}) {
   const t = labels[language];
   const fallback =
     language === "ne"
@@ -205,15 +188,23 @@ function DisclaimerBlock({ language, disclaimers }: { language: Language; discla
         {t.officialDisclaimer}
       </h2>
       <div className="mt-2 space-y-2 text-sm leading-6 text-nepal-slate">
-        {(disclaimers.length ? disclaimers : [fallback]).map((disclaimer, index) => (
-          <p key={`${disclaimer}-${index}`}>{disclaimer}</p>
-        ))}
+        {(disclaimers.length ? disclaimers : [fallback]).map(
+          (disclaimer, index) => (
+            <p key={`${disclaimer}-${index}`}>{disclaimer}</p>
+          ),
+        )}
       </div>
     </aside>
   );
 }
 
-function PersonCard({ result, language }: { result: PersonSearchResult; language: Language }) {
+function PersonCard({
+  result,
+  language,
+}: {
+  result: PersonSearchResult;
+  language: Language;
+}) {
   const t = labels[language];
   const { person, kind } = result;
   const status = person.status;
@@ -226,7 +217,9 @@ function PersonCard({ result, language }: { result: PersonSearchResult; language
       : status
         ? textForLanguage(status, language)
         : t.unavailable;
-  const chipTone = isMissing ? "bg-nepal-crimson text-white ring-nepal-crimson" : statusTone(status?.id);
+  const chipTone = isMissing
+    ? "bg-nepal-crimson text-white ring-nepal-crimson"
+    : statusTone(status?.id);
 
   return (
     <article className="border border-nepal-line bg-white p-6 shadow-panel">
@@ -248,10 +241,16 @@ function PersonCard({ result, language }: { result: PersonSearchResult; language
       <dl className="mt-6 grid gap-4 sm:grid-cols-2">
         <RecordField
           label={t.age}
-          value={person.age === null ? null : formatNumber(person.age, language)}
+          value={
+            person.age === null ? null : formatNumber(person.age, language)
+          }
           unavailable={t.unavailable}
         />
-        <RecordField label={t.gender} value={sentenceCase(person.gender)} unavailable={t.unavailable} />
+        <RecordField
+          label={t.gender}
+          value={sentenceCase(person.gender)}
+          unavailable={t.unavailable}
+        />
         <RecordField
           label={t.nationality}
           value={sentenceCase(person.country || person.nationality)}
@@ -259,7 +258,11 @@ function PersonCard({ result, language }: { result: PersonSearchResult; language
         />
         {kind === "rescued" ? (
           <>
-            <RecordField label={t.rescuedDate} value={person.rescued_date} unavailable={t.unavailable} />
+            <RecordField
+              label={t.rescuedDate}
+              value={person.rescued_date}
+              unavailable={t.unavailable}
+            />
             <RecordField
               label={t.rescuedLocation}
               value={locationValue(person.rescued_location, language)}
@@ -273,15 +276,29 @@ function PersonCard({ result, language }: { result: PersonSearchResult; language
           </>
         ) : (
           <>
-            <RecordField label={t.lastContact} value={person.last_contact} unavailable={t.unavailable} />
-            <RecordField label={t.reportedAt} value={person.reported_at} unavailable={t.unavailable} />
+            <RecordField
+              label={t.lastContact}
+              value={person.last_contact}
+              unavailable={t.unavailable}
+            />
+            <RecordField
+              label={t.reportedAt}
+              value={person.reported_at}
+              unavailable={t.unavailable}
+            />
           </>
         )}
-        <RecordField label={t.remarks} value={person.remarks} unavailable={t.unavailable} wide />
+        <RecordField
+          label={t.remarks}
+          value={person.remarks}
+          unavailable={t.unavailable}
+          wide
+        />
       </dl>
       <div className="mt-6 border-t border-nepal-line pt-4 text-sm leading-6 text-nepal-slate">
         <p>
-          <span className="font-semibold text-nepal-ink">{t.source}:</span> {t.sourceName}
+          <span className="font-semibold text-nepal-ink">{t.source}:</span>{" "}
+          {t.sourceName}
         </p>
         <p>
           <span className="font-semibold text-nepal-ink">{t.lastSynced}:</span>{" "}
@@ -322,7 +339,10 @@ function RecordField({
   );
 }
 
-function locationValue(location: PersonRecord["rescued_location"], language: Language) {
+function locationValue(
+  location: PersonRecord["rescued_location"],
+  language: Language,
+) {
   if (!location) return null;
   if (typeof location === "string") return location;
   return textForLanguage(location, language);
