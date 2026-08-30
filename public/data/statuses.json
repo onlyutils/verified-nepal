@@ -1,0 +1,22 @@
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "title": "Safe",
+      "title_ne": "सुरक्षित"
+    },
+    {
+      "id": 3,
+      "title": "Under Medical Care",
+      "title_ne": "उपचाररत"
+    },
+    {
+      "id": 4,
+      "title": "Obtained Rescued Name List",
+      "title_ne": "उद्दार गरिएको प्राप्त नामावली"
+    }
+  ]
+}

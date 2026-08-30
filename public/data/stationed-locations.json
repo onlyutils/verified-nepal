@@ -1,0 +1,139 @@
+{
+  "count": 11,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "title": "Dhunche Nepali Army Relief Camp",
+      "title_ne": "धुन्चे नेपाली सेना राहत शिविर",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.2977,
+          28.1118
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "Rasuwa District Hospital",
+      "title_ne": "जिल्ला अस्पताल रसुवा",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.299,
+          28.1127
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "Syabrubesi Temporary Shelter",
+      "title_ne": "स्याफ्रुबेँसी अस्थायी आश्रयस्थल",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.3392,
+          28.1642
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "Timure Health Post",
+      "title_ne": "टिमुरे स्वास्थ्य चौकी",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.3762,
+          28.2638
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "Bidur Nepali Army Relief Camp",
+      "title_ne": "विदुर नेपाली सेना राहत शिविर",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.1505,
+          27.9139
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "Trishuli District Hospital",
+      "title_ne": "त्रिशूली जिल्ला अस्पताल",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.165,
+          27.929
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "Battar Community Shelter",
+      "title_ne": "बट्टार सामुदायिक आश्रयस्थल",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.1488,
+          27.9245
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "title": "Kalikasthan Primary Health Centre",
+      "title_ne": "कालिकास्थान प्राथमिक स्वास्थ्य केन्द्र",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.268,
+          28.056
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "title": "Dhaibung Relief Collection Centre",
+      "title_ne": "धैबुङ राहत सङ्कलन केन्द्र",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.245,
+          28.024
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "title": "Galchhi Transit Relief Camp",
+      "title_ne": "गल्छी ट्रान्जिट राहत शिविर",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          84.985,
+          27.84
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "title": "Tribhuvan University Teaching Hospital",
+      "title_ne": "Tribhuvan University Teaching Hospital",
+      "centroid": {
+        "type": "Point",
+        "coordinates": [
+          85.33098263806937,
+          27.735236988728666
+        ]
+      }
+    }
+  ]
+}

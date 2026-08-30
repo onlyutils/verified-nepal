@@ -1,0 +1,133 @@
+{
+  "count": 21,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 11,
+      "title": "Sindhupalchok",
+      "title_ne": "सिन्धुपाल्चोक",
+      "centroid": null
+    },
+    {
+      "id": 25,
+      "title": "नुवाकोट",
+      "title_ne": "नुवाकोट",
+      "centroid": null
+    },
+    {
+      "id": 26,
+      "title": "रसुवा",
+      "title_ne": "रसुवा",
+      "centroid": null
+    },
+    {
+      "id": 27,
+      "title": "वेत्रवती, रसुवा",
+      "title_ne": "वेत्रवती, रसुवा",
+      "centroid": null
+    },
+    {
+      "id": 28,
+      "title": "टिमुरे, रसुवा",
+      "title_ne": "टिमुरे, रसुवा",
+      "centroid": null
+    },
+    {
+      "id": 29,
+      "title": "बेत्रावती, रसुवा",
+      "title_ne": "बेत्रावती, रसुवा",
+      "centroid": null
+    },
+    {
+      "id": 35,
+      "title": "स्याफ्रुबेसी",
+      "title_ne": "स्याफ्रुबेसी",
+      "centroid": null
+    },
+    {
+      "id": 50,
+      "title": "स्याफ्रुवेशी",
+      "title_ne": "स्याफ्रुवेशी",
+      "centroid": null
+    },
+    {
+      "id": 51,
+      "title": "रसुवागढी",
+      "title_ne": "रसुवागढी",
+      "centroid": null
+    },
+    {
+      "id": 52,
+      "title": "स्याफ्रुबेशी",
+      "title_ne": "स्याफ्रुबेशी",
+      "centroid": null
+    },
+    {
+      "id": 53,
+      "title": "त्रिशुली",
+      "title_ne": "त्रिशुली",
+      "centroid": null
+    },
+    {
+      "id": 54,
+      "title": "कोलनी",
+      "title_ne": "कोलनी",
+      "centroid": null
+    },
+    {
+      "id": 55,
+      "title": "शान्ति बजार",
+      "title_ne": "शान्ति बजार",
+      "centroid": null
+    },
+    {
+      "id": 56,
+      "title": "धुन्चे",
+      "title_ne": "धुन्चे",
+      "centroid": null
+    },
+    {
+      "id": 57,
+      "title": "बट्टार",
+      "title_ne": "बट्टार",
+      "centroid": null
+    },
+    {
+      "id": 58,
+      "title": "मैलुङ",
+      "title_ne": "मैलुङ",
+      "centroid": null
+    },
+    {
+      "id": 59,
+      "title": "हाफुबेसी",
+      "title_ne": "हाफुबेसी",
+      "centroid": null
+    },
+    {
+      "id": 60,
+      "title": "चिलिमे",
+      "title_ne": "चिलिमे",
+      "centroid": null
+    },
+    {
+      "id": 61,
+      "title": "टिमुरे",
+      "title_ne": "टिमुरे",
+      "centroid": null
+    },
+    {
+      "id": 62,
+      "title": "सलिटार",
+      "title_ne": "सलिटार",
+      "centroid": null
+    },
+    {
+      "id": 63,
+      "title": "मानेढुङ्गा",
+      "title_ne": "मानेढुङ्गा",
+      "centroid": null
+    }
+  ]
+}
