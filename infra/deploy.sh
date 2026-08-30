@@ -34,13 +34,19 @@ esac
 # --region is required: the out-mgmt profile's default region is wrong for
 # this parameter and the CLI fails silently otherwise (see onyutils
 # docs/operations.md §6).
-export CLOUDFLARE_API_TOKEN=$(aws ssm get-parameter --profile out-mgmt \
-  --name /onyutils/shared/cloudflare-api-token --with-decryption \
-  --region us-east-1 --query Parameter.Value --output text)
+# CI (GitHub Actions) injects CLOUDFLARE_API_TOKEN from repo secrets; the
+# SSM fetch is the local-maintainer path only.
+if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+  export CLOUDFLARE_API_TOKEN=$(aws ssm get-parameter --profile out-mgmt \
+    --name /onyutils/shared/cloudflare-api-token --with-decryption \
+    --region us-east-1 --query Parameter.Value --output text)
+fi
 # Account id is derived from the token, not committed to the repo.
-export CLOUDFLARE_ACCOUNT_ID=$(curl -sf https://api.cloudflare.com/client/v4/accounts \
-  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" |
-  python3 -c 'import json,sys;print(json.load(sys.stdin)["result"][0]["id"])')
+if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+  export CLOUDFLARE_ACCOUNT_ID=$(curl -sf https://api.cloudflare.com/client/v4/accounts \
+    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" |
+    python3 -c 'import json,sys;print(json.load(sys.stdin)["result"][0]["id"])')
+fi
 test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "could not resolve Cloudflare account id" >&2; exit 1; }
 
 pnpm install --frozen-lockfile
