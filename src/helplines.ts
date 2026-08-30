@@ -1,4 +1,4 @@
-// Verified 2026-08-30 against primary sources (see repo OWNER-TODO for details):
+// Verified 2026-08-30 against primary sources:
 // 1234 replaced the old 1149 NEOC hotline nationwide in July 2026 (MoHA/DEOC
 // rollout; MoHA's own page still shows 1149). 1112 and the +977 numbers are the
 // flood-specific control rooms MoHA/MoFA published on 2026-08-27. Fire 101 is
