@@ -44,7 +44,7 @@ Before pushing:
 pnpm typecheck && pnpm build
 ```
 
-Both must pass; there is no CI safety net you can lean on yet.
+Both must pass; CI runs the same checks on every PR.
 
 ## Pull requests
 
