@@ -322,6 +322,15 @@ function Footer({ language, navigate }: { language: Language; navigate: (page: P
               {t.contributeLink}
             </a>
           </p>
+          <p className="mt-2 text-sm leading-6">
+            {t.contactUs}:{" "}
+            <a
+              className="font-semibold text-white underline underline-offset-2 hover:text-nepal-onDark focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              href="mailto:verifiednepal01@gmail.com"
+            >
+              verifiednepal01@gmail.com
+            </a>
+          </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="text-sm leading-6">
