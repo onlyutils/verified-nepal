@@ -18,8 +18,16 @@ ENV="${1:?usage: deploy.sh dev|prod}"
 cd "$(dirname "$0")/.."
 
 case "$ENV" in
-  dev)  PROJECT=verifiednepal-dev ;;
-  prod) PROJECT=verifiednepal ;;
+  dev)
+    PROJECT=verifiednepal-dev
+    # .env carries the dev widget wiring defaults.
+    ;;
+  prod)
+    PROJECT=verifiednepal
+    export VITE_CHAT_WIDGET_SRC=https://onyutils-chat-widget.pages.dev/onyutils-chat.js
+    export VITE_CHAT_KEY=ou_chatpk_34G34ZplIA7A1WqqRT9ri
+    export VITE_CHAT_API=https://chat.onlyutils.com
+    ;;
   *) echo "unknown env: $ENV" >&2; exit 1 ;;
 esac
 
