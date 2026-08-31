@@ -16,6 +16,15 @@
     rel="stylesheet"
   />
   <title>verifiedNepal | Flood Rescue Information</title>
+  <script>
+    // Apply saved accessibility settings before first paint (see AccessibilityBar in src/layout.tsx).
+    try {
+      var s = localStorage.getItem("vn:text-scale");
+      if (s) document.documentElement.style.fontSize = s + "%";
+      var c = localStorage.getItem("vn:contrast");
+      if (c) document.documentElement.setAttribute("data-contrast", c);
+    } catch (e) {}
+  </script>
 </head>
 
 <body>

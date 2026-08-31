@@ -29,7 +29,6 @@ export function Masthead({
 
   return (
     <header className={shell}>
-      <Rule className="mt-3" />
       <div className="grid items-end gap-4 py-5 text-center lg:grid-cols-[1fr_auto_1fr] lg:text-left">
         <p className="hidden font-sans text-[0.68rem] uppercase leading-5 tracking-[0.14em] text-muted lg:block">
           {districts}
@@ -230,5 +229,73 @@ export function BackToTop({ language }: { language: Language }) {
     >
       <span aria-hidden="true">↑</span> {t.backToTop}
     </SquareButton>
+  );
+}
+
+const textScales = [87.5, 100, 112.5, 125, 137.5] as const;
+
+/** Government-site style controls: A− / A / A+ text size and a high-contrast toggle, persisted per browser. */
+export function AccessibilityBar({ language }: { language: Language }) {
+  const t = labels[language];
+  const [scale, setScale] = useState<number>(() => Number(localStorage.getItem("vn:text-scale")) || 100);
+  const [contrast, setContrast] = useState<"normal" | "high">(() =>
+    localStorage.getItem("vn:contrast") === "high" ? "high" : "normal",
+  );
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = scale === 100 ? "" : `${scale}%`;
+    if (scale === 100) localStorage.removeItem("vn:text-scale");
+    else localStorage.setItem("vn:text-scale", String(scale));
+  }, [scale]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-contrast", contrast);
+    localStorage.setItem("vn:contrast", contrast);
+  }, [contrast]);
+
+  const index = textScales.indexOf(scale as (typeof textScales)[number]);
+  const step = (delta: number) => setScale(textScales[Math.min(textScales.length - 1, Math.max(0, index + delta))]);
+  const control = `inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-sans text-[0.72rem] font-semibold tracking-[0.08em] text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent disabled:hover:text-muted ${focusRing}`;
+
+  return (
+    <div className={shell}>
+      <div
+        role="group"
+        aria-label={t.accessibility}
+        className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 border-b border-rule sm:justify-end"
+      >
+        <span className="mr-2 font-sans text-[0.62rem] uppercase tracking-[0.18em] text-muted">{t.accessibility}</span>
+        <button type="button" onClick={() => step(-1)} disabled={index <= 0} aria-label={t.textSmaller} className={control}>
+          A−
+        </button>
+        <button type="button" onClick={() => setScale(100)} aria-label={t.textReset} className={control}>
+          A
+        </button>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          disabled={index >= textScales.length - 1}
+          aria-label={t.textLarger}
+          className={`${control} text-[0.85rem]`}
+        >
+          A+
+        </button>
+        <span aria-hidden="true" className="mx-1 text-rule">
+          |
+        </span>
+        <button
+          type="button"
+          onClick={() => setContrast(contrast === "high" ? "normal" : "high")}
+          aria-pressed={contrast === "high"}
+          className={`${control} gap-2 uppercase ${contrast === "high" ? "bg-ink text-paper" : ""}`}
+        >
+          <span
+            aria-hidden="true"
+            className={`inline-block h-3 w-3 rounded-full border border-current ${contrast === "high" ? "bg-paper" : "bg-[linear-gradient(90deg,currentColor_50%,transparent_50%)]"}`}
+          />
+          {t.highContrast}
+        </button>
+      </div>
+    </div>
   );
 }

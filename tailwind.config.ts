@@ -5,13 +5,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        paper: "#FFFFFF", // black-and-white newsprint: white page, near-black ink, grey hairlines
-        ink: "#0A0A0A",
-        muted: "#6B6B6B",
-        rule: "#E3E3E3",
-        // Nepal flag: crimson = urgency / act now, blue = official / verified source.
-        red: "#DC143C",
-        blue: "#003893",
+        // Values live in src/styles.css as CSS variables so the high-contrast
+        // mode (and prefers-contrast) can swap them without touching classes.
+        paper: "rgb(var(--paper) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        muted: "rgb(var(--muted) / <alpha-value>)",
+        rule: "rgb(var(--rule) / <alpha-value>)",
+        red: "rgb(var(--red) / <alpha-value>)",
+        blue: "rgb(var(--blue) / <alpha-value>)",
         white: "#FFFFFF",
       },
       fontFamily: {
