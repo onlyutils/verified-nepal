@@ -66,7 +66,7 @@ src/i18n.ts        en/ne string dictionaries — every string has both
 src/helplines.ts   verified emergency numbers (sources in comments)
 src/chat-widget.ts branding glue for the embedded chat widget
 scripts/sync.mjs   snapshot generator (NDRRMA API → public/data/)
-infra/deploy.sh    Cloudflare Pages deploy (maintainer credentials required)
+(deploys run from a separate private infra repo)
 ```
 
 ## Privacy posture
