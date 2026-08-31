@@ -71,7 +71,7 @@ export function App() {
         <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
         <EmergencyLine language={language} />
         <main id="main" className="mx-auto w-full max-w-[80rem] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-          {page === "dashboard" ? <Dashboard language={language} /> : null}
+          {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : null}
           {page === "search" ? <FindPerson language={language} /> : null}
           {page === "info" ? <InfoHelp language={language} /> : null}
           {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
