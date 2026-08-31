@@ -1,4 +1,5 @@
 import { labels } from "./i18n";
+import { Headline, SectionLabel } from "./ui";
 import type { Language } from "./types";
 
 /**
@@ -120,35 +121,37 @@ export function PrivacyPolicy({ language }: { language: Language }) {
   const t = labels[language];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <section className="border border-nepal-line bg-white p-6 shadow-panel sm:p-8">
-        <h1 className="text-3xl font-bold tracking-display text-nepal-ink">{t.privacyTitle}</h1>
-        <p className="mt-2 text-sm text-nepal-slate">
-          {language === "ne" ? "प्रभावकारी मिति" : "Effective date"}: {effectiveDate}
+    <div className="grid gap-10 lg:grid-cols-[1fr_18rem] lg:gap-16">
+      <article>
+        <Headline level={2} as="h1">
+          {t.privacyTitle}
+        </Headline>
+        <p className="mt-2 font-sans text-[0.72rem] uppercase tracking-[0.14em] text-muted">
+          {t.effectiveDate}: {effectiveDate}
         </p>
-        {language === "ne" ? (
-          <div className="mt-5 border-l-4 border-nepal-blue bg-nepal-blueSoft p-4 text-sm leading-6 text-nepal-ink">
-            <p className="font-bold">मुख्य बुँदाहरू</p>
-            {nepaliSummary.map((line) => (
-              <p key={line} className="mt-2">
-                {line}
-              </p>
-            ))}
-          </div>
-        ) : null}
-        <div className="mt-6 space-y-8">
+        <div className="mt-8 max-w-[44rem] space-y-8">
           {sections.map((section) => (
             <section key={section.title}>
-              <h2 className="text-lg font-bold tracking-display text-nepal-ink">{section.title}</h2>
+              <Headline level={3} as="h2">
+                {section.title}
+              </Headline>
               {section.body.map((paragraph) => (
-                <p key={paragraph} className="mt-2 leading-7 text-nepal-slate">
+                <p key={paragraph} className="mt-2 font-serif leading-7 text-ink">
                   {paragraph}
                 </p>
               ))}
             </section>
           ))}
         </div>
-      </section>
+      </article>
+      <aside lang="ne" className="lg:sticky lg:top-6 lg:self-start">
+        <SectionLabel>{t.neSummaryTitle}</SectionLabel>
+        <div className="mt-3 space-y-3 border-l border-ink pl-4 font-serif text-sm leading-6 text-ink">
+          {nepaliSummary.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      </aside>
     </div>
   );
 }
