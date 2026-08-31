@@ -65,13 +65,6 @@ export function sentenceCase(value: string | null | undefined) {
     .join(" ");
 }
 
-export function statusTone(statusId?: number) {
-  if (statusId === 1) return "bg-emerald-50 text-emerald-800 ring-emerald-200";
-  if (statusId === 3) return "bg-amber-50 text-amber-900 ring-amber-200";
-  if (statusId === 4) return "bg-emerald-50 text-emerald-800 ring-emerald-200";
-  return "bg-sky-50 text-sky-900 ring-sky-200";
-}
-
 export function extractMessages(raw: MessageItem[] | { results?: MessageItem[] }) {
   return Array.isArray(raw) ? raw : raw.results ?? [];
 }

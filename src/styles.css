@@ -3,12 +3,43 @@
 @tailwind utilities;
 
 :root {
-  /* "only" opts out of Chrome auto-dark, which lightens our navy panels and washes out the white text on them. */
+  /* Black-and-white newsprint: white page, near-black ink, grey hairlines.
+     Nepal flag: crimson = urgency / act now, blue = official / verified source. */
+  --paper: 255 255 255;
+  --ink: 10 10 10;
+  --muted: 107 107 107;
+  --rule: 227 227 227;
+  --red: 220 20 60;
+  --blue: 0 56 147;
+  /* "only" opts out of Chrome auto-dark, which would invert the paper. */
   color-scheme: only light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* High contrast: pure black ink, no grey text, hairlines become black, deeper accents.
+   Set explicitly from the accessibility bar, or inherited from the OS preference. */
+html[data-contrast="high"] {
+  --ink: 0 0 0;
+  --muted: 40 40 40;
+  --rule: 0 0 0;
+  --red: 168 0 32;
+  --blue: 0 38 110;
+}
+@media (prefers-contrast: more) {
+  html:not([data-contrast="normal"]) {
+    --ink: 0 0 0;
+    --muted: 40 40 40;
+    --rule: 0 0 0;
+    --red: 168 0 32;
+    --blue: 0 38 110;
+  }
+}
+html[data-contrast="high"] a,
+html[data-contrast="high"] button {
+  text-decoration-thickness: 2px;
 }
 
 * {
@@ -18,6 +49,9 @@
 body {
   margin: 0;
   min-width: 320px;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: "Source Serif 4", "Noto Serif Devanagari", Georgia, serif;
 }
 
 button,
@@ -28,75 +62,81 @@ select {
 }
 
 ::selection {
-  background: #dc143c;
-  color: #fff;
+  background: rgb(var(--red));
+  color: rgb(var(--paper));
 }
 
-/* Thin, on-brand scrollbars for the panel lists. */
+/* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
+html[lang="ne"] [class*="tracking-"] {
+  letter-spacing: 0.02em;
+}
+
+/* Thin scrollbars for the ruled lists. */
 .overflow-auto {
   scrollbar-width: thin;
-  scrollbar-color: #c7d2e8 transparent;
+  scrollbar-color: #e3e3e3 transparent;
 }
 
 /* --- Leaflet ------------------------------------------------------------ */
 
 .leaflet-container {
-  font-family: inherit;
-  background: #0b1220;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
+  background: #ffffff;
+}
+
+/* The printed-plate look: satellite imagery in black and white. */
+.leaflet-tile-pane {
+  filter: grayscale(1) contrast(1.08);
 }
 
 .leaflet-control-attribution {
-  background: rgba(11, 18, 32, 0.7) !important;
-  color: #94a3b8 !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #6b6b6b !important;
   font-size: 10px;
 }
 
 .leaflet-control-attribution a {
-  color: #cbd5e1 !important;
+  color: #0a0a0a !important;
+}
+
+.leaflet-bar {
+  border: 1px solid #0a0a0a !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 .leaflet-bar a {
-  background: #101a2e;
-  color: #e2e8f0;
-  border-bottom-color: #24324d;
+  background: #ffffff;
+  color: #0a0a0a;
+  border-bottom-color: #e3e3e3;
+  border-radius: 0 !important;
 }
 
 .leaflet-bar a:hover {
-  background: #17233c;
-  color: #fff;
+  background: #ffffff;
 }
 
 .leaflet-tooltip {
-  background: #0b1220;
-  border: 1px solid #2b3a57;
+  background: #ffffff;
+  border: 1px solid #0a0a0a;
   border-radius: 0;
-  color: #f1f5f9;
-  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  color: #0a0a0a;
+  box-shadow: none;
   padding: 6px 9px;
 }
 
 .leaflet-tooltip-top::before {
-  border-top-color: #2b3a57;
+  border-top-color: #0a0a0a;
 }
 
-/* Custom pins: a drop shadow lifts them off the dark basemap. */
 .vn-pin {
   background: none;
   border: 0;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
-  transition: filter 150ms ease;
+  filter: drop-shadow(0 1px 2px rgba(10, 10, 10, 0.5));
 }
 
 .vn-pin--active {
-  filter: drop-shadow(0 0 10px rgba(220, 20, 60, 0.8)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
-  animation: vn-pin-drop 400ms ease-out;
-}
-
-@keyframes vn-pin-drop {
-  from {
-    transform: translateY(-10px);
-    opacity: 0.4;
-  }
+  filter: drop-shadow(0 0 0 1.5px #ffffff) drop-shadow(0 2px 4px rgba(10, 10, 10, 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {

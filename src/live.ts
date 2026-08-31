@@ -144,11 +144,11 @@ export function LiveStatusBadge({ language, className = "" }: { language: Langua
   return createElement(
     "span",
     {
-      className: `inline-flex items-center gap-2 text-xs font-semibold ${className}`,
+      className: `inline-flex items-center gap-2 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink ${className}`,
       title: liveData.isLive ? undefined : t.snapshotTooltip,
     },
     createElement("span", {
-      className: `h-2 w-2 rounded-full ${liveData.isLive ? "bg-emerald-400" : "bg-amber-400"}`,
+      className: `h-2 w-2 rounded-full ${liveData.isLive ? "bg-blue" : "border border-ink bg-transparent"}`,
       "aria-hidden": "true",
     }),
     label,
