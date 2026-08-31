@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
+import { Desk } from "./desk";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
 import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
@@ -12,9 +13,11 @@ const pagePaths: Record<Page, string> = {
   search: "/search",
   info: "/info",
   privacy: "/privacy",
+  desk: "/desk",
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
@@ -76,6 +79,7 @@ export function App() {
           {page === "search" ? <FindPerson language={language} /> : null}
           {page === "info" ? <InfoHelp language={language} /> : null}
           {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
+          {page === "desk" ? <Desk language={language} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />
         <BackToTop language={language} />

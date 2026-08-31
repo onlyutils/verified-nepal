@@ -19,6 +19,34 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+  /* shadcn tokens mapped to EXISTING newsprint palette — keep components native to the paper.
+     Values are duplicated from --paper/--ink/--rule so hsl() and rgb() both resolve;
+     --muted is kept as newsprint grey (107) for existing text-muted utility, while
+     shadcn muted surface uses --rule (227). We keep distinct vars to avoid collision. */
+  --background: 255 255 255;
+  --foreground: 10 10 10;
+  --card: 255 255 255;
+  --card-foreground: 10 10 10;
+  --popover: 255 255 255;
+  --popover-foreground: 10 10 10;
+  --primary: 10 10 10;
+  --primary-foreground: 255 255 255;
+  --secondary: 227 227 227;
+  --secondary-foreground: 10 10 10;
+  --muted-surface: 227 227 227;
+  --muted-foreground: 107 107 107;
+  --accent: 227 227 227;
+  --accent-foreground: 10 10 10;
+  --destructive: 220 20 60;
+  --destructive-foreground: 255 255 255;
+  --border: 227 227 227;
+  --input: 227 227 227;
+  --ring: 10 10 10;
+  --radius: 0rem;
+}
+
+
 /* High contrast: pure black ink, no grey text, hairlines become black, deeper accents.
    Set explicitly from the accessibility bar, or inherited from the OS preference. */
 html[data-contrast="high"] {
@@ -27,6 +55,23 @@ html[data-contrast="high"] {
   --rule: 0 0 0;
   --red: 168 0 32;
   --blue: 0 38 110;
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+  --card: 255 255 255;
+  --card-foreground: 0 0 0;
+  --popover: 255 255 255;
+  --popover-foreground: 0 0 0;
+  --primary: 0 0 0;
+  --primary-foreground: 255 255 255;
+  --secondary: 0 0 0;
+  --secondary-foreground: 255 255 255;
+  --muted-surface: 0 0 0;
+  --muted-foreground: 40 40 40;
+  --accent: 0 0 0;
+  --accent-foreground: 255 255 255;
+  --border: 0 0 0;
+  --input: 0 0 0;
+  --ring: 0 0 0;
 }
 @media (prefers-contrast: more) {
   html:not([data-contrast="normal"]) {
@@ -35,6 +80,19 @@ html[data-contrast="high"] {
     --rule: 0 0 0;
     --red: 168 0 32;
     --blue: 0 38 110;
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 0 0 0;
+    --popover: 255 255 255;
+    --popover-foreground: 0 0 0;
+    --primary: 0 0 0;
+    --primary-foreground: 255 255 255;
+    --secondary: 0 0 0;
+    --secondary-foreground: 255 255 255;
+    --border: 0 0 0;
+    --input: 0 0 0;
+    --ring: 0 0 0;
   }
 }
 html[data-contrast="high"] a,
@@ -147,5 +205,15 @@ html[lang="ne"] [class*="tracking-"] {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--border));
+  }
+  body {
+    background-color: rgb(var(--paper));
+    color: rgb(var(--ink));
   }
 }
