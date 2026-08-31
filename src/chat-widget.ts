@@ -9,54 +9,54 @@ const ONLYUTILS_URL = "https://onlyutils.com";
 
 const hostVars = {
   "--ouc-primary": "#A20D2B",
-  "--ouc-primary-fg": "#F4EFE6",
-  "--ouc-bg": "#F4EFE6",
-  "--ouc-text": "#16130F",
-  "--ouc-muted": "#6B655C",
-  "--ouc-border": "#D9D2C5",
+  "--ouc-primary-fg": "#FFFFFF",
+  "--ouc-bg": "#FFFFFF",
+  "--ouc-text": "#0A0A0A",
+  "--ouc-muted": "#6B6B6B",
+  "--ouc-border": "#E3E3E3",
   "--ouc-assistant-bg": "#FFFFFF",
   "--ouc-radius": "0",
   "--ouc-radius-sm": "0",
   "--ouc-launcher-size": "56px",
-  "--ouc-shadow": "0 12px 24px -16px rgba(22, 19, 15, 0.5)",
+  "--ouc-shadow": "0 12px 24px -16px rgba(10, 10, 10, 0.5)",
   "--ouc-font": 'system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif',
 };
 
 /* Editorial theme: paper, ink, one red accent, hairlines, square geometry, no motion. */
 const shadowCss = `
 .ouc-launcher {
-  background: #16130F;
-  border: 1px solid #F4EFE6;
+  background: #0A0A0A;
+  border: 1px solid #FFFFFF;
   border-radius: 0;
-  box-shadow: 0 0 0 1px #16130F, 0 8px 20px -12px rgba(22, 19, 15, 0.6);
+  box-shadow: 0 0 0 1px #0A0A0A, 0 8px 20px -12px rgba(10, 10, 10, 0.6);
   overflow: hidden;
   padding: 0;
 }
 .ouc-launcher img { width: 30px; height: 30px; }
 
 .ouc-panel {
-  border: 1px solid #16130F;
+  border: 1px solid #0A0A0A;
   border-radius: 0;
-  background: #F4EFE6;
+  background: #FFFFFF;
 }
 
 .ouc-header {
-  background: #F4EFE6;
-  border-bottom: 4px double #16130F;
+  background: #FFFFFF;
+  border-bottom: 4px double #0A0A0A;
   gap: 10px;
 }
 .ouc-title {
   font-family: "Playfair Display", "Noto Serif Devanagari", Georgia, serif;
   font-weight: 700;
   letter-spacing: 0;
-  color: #16130F;
+  color: #0A0A0A;
 }
 .vn-chat-brand { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
 .vn-chat-brand img { width: 24px; height: 24px; flex: none; }
 
 .ouc-msg { border: 1px solid transparent; border-radius: 0; }
-.ouc-msg-assistant { background: #FFFFFF; border-color: #D9D2C5; border-left: 2px solid #A20D2B; }
-.ouc-msg-user { background: #16130F; color: #F4EFE6; }
+.ouc-msg-assistant { background: #FFFFFF; border-color: #E3E3E3; border-left: 2px solid #A20D2B; }
+.ouc-msg-user { background: #0A0A0A; color: #FFFFFF; }
 .ouc-msg strong { font-weight: 600; }
 .ouc-tel {
   font-weight: 700;
@@ -67,20 +67,20 @@ const shadowCss = `
 
 .ouc-chip {
   background: transparent;
-  border: 1px solid #16130F;
+  border: 1px solid #0A0A0A;
   border-radius: 0;
-  color: #16130F;
+  color: #0A0A0A;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 11px;
 }
-.ouc-chip:hover { background: #16130F; color: #F4EFE6; border-color: #16130F; }
+.ouc-chip:hover { background: #0A0A0A; color: #FFFFFF; border-color: #0A0A0A; }
 
-.ouc-composer { border-top: 1px solid #D9D2C5; background: #F4EFE6; }
-.ouc-input { background: #FFFFFF; border: 1px solid #D9D2C5; border-radius: 0; color: #16130F; }
-.ouc-input:focus-visible { outline: none; border-color: #16130F; box-shadow: 0 0 0 2px rgba(162, 13, 43, 0.25); }
-.ouc-mic { background: #FFFFFF; border-radius: 0; color: #6B655C; }
-.ouc-send { background: #16130F; border-radius: 0; color: #F4EFE6; }
+.ouc-composer { border-top: 1px solid #E3E3E3; background: #FFFFFF; }
+.ouc-input { background: #FFFFFF; border: 1px solid #E3E3E3; border-radius: 0; color: #0A0A0A; }
+.ouc-input:focus-visible { outline: none; border-color: #0A0A0A; box-shadow: 0 0 0 2px rgba(162, 13, 43, 0.25); }
+.ouc-mic { background: #FFFFFF; border-radius: 0; color: #6B6B6B; }
+.ouc-send { background: #0A0A0A; border-radius: 0; color: #FFFFFF; }
 .ouc-send:hover:not(:disabled) { background: #A20D2B; }
 
 .vn-chat-credit {
@@ -89,10 +89,10 @@ const shadowCss = `
   text-align: center;
   font-size: 11px;
   line-height: 1.4;
-  color: #6B655C;
-  border-top: 1px solid #D9D2C5;
+  color: #6B6B6B;
+  border-top: 1px solid #E3E3E3;
 }
-.vn-chat-credit a { color: #16130F; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.vn-chat-credit a { color: #0A0A0A; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 `;
 
 function decorate(root: ShadowRoot) {
