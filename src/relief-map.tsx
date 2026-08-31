@@ -1,5 +1,4 @@
 import L from "leaflet";
-import { MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Polygon, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { data } from "./data";
@@ -12,10 +11,10 @@ import {
   type DistrictName,
 } from "./geo";
 import { labels, textForLanguage } from "./i18n";
-import { locationMatchesRegion, RegionSelect } from "./region";
+import { DistrictFilter, locationMatchesRegion, RegionSelect } from "./region";
 import type { Language, NamedLocation } from "./types";
 import { formatNumber } from "./utils";
-import { Panel, SourceCaption } from "./ui";
+import { Byline, Rule, SectionLabel, SquareButton } from "./ui";
 
 type LatLng = [number, number];
 
@@ -28,7 +27,7 @@ const pinGlyph = {
 };
 
 function makeIcon(kind: "rescue" | "camp", active: boolean) {
-  const color = kind === "rescue" ? "#DC143C" : "#0B62E0";
+  const color = kind === "rescue" ? "#A20D2B" : "#16130F";
   const size = active ? 42 : 28;
   return L.divIcon({
     className: `vn-pin${active ? " vn-pin--active" : ""}`,
@@ -147,31 +146,23 @@ export function ReliefMap({
   const zoom = selectedPlace ? 11 : 9;
 
   return (
-    <Panel
-      title={t.reliefMap}
-      icon={MapPin}
-      footer={<SourceCaption language={language} />}
-      action={
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <RegionSelect language={language} value={region} onChange={onRegionChange} compact />
-          {selected !== null ? (
-            <button
-              type="button"
-              onClick={() => onSelect(null)}
-              className="min-h-11 px-2 text-[0.7rem] font-bold uppercase tracking-[0.1em] text-nepal-crimson hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson"
-            >
-              {t.clearSelection}
-            </button>
-          ) : null}
+    <figure aria-labelledby="map-heading" className="m-0">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <SectionLabel id="map-heading" className="flex-1 border-b-0 pb-0">
+          {t.reliefMap}
+        </SectionLabel>
+        <div className="hidden sm:block">
+          <DistrictFilter language={language} value={region} onChange={onRegionChange} />
         </div>
-      }
-    >
-      <div className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-nepal-slate">
-        <LegendDot color="#DC143C">{t.rescuePoints}</LegendDot>
-        <LegendDot color="#0B62E0">{t.reliefCamps}</LegendDot>
-        <LegendDot color="#7DD3FC">{t.riverLabel}</LegendDot>
+        <div className="w-full sm:hidden">
+          <RegionSelect language={language} value={region} onChange={onRegionChange} compact />
+        </div>
+        {selected !== null ? (
+          <SquareButton onClick={() => onSelect(null)}>{t.clearSelection}</SquareButton>
+        ) : null}
       </div>
-      <div className="relative h-[20rem] overflow-hidden border border-nepal-line lg:h-[26rem]">
+      <Rule className="mt-2" />
+      <div className="relative mt-4 h-[20rem] overflow-hidden border border-ink bg-paper lg:h-[30rem]">
         <MapContainer
           center={center}
           zoom={zoom}
@@ -183,7 +174,6 @@ export function ReliefMap({
             attribution='Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           />
-          {/* Place names and borders ride on top of the imagery. */}
           <TileLayer
             attribution=""
             url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
@@ -191,7 +181,6 @@ export function ReliefMap({
           <MapFocus selectedCenter={selectedPlace ? [selectedPlace.lat, selectedPlace.lng] : null} />
           <MapDragging enabled={mapUnlocked} />
 
-          {/* Spotlight: a scrim dims every district, and the selected one clears it. */}
           {activeDistricts.map((district) => {
             const isActive = selectedPlace?.district === district;
             return districtShapes[district]?.map((ring, index) => (
@@ -199,10 +188,10 @@ export function ReliefMap({
                 key={`${district}-${index}`}
                 positions={ring}
                 pathOptions={{
-                  color: isActive ? "#FF2D55" : "#E6ECF7",
+                  color: isActive ? "#A20D2B" : "#F4EFE6",
                   weight: isActive ? 3 : 1,
-                  opacity: isActive ? 1 : 0.5,
-                  fillColor: "#0B1220",
+                  opacity: isActive ? 1 : 0.6,
+                  fillColor: "#16130F",
                   fillOpacity: isActive ? 0 : selectedPlace ? 0.45 : 0.18,
                 }}
               >
@@ -211,9 +200,8 @@ export function ReliefMap({
             ));
           })}
 
-          {/* Two passes: a soft halo under a bright core, so the river reads at every zoom. */}
-          <Polyline positions={riverPath} pathOptions={{ color: "#38BDF8", weight: 11, opacity: 0.2 }} />
-          <Polyline positions={riverPath} pathOptions={{ color: "#7DD3FC", weight: 3, opacity: 0.95 }}>
+          <Polyline positions={riverPath} pathOptions={{ color: "#16130F", weight: 9, opacity: 0.25 }} />
+          <Polyline positions={riverPath} pathOptions={{ color: "#F4EFE6", weight: 3, opacity: 0.95 }}>
             <Tooltip sticky>{t.riverLabel}</Tooltip>
           </Polyline>
 
@@ -256,32 +244,41 @@ export function ReliefMap({
           })}
         </MapContainer>
         {!mapUnlocked ? (
-          <button
-            type="button"
+          <SquareButton
+            tone="primary"
             onClick={() => setMapUnlocked(true)}
-            className="absolute inset-x-4 top-4 z-[500] mx-auto flex min-h-12 max-w-xs items-center justify-center bg-white px-4 text-sm font-bold text-nepal-ink shadow-lift transition hover:bg-nepal-blueSoft focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson"
+            className="absolute inset-x-4 top-4 z-[500] mx-auto max-w-xs"
           >
             {t.tapToExploreMap}
-          </button>
+          </SquareButton>
         ) : (
-          <button
-            type="button"
-            onClick={() => setMapUnlocked(false)}
-            className="absolute right-3 top-3 z-[500] min-h-11 bg-white px-3 text-xs font-bold uppercase tracking-[0.08em] text-nepal-blue shadow-panel transition hover:text-nepal-crimson focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson"
-          >
+          <SquareButton onClick={() => setMapUnlocked(false)} className="absolute right-3 top-3 z-[500] bg-paper">
             {t.collapseMap}
-          </button>
+          </SquareButton>
         )}
       </div>
-      <p className="mt-3 text-[0.68rem] leading-5 text-nepal-slate">{t.mapCredit}</p>
-    </Panel>
+      <figcaption className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-sans text-[0.72rem] leading-5 text-muted">
+        <span className="font-serif text-sm italic text-ink">{t.mapPlateCaption}</span>
+        <LegendDot color="#A20D2B">{t.rescuePoints}</LegendDot>
+        <LegendDot color="#16130F">{t.reliefCamps}</LegendDot>
+        <LegendDot color="#F4EFE6" outlined>
+          {t.riverLabel}
+        </LegendDot>
+        <span className="basis-full">{t.mapCredit}</span>
+      </figcaption>
+      <Byline language={language} className="mt-1" />
+    </figure>
   );
 }
 
-function LegendDot({ color, children }: { color: string; children: React.ReactNode }) {
+function LegendDot({ color, outlined = false, children }: { color: string; outlined?: boolean; children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
+      <span
+        className={`h-2 w-2 rounded-full ${outlined ? "border border-ink" : ""}`}
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
       {children}
     </span>
   );
@@ -323,93 +320,66 @@ export function AffectedLocations({
   const mappedCount = filteredRescueLocations.filter((location) => placeLocation(location)).length;
 
   return (
-    <section className="flex flex-col border border-nepal-line bg-white shadow-panel">
-      <div className="border-b border-nepal-line px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <MapPin className="shrink-0 text-nepal-crimson" size={17} aria-hidden="true" />
-          <h2 className="min-w-0 text-[0.8rem] font-bold uppercase leading-5 tracking-[0.08em] text-nepal-ink">
-            {t.affectedDistricts}
-          </h2>
-        </div>
-        <span className="mt-2 block text-[0.7rem] font-bold tabular-nums uppercase tracking-[0.08em] text-nepal-slate">
-          {formatNumber(mappedCount, language)}/
-          {formatNumber(filteredRescueLocations.length, language)} {t.locationsMapped}
+    <section aria-labelledby="locations-heading" className="mt-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <SectionLabel id="locations-heading" className="flex-1">
+          {t.affectedDistricts}
+        </SectionLabel>
+        <span className="font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted">
+          {formatNumber(mappedCount, language)}/{formatNumber(filteredRescueLocations.length, language)}{" "}
+          {t.locationsMapped}
         </span>
       </div>
-      <div className="flex-1 p-4">
-        <p className="text-sm leading-6 text-nepal-slate">{t.mapHint}</p>
-        <div className="mt-4 max-h-[28rem] space-y-4 overflow-auto pr-1">
-          {nearbyCamps.length ? (
-            <div>
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-nepal-crimson">
-                {t.reliefCamps}
-              </p>
-              <ul className="mt-2 divide-y divide-nepal-line border-y border-nepal-line">
-                {nearbyCamps.map((camp) => (
-                  <li key={`nearby-camp-${camp.id}`}>
-                    <div className="flex min-h-11 w-full items-center gap-3 bg-nepal-crimsonSoft px-2 py-2.5 text-left text-sm font-semibold text-nepal-ink">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-nepal-blue" aria-hidden="true" />
-                      <span className="truncate">{textForLanguage(camp, language)}</span>
-                      <span className="ml-auto shrink-0 bg-white px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-nepal-crimson">
-                        {t.nearYou}
+      <p className="mt-3 font-serif text-sm italic text-muted">{t.mapHint}</p>
+      <div className="mt-3 grid gap-x-8 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+        {nearbyCamps.length ? (
+          <div>
+            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-red">{t.reliefCamps}</p>
+            <ul className="mt-1 divide-y divide-rule border-y border-rule">
+              {nearbyCamps.map((camp) => (
+                <li key={`nearby-camp-${camp.id}`} className="flex min-h-11 items-center justify-between gap-3 font-sans text-sm text-ink">
+                  <span className="truncate">{textForLanguage(camp, language)}</span>
+                  <span className="shrink-0 text-[0.65rem] uppercase tracking-wide text-muted">{t.nearYou}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {groups.map(([district, locations]) => (
+          <div key={district}>
+            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink">
+              {district === "other" ? t.unavailable : districtLabels[district][language]}
+            </p>
+            <ul className="mt-1 divide-y divide-rule border-y border-rule">
+              {locations.map((location) => {
+                const place = placeLocation(location);
+                const active = location.id === selected;
+                const approximate = place?.approximate ? ` (${t.approximate})` : "";
+                return (
+                  <li key={location.id}>
+                    <button
+                      type="button"
+                      disabled={!place}
+                      onClick={() => onSelect(active ? null : location.id)}
+                      aria-pressed={active}
+                      className={`flex min-h-11 w-full items-center justify-between gap-3 text-left font-sans text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red ${
+                        active ? "font-semibold text-red" : place ? "text-ink hover:text-red" : "cursor-not-allowed text-muted"
+                      }`}
+                    >
+                      <span className="truncate">
+                        {textForLanguage(location, language)}
+                        {approximate}
                       </span>
-                    </div>
+                      {!place ? (
+                        <span className="shrink-0 text-[0.65rem] uppercase tracking-wide">{t.notMapped}</span>
+                      ) : null}
+                    </button>
                   </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          {groups.map(([district, locations]) => (
-            <div key={district}>
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-nepal-blue">
-                {district === "other" ? t.unavailable : districtLabels[district][language]}
-              </p>
-              <ul className="mt-2 divide-y divide-nepal-line border-y border-nepal-line">
-                {locations.map((location) => {
-                  const place = placeLocation(location);
-                  const active = location.id === selected;
-                  const approximate = place?.approximate ? ` (${t.approximate})` : "";
-                  return (
-                    <li key={location.id}>
-                      <button
-                        type="button"
-                        disabled={!place}
-                        onClick={() => onSelect(active ? null : location.id)}
-                        aria-pressed={active}
-                        className={`flex min-h-11 w-full items-center gap-3 px-2 py-2.5 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-nepal-crimson ${
-                          active
-                            ? "bg-nepal-crimsonSoft font-bold text-nepal-crimson"
-                            : place
-                              ? "font-medium text-nepal-ink hover:bg-nepal-blueSoft"
-                              : "cursor-not-allowed text-nepal-slate"
-                        }`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                            active ? "bg-nepal-crimson" : place ? "bg-nepal-blue" : "bg-nepal-line"
-                          }`}
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">
-                          {textForLanguage(location, language)}
-                          {approximate}
-                        </span>
-                        {!place ? (
-                          <span className="ml-auto shrink-0 text-[0.65rem] uppercase tracking-wide">
-                            {t.notMapped}
-                          </span>
-                        ) : null}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="px-4 pb-4 pt-1">
-        <SourceCaption language={language} />
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </div>
     </section>
   );
