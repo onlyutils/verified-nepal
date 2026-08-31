@@ -170,10 +170,10 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
         </div>
         <div className="font-sans text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-muted">
           <p className="font-semibold text-ink">{t.contactsTitle}</p>
-          <a className={`block ${link}`} href="https://ndrrma.gov.np" target="_blank" rel="noopener noreferrer">
+          <a className={`block text-blue ${link}`} href="https://ndrrma.gov.np" target="_blank" rel="noopener noreferrer">
             NDRRMA <span aria-hidden="true">↗</span>
           </a>
-          <a className={`block ${link}`} href={pmoAppealUrl} target="_blank" rel="noopener noreferrer">
+          <a className={`block text-blue ${link}`} href={pmoAppealUrl} target="_blank" rel="noopener noreferrer">
             {t.donateTitle} <span aria-hidden="true">↗</span>
           </a>
           <a className={`block ${link}`} href={githubUrl} target="_blank" rel="noopener noreferrer">

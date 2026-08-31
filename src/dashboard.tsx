@@ -7,7 +7,7 @@ import { labels, textForLanguage } from "./i18n";
 import { useLiveData } from "./live";
 import { AffectedLocations, ReliefMap } from "./relief-map";
 import type { Language, OpmcmGovernmentEffort, OpmcmStats, Page } from "./types";
-import { Byline, Headline, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "./ui";
+import { Byline, Headline, officialLink, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "./ui";
 import { opmcmAskHelpUrl, opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber, messageText, sentenceCase } from "./utils";
 
@@ -64,7 +64,7 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
   return (
     <section className="grid gap-8 lg:grid-cols-[7fr_5fr] lg:gap-0" aria-labelledby="lead-heading">
       <div className="lg:border-r lg:border-rule lg:pr-10">
-        <SectionLabel as="p" dot>
+        <SectionLabel as="p" dot="blue">
           {t.officialFigures}
         </SectionLabel>
         <Headline level={1} id="lead-heading" className="mt-5">
@@ -102,7 +102,7 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
         />
         <p className="mt-2 font-sans text-[0.68rem] text-muted">{t.floodDate}</p>
         <div className="mt-6 grid gap-3">
-          <SquareButton href={pmdrfUrl} tone="primary" external className="w-full">
+          <SquareButton href={pmdrfUrl} tone="red" external className="w-full">
             {t.donateLeadCta}
           </SquareButton>
           <SquareButton onClick={() => navigate("search")} className="w-full">
@@ -225,7 +225,9 @@ function UpdatesColumn({
   const t = labels[language];
   return (
     <section aria-labelledby="updates-heading">
-      <SectionLabel id="updates-heading">{t.officialUpdatesPanel}</SectionLabel>
+      <SectionLabel id="updates-heading" dot="blue">
+        {t.officialUpdatesPanel}
+      </SectionLabel>
       <ul className="divide-y divide-rule">
         {updates.slice(0, 3).map((item) => {
           const date = officialUpdateDate(item, language);
@@ -251,7 +253,7 @@ function UpdatesColumn({
         href={opmcmUpdatesUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink underline decoration-rule underline-offset-4 hover:decoration-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+        className={`mt-3 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
       >
         OPMCM <span aria-hidden="true">↗</span>
       </a>
@@ -298,7 +300,7 @@ export function PublicNotice({ language }: { language: Language }) {
           </Headline>
           <p className="mt-3 max-w-2xl font-serif leading-7 text-ink">{t.donateBody}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <SquareButton href={pmdrfUrl} tone="primary" external>
+            <SquareButton href={pmdrfUrl} tone="red" external>
               {t.donateCta}
             </SquareButton>
             <SquareButton href={pmoAppealUrl} external>

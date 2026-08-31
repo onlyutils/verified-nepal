@@ -12,6 +12,9 @@ function formatCaptionTime(value: string, language: Language) {
   }).format(new Date(value));
 }
 
+export const officialLink =
+  "text-blue underline decoration-blue/30 underline-offset-4 hover:decoration-blue";
+
 export const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
@@ -36,7 +39,7 @@ export function SectionLabel({
   children: ReactNode;
   as?: "h2" | "h3" | "p";
   id?: string;
-  dot?: boolean;
+  dot?: boolean | "red" | "blue";
   className?: string;
 }) {
   return (
@@ -44,7 +47,7 @@ export function SectionLabel({
       id={id}
       className={`flex items-center gap-2 border-b border-rule pb-2 font-sans text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-ink ${className}`}
     >
-      {dot ? <span className="h-2 w-2 rounded-full bg-red" aria-hidden="true" /> : null}
+      {dot ? <span className={`h-2 w-2 rounded-full ${dot === "blue" ? "bg-blue" : "bg-red"}`} aria-hidden="true" /> : null}
       {children}
     </Tag>
   );
@@ -153,7 +156,7 @@ export function SquareButton({
 }
 
 const statusDot = {
-  verified: "bg-ink",
+  verified: "bg-blue",
   missing: "bg-red",
   pending: "border border-ink bg-transparent",
   neutral: "bg-muted",

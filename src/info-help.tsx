@@ -71,7 +71,7 @@ function LinkList({ title, intro, links }: { title: string; intro?: string; link
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-12 items-center justify-between gap-3 font-serif text-ink hover:text-red focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red"
+              className="flex min-h-12 items-center justify-between gap-3 font-serif text-blue hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red"
             >
               {label}
               <span aria-hidden="true">↗</span>

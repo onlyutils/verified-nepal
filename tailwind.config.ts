@@ -9,7 +9,9 @@ export default {
         ink: "#0A0A0A",
         muted: "#6B6B6B",
         rule: "#E3E3E3",
-        red: "#A20D2B",
+        // Nepal flag: crimson = urgency / act now, blue = official / verified source.
+        red: "#DC143C",
+        blue: "#003893",
         white: "#FFFFFF",
       },
       fontFamily: {
