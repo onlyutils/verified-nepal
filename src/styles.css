@@ -18,8 +18,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #f4efe6;
-  color: #16130f;
+  background: #ffffff;
+  color: #0a0a0a;
   font-family: "Source Serif 4", "Noto Serif Devanagari", Georgia, serif;
 }
 
@@ -32,7 +32,7 @@ select {
 
 ::selection {
   background: #a20d2b;
-  color: #f4efe6;
+  color: #ffffff;
 }
 
 /* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
@@ -43,69 +43,69 @@ html[lang="ne"] [class*="tracking-"] {
 /* Thin scrollbars for the ruled lists. */
 .overflow-auto {
   scrollbar-width: thin;
-  scrollbar-color: #d9d2c5 transparent;
+  scrollbar-color: #e3e3e3 transparent;
 }
 
 /* --- Leaflet ------------------------------------------------------------ */
 
 .leaflet-container {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
-  background: #f4efe6;
+  background: #ffffff;
 }
 
-/* The printed-plate look: satellite imagery in warm monochrome. */
+/* The printed-plate look: satellite imagery in black and white. */
 .leaflet-tile-pane {
-  filter: grayscale(1) sepia(0.15) contrast(1.05);
+  filter: grayscale(1) contrast(1.08);
 }
 
 .leaflet-control-attribution {
-  background: rgba(244, 239, 230, 0.85) !important;
-  color: #6b655c !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #6b6b6b !important;
   font-size: 10px;
 }
 
 .leaflet-control-attribution a {
-  color: #16130f !important;
+  color: #0a0a0a !important;
 }
 
 .leaflet-bar {
-  border: 1px solid #16130f !important;
+  border: 1px solid #0a0a0a !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
 .leaflet-bar a {
   background: #ffffff;
-  color: #16130f;
-  border-bottom-color: #d9d2c5;
+  color: #0a0a0a;
+  border-bottom-color: #e3e3e3;
   border-radius: 0 !important;
 }
 
 .leaflet-bar a:hover {
-  background: #f4efe6;
+  background: #ffffff;
 }
 
 .leaflet-tooltip {
-  background: #f4efe6;
-  border: 1px solid #16130f;
+  background: #ffffff;
+  border: 1px solid #0a0a0a;
   border-radius: 0;
-  color: #16130f;
+  color: #0a0a0a;
   box-shadow: none;
   padding: 6px 9px;
 }
 
 .leaflet-tooltip-top::before {
-  border-top-color: #16130f;
+  border-top-color: #0a0a0a;
 }
 
 .vn-pin {
   background: none;
   border: 0;
-  filter: drop-shadow(0 1px 2px rgba(22, 19, 15, 0.5));
+  filter: drop-shadow(0 1px 2px rgba(10, 10, 10, 0.5));
 }
 
 .vn-pin--active {
-  filter: drop-shadow(0 0 0 1.5px #f4efe6) drop-shadow(0 2px 4px rgba(22, 19, 15, 0.6));
+  filter: drop-shadow(0 0 0 1.5px #ffffff) drop-shadow(0 2px 4px rgba(10, 10, 10, 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {

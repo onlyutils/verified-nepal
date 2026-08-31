@@ -27,7 +27,7 @@ const pinGlyph = {
 };
 
 function makeIcon(kind: "rescue" | "camp", active: boolean) {
-  const color = kind === "rescue" ? "#A20D2B" : "#16130F";
+  const color = kind === "rescue" ? "#A20D2B" : "#0A0A0A";
   const size = active ? 42 : 28;
   return L.divIcon({
     className: `vn-pin${active ? " vn-pin--active" : ""}`,
@@ -188,10 +188,10 @@ export function ReliefMap({
                 key={`${district}-${index}`}
                 positions={ring}
                 pathOptions={{
-                  color: isActive ? "#A20D2B" : "#F4EFE6",
+                  color: isActive ? "#A20D2B" : "#FFFFFF",
                   weight: isActive ? 3 : 1,
                   opacity: isActive ? 1 : 0.6,
-                  fillColor: "#16130F",
+                  fillColor: "#0A0A0A",
                   fillOpacity: isActive ? 0 : selectedPlace ? 0.45 : 0.18,
                 }}
               >
@@ -200,8 +200,8 @@ export function ReliefMap({
             ));
           })}
 
-          <Polyline positions={riverPath} pathOptions={{ color: "#16130F", weight: 9, opacity: 0.25 }} />
-          <Polyline positions={riverPath} pathOptions={{ color: "#F4EFE6", weight: 3, opacity: 0.95 }}>
+          <Polyline positions={riverPath} pathOptions={{ color: "#0A0A0A", weight: 9, opacity: 0.25 }} />
+          <Polyline positions={riverPath} pathOptions={{ color: "#FFFFFF", weight: 3, opacity: 0.95 }}>
             <Tooltip sticky>{t.riverLabel}</Tooltip>
           </Polyline>
 
@@ -266,8 +266,8 @@ export function ReliefMap({
       <figcaption className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-sans text-[0.72rem] leading-5 text-muted">
         <span className="font-serif text-sm italic text-ink">{t.mapPlateCaption}</span>
         <LegendDot color="#A20D2B">{t.rescuePoints}</LegendDot>
-        <LegendDot color="#16130F">{t.reliefCamps}</LegendDot>
-        <LegendDot color="#F4EFE6" outlined>
+        <LegendDot color="#0A0A0A">{t.reliefCamps}</LegendDot>
+        <LegendDot color="#FFFFFF" outlined>
           {t.riverLabel}
         </LegendDot>
         <span className="basis-full">{t.mapCredit}</span>

@@ -102,7 +102,7 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
         />
         <p className="mt-2 font-sans text-[0.68rem] text-muted">{t.floodDate}</p>
         <div className="mt-6 grid gap-3">
-          <SquareButton href={pmdrfUrl} tone="red" external className="w-full">
+          <SquareButton href={pmdrfUrl} tone="primary" external className="w-full">
             {t.donateLeadCta}
           </SquareButton>
           <SquareButton onClick={() => navigate("search")} className="w-full">
@@ -298,7 +298,7 @@ export function PublicNotice({ language }: { language: Language }) {
           </Headline>
           <p className="mt-3 max-w-2xl font-serif leading-7 text-ink">{t.donateBody}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <SquareButton href={pmdrfUrl} tone="red" external>
+            <SquareButton href={pmdrfUrl} tone="primary" external>
               {t.donateCta}
             </SquareButton>
             <SquareButton href={pmoAppealUrl} external>
@@ -336,7 +336,7 @@ function TablesRow({ language }: { language: Language }) {
         <RuledTable
           caption={t.statusOfRecords}
           className="mt-1"
-          rows={statusCounts.status_counts.map((status, index) => ({
+          rows={statusCounts.status_counts.map((status) => ({
             key: String(status.id),
             label: textForLanguage(status, language),
             value: (
@@ -346,7 +346,6 @@ function TablesRow({ language }: { language: Language }) {
               </>
             ),
             bar: status.count / total,
-            red: index === 0,
           }))}
         />
         <Byline language={language} className="mt-2" />
@@ -357,13 +356,12 @@ function TablesRow({ language }: { language: Language }) {
         <div className="mt-1 max-h-[18rem] overflow-auto pr-2">
           <RuledTable
             caption={t.byNationality}
-            rows={countryCounts.map(([country, count], index) => ({
+            rows={countryCounts.map(([country, count]) => ({
               key: country,
               label: country,
               value: formatNumber(count, language),
               bar: count / maxCountry,
-              red: index === 0,
-            }))}
+              }))}
           />
         </div>
         <Byline language={language} className="mt-2" />
