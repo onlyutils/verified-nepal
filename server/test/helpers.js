@@ -56,17 +56,82 @@ export class FakeDdb {
         e.name = "ConditionalCheckFailedException";
         throw e;
       }
-      this.store.set(k, input.Item);
+      this.store.set(k, JSON.parse(JSON.stringify(input.Item)));
       return {};
+    }
+    if (name === "ScanCommand") {
+      const items = Array.from(this.store.values());
+      let start = 0;
+      if (input.ExclusiveStartKey) {
+        const ek = this.key(input.ExclusiveStartKey.PK, input.ExclusiveStartKey.SK);
+        const idx = items.findIndex((it) => this.key(it.PK, it.SK) === ek);
+        if (idx >= 0) start = idx + 1;
+      }
+      let sliced = items.slice(start);
+      if (input.Limit) sliced = sliced.slice(0, input.Limit);
+      const result = { Items: sliced, Count: sliced.length };
+      if (start + sliced.length < items.length) {
+        const last = sliced[sliced.length - 1];
+        result.LastEvaluatedKey = { PK: last.PK, SK: last.SK };
+      }
+      return result;
+    }
+    if (name === "QueryCommand") {
+      let items = Array.from(this.store.values());
+      const vals = input.ExpressionAttributeValues || {};
+      let pkVal = null;
+      if (vals[":pk"] !== undefined) pkVal = vals[":pk"];
+      else if (vals[":gsi1pk"] !== undefined) pkVal = vals[":gsi1pk"];
+      else if (vals[":gsi2pk"] !== undefined) pkVal = vals[":gsi2pk"];
+      else {
+        const firstKey = Object.keys(vals)[0];
+        if (firstKey) pkVal = vals[firstKey];
+      }
+      if (pkVal) {
+        if (input.IndexName === "GSI1") {
+          items = items.filter((it) => it.gsi1pk === pkVal);
+          items.sort((a, b) => (a.gsi1sk || "").localeCompare(b.gsi1sk || ""));
+        } else if (input.IndexName === "GSI2") {
+          items = items.filter((it) => it.gsi2pk === pkVal);
+          items.sort((a, b) => (a.gsi2sk || "").localeCompare(b.gsi2sk || ""));
+        } else {
+          items = items.filter((it) => it.gsi1pk === pkVal || it.gsi2pk === pkVal);
+          items.sort((a, b) => (a.gsi1sk || a.gsi2sk || "").localeCompare(b.gsi1sk || b.gsi2sk || ""));
+        }
+        if (input.ScanIndexForward === false) items.reverse();
+      } else {
+        items.sort((a, b) => (a.gsi1sk || a.gsi2sk || "").localeCompare(b.gsi1sk || b.gsi2sk || ""));
+        if (input.ScanIndexForward === false) items.reverse();
+      }
+      let start = 0;
+      if (input.ExclusiveStartKey) {
+        const ek = this.key(input.ExclusiveStartKey.PK, input.ExclusiveStartKey.SK);
+        const idx = items.findIndex((it) => this.key(it.PK, it.SK) === ek);
+        if (idx >= 0) start = idx + 1;
+      }
+      let sliced = items.slice(start);
+      if (input.Limit) sliced = sliced.slice(0, input.Limit);
+      const result = { Items: sliced, Count: sliced.length };
+      if (start + sliced.length < items.length) {
+        const last = sliced[sliced.length - 1];
+        result.LastEvaluatedKey = { PK: last.PK, SK: last.SK };
+      }
+      return result;
+    }
+    if (name === "UpdateCommand" || name === "DeleteCommand") {
+      throw new Error(`unknown command ${name} - use Put/Get for tests`);
     }
     throw new Error(`unknown command ${name}`);
   }
 }
 
-export function makeEvent({ method = "GET", path = "/", headers = {}, rawPath } = {}) {
-  return {
+export function makeEvent({ method = "GET", path = "/", headers = {}, rawPath, body, queryStringParameters } = {}) {
+  const event = {
     rawPath: rawPath ?? path,
     headers,
-    requestContext: { http: { method, path } },
+    requestContext: { http: { method, path: (rawPath ?? path).split("?")[0] } },
   };
+  if (body !== undefined) event.body = typeof body === "string" ? body : JSON.stringify(body);
+  if (queryStringParameters) event.queryStringParameters = queryStringParameters;
+  return event;
 }
