@@ -45,7 +45,12 @@ colors.paper   #F4EFE6   page background
 colors.ink     #16130F   primary text
 colors.muted   #6B655C   secondary text (≥ 4.5:1 on paper)
 colors.rule    #D9D2C5   hairlines
-colors.red     #A20D2B   the one accent (~7:1 on paper)
+colors.red     #DC143C   Nepal-flag crimson: urgency / act now (emergency line,
+                          missing & critical figures, emergency numbers, rescue
+                          pins, donate CTA)
+colors.blue    #003893   Nepal-flag blue: official / verified source (VERIFIED
+                          mark, official-section dots, live dot, relief-camp
+                          pins, links into government portals)
 colors.white   #FFFFFF   inputs, notice box interior
 ```
 

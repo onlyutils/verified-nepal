@@ -8,7 +8,7 @@ const HOST_ID = "onyutils-chat-widget";
 const ONLYUTILS_URL = "https://onlyutils.com";
 
 const hostVars = {
-  "--ouc-primary": "#A20D2B",
+  "--ouc-primary": "#003893",
   "--ouc-primary-fg": "#FFFFFF",
   "--ouc-bg": "#FFFFFF",
   "--ouc-text": "#0A0A0A",
@@ -55,14 +55,14 @@ const shadowCss = `
 .vn-chat-brand img { width: 24px; height: 24px; flex: none; }
 
 .ouc-msg { border: 1px solid transparent; border-radius: 0; }
-.ouc-msg-assistant { background: #FFFFFF; border-color: #E3E3E3; border-left: 2px solid #A20D2B; }
+.ouc-msg-assistant { background: #FFFFFF; border-color: #E3E3E3; border-left: 2px solid #003893; }
 .ouc-msg-user { background: #0A0A0A; color: #FFFFFF; }
 .ouc-msg strong { font-weight: 600; }
 .ouc-tel {
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: #A20D2B;
+  color: #DC143C;
 }
 
 .ouc-chip {
@@ -78,10 +78,10 @@ const shadowCss = `
 
 .ouc-composer { border-top: 1px solid #E3E3E3; background: #FFFFFF; }
 .ouc-input { background: #FFFFFF; border: 1px solid #E3E3E3; border-radius: 0; color: #0A0A0A; }
-.ouc-input:focus-visible { outline: none; border-color: #0A0A0A; box-shadow: 0 0 0 2px rgba(162, 13, 43, 0.25); }
+.ouc-input:focus-visible { outline: none; border-color: #0A0A0A; box-shadow: 0 0 0 2px rgba(0, 56, 147, 0.25); }
 .ouc-mic { background: #FFFFFF; border-radius: 0; color: #6B6B6B; }
 .ouc-send { background: #0A0A0A; border-radius: 0; color: #FFFFFF; }
-.ouc-send:hover:not(:disabled) { background: #A20D2B; }
+.ouc-send:hover:not(:disabled) { background: #DC143C; }
 
 .vn-chat-credit {
   flex: none;

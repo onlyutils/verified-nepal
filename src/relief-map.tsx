@@ -27,7 +27,7 @@ const pinGlyph = {
 };
 
 function makeIcon(kind: "rescue" | "camp", active: boolean) {
-  const color = kind === "rescue" ? "#A20D2B" : "#0A0A0A";
+  const color = kind === "rescue" ? "#DC143C" : "#003893";
   const size = active ? 42 : 28;
   return L.divIcon({
     className: `vn-pin${active ? " vn-pin--active" : ""}`,
@@ -188,7 +188,7 @@ export function ReliefMap({
                 key={`${district}-${index}`}
                 positions={ring}
                 pathOptions={{
-                  color: isActive ? "#A20D2B" : "#FFFFFF",
+                  color: isActive ? "#DC143C" : "#FFFFFF",
                   weight: isActive ? 3 : 1,
                   opacity: isActive ? 1 : 0.6,
                   fillColor: "#0A0A0A",
@@ -265,8 +265,8 @@ export function ReliefMap({
       </div>
       <figcaption className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-sans text-[0.72rem] leading-5 text-muted">
         <span className="font-serif text-sm italic text-ink">{t.mapPlateCaption}</span>
-        <LegendDot color="#A20D2B">{t.rescuePoints}</LegendDot>
-        <LegendDot color="#0A0A0A">{t.reliefCamps}</LegendDot>
+        <LegendDot color="#DC143C">{t.rescuePoints}</LegendDot>
+        <LegendDot color="#003893">{t.reliefCamps}</LegendDot>
         <LegendDot color="#FFFFFF" outlined>
           {t.riverLabel}
         </LegendDot>

@@ -148,7 +148,7 @@ export function LiveStatusBadge({ language, className = "" }: { language: Langua
       title: liveData.isLive ? undefined : t.snapshotTooltip,
     },
     createElement("span", {
-      className: `h-2 w-2 rounded-full ${liveData.isLive ? "bg-red" : "border border-ink bg-transparent"}`,
+      className: `h-2 w-2 rounded-full ${liveData.isLive ? "bg-blue" : "border border-ink bg-transparent"}`,
       "aria-hidden": "true",
     }),
     label,

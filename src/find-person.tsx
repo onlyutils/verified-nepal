@@ -5,7 +5,7 @@ import { fetchMissingPersons, useLiveData } from "./live";
 import type { Language, MissingPersonRecord, PersonRecord } from "./types";
 import { opmcmMissingPersonUrl } from "./urls";
 import { formatNumber, matchesPerson, messageText, officialRescueUrl, sentenceCase } from "./utils";
-import { Byline, Headline, Rule, SectionLabel, SquareButton, Standfirst, StatusMark } from "./ui";
+import { Byline, Headline, officialLink, Rule, SectionLabel, SquareButton, Standfirst, StatusMark } from "./ui";
 
 type PersonSearchResult =
   | { kind: "rescued"; person: PersonRecord }
@@ -212,7 +212,7 @@ function PersonEntry({ result, language }: { result: PersonSearchResult; languag
             href={officialRescueUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink underline decoration-rule underline-offset-4 hover:decoration-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            className={`mt-2 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
           >
             {t.verifyOfficial} <span aria-hidden="true">↗</span>
           </a>
@@ -241,7 +241,7 @@ function PersonEntry({ result, language }: { result: PersonSearchResult; languag
             href={officialRescueUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink underline decoration-rule underline-offset-4 hover:decoration-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            className={`mt-1 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
           >
             {t.verifyOfficial} <span aria-hidden="true">↗</span>
           </a>
