@@ -146,6 +146,8 @@ export function FindPerson({ language }: { language: Language }) {
           <>
             {rescuedLoading ? <p className="font-sans text-sm text-muted">{t.loadingVerifiedRecords}</p> : null}
             {missingLoading ? <p className="font-sans text-sm text-muted">{t.loadingMissingRecords}</p> : null}
+            {rescuedError ? <p className="font-sans text-sm font-semibold text-red">{t.errorVerifiedRecords}</p> : null}
+            {missingError ? <p className="font-sans text-sm font-semibold text-red">{t.errorMissingRecords}</p> : null}
             {results.length > 0 ? (
               <>
                 <p className="font-sans text-[0.72rem] uppercase tracking-[0.14em] text-muted">
@@ -157,7 +159,7 @@ export function FindPerson({ language }: { language: Language }) {
                   ))}
                 </div>
               </>
-            ) : !anyLoading ? (
+            ) : !anyLoading && (persons || missingPersons) ? (
               <p className="font-serif leading-7 text-muted">{t.noMatch}</p>
             ) : null}
           </>

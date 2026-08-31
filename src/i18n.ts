@@ -113,6 +113,10 @@ export const labels = {
     collapseMap: "Collapse map",
     loadingVerifiedRecords: "Loading verified records — large list, please wait...",
     loadingMissingRecords: "Checking missing-person reports...",
+    errorVerifiedRecords:
+      "Could not load verified rescue records. Check the official NDRRMA page directly.",
+    errorMissingRecords:
+      "Could not load missing-person reports. Check the official OPMCM portal directly.",
     edition: "Edition",
     dayOf: "Day {n} of the response",
     officialFigures: "Official figures",
@@ -254,6 +258,10 @@ export const labels = {
     collapseMap: "नक्सा बन्द गर्नुहोस्",
     loadingVerifiedRecords: "प्रमाणित अभिलेख लोड हुँदैछ — सूची ठूलो छ, कृपया प्रतीक्षा गर्नुहोस्...",
     loadingMissingRecords: "बेपत्ता व्यक्तिका रिपोर्टहरू जाँच हुँदैछ...",
+    errorVerifiedRecords:
+      "प्रमाणित उद्धार अभिलेख लोड हुन सकेन। सीधै आधिकारिक NDRRMA पेज हेर्नुहोस्।",
+    errorMissingRecords:
+      "बेपत्ता व्यक्तिका रिपोर्टहरू लोड हुन सकेन। सीधै आधिकारिक OPMCM पोर्टल हेर्नुहोस्।",
     edition: "संस्करण",
     dayOf: "उद्धार कार्यको {n}औं दिन",
     officialFigures: "आधिकारिक तथ्यांक",
