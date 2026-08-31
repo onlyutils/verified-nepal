@@ -20,7 +20,7 @@ body {
   min-width: 320px;
   background: #f4efe6;
   color: #16130f;
-  font-family: "Source Serif 4", Martel, "Noto Serif Devanagari", Georgia, serif;
+  font-family: "Source Serif 4", "Noto Serif Devanagari", Georgia, serif;
 }
 
 button,
@@ -49,7 +49,7 @@ html[lang="ne"] [class*="tracking-"] {
 /* --- Leaflet ------------------------------------------------------------ */
 
 .leaflet-container {
-  font-family: "IBM Plex Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
   background: #f4efe6;
 }
 

@@ -45,6 +45,7 @@ pnpm sync          # refresh the local data snapshot (optional)
 pnpm dev           # http://localhost:8765
 pnpm typecheck     # TypeScript checks
 pnpm build         # static production build in dist/
+pnpm test          # edition helper checks (node --test)
 ```
 
 The dev server uses port 8765 because the chat widget's origin allowlist
@@ -53,7 +54,12 @@ accepts that origin.
 ## Repository layout
 
 ```
-src/App.tsx        all pages/components (dashboard, search, info, privacy)
+src/App.tsx        routing shell
+src/layout.tsx     masthead, nav, emergency line, footer
+src/ui.tsx         editorial primitives (Rule, SectionLabel, Headline, SquareButton, RuledTable, …)
+src/edition.ts     edition line helpers (response day, lead headline)
+src/dashboard.tsx  front page · src/find-person.tsx · src/info-help.tsx · src/privacy.tsx
+src/relief-map.tsx map plate and affected locations
 src/live.ts        live NDRRMA/OPMCM fetching + React context
 src/geo.ts         place-name → coordinate lookup, district shapes
 src/i18n.ts        en/ne string dictionaries — every string has both

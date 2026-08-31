@@ -208,7 +208,12 @@ export function ReliefMap({
           {camps.map((camp) => {
             const [lng, lat] = camp.centroid.coordinates;
             return (
-              <Marker key={`camp-${camp.id}`} position={[lat, lng]} icon={makeIcon("camp", false)}>
+              <Marker
+                key={`camp-${camp.id}`}
+                position={[lat, lng]}
+                icon={makeIcon("camp", false)}
+                title={`${textForLanguage(camp, language)} — ${t.reliefCamps}`}
+              >
                 <Tooltip direction="top" offset={[0, -6]}>
                   <span className="font-semibold">{textForLanguage(camp, language)}</span>
                   <br />
@@ -226,6 +231,7 @@ export function ReliefMap({
                 key={`rescue-${place.location.id}`}
                 position={[place.lat, place.lng]}
                 icon={makeIcon("rescue", active)}
+                title={`${textForLanguage(place.location, language)}${approximate}`}
                 zIndexOffset={active ? 1000 : 0}
                 eventHandlers={{ click: () => onSelect(active ? null : place.location.id) }}
               >
