@@ -1,19 +1,18 @@
-import { Github, Home, Info, PhoneCall, Search, X } from "lucide-react";
-import { useState } from "react";
 import { data } from "./data";
+import { fillTemplate, formatEditionDate, responseDay } from "./edition";
+import { districtLabels } from "./geo";
 import { labels } from "./i18n";
 import { LiveStatusBadge } from "./live";
-import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
+import { regionOptions } from "./region";
 import type { Language, Page } from "./types";
-import { formatDateTime } from "./utils";
+import { focusRing, Rule } from "./ui";
+import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
+import { formatDateTime, formatNumber } from "./utils";
 
-const navItems: Array<{ page: "dashboard" | "search" | "info"; icon: typeof Home }> = [
-  { page: "dashboard", icon: Home },
-  { page: "search", icon: Search },
-  { page: "info", icon: Info },
-];
+const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
+const navPages = ["dashboard", "search", "info"] as const;
 
-export function Header({
+export function Masthead({
   page,
   language,
   setLanguage,
@@ -25,73 +24,80 @@ export function Header({
   navigate: (page: Page) => void;
 }) {
   const t = labels[language];
+  const districts = regionOptions.map((district) => districtLabels[district][language]).join(" · ");
 
   return (
-    <header className="sticky top-0 z-40 border-b border-nepal-line bg-white/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-[78rem] flex-wrap items-center gap-x-8 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => navigate("dashboard")}
-          className="inline-flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson focus-visible:ring-offset-2"
-        >
-          <img src="/brand/logo-mark.svg" alt="" aria-hidden="true" className="h-9 w-9" />
-          <span className="text-left leading-none">
-            <span className="block text-[1.35rem] font-semibold tracking-display text-nepal-ink">
-              verified<span className="font-bold">Nepal</span>
-            </span>
-            <span className="mt-1.5 hidden text-[0.68rem] font-medium uppercase tracking-[0.12em] text-nepal-slate sm:block">
-              {t.unofficial}
-            </span>
+    <header className={shell}>
+      <Rule className="mt-3" />
+      <div className="grid items-end gap-4 py-5 text-center lg:grid-cols-[1fr_auto_1fr] lg:text-left">
+        <p className="hidden font-sans text-[0.68rem] uppercase leading-5 tracking-[0.14em] text-muted lg:block">
+          {districts}
+          <br />
+          {t.floodName}
+        </p>
+        <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
+          <span className="block font-display text-[2.4rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] lg:text-[4.5rem]">
+            Verified Nepal
           </span>
+          <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
+            भेरिफाइड नेपाल
+          </span>
+          <span className="mt-3 block font-serif text-sm italic text-muted">{t.unofficial}</span>
         </button>
-
-        <nav aria-label="Primary navigation" className="order-3 -mb-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
-          {navItems.map(({ page: itemPage, icon: Icon }) => {
-            const active = page === itemPage;
-            return (
-              <button
-                key={itemPage}
-                type="button"
-                onClick={() => navigate(itemPage)}
-                aria-current={active ? "page" : undefined}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 pb-3 pt-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson ${
-                  active
-                    ? "border-nepal-crimson text-nepal-ink"
-                    : "border-transparent text-nepal-slate hover:text-nepal-ink"
-                }`}
-              >
-                <Icon size={16} aria-hidden="true" />
-                {t[itemPage]}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t.githubAria}
-            className="inline-flex min-h-10 items-center gap-2 border border-nepal-line bg-white px-3 text-sm font-semibold text-nepal-slate transition hover:bg-nepal-blueSoft hover:text-nepal-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-nepal-crimson"
-          >
-            <Github size={17} aria-hidden="true" />
-            <span>{t.github}</span>
-          </a>
-          <div
-            className="inline-flex overflow-hidden border border-nepal-line"
-            aria-label={t.language}
-          >
-            <LanguageButton active={language === "en"} onClick={() => setLanguage("en")}>
-              EN
-            </LanguageButton>
-            <LanguageButton active={language === "ne"} onClick={() => setLanguage("ne")}>
-              नेपाली
-            </LanguageButton>
-          </div>
-        </div>
+        <EditionLine language={language} />
       </div>
+      <Rule variant="double" />
+      <nav
+        aria-label="Primary navigation"
+        className="flex items-center gap-5 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em]"
+      >
+        <div className="flex min-w-0 flex-1 gap-5 overflow-x-auto">
+        {navPages.map((item) => {
+          const active = page === item;
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => navigate(item)}
+              aria-current={active ? "page" : undefined}
+              className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 transition-colors ${
+                active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
+              } ${focusRing}`}
+            >
+              {t[item]}
+            </button>
+          );
+        })}
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2" aria-label={t.language}>
+          <LanguageButton active={language === "en"} onClick={() => setLanguage("en")}>
+            EN
+          </LanguageButton>
+          <span aria-hidden="true" className="text-rule">
+            |
+          </span>
+          <LanguageButton active={language === "ne"} onClick={() => setLanguage("ne")}>
+            <span lang="ne">नेपाली</span>
+          </LanguageButton>
+        </div>
+      </nav>
+      <Rule />
     </header>
+  );
+}
+
+function EditionLine({ language }: { language: Language }) {
+  const t = labels[language];
+  const now = new Date();
+  return (
+    <div className="font-sans text-[0.68rem] uppercase leading-5 tracking-[0.14em] text-muted lg:text-right">
+      <p>
+        <span className="font-semibold text-ink">{t.edition}</span> <span aria-hidden="true">·</span>{" "}
+        {formatEditionDate(now, language)}
+      </p>
+      <p>{fillTemplate(t.dayOf, { n: formatNumber(responseDay(now), language) })}</p>
+      <LiveStatusBadge language={language} className="mt-1 justify-center lg:justify-end" />
+    </div>
   );
 }
 
@@ -109,153 +115,86 @@ function LanguageButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`min-h-10 px-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-nepal-crimson ${
-        active ? "bg-nepal-blue text-white" : "bg-white text-nepal-slate hover:bg-nepal-blueSoft"
-      }`}
+      className={`min-h-11 min-w-11 border-b-2 px-1 transition-colors ${
+        active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
+      } ${focusRing}`}
     >
       {children}
     </button>
   );
 }
 
-export function EmergencyStrip({ language }: { language: Language }) {
+export function EmergencyLine({ language }: { language: Language }) {
   const t = labels[language];
-  const [dismissed, setDismissed] = useState(
-    () => sessionStorage.getItem("verifiednepal:emergency-dismissed") === "1",
-  );
-
-  if (dismissed) return null;
-
-  const dismiss = () => {
-    sessionStorage.setItem("verifiednepal:emergency-dismissed", "1");
-    setDismissed(true);
-  };
+  const numbers: Array<[string, string]> = [
+    ["1234", t.neocShort],
+    ["100", t.policeShort],
+    ["102", t.ambulanceShort],
+  ];
 
   return (
-    <aside
-      className="bg-nepal-crimson text-white"
-      aria-label={t.emergencyStripLabel}
-    >
-      <div className="mx-auto flex max-w-[78rem] items-center gap-3 px-4 py-2 text-sm font-semibold sm:px-6 lg:px-8">
-        <PhoneCall size={17} className="shrink-0" aria-hidden="true" />
-        <p className="min-w-0 flex-1 leading-6">
-          <span className="font-bold">{t.emergencyQuestion}</span>{" "}
-          <EmergencyStripLink number="1234" label={t.neocShort} /> <span aria-hidden="true">·</span>{" "}
-          <EmergencyStripLink number="100" label={t.policeShort} /> <span aria-hidden="true">·</span>{" "}
-          <EmergencyStripLink number="102" label={t.ambulanceShort} />
-        </p>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={t.dismissEmergency}
-          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-white transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-        >
-          <X size={18} aria-hidden="true" />
-        </button>
+    <aside aria-label={t.emergencyStripLabel} className={shell}>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-0 border-b border-rule font-sans text-[0.72rem] uppercase tracking-[0.14em]">
+        <span className="inline-flex min-h-11 items-center gap-2 font-semibold text-red">
+          <span className="h-2 w-2 rounded-full bg-red" aria-hidden="true" />
+          {t.emergencyLabel}
+        </span>
+        {numbers.map(([number, label]) => (
+          <a key={number} href={`tel:${number}`} className={`inline-flex min-h-11 items-center gap-1.5 text-ink ${focusRing}`}>
+            <span className="font-semibold tabular-nums">{number}</span>
+            <span className="normal-case tracking-normal text-muted">{label}</span>
+          </a>
+        ))}
       </div>
     </aside>
   );
 }
 
-function EmergencyStripLink({ number, label }: { number: string; label: string }) {
-  return (
-    <a
-      href={`tel:${number}`}
-      className="inline-flex min-h-11 items-center underline decoration-white/60 underline-offset-4 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-    >
-      <span className="font-bold tabular-nums">{number}</span>&nbsp;({label})
-    </a>
-  );
-}
-
 export function Footer({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = labels[language];
+  const link = `underline decoration-rule underline-offset-4 hover:decoration-ink ${focusRing}`;
 
   return (
-    <footer className="bg-nepal-blueDeep text-nepal-onDark">
-      <div className="mx-auto grid max-w-[78rem] gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.4fr_1fr] lg:px-8">
-        <div>
-          <img src="/brand/logo-horizontal-light.svg" alt="verifiedNepal" className="h-10 w-auto" />
-          <p className="mt-5 max-w-md text-sm leading-6">{t.aboutBody}</p>
-          <p className="mt-4 max-w-md text-sm leading-6">
-            {t.contributeCta}{" "}
-            <a
-              className="inline-flex items-center gap-1 font-semibold text-white underline underline-offset-2 hover:text-nepal-onDark focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              href={githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Github size={14} aria-hidden="true" />
-              {t.contributeLink}
-            </a>
+    <footer className={`${shell} pb-10`}>
+      <Rule variant="double" />
+      <div className="grid gap-8 py-8 font-serif text-sm leading-6 lg:grid-cols-[1.4fr_1fr_1fr]">
+        <p className="max-w-md text-ink">{t.aboutBody}</p>
+        <div className="font-sans text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-muted">
+          <p className="font-semibold text-ink">{t.source}</p>
+          <p className="normal-case tracking-normal">{t.sourceName}</p>
+          <p className="normal-case tracking-normal">
+            {t.lastSynced}: {formatDateTime(data.meta.synced_at, language)}
           </p>
-          <p className="mt-2 text-sm leading-6">
-            {t.contactUs}:{" "}
-            <a
-              className="font-semibold text-white underline underline-offset-2 hover:text-nepal-onDark focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              href="mailto:verifiednepal01@gmail.com"
-            >
-              verifiednepal01@gmail.com
-            </a>
-          </p>
+          <LiveStatusBadge language={language} className="mt-1" />
         </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="text-sm leading-6">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-nepal-onDarkMuted">
-              {t.source}
-            </p>
-            <p className="mt-2 text-white">{t.sourceName}</p>
-            <p>
-              {t.lastSynced}: {formatDateTime(data.meta.synced_at, language)}
-            </p>
-            <LiveStatusBadge language={language} className="mt-3 text-nepal-onDark" />
-          </div>
-          <div className="text-sm leading-6">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-nepal-onDarkMuted">
-              {t.contactsTitle}
-            </p>
-            <a
-              className="mt-2 block hover:text-white"
-              href="https://ndrrma.gov.np"
-              target="_blank"
-              rel="noreferrer"
-            >
-              NDRRMA
-            </a>
-            <a className="block hover:text-white" href={pmoAppealUrl} target="_blank" rel="noreferrer">
-              {t.donateTitle}
-            </a>
-            <a className="block hover:text-white" href={githubUrl} target="_blank" rel="noopener noreferrer">
-              {t.sourceCodeOnGithub}
-            </a>
-          </div>
+        <div className="font-sans text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-muted">
+          <p className="font-semibold text-ink">{t.contactsTitle}</p>
+          <a className={`block ${link}`} href="https://ndrrma.gov.np" target="_blank" rel="noopener noreferrer">
+            NDRRMA <span aria-hidden="true">↗</span>
+          </a>
+          <a className={`block ${link}`} href={pmoAppealUrl} target="_blank" rel="noopener noreferrer">
+            {t.donateTitle} <span aria-hidden="true">↗</span>
+          </a>
+          <a className={`block ${link}`} href={githubUrl} target="_blank" rel="noopener noreferrer">
+            {t.contributeLink} <span aria-hidden="true">↗</span>
+          </a>
+          <a className={`block ${link}`} href="mailto:verifiednepal01@gmail.com">
+            {t.contactUs}: <span className="normal-case tracking-normal">verifiednepal01@gmail.com</span>
+          </a>
+          <button type="button" onClick={() => navigate("privacy")} className={`block ${link}`}>
+            {t.privacyTitle}
+          </button>
         </div>
       </div>
-      <div className="border-t border-white/20">
-        <div className="mx-auto flex max-w-[78rem] flex-col gap-2 px-4 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p>
-            {t.unofficial}
-            {" · "}
-            <button
-              type="button"
-              onClick={() => navigate("privacy")}
-              className="underline decoration-white/40 underline-offset-4 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              {t.privacyTitle}
-            </button>
-          </p>
-          <p>
-            {t.poweredBy}{" "}
-            <a
-              href={onlyUtilsUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="font-semibold text-white underline decoration-nepal-crimson decoration-2 underline-offset-4 hover:decoration-white"
-            >
-              OnlyUtils
-            </a>
-          </p>
-        </div>
+      <Rule />
+      <div className="flex flex-col gap-2 pt-4 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          {t.unofficial} <span aria-hidden="true">·</span> {t.poweredBy}{" "}
+          <a href={onlyUtilsUrl} target="_blank" rel="noopener noreferrer" className={`text-ink ${link}`}>
+            OnlyUtils
+          </a>
+        </p>
+        <p>{t.setIn}</p>
       </div>
     </footer>
   );

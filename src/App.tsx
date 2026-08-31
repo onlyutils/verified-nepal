@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
-import { EmergencyStrip, Footer, Header } from "./layout";
+import { EmergencyLine, Footer, Masthead } from "./layout";
 import { LiveDataProvider } from "./live";
 import { PrivacyPolicy } from "./privacy";
 import type { Language, Page } from "./types";
@@ -61,17 +61,16 @@ export function App() {
 
   return (
     <LiveDataProvider>
-      <div className="min-h-dvh bg-nepal-mist text-nepal-ink">
-        <div className="h-1 bg-flag" aria-hidden="true" />
+      <div className="min-h-dvh bg-paper font-serif text-ink">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-nepal-blue focus:px-4 focus:py-3 focus:text-white"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-3 focus:text-paper"
         >
           Skip to main content
         </a>
-        {page === "dashboard" ? <EmergencyStrip language={language} /> : null}
-        <Header page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
-        <main id="main" className="mx-auto w-full max-w-[78rem] px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
+        <EmergencyLine language={language} />
+        <main id="main" className="mx-auto w-full max-w-[80rem] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
           {page === "dashboard" ? <Dashboard language={language} /> : null}
           {page === "search" ? <FindPerson language={language} /> : null}
           {page === "info" ? <InfoHelp language={language} /> : null}

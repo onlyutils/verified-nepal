@@ -35,6 +35,11 @@ select {
   color: #f4efe6;
 }
 
+/* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
+html[lang="ne"] [class*="tracking-"] {
+  letter-spacing: 0.02em;
+}
+
 /* Thin scrollbars for the ruled lists. */
 .overflow-auto {
   scrollbar-width: thin;
