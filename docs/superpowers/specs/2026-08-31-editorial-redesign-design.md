@@ -29,8 +29,8 @@ routing, or the external chat widget's own UI. No new runtime dependencies.
    sentence generated from live figures. The "absence from a list is not
    proof of safety or harm" note sits beside the search field.
 5. **Weight budget.** Fonts subset via Google Fonts `unicode-range`; total
-   font transfer ≤ ~150 KB on the English front page. Lucide imports drop
-   from 15 to ≤ 3.
+   font transfer ≤ ~250 KB on the English front page (see §3 for the
+   measured trade-off). Lucide is removed entirely.
 
 ## 3. Design tokens
 
@@ -55,8 +55,14 @@ Fonts (Google Fonts, `display=swap`, preconnect kept):
 | Role | Latin | Devanagari | Tailwind family |
 |---|---|---|---|
 | Masthead, headlines | Playfair Display 700 / 900 | Noto Serif Devanagari 700 | `font-display` |
-| Body, records, standfirst | Source Serif 4 400 / 400i / 600 | Martel 400 / 700 | `font-serif` |
-| Labels, metadata, numerals, UI | IBM Plex Sans 400 / 500 / 600 | Noto Sans Devanagari 400 / 600 | `font-sans` |
+| Body, records, standfirst | Source Serif 4 400 / 400i / 600 | Noto Serif Devanagari 400 | `font-serif` |
+| Labels, metadata, numerals, UI | system-ui (SF / Segoe / Roboto) | system Devanagari sans (Noto Sans Devanagari on Android) | `font-sans` |
+
+Measured after implementation: Google serves one variable file per family
+regardless of weights requested, and Devanagari files are large (Noto Serif
+Devanagari ≈ 124 KB, Noto Sans Devanagari ≈ 118 KB, Martel ≈ 44 KB). Martel,
+Noto Sans Devanagari and IBM Plex Sans were therefore dropped — three webfont
+families, ≈ 232 KB on the English front page (old site ≈ 130 KB).
 
 One stack per role serves both languages: the Latin faces carry no Devanagari
 glyphs, so the browser falls through to the Devanagari face per glyph and

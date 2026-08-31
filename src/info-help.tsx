@@ -10,6 +10,9 @@ export function InfoHelp({ language }: { language: Language }) {
 
   return (
     <div className="mx-auto max-w-[52rem] space-y-10">
+      <Headline level={2} as="h1">
+        {t.info}
+      </Headline>
       <EmergencyContacts language={language} />
       <PublicNotice language={language} />
       <Rule />

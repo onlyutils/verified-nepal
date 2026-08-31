@@ -107,7 +107,7 @@ export function FindPerson({ language }: { language: Language }) {
     <div className="space-y-8">
       <section aria-labelledby="search-heading">
         <SectionLabel as="p">{t.missingPersonsLabel}</SectionLabel>
-        <Headline level={2} id="search-heading" className="mt-4">
+        <Headline level={2} as="h1" id="search-heading" className="mt-4">
           {t.searchTitle}
         </Headline>
         <Standfirst className="mt-3 max-w-2xl">{t.searchIntro}</Standfirst>
