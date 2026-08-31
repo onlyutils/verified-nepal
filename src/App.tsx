@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
-import { BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
+import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
 import { LiveDataProvider } from "./live";
 import { PrivacyPolicy } from "./privacy";
 import type { Language, Page } from "./types";
@@ -68,6 +68,7 @@ export function App() {
         >
           Skip to main content
         </a>
+        <AccessibilityBar language={language} />
         <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
         <EmergencyLine language={language} />
         <main id="main" className="mx-auto w-full max-w-[80rem] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
