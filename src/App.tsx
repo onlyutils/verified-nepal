@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
-import { EmergencyLine, Footer, Masthead } from "./layout";
+import { BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
 import { LiveDataProvider } from "./live";
 import { PrivacyPolicy } from "./privacy";
 import type { Language, Page } from "./types";
@@ -77,6 +77,7 @@ export function App() {
           {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />
+        <BackToTop language={language} />
       </div>
     </LiveDataProvider>
   );

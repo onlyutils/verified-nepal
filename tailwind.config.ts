@@ -5,10 +5,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        paper: "#F4EFE6",
-        ink: "#16130F",
-        muted: "#6B655C",
-        rule: "#D9D2C5",
+        paper: "#FFFFFF", // black-and-white newsprint: white page, near-black ink, grey hairlines
+        ink: "#0A0A0A",
+        muted: "#6B6B6B",
+        rule: "#E3E3E3",
         red: "#A20D2B",
         white: "#FFFFFF",
       },

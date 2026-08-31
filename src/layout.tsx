@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { data } from "./data";
 import { fillTemplate, formatEditionDate, responseDay } from "./edition";
 import { districtLabels } from "./geo";
@@ -5,7 +6,7 @@ import { labels } from "./i18n";
 import { LiveStatusBadge } from "./live";
 import { regionOptions } from "./region";
 import type { Language, Page } from "./types";
-import { focusRing, Rule } from "./ui";
+import { focusRing, Rule, SquareButton } from "./ui";
 import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
@@ -155,7 +156,7 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
   const link = `underline decoration-rule underline-offset-4 hover:decoration-ink ${focusRing}`;
 
   return (
-    <footer className={`${shell} pb-10`}>
+    <footer className={`${shell} pb-24`}>
       <Rule variant="double" />
       <div className="grid gap-8 py-8 font-serif text-sm leading-6 lg:grid-cols-[1.4fr_1fr_1fr]">
         <p className="max-w-md text-ink">{t.aboutBody}</p>
@@ -197,5 +198,37 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
         <p>{t.setIn}</p>
       </div>
     </footer>
+  );
+}
+
+/** Square "back to top" control, shown once the reader is within a screen of the foot of the page. */
+export function BackToTop({ language }: { language: Language }) {
+  const t = labels[language];
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const { scrollY, innerHeight } = window;
+      const remaining = document.documentElement.scrollHeight - (scrollY + innerHeight);
+      setVisible(scrollY > innerHeight && remaining < innerHeight);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <SquareButton
+      tone="primary"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="fixed bottom-6 left-4 z-40 sm:left-6"
+    >
+      <span aria-hidden="true">↑</span> {t.backToTop}
+    </SquareButton>
   );
 }

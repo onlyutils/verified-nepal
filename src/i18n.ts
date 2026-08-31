@@ -135,6 +135,7 @@ export const labels = {
     effectiveDate: "Effective date",
     mapPlateCaption: "Rescue locations and relief camps along the Bhote Koshi–Trishuli corridor.",
     nameLabel: "Name",
+    backToTop: "Back to top",
     privacyTitle: "Privacy & Terms of Service",
   },
   ne: {
@@ -270,6 +271,7 @@ export const labels = {
     effectiveDate: "प्रभावकारी मिति",
     mapPlateCaption: "भोटेकोशी–त्रिशूली क्षेत्रका उद्धार स्थान र राहत शिविर।",
     nameLabel: "नाम",
+    backToTop: "माथि जानुहोस्",
     privacyTitle: "गोपनीयता तथा सेवा सर्तहरू",
   },
 } satisfies Record<Language, Record<string, string>>;
