@@ -5,7 +5,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Nepal flag: crimson field, blue border, white symbols.
+        paper: "#F4EFE6",
+        ink: "#16130F",
+        muted: "#6B655C",
+        rule: "#D9D2C5",
+        red: "#A20D2B",
+        white: "#FFFFFF",
+        // ponytail: legacy palette kept until Task 8 so untouched pages still render.
         nepal: {
           crimson: "#DC143C",
           crimsonDeep: "#A20D2B",
@@ -17,27 +23,21 @@ export default {
           slate: "#4A5568",
           line: "#DCE3F0",
           mist: "#F5F7FC",
-          // Measured 11.3:1 and 6.9:1 against the #001B47 navy surface.
           onDark: "#C8D4EA",
           onDarkMuted: "#93A7CA",
           white: "#FFFFFF",
         },
       },
       fontFamily: {
-        sans: [
-          '"Noto Sans Devanagari"',
-          "ui-sans-serif",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"Segoe UI"',
-          "sans-serif",
-        ],
+        display: ['"Playfair Display"', '"Noto Serif Devanagari"', "Georgia", "serif"],
+        serif: ['"Source Serif 4"', "Martel", '"Noto Serif Devanagari"', "Georgia", "serif"],
+        sans: ['"IBM Plex Sans"', '"Noto Sans Devanagari"', "system-ui", "sans-serif"],
       },
       letterSpacing: {
         display: "-0.035em",
       },
       boxShadow: {
+        // ponytail: legacy, removed in Task 8.
         panel: "0 1px 2px rgba(11, 18, 32, 0.04), 0 12px 32px -18px rgba(0, 27, 71, 0.35)",
         lift: "0 20px 48px -24px rgba(0, 27, 71, 0.55)",
       },
