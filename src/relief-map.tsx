@@ -331,7 +331,7 @@ export function AffectedLocations({
         </span>
       </div>
       <p className="mt-3 font-serif text-sm italic text-muted">{t.mapHint}</p>
-      <div className="mt-3 grid gap-x-8 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3 grid max-h-[24rem] gap-x-8 gap-y-4 overflow-auto pr-1 md:grid-cols-2 lg:max-h-none lg:grid-cols-3 lg:overflow-visible">
         {nearbyCamps.length ? (
           <div>
             <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-red">{t.reliefCamps}</p>
