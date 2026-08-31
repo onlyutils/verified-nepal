@@ -2,3 +2,5 @@ User-agent: *
 Disallow: /search
 Disallow: /data/
 
+Sitemap: https://verifiednepal.com/sitemap.xml
+
