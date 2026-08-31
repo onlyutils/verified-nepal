@@ -1,0 +1,22 @@
+# verifiedNepal
+
+> Independent, volunteer-run public-service dashboard mirroring official Government of Nepal data for the 2026 Rasuwa / Bhote Koshi flash flood. Not a government website; it exists to make already-public disaster information easier to read. Bilingual (English / नेपाली), mobile-first.
+
+Live figures (rescued, missing, forces deployed) are fetched from NDRRMA's public API and refreshed every 5 minutes, with an offline snapshot fallback. Person records are never listed in bulk — they surface only through an explicit name search. Always verify individual records and follow emergency guidance on the official government sources linked below, not this site.
+
+## Pages
+
+- [Dashboard](https://verifiednepal.com/): live rescued/missing/deployed counts, relief map, official updates.
+- [Find a person](https://verifiednepal.com/search): name search across the verified rescued and missing-persons lists. Not indexed (results are per-query, not a browsable listing).
+- [Info & Help](https://verifiednepal.com/info): verified emergency hotlines, data sources, how to report a missing person or ask for help.
+- [Privacy & Terms](https://verifiednepal.com/privacy): data handling, liability, and source-attribution policy.
+
+## Official sources mirrored here
+
+- [NDRRMA rescues API](https://ndrrma.gov.np/api/v1/rescues/) — rescued/missing counts, person records, locations, official messages.
+- [OPMCM rescue portal](https://rescue.opmcm.gov.np/) — help-request coordination stats and government effort updates.
+
+## Notes
+
+- This site sets no cookies and runs no analytics.
+- Source: [github.com/onlyutils/verified-nepal](https://github.com/onlyutils/verified-nepal).
