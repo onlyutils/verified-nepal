@@ -1,6 +1,6 @@
 /**
- * The OnlyUtils chat widget ships no branding or theming hooks, but it renders into
- * an open shadow root and reads `--ouc-*` custom properties. So: set the variables on
+ * The OnlyUtils chat widget ships no theming hooks, but it renders into an open
+ * shadow root and reads `--ouc-*` custom properties. So: set the variables on
  * the host, inject one stylesheet for the parts variables cannot reach, and stamp the
  * verifiedNepal mark plus the OnlyUtils credit into its DOM.
  */
@@ -8,84 +8,80 @@ const HOST_ID = "onyutils-chat-widget";
 const ONLYUTILS_URL = "https://onlyutils.com";
 
 const hostVars = {
-  "--ouc-primary": "#003893",
-  "--ouc-primary-fg": "#ffffff",
-  "--ouc-bg": "#0b1220",
-  "--ouc-text": "#e8edf7",
-  "--ouc-muted": "#93a4c4",
-  "--ouc-border": "rgba(255,255,255,0.12)",
-  "--ouc-assistant-bg": "rgba(255,255,255,0.06)",
-  "--ouc-radius": "16px",
-  "--ouc-radius-sm": "10px",
-  "--ouc-launcher-size": "60px",
-  "--ouc-shadow": "0 24px 60px -20px rgba(0,20,60,0.75)",
-  "--ouc-font": '"Noto Sans Devanagari", ui-sans-serif, system-ui, sans-serif',
+  "--ouc-primary": "#A20D2B",
+  "--ouc-primary-fg": "#F4EFE6",
+  "--ouc-bg": "#F4EFE6",
+  "--ouc-text": "#16130F",
+  "--ouc-muted": "#6B655C",
+  "--ouc-border": "#D9D2C5",
+  "--ouc-assistant-bg": "#FFFFFF",
+  "--ouc-radius": "0",
+  "--ouc-radius-sm": "0",
+  "--ouc-launcher-size": "56px",
+  "--ouc-shadow": "0 12px 24px -16px rgba(22, 19, 15, 0.5)",
+  "--ouc-font": 'system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif',
 };
 
+/* Editorial theme: paper, ink, one red accent, hairlines, square geometry, no motion. */
 const shadowCss = `
 .ouc-launcher {
-  background: radial-gradient(120% 120% at 30% 20%, #123a86 0%, #0b1220 70%);
-  border: 1px solid rgba(125,211,252,0.35);
-  box-shadow: 0 0 0 0 rgba(220,20,60,0.5), 0 14px 34px -10px rgba(0,20,60,0.8);
-  animation: vn-halo 3.6s ease-out infinite;
+  background: #16130F;
+  border: 1px solid #F4EFE6;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px #16130F, 0 8px 20px -12px rgba(22, 19, 15, 0.6);
   overflow: hidden;
   padding: 0;
 }
-.ouc-launcher img { width: 34px; height: 34px; }
-@keyframes vn-halo {
-  0%   { box-shadow: 0 0 0 0 rgba(220,20,60,0.45), 0 14px 34px -10px rgba(0,20,60,0.8); }
-  70%  { box-shadow: 0 0 0 14px rgba(220,20,60,0), 0 14px 34px -10px rgba(0,20,60,0.8); }
-  100% { box-shadow: 0 0 0 0 rgba(220,20,60,0), 0 14px 34px -10px rgba(0,20,60,0.8); }
-}
+.ouc-launcher img { width: 30px; height: 30px; }
 
 .ouc-panel {
-  border: 1px solid rgba(125,211,252,0.18);
-  background:
-    radial-gradient(90% 60% at 15% 0%, rgba(0,56,147,0.55) 0%, rgba(11,18,32,0) 60%),
-    linear-gradient(180deg, #0d1626 0%, #0b1220 100%);
-  backdrop-filter: blur(14px);
+  border: 1px solid #16130F;
+  border-radius: 0;
+  background: #F4EFE6;
 }
 
-/* Flag-gradient hairline across the top of the header. */
 .ouc-header {
-  position: relative;
-  background: linear-gradient(135deg, #001b47 0%, #003893 55%, #7a1030 100%);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #F4EFE6;
+  border-bottom: 4px double #16130F;
   gap: 10px;
 }
-.ouc-header::after {
-  content: "";
-  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-  background: linear-gradient(90deg, #003893 0%, #003893 42%, #DC143C 42%, #DC143C 100%);
+.ouc-title {
+  font-family: "Playfair Display", "Noto Serif Devanagari", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #16130F;
 }
-.ouc-title { letter-spacing: 0.01em; }
 .vn-chat-brand { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
-.vn-chat-brand img { width: 26px; height: 26px; flex: none; }
+.vn-chat-brand img { width: 24px; height: 24px; flex: none; }
 
-.ouc-msg { border: 1px solid transparent; }
-.ouc-msg-assistant { border-color: rgba(125,211,252,0.16); border-left: 2px solid #DC143C; }
-.ouc-msg-user { background: linear-gradient(135deg, #003893 0%, #0b62e0 100%); }
+.ouc-msg { border: 1px solid transparent; border-radius: 0; }
+.ouc-msg-assistant { background: #FFFFFF; border-color: #D9D2C5; border-left: 2px solid #A20D2B; }
+.ouc-msg-user { background: #16130F; color: #F4EFE6; }
 .ouc-msg strong { font-weight: 600; }
 .ouc-tel {
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: #DC143C;
+  color: #A20D2B;
 }
 
 .ouc-chip {
-  background: rgba(125,211,252,0.06);
-  border-color: rgba(125,211,252,0.4);
-  color: #9ed4ff;
+  background: transparent;
+  border: 1px solid #16130F;
+  border-radius: 0;
+  color: #16130F;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
 }
-.ouc-chip:hover { background: #003893; color: #fff; border-color: #003893; }
+.ouc-chip:hover { background: #16130F; color: #F4EFE6; border-color: #16130F; }
 
-.ouc-composer { border-top-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
-.ouc-input { background: rgba(255,255,255,0.04); }
-.ouc-input:focus-visible { outline: none; border-color: #7dd3fc; box-shadow: 0 0 0 3px rgba(125,211,252,0.18); }
-.ouc-mic { background: rgba(255,255,255,0.04); color: #93a4c4; }
-.ouc-send { background: linear-gradient(135deg, #003893 0%, #DC143C 100%); }
-.ouc-send:hover:not(:disabled) { filter: brightness(1.12); }
+.ouc-composer { border-top: 1px solid #D9D2C5; background: #F4EFE6; }
+.ouc-input { background: #FFFFFF; border: 1px solid #D9D2C5; border-radius: 0; color: #16130F; }
+.ouc-input:focus-visible { outline: none; border-color: #16130F; box-shadow: 0 0 0 2px rgba(162, 13, 43, 0.25); }
+.ouc-mic { background: #FFFFFF; border-radius: 0; color: #6B655C; }
+.ouc-send { background: #16130F; border-radius: 0; color: #F4EFE6; }
+.ouc-send:hover:not(:disabled) { background: #A20D2B; }
 
 .vn-chat-credit {
   flex: none;
@@ -93,15 +89,10 @@ const shadowCss = `
   text-align: center;
   font-size: 11px;
   line-height: 1.4;
-  color: #7d8fb3;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  color: #6B655C;
+  border-top: 1px solid #D9D2C5;
 }
-.vn-chat-credit a { color: #cfe0ff; font-weight: 600; text-decoration: none; }
-.vn-chat-credit a:hover { text-decoration: underline; }
-
-@media (prefers-reduced-motion: reduce) {
-  .ouc-launcher { animation: none; }
-}
+.vn-chat-credit a { color: #16130F; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 `;
 
 function decorate(root: ShadowRoot) {
@@ -118,7 +109,7 @@ function decorate(root: ShadowRoot) {
   if (title && !title.querySelector("img")) {
     const wrap = document.createElement("span");
     wrap.className = "vn-chat-brand";
-    wrap.innerHTML = '<img src="/brand/logo-mark-light.svg" alt="">';
+    wrap.innerHTML = '<img src="/brand/logo-mark.svg" alt="">';
     title.replaceWith(wrap);
     wrap.appendChild(title);
   }

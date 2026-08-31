@@ -12,8 +12,11 @@ disaster-response tool first: emergency numbers one tap away on every page,
 light on the network, readable on a phone in sunlight, honest labelling,
 humane copy, full English/Nepali parity.
 
-Non-goals: no change to data fetching (`live.ts`), geo, i18n mechanics,
-routing, or the external chat widget's own UI. No new runtime dependencies.
+Non-goals: no change to data fetching (`live.ts`), geo, i18n mechanics or
+routing. No new runtime dependencies. The OnlyUtils chat widget's markup is
+external, but its theme is ours (`src/chat-widget.ts` injects `--ouc-*`
+variables and a stylesheet into its shadow root), so it is restyled to the same
+tokens: ink square launcher, paper panel, hairlines, no gradients or motion.
 
 ## 2. Principles that override the visual brief
 
