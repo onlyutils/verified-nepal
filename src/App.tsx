@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
 import { Desk } from "./desk";
+import { GetHelp } from "./pages/get-help";
+import { GiveHelp } from "./pages/give-help";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
 import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
@@ -14,9 +16,13 @@ const pagePaths: Record<Page, string> = {
   info: "/info",
   privacy: "/privacy",
   desk: "/desk",
+  getHelp: "/get-help",
+  giveHelp: "/give-help",
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.startsWith("/get-help")) return "getHelp";
+  if (pathname.startsWith("/give-help")) return "giveHelp";
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/info")) return "info";
@@ -80,6 +86,8 @@ export function App() {
           {page === "info" ? <InfoHelp language={language} /> : null}
           {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
           {page === "desk" ? <Desk language={language} /> : null}
+          {page === "getHelp" ? <GetHelp language={language} /> : null}
+          {page === "giveHelp" ? <GiveHelp language={language} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />
         <BackToTop language={language} />

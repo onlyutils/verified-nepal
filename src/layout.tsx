@@ -11,7 +11,7 @@ import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["dashboard", "search", "info"] as const;
+const navPages = ["dashboard", "getHelp", "giveHelp", "search", "desk", "info"] as const;
 
 export function Masthead({
   page,
@@ -54,6 +54,14 @@ export function Masthead({
         <div className="flex min-w-0 flex-1 gap-5 overflow-x-auto">
         {navPages.map((item) => {
           const active = page === item;
+          const labelMap: Record<string, string> = {
+            dashboard: t.dashboard,
+            getHelp: t.getHelp,
+            giveHelp: t.giveHelp,
+            search: t.search,
+            desk: t.deskTitle,
+            info: t.info,
+          };
           return (
             <button
               key={item}
@@ -64,7 +72,7 @@ export function Masthead({
                 active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
               } ${focusRing}`}
             >
-              {t[item]}
+              {labelMap[item] ?? t[item as keyof typeof t]}
             </button>
           );
         })}
