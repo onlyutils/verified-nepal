@@ -136,6 +136,11 @@ export const labels = {
     mapPlateCaption: "Rescue locations and relief camps along the Bhote Koshi–Trishuli corridor.",
     nameLabel: "Name",
     backToTop: "Back to top",
+    accessibility: "Accessibility",
+    textSmaller: "Smaller text",
+    textReset: "Default text size",
+    textLarger: "Larger text",
+    highContrast: "High contrast",
     privacyTitle: "Privacy & Terms of Service",
   },
   ne: {
@@ -272,6 +277,11 @@ export const labels = {
     mapPlateCaption: "भोटेकोशी–त्रिशूली क्षेत्रका उद्धार स्थान र राहत शिविर।",
     nameLabel: "नाम",
     backToTop: "माथि जानुहोस्",
+    accessibility: "पहुँच",
+    textSmaller: "अक्षर सानो",
+    textReset: "अक्षरको साधारण आकार",
+    textLarger: "अक्षर ठूलो",
+    highContrast: "उच्च कन्ट्रास्ट",
     privacyTitle: "गोपनीयता तथा सेवा सर्तहरू",
   },
 } satisfies Record<Language, Record<string, string>>;

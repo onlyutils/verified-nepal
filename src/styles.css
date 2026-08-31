@@ -3,12 +3,43 @@
 @tailwind utilities;
 
 :root {
+  /* Black-and-white newsprint: white page, near-black ink, grey hairlines.
+     Nepal flag: crimson = urgency / act now, blue = official / verified source. */
+  --paper: 255 255 255;
+  --ink: 10 10 10;
+  --muted: 107 107 107;
+  --rule: 227 227 227;
+  --red: 220 20 60;
+  --blue: 0 56 147;
   /* "only" opts out of Chrome auto-dark, which would invert the paper. */
   color-scheme: only light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* High contrast: pure black ink, no grey text, hairlines become black, deeper accents.
+   Set explicitly from the accessibility bar, or inherited from the OS preference. */
+html[data-contrast="high"] {
+  --ink: 0 0 0;
+  --muted: 40 40 40;
+  --rule: 0 0 0;
+  --red: 168 0 32;
+  --blue: 0 38 110;
+}
+@media (prefers-contrast: more) {
+  html:not([data-contrast="normal"]) {
+    --ink: 0 0 0;
+    --muted: 40 40 40;
+    --rule: 0 0 0;
+    --red: 168 0 32;
+    --blue: 0 38 110;
+  }
+}
+html[data-contrast="high"] a,
+html[data-contrast="high"] button {
+  text-decoration-thickness: 2px;
 }
 
 * {
@@ -18,8 +49,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #ffffff;
-  color: #0a0a0a;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
   font-family: "Source Serif 4", "Noto Serif Devanagari", Georgia, serif;
 }
 
@@ -31,8 +62,8 @@ select {
 }
 
 ::selection {
-  background: #dc143c;
-  color: #ffffff;
+  background: rgb(var(--red));
+  color: rgb(var(--paper));
 }
 
 /* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
