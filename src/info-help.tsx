@@ -3,7 +3,7 @@ import { data } from "./data";
 import { labels } from "./i18n";
 import { formatDateTime, officialRescueUrl } from "./utils";
 import { Kicker } from "./ui";
-import { DonateCta, EmergencyContacts } from "./dashboard";
+import { EmergencyContacts, PublicNotice } from "./dashboard";
 import type { Language } from "./types";
 
 export function InfoHelp({ language }: { language: Language }) {
@@ -12,7 +12,7 @@ export function InfoHelp({ language }: { language: Language }) {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <EmergencyContacts language={language} />
-      <DonateCta language={language} />
+      <PublicNotice language={language} />
       <InfoPanel title={t.aboutTitle}>{t.aboutBody}</InfoPanel>
       <InfoPanel title={t.dataSourceTitle}>
         {t.dataSourceBody}
