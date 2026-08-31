@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "sync": "node scripts/sync.mjs"
+    "sync": "node scripts/sync.mjs",
+    "test": "node --experimental-strip-types --test src/*.test.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.2",
@@ -32,4 +33,3 @@
   },
   "packageManager": "pnpm@9.15.0"
 }
-
