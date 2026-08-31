@@ -58,9 +58,9 @@ Fonts (Google Fonts, `display=swap`, preconnect kept):
 | Body, records, standfirst | Source Serif 4 400 / 400i / 600 | Martel 400 / 700 | `font-serif` |
 | Labels, metadata, numerals, UI | IBM Plex Sans 400 / 500 / 600 | Noto Sans Devanagari 400 / 600 | `font-sans` |
 
-`html[lang="ne"]` keeps the same stacks; the Devanagari face is listed first
-in each stack so Nepali glyphs never fall back to system sans. Numerals in
-tables use `tabular-nums`.
+One stack per role serves both languages: the Latin faces carry no Devanagari
+glyphs, so the browser falls through to the Devanagari face per glyph and
+Nepali never reaches system sans. Numerals in tables use `tabular-nums`.
 
 Global CSS: `body { background: paper; color: ink }`, `::selection` red/white,
 `color-scheme: only light` kept, reduced-motion block kept. No paper texture
@@ -228,11 +228,14 @@ desktop. Effective date as `Byline`.
 
 ## 11. Copy / i18n additions (`src/i18n.ts`, both languages)
 
-`frontPage`, `edition`, `dayOf` (`Day {n} of the response`), `leadHeadline`,
-`leadHeadlineNoMissing`, `byTheNumbers`, `officialFigures`,
+`edition`, `dayOf` (`Day {n} of the response`), `leadHeadline`,
+`leadHeadlineNoMissing`, `byTheNumbers`, `officialFigures`, `fromSourceData`,
 `helpRequestsOpmcm`, `publicNotice`, `askTheDesk`, `donateLeadCta`,
-`searchByName`, `absenceNote` (move the existing sentence out of `noMatch`
-so it can stand alone), `emergencyLabel`, `setIn` (colophon), `neSummary`.
+`missingPersonsLabel`, `searchLead`, `searchButton`, `nameLabel`,
+`absenceNote` (move the existing sentence out of `noMatch` so it can stand
+alone), `statusOfRecords`, `byNationality`, `emergencyLabel`, `setIn`
+(colophon), `neSummaryTitle`, `effectiveDate`, `mapPlateCaption`. The
+implementation plan is authoritative for exact key names.
 Nav key `dashboard` label changes to `Front page` / `मुख्य पृष्ठ`. Remove
 keys that no longer render (`agentKicker`, `dismissEmergency`, etc.) once
 the components are gone; the TypeScript `labels` shape is the check.
