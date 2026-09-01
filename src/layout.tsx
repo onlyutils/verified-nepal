@@ -20,14 +20,40 @@ export function Masthead({
   language,
   setLanguage,
   navigate,
+  compact = false,
 }: {
   page: Page;
   language: Language;
   setLanguage: (language: Language) => void;
   navigate: (page: Page) => void;
+  /** Slim single-row header for signed-in work surfaces (the Desk) — trades the newspaper masthead for vertical space. */
+  compact?: boolean;
 }) {
   const t = labels[language];
+  const ts = shellStrings[language];
   const districts = regionOptions.map((district) => districtLabels[district][language]).join(" · ");
+
+  if (compact) {
+    return (
+      <header className={shell}>
+        <div className="flex items-center justify-between gap-4 py-3">
+          <button type="button" onClick={() => navigate("dashboard")} className={`flex items-center gap-2 ${focusRing}`}>
+            <span lang={language === "ne" ? "ne" : "en"} className="font-display text-lg font-black uppercase leading-none tracking-[0.04em] text-ink">
+              {language === "ne" ? "भेरिफाइड नेपाल" : "Verified Nepal"}
+            </span>
+            <span className="hidden font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted sm:inline">{ts.compactBadge}</span>
+          </button>
+          <a href="tel:1234" className={`min-h-11 inline-flex shrink-0 items-center gap-1.5 font-sans text-sm font-semibold text-red ${focusRing}`}>
+            <span className="h-2 w-2 rounded-full bg-red" aria-hidden="true" />
+            1234
+          </a>
+        </div>
+        <Rule />
+        <MastheadNav page={page} navigate={navigate} language={language} setLanguage={setLanguage} compact />
+        <Rule />
+      </header>
+    );
+  }
 
   return (
     <header className={shell}>
@@ -38,12 +64,25 @@ export function Masthead({
           {t.floodName}
         </p>
         <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
-          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] 2xl:text-[4.5rem]">
-            Verified Nepal
-          </span>
-          <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
-            भेरिफाइड नेपाल
-          </span>
+          {language === "ne" ? (
+            <>
+              <span lang="ne" className="block font-display text-[1.6rem] font-black leading-none text-ink sm:text-[3.2rem] 2xl:text-[4rem]">
+                भेरिफाइड नेपाल
+              </span>
+              <span lang="en" className="mt-2 block font-display text-base uppercase leading-none tracking-[0.06em] text-ink sm:text-lg">
+                Verified Nepal
+              </span>
+            </>
+          ) : (
+            <>
+              <span lang="en" className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] 2xl:text-[4.5rem]">
+                Verified Nepal
+              </span>
+              <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
+                भेरिफाइड नेपाल
+              </span>
+            </>
+          )}
           <span className="mt-3 hidden font-serif text-sm italic text-muted sm:block">{t.unofficial}</span>
         </button>
         <div className="hidden lg:block"><EditionLine language={language} /></div>
@@ -61,11 +100,14 @@ function MastheadNav({
   language,
   setLanguage,
   navigate,
+  compact = false,
 }: {
   page: Page;
   language: Language;
   setLanguage: (language: Language) => void;
   navigate: (page: Page) => void;
+  /** Skip the built-in desktop language toggle — the compact Masthead's AccessibilityBar already renders one at every width. */
+  compact?: boolean;
 }) {
   const t = labels[language];
   const ts = shellStrings[language];
@@ -118,9 +160,11 @@ function MastheadNav({
             {ts.more}
           </button>
         </div>
-        <div className="ml-auto hidden lg:block">
-          <LanguageToggle language={language} setLanguage={setLanguage} />
-        </div>
+        {compact ? null : (
+          <div className="ml-auto hidden lg:block">
+            <LanguageToggle language={language} setLanguage={setLanguage} />
+          </div>
+        )}
       </div>
       {moreOpen ? (
         <div id="more-nav-row" className="flex flex-wrap gap-x-5 gap-y-0 border-t border-rule">
@@ -305,7 +349,16 @@ const textScales = [100, 112.5, 125, 137.5, 150] as const;
 const defaultScale = 125;
 
 /** Government-site style controls: A− / A / A+ text size and a high-contrast toggle, persisted per browser. */
-export function AccessibilityBar({ language, setLanguage }: { language: Language; setLanguage: (language: Language) => void }) {
+export function AccessibilityBar({
+  language,
+  setLanguage,
+  compact = false,
+}: {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  /** Always use the single "Aa" toggle row (skip the full desktop row) — for the Desk's slimmer header. */
+  compact?: boolean;
+}) {
   const t = labels[language];
   const ts = shellStrings[language];
   const [scale, setScale] = useState<number>(() => {
@@ -370,10 +423,10 @@ export function AccessibilityBar({ language, setLanguage }: { language: Language
 
   return (
     <div className={shell}>
-      <div className="hidden lg:flex flex-wrap items-center justify-end gap-x-1 gap-y-0 border-b border-rule" role="group" aria-label={t.accessibility}>
+      <div className={`${compact ? "hidden" : "hidden lg:flex"} flex-wrap items-center justify-end gap-x-1 gap-y-0 border-b border-rule`} role="group" aria-label={t.accessibility}>
         {controls}
       </div>
-      <div className="flex items-center border-b border-rule lg:hidden">
+      <div className={`flex items-center border-b border-rule ${compact ? "" : "lg:hidden"}`}>
         <button
           type="button"
           aria-expanded={open}
@@ -389,7 +442,7 @@ export function AccessibilityBar({ language, setLanguage }: { language: Language
         </div>
       </div>
       {open ? (
-        <div id="a11y-controls" role="group" aria-label={t.accessibility} className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-rule py-1 lg:hidden">
+        <div id="a11y-controls" role="group" aria-label={t.accessibility} className={`flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-rule py-1 ${compact ? "" : "lg:hidden"}`}>
           {controls}
         </div>
       ) : null}
