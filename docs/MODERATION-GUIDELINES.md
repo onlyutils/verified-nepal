@@ -1,5 +1,3 @@
-> TODO: Nepali translation — this document is English-only for now; a Nepali version (नेपाली अनुवाद) is planned.
-
 # VerifiedNepal — Moderation Guidelines
 
 Read this before you moderate anything. You must acknowledge it in the Desk before the moderation endpoints will accept your actions.

@@ -18,6 +18,97 @@ export const officialLink =
 export const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 
+function renderMarkdownInline(text: string, keyPrefix: string): ReactNode[] {
+  return text
+    .split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
+    .filter((part) => part !== "")
+    .map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code key={`${keyPrefix}-${i}`} className="bg-ink/5 px-1 py-0.5 rounded-none">
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return part;
+    });
+}
+
+// ponytail: hand-rolled renderer for the small, fixed set of markdown this doc
+// actually uses (headers, bold, inline code, `-` lists, `>` quotes, `---`
+// rules) — not full CommonMark. Swap for a real parser if the doc's markdown
+// usage grows beyond this.
+export function SimpleMarkdown({ text, className = "" }: { text: string; className?: string }) {
+  const blocks: ReactNode[] = [];
+  let list: string[] = [];
+  const flushList = () => {
+    if (list.length === 0) return;
+    const items = list;
+    list = [];
+    blocks.push(
+      <ul key={`ul-${blocks.length}`} className="list-disc space-y-1 pl-5">
+        {items.map((item, i) => (
+          <li key={i}>{renderMarkdownInline(item, `li-${blocks.length}-${i}`)}</li>
+        ))}
+      </ul>,
+    );
+  };
+
+  text.split("\n").forEach((rawLine, i) => {
+    const line = rawLine.trim();
+    if (line === "") {
+      flushList();
+      return;
+    }
+    if (line === "---") {
+      flushList();
+      blocks.push(<hr key={`hr-${i}`} className="border-rule my-3" />);
+      return;
+    }
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      flushList();
+      const level = heading[1].length;
+      const text = renderMarkdownInline(heading[2], `h-${i}`);
+      blocks.push(
+        level === 1 ? (
+          <h1 key={`h-${i}`} className="mt-4 text-lg font-bold first:mt-0">
+            {text}
+          </h1>
+        ) : (
+          <h2 key={`h-${i}`} className="mt-3 text-base font-bold first:mt-0">
+            {text}
+          </h2>
+        ),
+      );
+      return;
+    }
+    const quote = line.match(/^>\s?(.*)$/);
+    if (quote) {
+      flushList();
+      blocks.push(
+        <p key={`bq-${i}`} className="border-l-2 border-rule pl-3 italic">
+          {renderMarkdownInline(quote[1], `bq-${i}`)}
+        </p>,
+      );
+      return;
+    }
+    const item = line.match(/^-\s+(.*)$/);
+    if (item) {
+      list.push(item[1]);
+      return;
+    }
+    flushList();
+    blocks.push(<p key={`p-${i}`}>{renderMarkdownInline(line, `p-${i}`)}</p>);
+  });
+  flushList();
+
+  return <div className={`space-y-2 ${className}`}>{blocks}</div>;
+}
+
 export function Rule({ variant = "single", className = "" }: { variant?: "single" | "double"; className?: string }) {
   if (variant === "double") {
     return (

@@ -33,6 +33,7 @@ import {
 } from "./api";
 import guidelinesRaw from "../docs/MODERATION-GUIDELINES.md?raw";
 import { useGoogleAuth } from "./auth";
+import { SimpleMarkdown } from "./ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -632,9 +633,10 @@ export function Desk({ language }: { language: Language }) {
             <CardDescription>{(t as Record<string,string>).deskGuidelinesGateLead}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="max-h-[50vh] overflow-auto border border-rule bg-paper p-4 font-sans text-xs leading-5 whitespace-pre-wrap">
-              {guidelinesRaw}
-            </div>
+            <SimpleMarkdown
+              text={guidelinesRaw}
+              className="max-h-[50vh] overflow-auto border border-rule bg-paper p-4 font-sans text-xs leading-5"
+            />
             {ackError ? <p className="font-sans text-sm text-destructive" role="alert">{ackError}</p> : null}
             <Button onClick={handleAck} disabled={ackLoading}>
               {ackLoading ? (t as Record<string,string>).deskGuidelinesAcking : (t as Record<string,string>).deskGuidelinesAckButton}
