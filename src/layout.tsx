@@ -38,7 +38,7 @@ export function Masthead({
           {t.floodName}
         </p>
         <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
-          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] xl:text-[4.5rem]">
+          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] 2xl:text-[4.5rem]">
             Verified Nepal
           </span>
           <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
