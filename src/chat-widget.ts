@@ -93,6 +93,10 @@ const shadowCss = `
   border-top: 1px solid #E3E3E3;
 }
 .vn-chat-credit a { color: #0A0A0A; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 639px) {
+  .ouc-launcher { bottom: 88px !important; }
+}
 `;
 
 function decorate(root: ShadowRoot) {
@@ -137,35 +141,114 @@ export function brandChatWidget() {
   }, 250);
 }
 
-export function openChatWidget() {
+let chatWidgetPromise: Promise<void> | null = null;
+let chatWidgetLoaded = false;
+
+export function ensureChatWidget(): Promise<void> {
+  if (chatWidgetLoaded) return Promise.resolve();
+  if (chatWidgetPromise) return chatWidgetPromise;
+  const src = (import.meta.env.VITE_CHAT_WIDGET_SRC as string | undefined)?.trim();
+  if (!src || src === "%VITE_CHAT_WIDGET_SRC%") return Promise.resolve();
+
+  const dataKey = (import.meta.env.VITE_CHAT_KEY as string | undefined) || "";
+  const dataApi = (import.meta.env.VITE_CHAT_API as string | undefined) || "";
+
+  chatWidgetPromise = new Promise<void>((resolve) => {
+    const startPolling = () => {
+      let tries = 0;
+      const timer = window.setInterval(() => {
+        const host = document.getElementById(HOST_ID);
+        const ready = Boolean(host?.shadowRoot?.querySelector(".ouc-panel") || (window as unknown as { OnyutilsChat?: unknown }).OnyutilsChat);
+        if (ready) {
+          window.clearInterval(timer);
+          chatWidgetLoaded = true;
+          brandChatWidget();
+          try {
+            const saved = localStorage.getItem("vn:region");
+            const api = (window as unknown as { OnyutilsChat?: { setContext?: (t: string) => void } }).OnyutilsChat;
+            if (api?.setContext && saved) api.setContext(`Visitor's selected district: ${saved}`);
+          } catch {}
+          resolve();
+        } else if (++tries > 40) {
+          window.clearInterval(timer);
+          chatWidgetLoaded = true;
+          resolve();
+        }
+      }, 250);
+    };
+
+    const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
+    if (existing) {
+      if ((existing as unknown as { _vnLoaded?: boolean })._vnLoaded) {
+        startPolling();
+      } else {
+        existing.addEventListener("load", () => { (existing as unknown as { _vnLoaded?: boolean })._vnLoaded = true; startPolling(); }, { once: true });
+        existing.addEventListener("error", () => resolve(), { once: true });
+        startPolling();
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    if (dataKey) script.setAttribute("data-key", dataKey);
+    if (dataApi) script.setAttribute("data-api", dataApi);
+    script.setAttribute("data-greeting", "I'm here to help. Ask about rescued or missing people, relief locations, or how to get help.");
+    script.defer = true;
+    script.addEventListener("load", () => { (script as unknown as { _vnLoaded?: boolean })._vnLoaded = true; startPolling(); }, { once: true });
+    script.addEventListener("error", () => resolve(), { once: true });
+    document.body.appendChild(script);
+    startPolling();
+  });
+
+  return chatWidgetPromise;
+}
+
+export async function openChatWidget() {
+  await ensureChatWidget();
   const root = document.getElementById(HOST_ID)?.shadowRoot;
   const panel = root?.querySelector(".ouc-panel");
-  // The launcher toggles, so only click it when the panel is closed.
   if (panel && !panel.classList.contains("ouc-open")) {
     root?.querySelector<HTMLButtonElement>(".ouc-launcher")?.click();
   }
+  if (!panel) {
+    const host = document.getElementById(HOST_ID)?.shadowRoot?.querySelector<HTMLButtonElement>(".ouc-launcher");
+    host?.click();
+  }
 }
 
-
-/**
- * Feed the visitor's selected district into the OnlyUtils widget as
- * conversation context (window.OnyutilsChat.setContext, shipped 2026-08-30).
- * Applies the persisted choice at boot and follows vn:region-change events.
- * No-ops gracefully on older widget bundles without the global.
- */
 export function wireRegionContext() {
   const send = (region: string) => {
-    const api = (window as Window & { OnyutilsChat?: { setContext?: (t: string) => void } }).OnyutilsChat;
+    const api = (window as unknown as { OnyutilsChat?: { setContext?: (t: string) => void } }).OnyutilsChat;
     if (!api?.setContext) return;
     api.setContext(region ? `Visitor's selected district: ${region}` : "");
   };
   try {
     const saved = localStorage.getItem("vn:region");
     if (saved) send(saved);
-  } catch {
-    /* private mode */
-  }
+  } catch {}
   window.addEventListener("vn:region-change", (event) => {
     send(String((event as CustomEvent<{ region?: string }>).detail?.region ?? ""));
   });
+}
+
+function shouldPreload(): boolean {
+  const conn = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (conn?.saveData) return false;
+  const eff = conn?.effectiveType;
+  if (eff === "slow-2g" || eff === "2g") return false;
+  return true;
+}
+
+function scheduleIdlePreload() {
+  if (!shouldPreload()) return;
+  const run = () => { void ensureChatWidget(); };
+  const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+  if (typeof ric === "function") ric(run, { timeout: 4000 });
+  else window.setTimeout(run, 4000);
+}
+
+if (typeof window !== "undefined") {
+  if (document.readyState === "complete") scheduleIdlePreload();
+  else window.addEventListener("load", scheduleIdlePreload, { once: true });
 }

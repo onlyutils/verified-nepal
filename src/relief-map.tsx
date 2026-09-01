@@ -1,3 +1,4 @@
+import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Polygon, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
@@ -11,6 +12,7 @@ import {
   type DistrictName,
 } from "./geo";
 import { labels, textForLanguage } from "./i18n";
+import { mapStrings } from "./i18n-map";
 import { DistrictFilter, locationMatchesRegion, RegionSelect } from "./region";
 import type { Language, NamedLocation } from "./types";
 import { formatNumber } from "./utils";
@@ -114,6 +116,10 @@ export function ReliefMap({
   onRegionChange: (region: string) => void;
 }) {
   const t = labels[language];
+  const ts = mapStrings[language];
+  const [mapExpanded, setMapExpanded] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches,
+  );
   const [mapUnlocked, setMapUnlocked] = useState(
     () => !(window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window),
   );
@@ -162,7 +168,21 @@ export function ReliefMap({
         ) : null}
       </div>
       <Rule className="mt-2" />
-      <div className="relative mt-4 h-[20rem] overflow-hidden border border-ink bg-paper lg:h-[30rem]">
+      <div className="mt-4">
+        <SquareButton
+          onClick={() => setMapExpanded((v) => !v)}
+          aria-expanded={mapExpanded}
+          aria-controls="relief-map-plate"
+        >
+          {mapExpanded ? ts.hideMap : ts.showMap}
+        </SquareButton>
+      </div>
+      {mapExpanded ? (
+        <>
+          <div
+            id="relief-map-plate"
+            className="relative mt-4 h-[20rem] overflow-hidden border border-ink bg-paper lg:h-[30rem]"
+          >
         <MapContainer
           center={center}
           zoom={zoom}
@@ -249,30 +269,32 @@ export function ReliefMap({
             );
           })}
         </MapContainer>
-        {!mapUnlocked ? (
-          <SquareButton
-            tone="primary"
-            onClick={() => setMapUnlocked(true)}
-            className="absolute inset-x-4 top-4 z-[500] mx-auto max-w-xs"
-          >
-            {t.tapToExploreMap}
-          </SquareButton>
-        ) : (
-          <SquareButton onClick={() => setMapUnlocked(false)} className="absolute right-3 top-3 z-[500] bg-paper">
-            {t.collapseMap}
-          </SquareButton>
-        )}
-      </div>
-      <figcaption className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-sans text-[0.72rem] leading-5 text-muted">
-        <span className="font-serif text-sm italic text-ink">{t.mapPlateCaption}</span>
-        <LegendDot color="#DC143C">{t.rescuePoints}</LegendDot>
-        <LegendDot color="#003893">{t.reliefCamps}</LegendDot>
-        <LegendDot color="#FFFFFF" outlined>
-          {t.riverLabel}
-        </LegendDot>
-        <span className="basis-full">{t.mapCredit}</span>
-      </figcaption>
-      <Byline language={language} className="mt-1" />
+            {!mapUnlocked ? (
+              <SquareButton
+                tone="primary"
+                onClick={() => setMapUnlocked(true)}
+                className="absolute inset-x-4 top-4 z-[500] mx-auto max-w-xs"
+              >
+                {t.tapToExploreMap}
+              </SquareButton>
+            ) : (
+              <SquareButton onClick={() => setMapUnlocked(false)} className="absolute right-3 top-3 z-[500] bg-paper">
+                {t.collapseMap}
+              </SquareButton>
+            )}
+          </div>
+          <figcaption className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-sans text-[0.72rem] leading-5 text-muted">
+            <span className="font-serif text-sm italic text-ink">{t.mapPlateCaption}</span>
+            <LegendDot color="#DC143C">{t.rescuePoints}</LegendDot>
+            <LegendDot color="#003893">{t.reliefCamps}</LegendDot>
+            <LegendDot color="#FFFFFF" outlined>
+              {t.riverLabel}
+            </LegendDot>
+            <span className="basis-full">{t.mapCredit}</span>
+          </figcaption>
+          <Byline language={language} className="mt-1" />
+        </>
+      ) : null}
     </figure>
   );
 }
