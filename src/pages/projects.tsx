@@ -8,18 +8,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { districtLabels, districtNames } from "../geo";
 import { labels } from "../i18n";
+import { uiStrings } from "../i18n-ui";
+import { ProjectStatusMark } from "../ui";
 import type { Language } from "../types";
 import { formatNumber } from "../utils";
+import { apiErrorMessage } from "../api-error";
 import { fillTemplate } from "../edition";
 
-function typeLabel(t: Record<string,string>, type: string){
+function typeLabel(type: string, language: import("../types").Language){
+  const u = uiStrings[language];
   const map: Record<string,string> = {
-    tuin: "tuin",
-    bridge: "bridge",
-    trail: "trail",
-    water: "water",
-    school: "school",
-    other: "other",
+    tuin: u.projectTypeTuin,
+    bridge: u.projectTypeBridge,
+    trail: u.projectTypeTrail,
+    water: u.projectTypeWater,
+    school: u.projectTypeSchool,
+    other: u.projectTypeOther,
   };
   return map[type] ?? type;
 }
@@ -57,12 +61,11 @@ export function ProjectsList({ language }: { language: Language }) {
       setNextCursor(res.cursor);
       setCursor(cur);
     } catch (e) {
-      const err = e as ApiError;
-      if (err.status===0 || !navigator.onLine) {
+      if ((e as ApiError).status===0 || !navigator.onLine) {
         setOffline(true);
         setError(t.projectsOffline);
       } else {
-        setError(err.message || t.projectsError);
+        setError(apiErrorMessage(e, language));
       }
     } finally {
       setLoading(false);
@@ -126,8 +129,8 @@ export function ProjectsList({ language }: { language: Language }) {
               {cover ? <img src={cover} alt={t.projectsCoverAlt} className="h-44 w-full object-cover" loading="lazy" /> : <div className="flex h-44 w-full items-center justify-center bg-secondary font-sans text-xs uppercase tracking-wide text-muted-foreground">{t.projectsNoCover}</div>}
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="uppercase">{typeLabel(t,p.type)}</Badge>
-                  <Badge variant={p.status==='published' ? 'default' : p.status==='in-progress' ? 'secondary' : 'outline'} className="capitalize">{p.status}</Badge>
+                  <Badge variant="secondary" className="uppercase">{typeLabel(p.type, language)}</Badge>
+                  <ProjectStatusMark status={p.status} language={language} />
                 </div>
                 <CardTitle className="line-clamp-2 text-base leading-6">{title}</CardTitle>
                 <p className="font-sans text-xs text-muted-foreground">{districtLabels[p.district as keyof typeof districtLabels]?.[language] ?? p.district} · W{p.ward} · {fillTemplate(t.projectsCostNpr,{amount: formatNumber(p.costEstimateNpr, language)})}</p>

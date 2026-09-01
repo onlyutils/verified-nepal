@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { data } from "./data";
 import { labels } from "./i18n";
+import { uiStrings } from "./i18n-ui";
 import { useLiveData } from "./live";
 import type { Language } from "./types";
 
@@ -13,7 +14,7 @@ function formatCaptionTime(value: string, language: Language) {
 }
 
 export const officialLink =
-  "text-blue underline decoration-blue/30 underline-offset-4 hover:decoration-blue";
+  "text-blue underline decoration-blue/60 underline-offset-4 hover:decoration-blue";
 
 export const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
@@ -199,8 +200,8 @@ export function Byline({
 
 const buttonTone = {
   outline: "border-ink bg-transparent text-ink hover:bg-ink hover:text-paper",
-  primary: "border-ink bg-ink text-paper hover:border-red hover:bg-red",
-  red: "border-red bg-red text-paper hover:border-ink hover:bg-ink",
+  primary: "border-ink bg-ink text-paper hover:bg-ink/80 hover:border-ink/80",
+  red: "border-red bg-red text-paper hover:bg-red/85 hover:border-red/85",
 } as const;
 
 export function SquareButton({
@@ -246,26 +247,65 @@ export function SquareButton({
   );
 }
 
+const statusGlyph: Record<string, string> = {
+  verified: "●",
+  missing: "✕",
+  pending: "○",
+  neutral: "▢",
+  published: "●",
+  matched: "◐",
+  fulfilled: "✓",
+  rejected: "✕",
+  archived: "▢",
+  "in-progress": "◐",
+  completed: "✓",
+};
+
 const statusDot = {
-  verified: "bg-blue",
-  missing: "bg-red",
-  pending: "border border-ink bg-transparent",
-  neutral: "bg-muted",
+  verified: "bg-blue text-blue",
+  missing: "bg-red text-red",
+  pending: "border border-ink bg-transparent text-ink",
+  neutral: "bg-muted text-muted",
+  published: "bg-ink text-ink",
+  matched: "bg-ink text-ink",
+  fulfilled: "bg-ink text-ink",
+  rejected: "bg-ink text-ink",
+  archived: "bg-muted text-muted",
+  "in-progress": "bg-ink text-ink",
+  completed: "bg-ink text-ink",
 } as const;
 
 export function StatusMark({
   tone,
   children,
 }: {
-  tone: "verified" | "missing" | "pending" | "neutral";
+  tone: "verified" | "missing" | "pending" | "neutral" | "published" | "matched" | "fulfilled" | "rejected" | "archived" | "in-progress" | "completed";
   children: ReactNode;
 }) {
+  const glyph = statusGlyph[tone] ?? "○";
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink">
-      <span className={`h-2 w-2 rounded-full ${statusDot[tone]}`} aria-hidden="true" />
+      <span className="flex h-3 w-3 items-center justify-center text-[0.6rem] leading-none" aria-hidden="true">{glyph}</span>
       {children}
     </span>
   );
+}
+
+export function ProjectStatusMark({ status, language }: { status: string; language: import("./types").Language }) {
+  const t = labels[language] as Record<string,string>;
+  const u = uiStrings[language] as Record<string,string>;
+  const map: Record<string, { tone: "pending"|"published"|"matched"|"fulfilled"|"rejected"|"archived"|"in-progress"|"completed", label: string }> = {
+    pending: { tone: "pending", label: u.statusPending ?? t.deskNeedsStatusPending ?? "Pending" },
+    published: { tone: "published", label: u.statusPublished ?? t.deskNeedsStatusPublished ?? "Published" },
+    matched: { tone: "matched", label: u.statusMatched ?? t.deskNeedsStatusMatched ?? "Matched" },
+    fulfilled: { tone: "fulfilled", label: u.statusFulfilled ?? t.deskNeedsStatusFulfilled ?? "Fulfilled" },
+    rejected: { tone: "rejected", label: u.statusRejected ?? t.deskNeedsStatusRejected ?? "Rejected" },
+    archived: { tone: "archived", label: u.statusArchived ?? t.deskNeedsStatusArchived ?? "Archived" },
+    "in-progress": { tone: "in-progress", label: u.statusInProgress },
+    completed: { tone: "completed", label: u.statusCompleted },
+  };
+  const entry = map[status] ?? { tone: "pending" as const, label: status };
+  return <StatusMark tone={entry.tone}>{entry.label}</StatusMark>;
 }
 
 export function RuledTable({

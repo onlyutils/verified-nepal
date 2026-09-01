@@ -5,6 +5,7 @@ import { fetchMissingPersons, useLiveData } from "./live";
 import type { Language, MissingPersonRecord, PersonRecord } from "./types";
 import { opmcmMissingPersonUrl } from "./urls";
 import { formatNumber, matchesPerson, messageText, officialRescueUrl, sentenceCase } from "./utils";
+import { uiStrings } from "./i18n-ui";
 import { Byline, Headline, officialLink, Rule, SectionLabel, SquareButton, Standfirst, StatusMark } from "./ui";
 
 type PersonSearchResult =
@@ -102,6 +103,18 @@ export function FindPerson({ language }: { language: Language }) {
     .map((message) => messageText(message, language))
     .filter(Boolean);
   const anyLoading = rescuedLoading || missingLoading;
+  const [announce, setAnnounce] = useState("");
+  useEffect(() => {
+    if (anyLoading) return;
+    const u = uiStrings[language];
+    let text = "";
+    if (!searched) text = u.searchNoQuery;
+    else if (rescuedError && missingError) text = u.searchUnavailable;
+    else if (results.length > 0) text = u.searchResultsFor.replace("{count}", formatNumber(results.length, language)).replace("{query}", normalizedQuery);
+    else if (persons || missingPersons) text = u.searchNoResultsFor.replace("{query}", normalizedQuery);
+    else text = "";
+    setAnnounce(text);
+  }, [anyLoading, searched, results.length, normalizedQuery, persons, missingPersons, rescuedError, missingError, language]);
 
   return (
     <div className="space-y-8">
@@ -139,7 +152,9 @@ export function FindPerson({ language }: { language: Language }) {
 
       <Rule />
 
-      <section aria-live="polite" className="space-y-6">
+      <p role="status" aria-live="polite" className="sr-only">{announce}</p>
+
+      <section className="space-y-6">
         {!searched ? (
           <p className="font-serif leading-7 text-muted">{t.noSearch}</p>
         ) : (
@@ -178,7 +193,7 @@ function DisclaimerBlock({ language, disclaimers }: { language: Language; discla
 
   return (
     <aside className="border-l border-ink pl-4 font-serif text-sm leading-6 text-muted">
-      <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-red">{t.officialDisclaimer}</p>
+      <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted">{t.officialDisclaimer}</p>
       <p className="mt-2 text-ink">{t.absenceNote}</p>
       {(disclaimers.length ? disclaimers : [fallback]).map((disclaimer, index) => (
         <p key={`${disclaimer}-${index}`} className="mt-2">

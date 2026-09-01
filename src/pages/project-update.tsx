@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { labels } from "../i18n";
+import { apiErrorMessage } from "../api-error";
 import type { Language } from "../types";
 import { downscaleImage } from "../lib/image";
 
@@ -89,10 +90,8 @@ export function ProjectUpdate({ language }: { language: Language }) {
       setText("");
       setSpent("");
     } catch(e){
-      const err = e as ApiError | Error;
-      const msg = (err as ApiError).message || (err as Error).message || t.projectUpdateError;
-      if ((err as ApiError).status===0 || !navigator.onLine) { setOffline(true); setError(t.projectUpdateOffline); }
-      else setError(msg);
+      if ((e as ApiError).status===0 || !navigator.onLine) { setOffline(true); setError(t.projectUpdateOffline); }
+      else setError(apiErrorMessage(e, language));
       setProgress(null);
     } finally {
       setSubmitting(false);
@@ -106,7 +105,7 @@ export function ProjectUpdate({ language }: { language: Language }) {
         <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.projectUpdateLead}</p>
       </header>
 
-      {success ? <div className="border border-green-200 bg-green-50 px-4 py-4"><p className="font-sans text-sm text-green-800">{t.projectUpdateSuccess}</p><div className="mt-3"><a href={`/projects/${encodeURIComponent(extractProjectId(projectInput))}`} className="font-sans text-sm underline">{t.projectsViewProject}</a></div></div> : null}
+      {success ? <div className="border border-ink bg-paper px-4 py-4"><p className="font-sans text-sm text-ink">{t.projectUpdateSuccess}</p><div className="mt-3"><a href={`/projects/${encodeURIComponent(extractProjectId(projectInput))}`} className="font-sans text-sm underline">{t.projectsViewProject}</a></div></div> : null}
 
       <Card>
         <CardHeader><CardTitle className="text-base">{t.projectUpdateTitle}</CardTitle></CardHeader>

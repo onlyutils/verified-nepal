@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "../api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getLedger, getLedgerCsvUrl, type LedgerItem } from "../api";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ export function Ledger({ language }: { language: Language }) {
       if (err.status === 0) {
         setError(t.ledgerOffline);
       } else {
-        setError(err.message || t.ledgerError);
+        setError(apiErrorMessage(err, language));
       }
       setItems([]);
     } finally {
@@ -102,7 +103,6 @@ export function Ledger({ language }: { language: Language }) {
       ) : error ? (
         <div className="border border-rule bg-card px-4 py-6" role="alert">
           <p className="font-sans text-sm text-destructive">{error}</p>
-          <p className="mt-2 font-sans text-xs text-muted-foreground">{t.ledgerOffline}</p>
         </div>
       ) : items.length === 0 ? (
         <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.ledgerEmpty}</p>

@@ -41,7 +41,7 @@
   --destructive: 220 20 60;
   --destructive-foreground: 255 255 255;
   --border: 227 227 227;
-  --input: 227 227 227;
+  --input: 143 143 143;
   --ring: 10 10 10;
   --radius: 0rem;
 }
@@ -127,6 +127,12 @@ select {
 /* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
 html[lang="ne"] [class*="tracking-"] {
   letter-spacing: 0.02em;
+}
+html[lang="ne"] [class*="uppercase"] {
+  text-transform: none;
+}
+html[lang="ne"] [class*="text-[0.6"], html[lang="ne"] [class*="text-[0.7"] {
+  font-size: 0.8rem;
 }
 
 /* Thin scrollbars for the ruled lists. */

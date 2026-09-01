@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectItem } from "@/components/ui/select";
 import { districtNames, districtLabels } from "../geo";
 import { labels } from "../i18n";
+import { apiErrorMessage } from "../api-error";
 import type { Language } from "../types";
 import { TurnstileWidget } from "../components/turnstile";
 
@@ -72,9 +73,8 @@ export function ProjectRegister({ language }: { language: Language }) {
       });
       setResult(res);
     } catch(e){
-      const err = e as ApiError;
-      if (err.status===0) setError(t.projectsOffline);
-      else setError(err.message || t.projectRegisterError);
+      if ((e as ApiError).status===0) setError(t.projectsOffline);
+      else setError(apiErrorMessage(e, language));
     } finally { setSubmitting(false); }
   };
 
@@ -93,9 +93,9 @@ export function ProjectRegister({ language }: { language: Language }) {
               </Button>
               <p className="mt-3 font-sans text-xs leading-5 text-muted-foreground">{t.projectRegisterUpdateCodeHint}</p>
             </div>
-            <div className="border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="border border-ink bg-paper px-4 py-3">
               <h3 className="font-display text-base font-semibold">{t.projectRegisterWhatNextTitle}</h3>
-              <p className="mt-2 font-sans text-sm leading-6 text-amber-900">{t.projectRegisterWhatNextBody}</p>
+              <p className="mt-2 font-sans text-sm leading-6 text-ink">{t.projectRegisterWhatNextBody}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <a href={projectUrl} className="inline-flex h-9 items-center border border-ink bg-ink px-4 font-sans text-xs font-semibold uppercase tracking-wide text-paper">{t.projectsViewProject}</a>

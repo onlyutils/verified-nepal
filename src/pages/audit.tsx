@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "../api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getAudit, type AuditItem } from "../api";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export function AuditPage({ language }: { language: Language }) {
       setCursor(res.cursor);
     } catch (e) {
       const err = e as ApiError;
-      setError(err.message || (t as Record<string, string>).auditError);
+      setError(apiErrorMessage(err, language));
       if (!append) setItems([]);
       setNextCursor(undefined);
     } finally {

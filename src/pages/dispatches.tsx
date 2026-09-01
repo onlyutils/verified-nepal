@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectItem } from "@/components/ui/select";
 import { labels } from "../i18n";
+import { apiErrorMessage } from "../api-error";
 import type { Language } from "../types";
 import { Headline, Rule, SectionLabel } from "../ui";
 import { formatDateTime } from "../utils";
@@ -49,11 +50,10 @@ export function DispatchesPage({ language }: { language: Language }) {
       setItems(prev => append ? [...prev, ...res.items] : res.items);
       setCursor(res.cursor);
     } catch (e) {
-      const err = e as ApiError;
-      if (err.status===0 || !navigator.onLine) {
+      if ((e as ApiError).status===0 || !navigator.onLine) {
         setOffline(true);
         setError(t.dispatchesOffline ?? t.dispatchesError);
-      } else setError(err.message || t.dispatchesError);
+      } else setError(apiErrorMessage(e, language));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -101,9 +101,8 @@ export function DispatchesPage({ language }: { language: Language }) {
       setFormSuccess(true);
       setTitle(""); setBody(""); setDisplayName(""); setPlace(""); setEmail(""); setTags([]); setTurnstileToken("");
     } catch (err) {
-      const ae = err as ApiError;
-      if (ae.status===0) setFormError(t.dispatchWriteOffline);
-      else setFormError(ae.message || t.dispatchWriteError);
+      if ((err as ApiError).status===0) setFormError(t.dispatchWriteOffline);
+      else setFormError(apiErrorMessage(err, language));
     } finally { setSubmitting(false); }
   };
 
@@ -127,7 +126,7 @@ export function DispatchesPage({ language }: { language: Language }) {
             type="button"
             onClick={()=>handleTag("")}
             aria-pressed={activeTag===""}
-            className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag==="" ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
+            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag==="" ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
           >
             {t.dispatchesAllTags}
           </button>
@@ -137,7 +136,7 @@ export function DispatchesPage({ language }: { language: Language }) {
               type="button"
               onClick={()=>handleTag(tag)}
               aria-pressed={activeTag===tag}
-              className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag===tag ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
+              className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag===tag ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
             >
               {tagLabel(tag, t)}
             </button>
@@ -198,7 +197,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                     <Textarea id="d-body" value={body} onChange={e=>setBody(e.target.value)} placeholder={t.dispatchWriteBodyPlaceholder} rows={10} maxLength={6000} required className="min-h-[180px]" />
                     <div className="flex justify-between">
                       <p className="font-sans text-xs text-muted-foreground">{t.dispatchWriteBodyHint}</p>
-                      <p className={`font-sans text-xs ${body.length>5500 ? "text-amber-600" : body.length>5900 ? "text-destructive" : "text-muted-foreground"}`}>{body.length} / 6,000</p>
+                      <p className={`font-sans text-xs ${body.length>5900 ? "text-red" : body.length>5500 ? "text-ink" : "text-muted-foreground"}`}>{body.length} / 6,000</p>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -234,7 +233,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                             onClick={()=>toggleTag(tag)}
                             disabled={disabled}
                             aria-pressed={selected}
-                            className={`rounded-full border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide ${selected ? "border-ink bg-ink text-paper" : disabled ? "border-rule bg-secondary text-muted-foreground opacity-50" : "border-rule bg-paper text-ink hover:border-ink"}`}
+                            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide ${selected ? "border-ink bg-ink text-paper" : disabled ? "border-rule bg-secondary text-muted-foreground opacity-50" : "border-rule bg-paper text-ink hover:border-ink"}`}
                           >
                             {tagLabel(tag, t)}
                           </button>

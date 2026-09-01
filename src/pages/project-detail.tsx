@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "../api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getProject, type ProjectDetailResponse } from "../api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export function ProjectDetail({ language, id }: { language: Language; id: string
       const err = e as ApiError;
       if (err.status===0 || !navigator.onLine) { setOffline(true); setError(t.projectDetailError); }
       else if (err.status===404) setError(t.projectDetailNotFound);
-      else setError(err.message || t.projectDetailError);
+      else setError(apiErrorMessage(err, language));
       setLoading(false);
     });
     return ()=>{ cancelled=true };

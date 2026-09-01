@@ -1,3 +1,4 @@
+import { apiErrorMessage } from "../api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getDispatch, type DispatchDetailResponse } from "../api";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +41,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       const err = e as ApiError;
       if (err.status===0 || !navigator.onLine) { setOffline(true); setError(t.dispatchDetailOffline ?? t.dispatchDetailError); }
       else if (err.status===404) setError(t.dispatchDetailNotFound);
-      else setError(err.message || t.dispatchDetailError);
+      else setError(apiErrorMessage(err, language));
       setLoading(false);
     });
     return ()=>{ cancelled=true };
