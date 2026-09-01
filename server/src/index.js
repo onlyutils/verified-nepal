@@ -170,7 +170,7 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
   if (!token) throw err(401, "Missing token");
   let payload;
   try {
-    payload = await verifyIdToken(token, { fetchJwks, googleClientId: env.GOOGLE_CLIENT_ID });
+    payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
     const ne = new Error(e.message || "Invalid token");
@@ -198,8 +198,10 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
     if (existing.name) name = existing.name;
   } else {
     const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-    const verified = payload.email_verified !== false;
-    if (verified && adminEmails.includes((payload.email || "").toLowerCase())) role = "admin";
+    const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const emailLower = (payload.email || "").toLowerCase();
+    if (adminEmails.includes(emailLower)) role = "admin";
+    else if (moderatorEmails.includes(emailLower)) role = "moderator";
     else role = "helper";
     const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, email, name: payload.name || "", role, createdAt: new Date().toISOString() };
     try {
@@ -219,7 +221,7 @@ async function requireAuth(event, { fetchJwks, getDdb, env }) {
   if (!token) throw err(401, "Missing token");
   let payload;
   try {
-    payload = await verifyIdToken(token, { fetchJwks, googleClientId: env.GOOGLE_CLIENT_ID });
+    payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
     const ne = new Error(e.message || "Invalid token");
@@ -766,9 +768,92 @@ async function handlePostNeedStatus(event, opts, needId) {
   return json(200, { status });
 }
 
+
+function getTokenEndpoint(env) {
+  const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
+  return `${host}/token`;
+}
+
+async function handleAuthExchange(event, { env, fetchImpl }) {
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { code, code_verifier, redirect_uri } = body;
+  if (!code || typeof code !== "string" || !code.trim()) throw err(400, "code required");
+  if (!code_verifier || typeof code_verifier !== "string" || !code_verifier.trim()) throw err(400, "code_verifier required");
+  if (!redirect_uri || typeof redirect_uri !== "string" || !redirect_uri.trim()) throw err(400, "redirect_uri required");
+  const endpoint = getTokenEndpoint(env);
+  const params = new URLSearchParams();
+  params.set("grant_type", "authorization_code");
+  params.set("code", code);
+  params.set("code_verifier", code_verifier);
+  params.set("redirect_uri", redirect_uri);
+  if (env.OU_CLIENT_ID) params.set("client_id", env.OU_CLIENT_ID);
+  if (env.OU_CLIENT_SECRET) params.set("client_secret", env.OU_CLIENT_SECRET);
+  let res;
+  try {
+    res = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+  } catch {
+    throw err(400, "token exchange failed");
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (res.ok) {
+    return json(200, data);
+  }
+  const msg = data?.error_description || data?.error || data?.message || `upstream error ${res.status}`;
+  const e = new Error(msg);
+  e.status = 400;
+  throw e;
+}
+
+async function handleAuthRefresh(event, { env, fetchImpl }) {
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { refresh_token } = body;
+  if (!refresh_token || typeof refresh_token !== "string" || !refresh_token.trim()) throw err(400, "refresh_token required");
+  const endpoint = getTokenEndpoint(env);
+  const params = new URLSearchParams();
+  params.set("grant_type", "refresh_token");
+  params.set("refresh_token", refresh_token);
+  if (env.OU_CLIENT_ID) params.set("client_id", env.OU_CLIENT_ID);
+  if (env.OU_CLIENT_SECRET) params.set("client_secret", env.OU_CLIENT_SECRET);
+  let res;
+  try {
+    res = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+  } catch {
+    throw err(400, "token refresh failed");
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (res.ok) {
+    return json(200, data);
+  }
+  const msg = data?.error_description || data?.error || data?.message || `upstream error ${res.status}`;
+  const e = new Error(msg);
+  e.status = 400;
+  throw e;
+}
+
 export function createHandler(opts = {}) {
   const env = opts.env ?? process.env;
   const fetchJwks = opts.fetchJwks;
+  const fetchImpl = opts.fetch ?? opts.fetchImpl ?? globalThis.fetch;
   let ddbClient = opts.ddbClient ?? null;
   function getDdb() {
     if (ddbClient) return ddbClient;
@@ -782,6 +867,8 @@ export function createHandler(opts = {}) {
       const rawPathFull = event.rawPath ?? event.requestContext?.http?.path ?? event.path ?? "/";
       const path = rawPathFull.split("?")[0];
       if (method === "GET" && path === "/health") return json(200, { ok: true });
+      if (method === "POST" && path === "/auth/exchange") return await handleAuthExchange(event, { env, fetchImpl });
+      if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });
       if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env });
       if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env });
       if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });

@@ -27,7 +27,7 @@ describe("router dispatch", () => {
   });
 
   it("GET /me without auth returns 401", async () => {
-    const handler = createHandler({ env: { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks: async () => ({ keys: [] }) });
+    const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks: async () => ({ keys: [] }) });
     const res = await handler(makeEvent({ method: "GET", path: "/me", headers: {} }));
     assert.equal(res.statusCode, 401);
   });
@@ -36,7 +36,7 @@ describe("router dispatch", () => {
     clearJwksCache();
     const kp = makeKeyPair();
     const handler = createHandler({
-      env: { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "t" },
+      env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" },
       ddbClient: new FakeDdb(),
       fetchJwks: async () => ({ keys: [kp.jwk] }),
     });
@@ -72,7 +72,7 @@ describe("GET /me with fake ddb", () => {
 
   it("first login creates helper user", async () => {
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table", ADMIN_EMAILS: "" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
 
     const payload = basePayload({ sub: "sub-1", email: "alice@example.com", name: "Alice" });
@@ -94,7 +94,7 @@ describe("GET /me with fake ddb", () => {
 
   it("first login creates admin if email in ADMIN_EMAILS", async () => {
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table", ADMIN_EMAILS: "alice@example.com, bob@example.com " };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "alice@example.com, bob@example.com " };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
 
     const payload = basePayload({ sub: "sub-admin", email: "Bob@Example.com", name: "Bob" });
@@ -107,18 +107,54 @@ describe("GET /me with fake ddb", () => {
     assert.equal(stored.role, "admin");
   });
 
-  it("denies admin when email_verified is false even if email in ADMIN_EMAILS", async () => {
+  it("grants admin even when email_verified is false (OnlyUtils federation verified)", async () => {
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table", ADMIN_EMAILS: "alice@example.com, bob@example.com" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "alice@example.com, bob@example.com" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
 
     const payload = basePayload({ sub: "sub-spoof", email: "alice@example.com", name: "Alice", email_verified: false });
     const token = createToken(payload, kp.privateKey);
     const res = await handler(makeEvent({ method: "GET", path: "/me", headers: { authorization: `Bearer ${token}` } }));
     assert.equal(res.statusCode, 200);
-    assert.equal(JSON.parse(res.body).role, "helper");
+    assert.equal(JSON.parse(res.body).role, "admin");
     const stored = ddb.store.get("USER#sub-spoof|PROFILE");
-    assert.equal(stored.role, "helper");
+    assert.equal(stored.role, "admin");
+  });
+
+  it("grants admin when email_verified absent (OnlyUtils tokens may not carry it)", async () => {
+    const ddb = new FakeDdb();
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "alice@example.com" };
+    const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
+    const payload = basePayload({ sub: "sub-no-verified", email: "alice@example.com", name: "Alice" });
+    delete payload.email_verified;
+    const token = createToken(payload, kp.privateKey);
+    const res = await handler(makeEvent({ method: "GET", path: "/me", headers: { authorization: `Bearer ${token}` } }));
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).role, "admin");
+  });
+
+  it("creates moderator if email in MODERATOR_EMAILS", async () => {
+    const ddb = new FakeDdb();
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", MODERATOR_EMAILS: "mod@example.com" };
+    const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
+    const payload = basePayload({ sub: "sub-mod", email: "mod@example.com", name: "Mod" });
+    const token = createToken(payload, kp.privateKey);
+    const res = await handler(makeEvent({ method: "GET", path: "/me", headers: { authorization: `Bearer ${token}` } }));
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).role, "moderator");
+    const stored = ddb.store.get("USER#sub-mod|PROFILE");
+    assert.equal(stored.role, "moderator");
+  });
+
+  it("ADMIN_EMAILS wins over MODERATOR_EMAILS", async () => {
+    const ddb = new FakeDdb();
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "both@example.com", MODERATOR_EMAILS: "both@example.com, other@example.com" };
+    const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
+    const payload = basePayload({ sub: "sub-both", email: "both@example.com", name: "Both" });
+    const token = createToken(payload, kp.privateKey);
+    const res = await handler(makeEvent({ method: "GET", path: "/me", headers: { authorization: `Bearer ${token}` } }));
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).role, "admin");
   });
 
   it("existing user returns stored role (not helper fallback)", async () => {
@@ -132,7 +168,7 @@ describe("GET /me with fake ddb", () => {
       role: "moderator",
       createdAt: new Date().toISOString(),
     });
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table", ADMIN_EMAILS: "" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
 
     const payload = basePayload({ sub: "sub-1", email: "alice@example.com", name: "Alice New" });
@@ -146,7 +182,7 @@ describe("GET /me with fake ddb", () => {
 
   it("existing user second call does not overwrite store", async () => {
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
 
     const payload = basePayload({ sub: "sub-2", email: "carol@example.com", name: "Carol" });
@@ -165,7 +201,7 @@ describe("GET /me with fake ddb", () => {
 
   it("handles lowercase authorization header", async () => {
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
     const payload = basePayload({ sub: "sub-lc" });
     const token = createToken(payload, kp.privateKey);
@@ -177,7 +213,7 @@ describe("GET /me with fake ddb", () => {
   it("returns 500 when TABLE_NAME missing (no stack)", async () => {
     clearJwksCache();
     const ddb = new FakeDdb();
-    const env = { GOOGLE_CLIENT_ID: "test-client-id" };
+    const env = { AUTH_ISSUER: "https://auth.onlyutils.com" };
     const handler = createHandler({ env, ddbClient: ddb, fetchJwks });
     const payload = basePayload();
     const token = createToken(payload, kp.privateKey);

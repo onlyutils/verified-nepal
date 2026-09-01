@@ -236,13 +236,15 @@ export function GiveHelp({ language }: { language: Language }) {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               {auth.clientId ? (
-                <div ref={auth.buttonRef} aria-label="Google sign-in" />
+                <Button onClick={auth.signIn} className="w-full max-w-[280px]" aria-label="Continue with Google">
+                  {t.deskContinueWithGoogle}
+                </Button>
               ) : (
                 <p className="font-sans text-sm text-muted-foreground">{t.deskNotConfigured}</p>
               )}
               {auth.error ? (
                 <p className="font-sans text-sm text-destructive" role="alert">
-                  {t.deskErrorFailedToVerify}
+                  {t.deskSignInFailed}
                 </p>
               ) : null}
             </CardContent>

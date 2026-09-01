@@ -88,16 +88,13 @@ export function Desk({ language }: { language: Language }) {
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
             {auth.clientId ? (
-              <>
-                <div ref={auth.buttonRef} className="flex justify-center" aria-label="Google sign-in" />
-                <noscript>
-                  <p className="font-sans text-sm text-muted-foreground">JavaScript required for sign-in.</p>
-                </noscript>
-              </>
+              <Button onClick={auth.signIn} className="w-full max-w-[280px]" aria-label="Continue with Google">
+                {t.deskContinueWithGoogle}
+              </Button>
             ) : (
               <p className="font-sans text-sm text-muted-foreground">{t.deskNotConfigured}</p>
             )}
-            {auth.error ? <p className="font-sans text-sm text-destructive">{t.deskErrorFailedToVerify}</p> : null}
+            {auth.error ? <p className="font-sans text-sm text-destructive" role="alert">{t.deskSignInFailed}</p> : null}
           </CardContent>
         </Card>
       </div>

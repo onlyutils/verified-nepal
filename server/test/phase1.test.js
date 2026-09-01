@@ -7,7 +7,7 @@ import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./hel
 function makeHandler({ envOverrides = {}, ddb, kp } = {}) {
   const keyPair = kp ?? makeKeyPair();
   const d = ddb ?? new FakeDdb();
-  const env = { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "test-table", ADMIN_EMAILS: "", ...envOverrides };
+  const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "", ...envOverrides };
   const fetchJwks = async () => ({ keys: [keyPair.jwk] });
   const handler = createHandler({ env, ddbClient: d, fetchJwks });
   return { handler, ddb: d, env, kp: keyPair, fetchJwks };
@@ -100,7 +100,7 @@ describe("GET /needs public board", () => {
     const kp = makeKeyPair();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
     const ddb = new FakeDdb();
-    const handler = createHandler({ env: { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
+    const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     // create need with private data
     let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en" } }));
     const { id, refCode } = JSON.parse(res.body);
@@ -140,7 +140,7 @@ describe("GET /needs public board", () => {
     const kp = makeKeyPair();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
     const ddb = new FakeDdb();
-    const handler = createHandler({ env: { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
+    const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
     const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     // create 3 needs in different districts/categories
@@ -204,7 +204,7 @@ describe("offers", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     let res = await handler(makeEvent({method:"POST", path:"/offers", body:{categories:["goods"], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000"}}));
     assert.equal(res.statusCode, 401);
     const token = createToken(basePayload({sub:"h1"}), kp.privateKey);
@@ -218,7 +218,7 @@ describe("offers", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     const token = createToken(basePayload({sub:"h1", name:"Helper Person"}), kp.privateKey);
     let res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:["goods","medical"], districts:["Gorkha","Kathmandu"], description:"We can provide goods and medical aid in Gorkha and Kathmandu", phone:"+9779800000000", org:{name:"Youth Club", contact:"contact@youth.org"}}}));
     assert.equal(res.statusCode, 201);
@@ -253,7 +253,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     const helperTok = createToken(basePayload({sub:"h1"}), kp.privateKey);
     ddb.store.set("USER#h1|PROFILE", {PK:"USER#h1", SK:"PROFILE", sub:"h1", role:"helper"});
     let res = await handler(makeEvent({method:"GET", path:"/moderation/queue", headers:{authorization:`Bearer ${helperTok}`}}));
@@ -270,7 +270,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     // create need
@@ -307,7 +307,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"X Y", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for helper forbid", language:"en"}}));
     const {id} = JSON.parse(res.body);
     ddb.store.set("USER#helper-1|PROFILE", {PK:"USER#helper-1", SK:"PROFILE", sub:"helper-1", role:"helper"});
@@ -323,7 +323,7 @@ describe("POST /needs/:id/status", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
-    const handler = createHandler({ env:{GOOGLE_CLIENT_ID:"test-client-id", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Benef Person", phone:"+9779800000001", district:"Gorkha", ward:3}, category:"goods", description:"Need description long enough for status change", language:"en"}}));

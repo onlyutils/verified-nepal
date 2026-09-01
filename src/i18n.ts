@@ -157,6 +157,8 @@ export const labels = {
     deskSignOut: "Sign out",
     deskWelcome: "Signed in as {name}",
     deskErrorFailedToVerify: "Could not verify your account. Please try again.",
+    deskContinueWithGoogle: "Continue with Google",
+    deskSignInFailed: "Sign-in failed. Please try again.",
 
     getHelp: "Get help",
     giveHelp: "Give help",
@@ -440,6 +442,8 @@ export const labels = {
     deskSignOut: "साइन आउट",
     deskWelcome: "{name} को रूपमा साइन-इन",
     deskErrorFailedToVerify: "तपाईंको खाता प्रमाणीकरण हुन सकेन। कृपया फेरि प्रयास गर्नुहोस्।",
+    deskContinueWithGoogle: "Google बाट जारी राख्नुहोस्",
+    deskSignInFailed: "साइन-इन असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।",
 
     getHelp: "सहयोग माग्नुहोस्",
     giveHelp: "सहयोग दिनुहोस्",

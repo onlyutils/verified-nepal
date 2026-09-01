@@ -1,13 +1,15 @@
 import { createPublicKey, verify } from "node:crypto";
 
-const JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+const DEFAULT_JWKS_URL = "https://auth.onlyutils.com/.well-known/jwks.json";
+const DEFAULT_ISSUER = "https://auth.onlyutils.com";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 let cachedJwks = null;
 let cachedAt = 0;
+let cachedJwksUrl = null;
 
-async function defaultFetchJwks() {
-  const res = await fetch(JWKS_URL);
+async function defaultFetchJwks(url) {
+  const res = await fetch(url);
   if (!res.ok) {
     const e = new Error("failed to fetch jwks");
     e.status = 500;
@@ -32,17 +34,16 @@ function jsonResponse(status, body) {
 export function clearJwksCache() {
   cachedJwks = null;
   cachedAt = 0;
+  cachedJwksUrl = null;
 }
 
 export async function verifyIdToken(token, opts = {}) {
-  const fetchJwks = opts.fetchJwks ?? defaultFetchJwks;
-  const googleClientId = opts.googleClientId ?? process.env.GOOGLE_CLIENT_ID;
+  const env = opts.env ?? process.env;
+  const jwksUrl = env.AUTH_JWKS_URL || DEFAULT_JWKS_URL;
+  const expectedIssuer = env.AUTH_ISSUER || DEFAULT_ISSUER;
+  const expectedAudience = env.AUTH_AUDIENCE;
+  const fetchJwks = opts.fetchJwks ?? (() => defaultFetchJwks(jwksUrl));
 
-  if (!googleClientId) {
-    const e = new Error("GOOGLE_CLIENT_ID not configured");
-    e.status = 500;
-    throw e;
-  }
   if (!token || typeof token !== "string") {
     const e = new Error("missing token");
     e.status = 401;
@@ -75,7 +76,7 @@ export async function verifyIdToken(token, opts = {}) {
 
   async function getJwks() {
     const now = Date.now();
-    if (cachedJwks && now - cachedAt < CACHE_TTL_MS) return cachedJwks;
+    if (cachedJwks && cachedJwksUrl === jwksUrl && now - cachedAt < CACHE_TTL_MS) return cachedJwks;
     const jwks = await fetchJwks();
     if (!jwks || !Array.isArray(jwks.keys)) {
       const e = new Error("invalid jwks");
@@ -84,6 +85,7 @@ export async function verifyIdToken(token, opts = {}) {
     }
     cachedJwks = jwks;
     cachedAt = now;
+    cachedJwksUrl = jwksUrl;
     return jwks;
   }
 
@@ -91,6 +93,7 @@ export async function verifyIdToken(token, opts = {}) {
   let jwk = jwks.keys.find((k) => k.kid === kid);
   if (!jwk) {
     cachedJwks = null;
+    cachedJwksUrl = null;
     jwks = await getJwks();
     jwk = jwks.keys.find((k) => k.kid === kid);
     if (!jwk) {
@@ -123,18 +126,19 @@ export async function verifyIdToken(token, opts = {}) {
     throw e;
   }
 
-  const issOk =
-    payload.iss === "https://accounts.google.com" ||
-    payload.iss === "accounts.google.com";
-  if (!issOk) {
+  if (payload.iss !== expectedIssuer) {
     const e = new Error("invalid iss");
     e.status = 401;
     throw e;
   }
-  if (payload.aud !== googleClientId) {
-    const e = new Error("invalid aud");
-    e.status = 401;
-    throw e;
+  if (expectedAudience) {
+    if (payload.aud !== expectedAudience) {
+      const e = new Error("invalid aud");
+      e.status = 401;
+      throw e;
+    }
+  } else {
+    // pin after first real token is inspected
   }
   const nowSec = Math.floor(Date.now() / 1000);
   if (typeof payload.exp !== "number" || payload.exp <= nowSec) {

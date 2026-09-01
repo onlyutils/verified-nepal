@@ -26,7 +26,7 @@ export function createToken(payload, privateKey, kid = "test-kid") {
 export function basePayload(overrides = {}) {
   const now = Math.floor(Date.now() / 1000);
   return {
-    iss: "https://accounts.google.com",
+    iss: "https://auth.onlyutils.com",
     aud: "test-client-id",
     sub: "1234567890",
     email: "user@example.com",

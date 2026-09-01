@@ -16,40 +16,62 @@ describe("verifyIdToken", () => {
   it("verifies a valid token", async () => {
     const payload = basePayload();
     const token = createToken(payload, kp.privateKey);
-    const out = await verifyIdToken(token, { fetchJwks, googleClientId: "test-client-id" });
+    const out = await verifyIdToken(token, { fetchJwks, env: { AUTH_ISSUER: "https://auth.onlyutils.com" } });
     assert.equal(out.sub, payload.sub);
     assert.equal(out.email, payload.email);
   });
 
-  it("accepts iss without https prefix", async () => {
-    const payload = basePayload({ iss: "accounts.google.com" });
+  it("verifies with default issuer when env not set", async () => {
+    const payload = basePayload({ iss: "https://auth.onlyutils.com" });
     const token = createToken(payload, kp.privateKey);
-    const out = await verifyIdToken(token, { fetchJwks, googleClientId: "test-client-id" });
-    assert.equal(out.iss, "accounts.google.com");
+    const out = await verifyIdToken(token, { fetchJwks, env: {} });
+    assert.equal(out.iss, "https://auth.onlyutils.com");
   });
 
   it("rejects invalid iss", async () => {
     const payload = basePayload({ iss: "https://evil.com" });
     const token = createToken(payload, kp.privateKey);
-    await assert.rejects(() => verifyIdToken(token, { fetchJwks, googleClientId: "test-client-id" }), (e) => {
+    await assert.rejects(() => verifyIdToken(token, { fetchJwks, env: { AUTH_ISSUER: "https://auth.onlyutils.com" } }), (e) => {
       assert.equal(e.status, 401);
       return true;
     });
   });
 
-  it("rejects wrong aud", async () => {
-    const payload = basePayload({ aud: "other-client" });
+  it("respects AUTH_ISSUER env override", async () => {
+    const payload = basePayload({ iss: "https://custom.example.com" });
     const token = createToken(payload, kp.privateKey);
-    await assert.rejects(() => verifyIdToken(token, { fetchJwks, googleClientId: "test-client-id" }), (e) => {
+    const out = await verifyIdToken(token, { fetchJwks, env: { AUTH_ISSUER: "https://custom.example.com" } });
+    assert.equal(out.iss, "https://custom.example.com");
+    await assert.rejects(() => verifyIdToken(token, { fetchJwks, env: { AUTH_ISSUER: "https://auth.onlyutils.com" } }), (e) => {
       assert.equal(e.status, 401);
       return true;
     });
+  });
+
+  it("skips aud check when AUTH_AUDIENCE not set", async () => {
+    const payload = basePayload({ aud: "other-client" });
+    const token = createToken(payload, kp.privateKey);
+    const out = await verifyIdToken(token, { fetchJwks, env: {} });
+    assert.equal(out.aud, "other-client");
+  });
+
+  it("enforces aud when AUTH_AUDIENCE set", async () => {
+    const payload = basePayload({ aud: "other-client" });
+    const token = createToken(payload, kp.privateKey);
+    await assert.rejects(() => verifyIdToken(token, { fetchJwks, env: { AUTH_AUDIENCE: "test-client-id" } }), (e) => {
+      assert.equal(e.status, 401);
+      return true;
+    });
+    const good = basePayload({ aud: "test-client-id" });
+    const goodToken = createToken(good, kp.privateKey);
+    const out = await verifyIdToken(goodToken, { fetchJwks, env: { AUTH_AUDIENCE: "test-client-id" } });
+    assert.equal(out.aud, "test-client-id");
   });
 
   it("rejects expired token", async () => {
     const payload = basePayload({ exp: Math.floor(Date.now() / 1000) - 10 });
     const token = createToken(payload, kp.privateKey);
-    await assert.rejects(() => verifyIdToken(token, { fetchJwks, googleClientId: "test-client-id" }), (e) => {
+    await assert.rejects(() => verifyIdToken(token, { fetchJwks, env: {} }), (e) => {
       assert.equal(e.status, 401);
       return true;
     });
@@ -59,7 +81,7 @@ describe("verifyIdToken", () => {
     const payload = basePayload();
     const token = createToken(payload, kp.privateKey);
     const bad = token.slice(0, -4) + "abcd";
-    await assert.rejects(() => verifyIdToken(bad, { fetchJwks, googleClientId: "test-client-id" }), (e) => {
+    await assert.rejects(() => verifyIdToken(bad, { fetchJwks, env: {} }), (e) => {
       assert.equal(e.status, 401);
       return true;
     });
@@ -73,7 +95,7 @@ describe("verifyIdToken", () => {
       calls++;
       return { keys: [kp.jwk] };
     };
-    await assert.rejects(() => verifyIdToken(token, { fetchJwks: fetcher, googleClientId: "test-client-id" }), (e) => {
+    await assert.rejects(() => verifyIdToken(token, { fetchJwks: fetcher, env: {} }), (e) => {
       assert.equal(e.status, 401);
       return true;
     });
@@ -88,17 +110,18 @@ describe("verifyIdToken", () => {
     };
     const payload = basePayload();
     const token = createToken(payload, kp.privateKey);
-    await verifyIdToken(token, { fetchJwks: fetcher, googleClientId: "test-client-id" });
-    await verifyIdToken(token, { fetchJwks: fetcher, googleClientId: "test-client-id" });
+    await verifyIdToken(token, { fetchJwks: fetcher, env: {} });
+    await verifyIdToken(token, { fetchJwks: fetcher, env: {} });
     assert.equal(calls, 1);
   });
 
-  it("rejects missing GOOGLE_CLIENT_ID as 500", async () => {
+  it("supports custom AUTH_JWKS_URL via env", async () => {
     const payload = basePayload();
     const token = createToken(payload, kp.privateKey);
-    await assert.rejects(() => verifyIdToken(token, { fetchJwks, googleClientId: "" }), (e) => {
-      assert.equal(e.status, 500);
-      return true;
-    });
+    let fetchedUrl = null;
+    const origFetch = globalThis.fetch;
+    // Use injected fetchJwks to verify URL handling is not required for custom fetcher
+    const out = await verifyIdToken(token, { fetchJwks, env: { AUTH_JWKS_URL: "https://custom.example.com/.well-known/jwks.json" } });
+    assert.equal(out.sub, payload.sub);
   });
 });

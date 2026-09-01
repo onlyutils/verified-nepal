@@ -11,7 +11,7 @@ describe("GSI status transition", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
-    const handler = createHandler({ env: { GOOGLE_CLIENT_ID: "test-client-id", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
+    const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
 
