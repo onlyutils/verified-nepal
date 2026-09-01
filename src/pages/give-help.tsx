@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, CATEGORIES, type Category, createOffer, flagNeed, listNeeds, listOffers, type NeedPublic, type OfferPublic } from "../api";
+import { apiErrorMessage } from "../api-error";
 import { useGoogleAuth } from "../auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { TurnstileWidget } from "../components/turnstile";
 import { districtLabels, districtNames } from "../geo";
 import { labels } from "../i18n";
+import { formStrings } from "../i18n-forms";
 import type { Language } from "../types";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -60,8 +62,7 @@ function FlagDialog({ language, needId, open, onClose }: { language: Language; n
       await flagNeed(needId, { reason, details: details.trim() || undefined, turnstileToken: turnstileToken || undefined });
       setDone(true);
     } catch (e) {
-      const err = e as ApiError;
-      setError(err.message || t.flagError);
+      setError(apiErrorMessage(e, language));
     } finally {
       setSubmitting(false);
     }
@@ -123,6 +124,7 @@ function FlagDialog({ language, needId, open, onClose }: { language: Language; n
 
 export function GiveHelp({ language }: { language: Language }) {
   const t = labels[language];
+  const ts = formStrings[language];
   const auth = useGoogleAuth();
 
   const [needsDistrict, setNeedsDistrict] = useState("");
@@ -157,9 +159,7 @@ export function GiveHelp({ language }: { language: Language }) {
       const res = await listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined });
       setNeeds(res.items);
     } catch (e) {
-      const err = e as ApiError;
-      if (err.status === 0) setNeedsError(t.giveHelpError);
-      else setNeedsError(err.message || t.giveHelpError);
+      setNeedsError(apiErrorMessage(e, language));
       setNeeds([]);
     } finally {
       setNeedsLoading(false);
@@ -224,8 +224,7 @@ export function GiveHelp({ language }: { language: Language }) {
       setOfferPhone("");
       setOfferEmail("");
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "Failed";
-      setOfferError(msg);
+      setOfferError(apiErrorMessage(err, language));
     } finally {
       setOfferSubmitting(false);
     }
@@ -250,8 +249,8 @@ export function GiveHelp({ language }: { language: Language }) {
           <h2 className="font-display text-xl font-semibold">{t.giveHelpNeedsBoardTitle}</h2>
           <div className="flex flex-wrap gap-3">
             <div className="min-w-[12rem]">
-              <Label>{t.giveHelpFilterDistrict}</Label>
-              <Select value={needsDistrict} onChange={(e) => setNeedsDistrict(e.target.value)}>
+              <Label htmlFor="needsDistrict">{t.giveHelpFilterDistrict}</Label>
+              <Select id="needsDistrict" value={needsDistrict} onChange={(e) => setNeedsDistrict(e.target.value)}>
                 <option value="">{t.giveHelpAllDistricts}</option>
                 {districtNames.map((d) => (
                   <SelectItem key={d} value={d}>
@@ -261,8 +260,8 @@ export function GiveHelp({ language }: { language: Language }) {
               </Select>
             </div>
             <div className="min-w-[12rem]">
-              <Label>{t.giveHelpFilterCategory}</Label>
-              <Select value={needsCategory} onChange={(e) => setNeedsCategory(e.target.value)}>
+              <Label htmlFor="needsCategory">{t.giveHelpFilterCategory}</Label>
+              <Select id="needsCategory" value={needsCategory} onChange={(e) => setNeedsCategory(e.target.value)}>
                 <option value="">{t.giveHelpAllCategories}</option>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
@@ -359,6 +358,16 @@ export function GiveHelp({ language }: { language: Language }) {
               <CardTitle className="text-base">{t.giveHelpOfferSuccessTitle}</CardTitle>
               <CardDescription>{t.giveHelpOfferSuccessBody}</CardDescription>
             </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border border-ink bg-paper p-3 text-center" role="status">
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{ts.offerReferenceLabel}</p>
+                <p className="mt-2 break-all font-mono text-lg font-bold tracking-widest text-ink">{offerSuccess}</p>
+              </div>
+              <div>
+                <h3 className="font-display text-base font-semibold">{ts.offerWhatNextTitle}</h3>
+                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{ts.offerWhatNextBody}</p>
+              </div>
+            </CardContent>
           </Card>
         ) : (
           <Card>
@@ -445,8 +454,8 @@ export function GiveHelp({ language }: { language: Language }) {
           <h2 className="font-display text-lg font-semibold">{t.giveHelpOffersBoardTitle}</h2>
           <div className="flex flex-wrap gap-3">
             <div className="min-w-[11rem]">
-              <Label>{t.giveHelpFilterDistrict}</Label>
-              <Select value={offersDistrict} onChange={(e) => setOffersDistrict(e.target.value)}>
+              <Label htmlFor="offersDistrict">{t.giveHelpFilterDistrict}</Label>
+              <Select id="offersDistrict" value={offersDistrict} onChange={(e) => setOffersDistrict(e.target.value)}>
                 <option value="">{t.giveHelpAllDistricts}</option>
                 {districtNames.map((d) => (
                   <SelectItem key={d} value={d}>
@@ -456,8 +465,8 @@ export function GiveHelp({ language }: { language: Language }) {
               </Select>
             </div>
             <div className="min-w-[11rem]">
-              <Label>{t.giveHelpFilterCategory}</Label>
-              <Select value={offersCategory} onChange={(e) => setOffersCategory(e.target.value)}>
+              <Label htmlFor="offersCategory">{t.giveHelpFilterCategory}</Label>
+              <Select id="offersCategory" value={offersCategory} onChange={(e) => setOffersCategory(e.target.value)}>
                 <option value="">{t.giveHelpAllCategories}</option>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
