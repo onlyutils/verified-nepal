@@ -163,6 +163,31 @@ function decodeCursor(cur) {
   }
 }
 
+function logAuthFail(token, err) {
+  let iss;
+  let aud;
+  let alg;
+  try {
+    const parts = String(token).split(".");
+    if (parts.length >= 1) {
+      try {
+        const headerJson = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
+        if (headerJson && typeof headerJson.alg === "string") alg = headerJson.alg;
+      } catch {}
+    }
+    if (parts.length >= 2) {
+      try {
+        const payloadJson = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+        if (payloadJson && typeof payloadJson.iss === "string") iss = payloadJson.iss;
+        if (payloadJson && payloadJson.aud !== undefined) aud = payloadJson.aud;
+      } catch {}
+    }
+  } catch {}
+  try {
+    console.error(JSON.stringify({ tag: "auth_fail", reason: err.message, iss, aud, alg }));
+  } catch {}
+}
+
 async function handleMe(event, { fetchJwks, getDdb, env }) {
   const auth = getAuthToken(event.headers);
   if (!auth || !auth.startsWith("Bearer ")) throw err(401, "Missing or invalid Authorization header");
@@ -173,6 +198,7 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
     payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
+    try { logAuthFail(token, e); } catch {}
     const ne = new Error(e.message || "Invalid token");
     ne.status = 401;
     throw ne;
@@ -224,6 +250,7 @@ async function requireAuth(event, { fetchJwks, getDdb, env }) {
     payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
+    try { logAuthFail(token, e); } catch {}
     const ne = new Error(e.message || "Invalid token");
     ne.status = 401;
     throw ne;

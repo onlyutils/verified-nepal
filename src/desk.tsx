@@ -114,6 +114,52 @@ export function Desk({ language }: { language: Language }) {
     );
   }
 
+  if (auth.error) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center px-4 py-10">
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <CardTitle>{t.deskAuthErrorTitle}</CardTitle>
+            <CardDescription>{t.deskAuthErrorBody}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            {auth.clientId ? (
+              <Button onClick={auth.signIn} className="w-full max-w-[280px]">
+                {t.deskContinueWithGoogle}
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={auth.signOut}>
+              {t.deskSignOut}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!auth.profile) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center px-4 py-10">
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <CardTitle>{t.deskAuthErrorTitle}</CardTitle>
+            <CardDescription>{t.deskAuthErrorBody}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            {auth.clientId ? (
+              <Button onClick={auth.signIn} className="w-full max-w-[280px]">
+                {t.deskContinueWithGoogle}
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={auth.signOut}>
+              {t.deskSignOut}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const role = auth.profile?.role;
   const isModerator = role === "moderator" || role === "admin";
 
