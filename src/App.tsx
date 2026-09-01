@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Dashboard } from "./dashboard";
+import { ComponentErrorBoundary } from "./error-boundary";
 import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
 import { LiveDataProvider } from "./live";
 import { labels } from "./i18n";
@@ -164,17 +165,17 @@ export function App() {
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "info" ? <InfoHelp language={language} /> : null}
               {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
-              {page === "desk" ? <Desk language={language} /> : null}
-              {page === "getHelp" ? <GetHelp language={language} /> : null}
-              {page === "giveHelp" ? <GiveHelp language={language} /> : null}
-              {page === "ledger" ? <Ledger language={language} /> : null}
-              {page === "audit" ? <AuditPage language={language} /> : null}
-              {page === "projects" ? <ProjectsList language={language} /> : null}
-              {page === "projectRegister" ? <ProjectRegister language={language} /> : null}
-              {page === "projectUpdate" ? <ProjectUpdate language={language} /> : null}
-              {page === "dispatches" ? <DispatchesPage language={language} /> : null}
-              {page === "dispatchDetail" ? <DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /> : null}
-              {page === "projectDetail" ? <ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /> : null}
+              {page === "desk" ? <ComponentErrorBoundary language={language}><Desk language={language} /></ComponentErrorBoundary> : null}
+              {page === "getHelp" ? <ComponentErrorBoundary language={language}><GetHelp language={language} /></ComponentErrorBoundary> : null}
+              {page === "giveHelp" ? <ComponentErrorBoundary language={language}><GiveHelp language={language} /></ComponentErrorBoundary> : null}
+              {page === "ledger" ? <ComponentErrorBoundary language={language}><Ledger language={language} /></ComponentErrorBoundary> : null}
+              {page === "audit" ? <ComponentErrorBoundary language={language}><AuditPage language={language} /></ComponentErrorBoundary> : null}
+              {page === "projects" ? <ComponentErrorBoundary language={language}><ProjectsList language={language} /></ComponentErrorBoundary> : null}
+              {page === "projectRegister" ? <ComponentErrorBoundary language={language}><ProjectRegister language={language} /></ComponentErrorBoundary> : null}
+              {page === "projectUpdate" ? <ComponentErrorBoundary language={language}><ProjectUpdate language={language} /></ComponentErrorBoundary> : null}
+              {page === "dispatches" ? <ComponentErrorBoundary language={language}><DispatchesPage language={language} /></ComponentErrorBoundary> : null}
+              {page === "dispatchDetail" ? <ComponentErrorBoundary language={language}><DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
+              {page === "projectDetail" ? <ComponentErrorBoundary language={language}><ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
             </Suspense>
           )}
         </main>
