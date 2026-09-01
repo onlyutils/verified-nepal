@@ -17,6 +17,7 @@
   },
   "include": [
     "vite.config.ts",
-    "tailwind.config.ts"
+    "tailwind.config.ts",
+    "src/lib/sw-rules.ts"
   ]
 }
