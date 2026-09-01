@@ -92,6 +92,20 @@ function maskEmail(email) {
   return `${first}***@${domain}`;
 }
 
+function publicActorName(item) {
+  const raw = (item.actorName ?? item.actorEmail ?? "").trim();
+  if (!raw) return "Moderator";
+  if (raw.includes("@")) {
+    const at = raw.indexOf("@");
+    const local = raw.slice(0, at);
+    const domain = raw.slice(at + 1);
+    if (!domain) return "Moderator";
+    const first = local[0] || "*";
+    return `${first}***@${domain}`;
+  }
+  return raw;
+}
+
 function getNeedTargetLabel(need) {
   const masked = maskName(need?.beneficiary?.name || need?.name || "");
   const ward = need?.beneficiary?.ward ?? need?.ward;
@@ -749,7 +763,7 @@ async function handleAdminUsersRole(event, opts, targetSub) {
   if (!user.createdAt) user.createdAt = user.gsi2sk;
   await ddb.send(new PutCommand({ TableName: tableName, Item: user }));
   const nowIso = new Date().toISOString();
-  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorName = auth.user?.name || auth.payload.name || "";
   const targetLabel = maskEmail(user.email || "");
   const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action: "role.set", targetType: "USER", targetId: targetSub, targetLabel, reason: `role:${role}`, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
@@ -818,7 +832,7 @@ async function handleGetAudit(event, { getDdb, env }) {
   const res = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false, ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}) , Limit: 20 }));
   const rawItems = res.Items || [];
   const items = rawItems.map((it) => {
-    const o = { ts: it.ts || it.createdAt, actorName: it.actorName || it.actorEmail || "", action: it.action, targetType: it.targetType, targetLabel: it.targetLabel || "" };
+    const o = { ts: it.ts || it.createdAt, actorName: publicActorName(it), action: it.action, targetType: it.targetType, targetLabel: it.targetLabel && String(it.targetLabel).trim() ? String(it.targetLabel).trim() : "—" };
     if (it.reason) o.reason = it.reason;
     return o;
   });
@@ -1301,7 +1315,7 @@ async function handlePostModeration(event, opts, id) {
     await ddb.send(new PutCommand({ TableName: tableName, Item: claimPtr }));
   }
   const nowIso = new Date().toISOString();
-  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorName = auth.user?.name || auth.payload.name || "";
   const targetLabel = getTargetLabelForAudit(type, item);
   const reasonVal = reason ? reason.trim() : undefined;
   const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action, targetType: type, targetId: id, targetLabel, reason: reasonVal, ts: nowIso });
@@ -1344,7 +1358,7 @@ async function handlePostNeedStatus(event, opts, needId) {
     } catch (_e) {}
   }
   const nowIso = new Date().toISOString();
-  const actorName2 = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorName2 = auth.user?.name || auth.payload.name || "";
   const targetLabel2 = getTargetLabelForAudit("NEED", need);
   const audit2 = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorName2, action: `status:${status}`, targetType: "NEED", targetId: needId, targetLabel: targetLabel2, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit2 }));
@@ -1419,7 +1433,7 @@ async function performRedeem({ ddb, tableName, claimCode, providedRedeemedAt, no
   await ddb.send(new PutCommand({ TableName: tableName, Item: item1 }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: item2 }));
   const nowIso = new Date().toISOString();
-  const actorName3 = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorName3 = auth.user?.name || auth.payload.name || "";
   const targetLabel3 = getTargetLabelForAudit("NEED", need);
   const audit3 = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorName3, action: "redeem", targetType: "NEED", targetId: needId, targetLabel: targetLabel3, reason: ledgerBase.note, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit3 }));
@@ -1996,7 +2010,7 @@ async function handlePostModerationProject(event, opts, projectId) {
     proj.photos = photos;
     await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
   }
-  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorName = auth.user?.name || auth.payload.name || "";
   const targetLabel = getTargetLabelForAudit("PROJECT", proj);
   const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action: auditAction, targetType: "PROJECT", targetId: projectId, targetLabel, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
@@ -2028,7 +2042,7 @@ async function handlePostModerationUpdate(event, opts, projectId, updateId) {
     if (reason) target.rejectionReason = String(reason).trim();
     await ddb.send(new PutCommand({ TableName: tableName, Item: target }));
   }
-  const actorNameU = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorNameU = auth.user?.name || auth.payload.name || "";
   const targetLabelU = getTargetLabelForAudit("UPDATE", target);
   const auditU = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorNameU, action: `update:${action}`, targetType: "UPDATE", targetId: updateId, targetLabel: targetLabelU, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: auditU }));
@@ -2355,7 +2369,7 @@ async function handlePostModerationDispatch(event, opts, id) {
     if (reason && typeof reason === "string" && reason.trim()) item.rejectionReason = reason.trim();
     await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   }
-  const actorNameD = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const actorNameD = auth.user?.name || auth.payload.name || "";
   const targetLabelD = getTargetLabelForAudit("DISPATCH", item);
   const auditD = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorNameD, action, targetType: "DISPATCH", targetId: id, targetLabel: targetLabelD, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: auditD }));
