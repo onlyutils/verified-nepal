@@ -837,3 +837,26 @@ export interface CenterFlagInboxItem {
 export function getModerationCenterFlags(token: string): Promise<{ items: CenterFlagInboxItem[] }> {
   return request("/moderation/center-flags", { token });
 }
+
+// Phase 3 — staff, donor drop codes
+export function listOrgMembers(token: string, orgId: string): Promise<{ items: OrgMember[] }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/members`, { token });
+}
+export function inviteOrgMember(token: string, orgId: string, body: { email: string }): Promise<{ status: "invited" | "member" }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/members`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function removeOrgMember(token: string, orgId: string, subOrEmail: string): Promise<{ ok: boolean }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/members/${encodeURIComponent(subOrEmail)}`, { method: "DELETE", token });
+}
+export function declareDonation(centerId: string, body: { category: string; qty: number; note?: string; turnstileToken?: string }): Promise<{ ref: string }> {
+  return request(`/centers/${encodeURIComponent(centerId)}/donations`, { method: "POST", body: JSON.stringify(body) });
+}
+export function getDonation(ref: string): Promise<DonationStatus> {
+  return request(`/donations/${encodeURIComponent(ref)}`);
+}
+export function listCenterDonations(token: string, centerId: string, status: "declared" | "received" | "not_received" = "declared"): Promise<{ items: DonationStatus[] }> {
+  return request(`/centers/${encodeURIComponent(centerId)}/donations${qs({ status })}`, { token });
+}
+export function confirmDonation(token: string, ref: string, body: { qty?: number } | { action: "not_received" }): Promise<{ entryId?: string; ok?: boolean }> {
+  return request(`/donations/${encodeURIComponent(ref)}/confirm`, { method: "POST", body: JSON.stringify(body), token });
+}

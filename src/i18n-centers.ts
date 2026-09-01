@@ -6,6 +6,7 @@ export const centerStrings = {
     dropCentersTitle: "Drop centers",
     navDropCenters: "Drop centers",
     unverifiedOrg: "Unverified organization",
+    donationStatusTitle: "Your drop",
     centersSectionLabel: "Relief network",
     centersStandfirst:
       "Independent organizations collect food, water and shelter goods at these centers. Stock and activity figures are logged by the organizations themselves and are not independently verified.",
@@ -71,6 +72,7 @@ export const centerStrings = {
     dropCentersTitle: "सामग्री सङ्कलन केन्द्रहरू",
     navDropCenters: "सङ्कलन केन्द्र",
     unverifiedOrg: "प्रमाणित नभएको संस्था",
+    donationStatusTitle: "तपाईंको सहयोग",
     centersSectionLabel: "राहत सञ्जाल",
     centersStandfirst:
       "स्वतन्त्र संस्थाहरूले यी केन्द्रहरूमा खाद्यान्न, पानी र आवास सामग्री सङ्कलन गर्छन्। मौज्दात र गतिविधि तथ्याङ्क संस्थाकै कर्मचारीले प्रविष्ट गरेका हुन् र स्वतन्त्र रूपमा प्रमाणित गरिएको छैन।",

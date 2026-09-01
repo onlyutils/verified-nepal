@@ -28,6 +28,7 @@ const RegisterOrganization = lazy(() => import("./pages/register-organization").
 const OrgDashboard = lazy(() => import("./pages/org-dashboard").then((m) => ({ default: m.OrgDashboard })));
 const DropCenters = lazy(() => import("./pages/drop-centers").then((m) => ({ default: m.DropCenters })));
 const DropCenterDetail = lazy(() => import("./pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
+const DonationStatusPage = lazy(() => import("./pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
 
 const pagePaths: Record<Page, string> = {
   dashboard: "/",
@@ -51,9 +52,11 @@ const pagePaths: Record<Page, string> = {
   org: "/org",
   dropCenters: "/drop-centers",
   dropCenterDetail: "/drop-centers/:id",
+  donationStatus: "/donation/:ref",
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.match(/^\/donation\/[^\/]+/)) return "donationStatus";
   if (pathname.startsWith("/register-organization")) return "registerOrg";
   if (pathname.startsWith("/org")) return "org";
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
@@ -100,6 +103,7 @@ function pageTitle(page: Page, language: Language): string {
     org: orgStrings[language].orgDashboardTitle,
     dropCenters: centerStrings[language].dropCentersTitle,
     dropCenterDetail: centerStrings[language].dropCentersTitle,
+    donationStatus: centerStrings[language].donationStatusTitle,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -202,6 +206,7 @@ export function App() {
               {page === "org" ? <ComponentErrorBoundary language={language}><OrgDashboard language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
               {page === "dropCenters" ? <ComponentErrorBoundary language={language}><DropCenters language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
               {page === "dropCenterDetail" ? <ComponentErrorBoundary language={language}><DropCenterDetail language={language} navigate={navigate} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
+              {page === "donationStatus" ? <ComponentErrorBoundary language={language}><DonationStatusPage language={language} navigate={navigate} refCode={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
             </Suspense>
           )}
         </main>
