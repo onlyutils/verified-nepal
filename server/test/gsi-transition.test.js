@@ -12,7 +12,7 @@ describe("GSI status transition", () => {
     const ddb = new FakeDdb();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
 
     let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "Gita Karki", district: "Gorkha", ward: 7 }, category: "goods", description: "Need food and shelter for fulfilled GSI test case long enough", language: "en" } }));

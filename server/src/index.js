@@ -82,6 +82,130 @@ function maskName(name) {
   return `${first} ${last[0].toUpperCase()}.`;
 }
 
+function maskEmail(email) {
+  if (!email || typeof email !== "string") return "";
+  const at = email.indexOf("@");
+  if (at <= 0) return email;
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const first = local[0] || "*";
+  return `${first}***@${domain}`;
+}
+
+function getNeedTargetLabel(need) {
+  const masked = maskName(need?.beneficiary?.name || need?.name || "");
+  const ward = need?.beneficiary?.ward ?? need?.ward;
+  if (ward !== undefined && ward !== null) return `${masked}, Ward ${ward}`;
+  return masked;
+}
+
+function getTargetLabelForAudit(targetType, item) {
+  if (!item) return "";
+  if (targetType === "NEED") return getNeedTargetLabel(item);
+  if (targetType === "OFFER") {
+    const helper = item.helperLabel || maskName(item.helperName || "");
+    return helper;
+  }
+  if (targetType === "PROJECT") {
+    const t = item.title;
+    if (t && typeof t === "object") return (t.en || t.ne || "").slice(0, 200);
+    if (typeof t === "string") return t.slice(0, 200);
+    return item.id || "";
+  }
+  if (targetType === "DISPATCH") {
+    const t = item.title;
+    if (t && typeof t === "object") return (t.en || t.ne || "").slice(0, 200);
+    if (typeof t === "string") return t.slice(0, 200);
+    return item.id || "";
+  }
+  if (targetType === "USER") {
+    return maskEmail(item.email || "");
+  }
+  if (targetType === "UPDATE") {
+    return (item.text || "").slice(0, 80);
+  }
+  return String(item.id || item.PK || "").slice(0, 200);
+}
+
+function buildAuditEntry({ actorSub, actorName, action, targetType, targetId, targetLabel, reason, ts }) {
+  const ym = ts.slice(0, 7);
+  const entry = {
+    PK: `AUDIT#${ym}`,
+    SK: `${ts}#${actorSub}#${randomUUID().slice(0, 6)}`,
+    type: "AUDIT",
+    actorSub,
+    actorName: actorName || "",
+    action,
+    targetType,
+    targetId,
+    targetLabel: targetLabel || "",
+    ts,
+    createdAt: ts,
+  };
+  if (reason) entry.reason = String(reason).trim();
+  return entry;
+}
+
+function ensureGuidelinesAck(auth) {
+  if (auth.role === "moderator" && !auth.user?.guidelinesAckAt) {
+    throw err(403, "guidelines_not_acknowledged");
+  }
+}
+
+function getItemDistrict(item) {
+  if (!item) return "";
+  if (item.PK && item.PK.startsWith("NEED#")) return item.beneficiary?.district || item.district || "";
+  if (item.PK && item.PK.startsWith("OFFER#")) return Array.isArray(item.districts) ? item.districts : [];
+  if (item.PK && item.PK.startsWith("PROJECT#")) return item.district || "";
+  if (item.type === "NEED") return item.beneficiary?.district || item.district || "";
+  if (item.type === "OFFER") return Array.isArray(item.districts) ? item.districts : [];
+  if (item.type === "PROJECT") return item.district || "";
+  return "";
+}
+
+function isOutOfScope(user, itemOrDistrict) {
+  if (!user) return false;
+  if (user.role === "admin") return false;
+  const scope = Array.isArray(user.districts) ? user.districts : [];
+  if (scope.length === 0) return false;
+  let districts = [];
+  if (typeof itemOrDistrict === "string") districts = [itemOrDistrict];
+  else if (Array.isArray(itemOrDistrict)) districts = itemOrDistrict;
+  else if (itemOrDistrict && typeof itemOrDistrict === "object") {
+    const d = getItemDistrict(itemOrDistrict);
+    if (Array.isArray(d)) districts = d;
+    else if (typeof d === "string" && d) districts = [d];
+    else districts = [];
+  }
+  if (districts.length === 0) return true;
+  return !districts.some((d) => scope.includes(d));
+}
+
+async function ensureUserBackfill({ ddb, tableName, user, payload }) {
+  if (!user) return;
+  let needsUpdate = false;
+  const clone = { ...user };
+  if (!Array.isArray(clone.districts)) { clone.districts = []; needsUpdate = true; }
+  const expectedGsi2pk = `USER#${clone.role}`;
+  if (clone.gsi2pk !== expectedGsi2pk) { clone.gsi2pk = expectedGsi2pk; needsUpdate = true; }
+  if (!clone.gsi2sk && clone.createdAt) { clone.gsi2sk = clone.createdAt; needsUpdate = true; }
+  if (!clone.gsi2sk && !clone.createdAt) { clone.gsi2sk = new Date().toISOString(); clone.createdAt = clone.gsi2sk; needsUpdate = true; }
+  if (needsUpdate) {
+    try { await ddb.send(new PutCommand({ TableName: tableName, Item: clone })); } catch (_e) {}
+    Object.assign(user, clone);
+  }
+  if (user.email) {
+    const lower = String(user.email).toLowerCase();
+    const pk = `EMAIL#${lower}`;
+    try {
+      const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: pk, SK: "META" } }));
+      if (!res.Item) {
+        await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: pk, SK: "META", type: "EMAIL", sub: user.sub || payload.sub, email: user.email, createdAt: user.createdAt || new Date().toISOString() } }));
+      }
+    } catch (_e) {}
+  }
+}
+
 function hashUpdateCode(code) {
   return createHash("sha256").update(code).digest("hex");
 }
@@ -426,9 +550,14 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     const role = existing.role;
     const email = existing.email ?? "";
     const name = existing.name ?? "";
+    const districts = Array.isArray(existing.districts) ? existing.districts : [];
+    const guidelinesAckAt = existing.guidelinesAckAt;
     const emailResolved = Boolean(email);
     try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
-    return json(200, { sub: payload.sub, email, name, role });
+    await ensureUserBackfill({ ddb, tableName, user: existing, payload });
+    const out = { sub: payload.sub, email, name, role, districts };
+    if (guidelinesAckAt) out.guidelinesAckAt = guidelinesAckAt;
+    return json(200, out);
   }
   const fetchFn = fetchImpl ?? globalThis.fetch;
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
@@ -464,7 +593,8 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   if (adminEmails.includes(emailLower)) role = "admin";
   else if (moderatorEmails.includes(emailLower)) role = "moderator";
   else role = "helper";
-  const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, role, createdAt: new Date().toISOString() };
+  const nowIso = new Date().toISOString();
+  const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, role, districts: [], createdAt: nowIso, gsi2pk: `USER#${role}`, gsi2sk: nowIso };
   if (email !== undefined) item.email = email;
   if (name !== undefined) item.name = name;
   try {
@@ -473,7 +603,11 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch (_e) {}
     return json(500, { error: "storage" });
   }
-  return json(200, { sub: payload.sub, email: email ?? "", name: name ?? "", role });
+  if (email) {
+    const lower = String(email).toLowerCase();
+    try { await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: `EMAIL#${lower}`, SK: "META", type: "EMAIL", sub: payload.sub, email, createdAt: nowIso } })); } catch (_e) {}
+  }
+  return json(200, { sub: payload.sub, email: email ?? "", name: name ?? "", role, districts: [], guidelinesAckAt: undefined });
 }
 
 async function requireAuth(event, { fetchJwks, getDdb, env }) {
@@ -508,6 +642,189 @@ async function requireAuth(event, { fetchJwks, getDdb, env }) {
     role = "helper";
   }
   return { payload, user, role, ddb, tableName };
+}
+
+async function handleAckGuidelines(event, opts) {
+  const auth = await requireAuth(event, opts);
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const pk = `USER#${auth.payload.sub}`;
+  const sk = "PROFILE";
+  let user = auth.user;
+  if (!user) {
+    const nowIso = new Date().toISOString();
+    user = { PK: pk, SK: sk, type: "USER", sub: auth.payload.sub, role: auth.role || "helper", districts: [], createdAt: nowIso, gsi2pk: `USER#${auth.role || "helper"}`, gsi2sk: nowIso, email: auth.payload.email || "", name: auth.payload.name || "" };
+  }
+  const nowIso = new Date().toISOString();
+  user.guidelinesAckAt = nowIso;
+  if (!Array.isArray(user.districts)) user.districts = [];
+  if (!user.gsi2pk) user.gsi2pk = `USER#${user.role}`;
+  if (!user.gsi2sk) user.gsi2sk = user.createdAt || nowIso;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: user }));
+  return json(200, { guidelinesAckAt: nowIso });
+}
+
+async function handleAdminUsersList(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (auth.role !== "admin") throw err(403, "Forbidden");
+  const q = getQuery(event);
+  const roleFilter = q.role ? String(q.role).trim() : "";
+  const cursorRaw = q.cursor ? String(q.cursor).trim() : "";
+  if (roleFilter && !["helper","moderator","admin"].includes(roleFilter)) throw err(400, "invalid role");
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const cursorKey = decodeCursor(cursorRaw);
+  const roles = roleFilter ? [roleFilter] : ["helper","moderator","admin"];
+  let all = [];
+  for (const r of roles) {
+    const pk = `USER#${r}`;
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: true }));
+    if (res.Items) all.push(...res.Items);
+  }
+  all.sort((a,b) => (b.createdAt||"").localeCompare(a.createdAt||""));
+  let start = 0;
+  if (cursorKey) {
+    const idx = all.findIndex((it) => it.PK === cursorKey.PK && it.SK === cursorKey.SK);
+    if (idx === -1) throw err(400, "invalid cursor");
+    start = idx + 1;
+  }
+  const limit = 20;
+  const sliced = all.slice(start, start + limit);
+  const items = sliced.map((u) => ({ sub: u.sub || u.PK.replace(/^USER#/,""), email: u.email || "", name: u.name || "", role: u.role, districts: Array.isArray(u.districts) ? u.districts : [], guidelinesAckAt: u.guidelinesAckAt, createdAt: u.createdAt }));
+  const body = { items };
+  if (start + limit < all.length) {
+    const last = sliced[sliced.length - 1];
+    body.cursor = encodeCursor({ PK: last.PK, SK: last.SK });
+  }
+  return json(200, body);
+}
+
+async function handleAdminUsersLookup(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (auth.role !== "admin") throw err(403, "Forbidden");
+  const q = getQuery(event);
+  const emailRaw = q.email ? String(q.email).trim() : "";
+  if (!emailRaw) throw err(400, "email required");
+  const lower = emailRaw.toLowerCase();
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const ptr = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `EMAIL#${lower}`, SK: "META" } }))).Item;
+  if (!ptr) throw err(404, "not found");
+  const sub = ptr.sub;
+  const user = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `USER#${sub}`, SK: "PROFILE" } }))).Item;
+  if (!user) throw err(404, "not found");
+  return json(200, { sub: user.sub || sub, email: user.email || "", name: user.name || "", role: user.role, districts: Array.isArray(user.districts) ? user.districts : [], guidelinesAckAt: user.guidelinesAckAt, createdAt: user.createdAt });
+}
+
+async function handleAdminUsersRole(event, opts, targetSub) {
+  const auth = await requireAuth(event, opts);
+  if (auth.role !== "admin") throw err(403, "Forbidden");
+  if (auth.payload.sub === targetSub) {
+    const bodyTmp = parseBody(event) || {};
+    const requestedRole = bodyTmp.role ? String(bodyTmp.role).trim() : "";
+    if (["helper","moderator"].includes(requestedRole) || (requestedRole === "admin" ? false : false)) {
+      // self demotion guard: admin cannot demote themselves
+      if (requestedRole !== "admin") throw err(403, "self_demotion_not_allowed");
+    }
+  }
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const role = body.role ? String(body.role).trim() : "";
+  if (!["helper","moderator","admin"].includes(role)) throw err(400, "role must be helper|moderator|admin");
+  let districts = [];
+  if (body.districts !== undefined) {
+    if (!Array.isArray(body.districts)) throw err(400, "districts must be array");
+    districts = body.districts.map((d) => validateString(d, "districts[]", 1, 100));
+  }
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const user = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `USER#${targetSub}`, SK: "PROFILE" } }))).Item;
+  if (!user) throw err(404, "not found");
+  // self demotion guard second check after fetch
+  if (auth.payload.sub === targetSub && user.role === "admin" && role !== "admin") throw err(403, "self_demotion_not_allowed");
+  user.role = role;
+  user.districts = districts;
+  user.gsi2pk = `USER#${role}`;
+  user.gsi2sk = user.createdAt || new Date().toISOString();
+  if (!user.createdAt) user.createdAt = user.gsi2sk;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: user }));
+  const nowIso = new Date().toISOString();
+  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabel = maskEmail(user.email || "");
+  const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action: "role.set", targetType: "USER", targetId: targetSub, targetLabel, reason: `role:${role}`, ts: nowIso });
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  return json(200, { role, districts });
+}
+
+async function handleAdminStats(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (auth.role !== "admin") throw err(403, "Forbidden");
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  async function countGsi2(pk) {
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, Select: "COUNT" }));
+    if (typeof res.Count === "number") return res.Count;
+    return (res.Items || []).length;
+  }
+  const needs = {
+    pending: await countGsi2("NEED#pending"),
+    published: await countGsi2("NEED#published"),
+    matched: await countGsi2("NEED#matched"),
+    fulfilled: await countGsi2("NEED#fulfilled"),
+  };
+  const offers = {
+    pending: await countGsi2("OFFER#pending"),
+    published: await countGsi2("OFFER#published"),
+  };
+  const projects = {
+    pending: await countGsi2("PROJECT#pending"),
+    published: await countGsi2("PROJECT#published"),
+    "in-progress": await countGsi2("PROJECT#in-progress"),
+    completed: await countGsi2("PROJECT#completed"),
+  };
+  const dispatches = {
+    pending: await countGsi2("DISPATCH#pending"),
+    published: await countGsi2("DISPATCH#published"),
+  };
+  const moderators = await countGsi2("USER#moderator");
+  // oldest pending
+  let oldest = null;
+  for (const pk of ["NEED#pending","OFFER#pending","PROJECT#pending","DISPATCH#pending"]) {
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: true, Limit: 1 }));
+    const item = res.Items && res.Items[0];
+    if (item && item.createdAt) {
+      if (!oldest || item.createdAt < oldest) oldest = item.createdAt;
+    }
+  }
+  let oldestPendingAgeHours = 0;
+  if (oldest) {
+    const diffMs = Date.now() - new Date(oldest).getTime();
+    oldestPendingAgeHours = Math.floor(diffMs / (1000*60*60));
+    if (oldestPendingAgeHours < 0) oldestPendingAgeHours = 0;
+  }
+  return json(200, { needs, offers, projects, dispatches, oldestPendingAgeHours, moderators });
+}
+
+async function handleGetAudit(event, { getDdb, env }) {
+  const q = getQuery(event);
+  const monthRaw = q.month ? String(q.month).trim() : "";
+  const cursorRaw = q.cursor ? String(q.cursor).trim() : "";
+  if (!monthRaw || !/^\d{4}-\d{2}$/.test(monthRaw)) throw err(400, "month must be YYYY-MM");
+  const cursorKey = decodeCursor(cursorRaw);
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const pk = `AUDIT#${monthRaw}`;
+  const res = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false, ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}) , Limit: 20 }));
+  const rawItems = res.Items || [];
+  const items = rawItems.map((it) => {
+    const o = { ts: it.ts || it.createdAt, actorName: it.actorName || it.actorEmail || "", action: it.action, targetType: it.targetType, targetLabel: it.targetLabel || "" };
+    if (it.reason) o.reason = it.reason;
+    return o;
+  });
+  const body = { items };
+  if (res.LastEvaluatedKey) body.cursor = encodeCursor(res.LastEvaluatedKey);
+  return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
 }
 
 async function handlePostNeeds(event, { getDdb, env }) {
@@ -819,6 +1136,7 @@ async function handleGetOffers(event, { getDdb, env }) {
 async function handleGetModerationQueue(event, opts) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   let pending = [];
@@ -834,6 +1152,9 @@ async function handleGetModerationQueue(event, opts) {
     if (res.Items) pending.push(...res.Items);
   }
   pending.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
+    pending = pending.filter((it) => !isOutOfScope(auth.user, it));
+  }
   const allNeedStatuses = ["pending", "published", "matched", "fulfilled", "archived", "rejected"];
   let needsAll = [];
   for (const s of allNeedStatuses) {
@@ -867,6 +1188,7 @@ async function handleGetModerationQueue(event, opts) {
 async function handlePostModeration(event, opts, id) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason, edits } = body;
@@ -884,6 +1206,7 @@ async function handlePostModeration(event, opts, id) {
     type = "OFFER";
   }
   if (!item) throw err(404, "not found");
+  if (isOutOfScope(auth.user, item)) throw err(403, "out_of_scope");
   if (item.status !== "pending") throw err(400, "only pending items can be moderated");
   if (edits && typeof edits === "object") {
     if (edits.description !== undefined) item.description = validateString(edits.description, "edits.description", 10, 2000);
@@ -978,22 +1301,10 @@ async function handlePostModeration(event, opts, id) {
     await ddb.send(new PutCommand({ TableName: tableName, Item: claimPtr }));
   }
   const nowIso = new Date().toISOString();
-  const ym = nowIso.slice(0, 7);
-  const audit = {
-    PK: `AUDIT#${ym}`,
-    SK: `${nowIso}#${auth.payload.sub}`,
-    type: "AUDIT",
-    action,
-    targetId: id,
-    targetType: type,
-    actorSub: auth.payload.sub,
-    actorEmail: auth.payload.email || auth.user?.email || "",
-    reason: reason ? reason.trim() : undefined,
-    edits: edits || undefined,
-    createdAt: nowIso,
-  };
-  if (!audit.reason) delete audit.reason;
-  if (!audit.edits) delete audit.edits;
+  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabel = getTargetLabelForAudit(type, item);
+  const reasonVal = reason ? reason.trim() : undefined;
+  const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action, targetType: type, targetId: id, targetLabel, reason: reasonVal, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
   const resp = { status: newStatus };
   if (mintedClaimCode) resp.claimCode = mintedClaimCode;
@@ -1003,6 +1314,7 @@ async function handlePostModeration(event, opts, id) {
 async function handlePostNeedStatus(event, opts, needId) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { status, offerId } = body;
@@ -1011,6 +1323,7 @@ async function handlePostNeedStatus(event, opts, needId) {
   const ddb = auth.ddb;
   const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${needId}`, SK: "META" } }))).Item;
   if (!need) throw err(404, "not found");
+  if (isOutOfScope(auth.user, need)) throw err(403, "out_of_scope");
   if (need.status === "pending" || need.status === "rejected") throw err(400, "need must be published before status update");
   need.status = status;
   const district = need.beneficiary?.district || need.district || "";
@@ -1031,21 +1344,10 @@ async function handlePostNeedStatus(event, opts, needId) {
     } catch (_e) {}
   }
   const nowIso = new Date().toISOString();
-  const ym = nowIso.slice(0, 7);
-  const audit = {
-    PK: `AUDIT#${ym}`,
-    SK: `${nowIso}#${auth.payload.sub}`,
-    type: "AUDIT",
-    action: `status:${status}`,
-    targetId: needId,
-    targetType: "NEED",
-    actorSub: auth.payload.sub,
-    createdAt: nowIso,
-    status,
-    offerId: offerId || undefined,
-  };
-  if (!audit.offerId) delete audit.offerId;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  const actorName2 = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabel2 = getTargetLabelForAudit("NEED", need);
+  const audit2 = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorName2, action: `status:${status}`, targetType: "NEED", targetId: needId, targetLabel: targetLabel2, ts: nowIso });
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit2 }));
   if (status === "matched") {
     let offer = null;
     if (offerId) {
@@ -1086,6 +1388,7 @@ async function performRedeem({ ddb, tableName, claimCode, providedRedeemedAt, no
   const needId = claim.needId;
   const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${needId}`, SK: "META" } }))).Item;
   if (!need) return { status: "unknown" };
+  if (isOutOfScope(auth.user, need)) throw err(403, "out_of_scope");
   if (need.redeemedAt) {
     return { status: "already_redeemed", needId, redeemedAt: need.redeemedAt };
   }
@@ -1116,16 +1419,17 @@ async function performRedeem({ ddb, tableName, claimCode, providedRedeemedAt, no
   await ddb.send(new PutCommand({ TableName: tableName, Item: item1 }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: item2 }));
   const nowIso = new Date().toISOString();
-  const ym = nowIso.slice(0, 7);
-  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}`, type: "AUDIT", action: "redeem", targetId: needId, targetType: "NEED", claimCode, actorSub: auth.payload.sub, createdAt: nowIso, redeemedAt, note: ledgerBase.note };
-  if (!audit.note) delete audit.note;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  const actorName3 = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabel3 = getTargetLabelForAudit("NEED", need);
+  const audit3 = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorName3, action: "redeem", targetType: "NEED", targetId: needId, targetLabel: targetLabel3, reason: ledgerBase.note, ts: nowIso });
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit3 }));
   return { status: "redeemed", needId, redeemedAt };
 }
 
 async function handleRedeem(event, opts, code) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const body = parseBody(event) || {};
   let note;
   if (body.note !== undefined && body.note !== null) {
@@ -1149,6 +1453,7 @@ async function handleRedeem(event, opts, code) {
 async function handleSync(event, opts) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object" || !Array.isArray(body.redemptions)) throw err(400, "redemptions must be array");
   const redemptions = body.redemptions;
@@ -1186,6 +1491,7 @@ async function handleSync(event, opts) {
 async function handlePrint(event, opts) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
   const wardRaw = q.ward ? String(q.ward).trim() : "";
@@ -1193,6 +1499,7 @@ async function handlePrint(event, opts) {
   if (!wardRaw) throw err(400, "ward required");
   const ward = Number(wardRaw);
   if (!Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
+  if (isOutOfScope(auth.user, district)) throw err(403, "out_of_scope");
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   let items = [];
@@ -1281,6 +1588,7 @@ async function handlePostFlag(event, { getDdb, env }, needId) {
 async function handleGetFlags(event, opts) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const pointers = [];
@@ -1319,8 +1627,12 @@ async function handleGetFlags(event, opts) {
       flags,
     });
   }
-  out.sort((a, b) => b.flagCount - a.flagCount || a.maskedName.localeCompare(b.maskedName));
-  return json(200, { items: out });
+  let filtered = out;
+  if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
+    filtered = out.filter((it) => !isOutOfScope(auth.user, it.district));
+  }
+  filtered.sort((a, b) => b.flagCount - a.flagCount || a.maskedName.localeCompare(b.maskedName));
+  return json(200, { items: filtered });
 }
 
 
@@ -1595,6 +1907,7 @@ async function handlePostUpdate(event, opts, projectId) {
 
 async function handleGetModerationProjects(event, opts) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   let all = [];
@@ -1604,6 +1917,9 @@ async function handleGetModerationProjects(event, opts) {
     if (res.Items) all.push(...res.Items);
   }
   all.sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
+  if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
+    all = all.filter((proj) => !isOutOfScope(auth.user, proj));
+  }
   const items = [];
   for (const proj of all) {
     const updRes = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)", ExpressionAttributeValues: { ":pk": proj.PK, ":prefix": "UPDATE#" }, ScanIndexForward: true }));
@@ -1617,6 +1933,7 @@ async function handleGetModerationProjects(event, opts) {
 
 async function handlePostModerationProject(event, opts, projectId) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason, status, fileId } = body;
@@ -1626,6 +1943,7 @@ async function handlePostModerationProject(event, opts, projectId) {
   const ddb = auth.ddb;
   const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
   if (!proj) throw err(404, "not found");
+  if (isOutOfScope(auth.user, proj)) throw err(403, "out_of_scope");
   const nowIso = new Date().toISOString();
   const ym = nowIso.slice(0,7);
   let auditAction = action;
@@ -1678,22 +1996,24 @@ async function handlePostModerationProject(event, opts, projectId) {
     proj.photos = photos;
     await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
   }
-  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}#${randomUUID().slice(0,6)}`, type: "AUDIT", action: auditAction, targetId: projectId, targetType: "PROJECT", actorSub: auth.payload.sub, createdAt: nowIso };
-  if (reason) audit.reason = String(reason).trim();
-  if (status) audit.status = status;
-  if (fileId) audit.fileId = String(fileId).trim();
+  const actorName = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabel = getTargetLabelForAudit("PROJECT", proj);
+  const audit = buildAuditEntry({ actorSub: auth.payload.sub, actorName, action: auditAction, targetType: "PROJECT", targetId: projectId, targetLabel, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
   return json(200, { status: proj.status });
 }
 
 async function handlePostModerationUpdate(event, opts, projectId, updateId) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason } = body;
   if (!["publish","reject"].includes(action)) throw err(400, `action must be publish or reject`);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
+  const projCheck = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (projCheck && isOutOfScope(auth.user, projCheck)) throw err(403, "out_of_scope");
   const updRes = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)", ExpressionAttributeValues: { ":pk": `PROJECT#${projectId}`, ":prefix": "UPDATE#" } }));
   const items = updRes.Items || [];
   const target = items.find((it)=>it.id===updateId);
@@ -1708,9 +2028,10 @@ async function handlePostModerationUpdate(event, opts, projectId, updateId) {
     if (reason) target.rejectionReason = String(reason).trim();
     await ddb.send(new PutCommand({ TableName: tableName, Item: target }));
   }
-  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}#${randomUUID().slice(0,6)}`, type: "AUDIT", action: `update:${action}`, targetId: updateId, targetType: "UPDATE", projectId, actorSub: auth.payload.sub, createdAt: nowIso };
-  if (reason) audit.reason = String(reason).trim();
-  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  const actorNameU = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabelU = getTargetLabelForAudit("UPDATE", target);
+  const auditU = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorNameU, action: `update:${action}`, targetType: "UPDATE", targetId: updateId, targetLabel: targetLabelU, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
+  await ddb.send(new PutCommand({ TableName: tableName, Item: auditU }));
   return json(200, { status: target.status });
 }
 
@@ -1988,6 +2309,7 @@ async function handleGetDispatch(event, { getDdb, env }, id) {
 
 async function handleGetModerationDispatches(event, opts) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const res = await ddb.send(new QueryCommand({
@@ -2004,6 +2326,7 @@ async function handleGetModerationDispatches(event, opts) {
 
 async function handlePostModerationDispatch(event, opts, id) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason } = body;
@@ -2032,19 +2355,10 @@ async function handlePostModerationDispatch(event, opts, id) {
     if (reason && typeof reason === "string" && reason.trim()) item.rejectionReason = reason.trim();
     await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   }
-  const audit = {
-    PK: `AUDIT#${ym}`,
-    SK: `${nowIso}#${auth.payload.sub}`,
-    type: "AUDIT",
-    action,
-    targetId: id,
-    targetType: "DISPATCH",
-    actorSub: auth.payload.sub,
-    actorEmail: auth.payload.email || auth.user?.email || "",
-    createdAt: nowIso,
-  };
-  if (reason) audit.reason = String(reason).trim();
-  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  const actorNameD = auth.user?.name || auth.payload.name || auth.payload.email || "";
+  const targetLabelD = getTargetLabelForAudit("DISPATCH", item);
+  const auditD = buildAuditEntry({ actorSub: auth.payload.sub, actorName: actorNameD, action, targetType: "DISPATCH", targetId: id, targetLabel: targetLabelD, reason: reason ? String(reason).trim() : undefined, ts: nowIso });
+  await ddb.send(new PutCommand({ TableName: tableName, Item: auditD }));
   return json(200, { status: item.status });
 }
 
@@ -2150,6 +2464,11 @@ export function createHandler(opts = {}) {
       if (method === "POST" && path === "/auth/exchange") return await handleAuthExchange(event, { env, fetchImpl });
       if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });
       if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env, fetchImpl });
+      if (method === "POST" && path === "/me/ack-guidelines") return await handleAckGuidelines(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/admin/users/lookup") return await handleAdminUsersLookup(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/admin/users") return await handleAdminUsersList(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/audit") return await handleGetAudit(event, { getDdb, env });
       if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env });
       if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });
       if (method === "GET" && path.startsWith("/status/")) {
@@ -2223,6 +2542,11 @@ export function createHandler(opts = {}) {
       if (method === "GET" && /^\/dispatches\/[^\/]+$/.test(path)) {
         const id = decodeURIComponent(path.split("/")[2]);
         return await handleGetDispatch(event, { getDdb, env }, id);
+      }
+      if (method === "POST" && /^\/admin\/users\/[^\/]+\/role$/.test(path)) {
+        const parts = path.split("/");
+        const sub = decodeURIComponent(parts[3]);
+        return await handleAdminUsersRole(event, { fetchJwks, getDdb, env }, sub);
       }
       return json(404, { error: "Not Found" });
     } catch (e) {

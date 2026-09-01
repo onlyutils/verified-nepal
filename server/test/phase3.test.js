@@ -126,7 +126,7 @@ describe("GET /projects", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
 
     // create 3 projects in different districts/statuses
@@ -204,7 +204,7 @@ describe("GET /projects", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const ids = [];
     for (let i = 0; i < 3; i++) {
@@ -235,7 +235,7 @@ describe("GET /projects/{id} public detail", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const { id, updateCode } = JSON.parse(r.body);
@@ -280,7 +280,7 @@ describe("GET /projects/{id} public detail", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const id = JSON.parse(r.body).id;
@@ -346,7 +346,7 @@ describe("POST /projects/{id}/photos/presign", () => {
       return { ok: false, status: 404, json: async () => ({ message: "not found" }) };
     };
     const { handler } = makeHandler({ kp, ddb, fetchImpl: fetchMock });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const { id, updateCode } = JSON.parse(r.body);
@@ -429,7 +429,7 @@ describe("POST /projects/{id}/photos", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const { id, updateCode } = JSON.parse(r.body);
@@ -487,7 +487,7 @@ describe("POST /projects/{id}/updates", () => {
     assert.equal(upd.photos[0].fileId, "fid1");
 
     // mod cannot create update (should be 401)
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     res = await handler(makeEvent({ method: "POST", path: `/projects/${id}/updates`, headers: { authorization: `Bearer ${modTok}` }, body: { text: "mod try update with enough length here" } }));
     assert.equal(res.statusCode, 401);
@@ -521,7 +521,7 @@ describe("moderation", () => {
     res = await handler(makeEvent({ method: "GET", path: "/moderation/projects" }));
     assert.equal(res.statusCode, 401);
 
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r1 = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody({ title: { en: "A" }, description: { en: "Desc long enough for project A here" } }) }));
     await new Promise(r=>setTimeout(r,2));
@@ -555,7 +555,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const id = JSON.parse(r.body).id;
@@ -584,7 +584,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const id = JSON.parse(r.body).id;
@@ -619,7 +619,7 @@ describe("moderation", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const { id, updateCode } = JSON.parse(r.body);
@@ -646,7 +646,7 @@ describe("masking test", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const { handler } = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     const id = JSON.parse(r.body).id;

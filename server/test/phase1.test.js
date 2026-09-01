@@ -108,7 +108,7 @@ describe("GET /needs public board", () => {
     res = await handler(makeEvent({ method: "GET", path: "/needs" }));
     assert.equal(JSON.parse(res.body).items.length, 0);
     // publish as moderator
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     res = await handler(makeEvent({ method: "POST", path: `/moderation/${id}`, headers: { authorization: `Bearer ${modToken}` }, body: { action: "publish" } }));
     assert.equal(res.statusCode, 200);
@@ -141,7 +141,7 @@ describe("GET /needs public board", () => {
     const fetchJwks = async () => ({ keys: [kp.jwk] });
     const ddb = new FakeDdb();
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
-    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     // create 3 needs in different districts/categories
     const ids = [];
@@ -227,7 +227,7 @@ describe("offers", () => {
     res = await handler(makeEvent({method:"GET", path:"/offers"}));
     assert.equal(JSON.parse(res.body).items.length, 0);
     // publish
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     res = await handler(makeEvent({method:"POST", path:`/moderation/${id}`, headers:{authorization:`Bearer ${modToken}`}, body:{action:"publish"}}));
     assert.equal(res.statusCode, 200);
@@ -260,7 +260,7 @@ describe("moderation", () => {
     assert.equal(res.statusCode, 403);
     res = await handler(makeEvent({method:"GET", path:"/moderation/queue"}));
     assert.equal(res.statusCode, 401);
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     res = await handler(makeEvent({method:"GET", path:"/moderation/queue", headers:{authorization:`Bearer ${modTok}`}}));
     assert.equal(res.statusCode, 200);
@@ -271,7 +271,7 @@ describe("moderation", () => {
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     // create need
     let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Dup Name", district:"Gorkha", ward:2}, category:"goods", description:"Need description long enough for moderation dup test", language:"en"}}));
@@ -324,7 +324,7 @@ describe("POST /needs/:id/status", () => {
     const ddb = new FakeDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Benef Person", phone:"+9779800000001", district:"Gorkha", ward:3}, category:"goods", description:"Need description long enough for status change", language:"en"}}));
     const {id:needId} = JSON.parse(res.body);

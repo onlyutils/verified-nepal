@@ -40,7 +40,7 @@ describe("Phase2 claim mint", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const {handler} = makeHandler({ kp, ddb });
-    ddb.store.set("USER#mod-1|PROFILE", { PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", { PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const {id, refCode} = await createNeed(handler, { name:"Sita Sharma", district:"Gorkha", ward:3 });
     // before publish, status has no claimCode
@@ -90,7 +90,7 @@ describe("Phase2 claim mint", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const {handler} = makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     for(let i=0;i<5;i++){
       const {id} = await createNeed(handler, { ward: (i%33)+1, name:`Ben ${i} Kumar`});
@@ -107,7 +107,7 @@ describe("POST /claims/:code/redeem", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const {handler} = makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     ddb.store.set("USER#helper-1|PROFILE", {PK:"USER#helper-1", SK:"PROFILE", sub:"helper-1", role:"helper"});
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const helperTok = createToken(basePayload({sub:"helper-1"}), kp.privateKey);
@@ -167,7 +167,7 @@ describe("POST /claims/sync", () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const {handler} = makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const helperTok = createToken(basePayload({sub:"helper-1"}), kp.privateKey);
     ddb.store.set("USER#helper-1|PROFILE", {PK:"USER#helper-1", SK:"PROFILE", sub:"helper-1", role:"helper"});
@@ -218,7 +218,7 @@ describe("GET /claims/print", () => {
     const kp=makeKeyPair();
     const ddb=new FakeDdb();
     const {handler}=makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     ddb.store.set("USER#helper-1|PROFILE", {PK:"USER#helper-1", SK:"PROFILE", sub:"helper-1", role:"helper"});
     const modTok=createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const helperTok=createToken(basePayload({sub:"helper-1"}), kp.privateKey);
@@ -273,7 +273,7 @@ describe("GET /ledger", () => {
     const kp=makeKeyPair();
     const ddb=new FakeDdb();
     const {handler}=makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok=createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     // create needs with names that test masking / csv
     const {id:id1} = await createNeed(handler, {name:"Ram, Bahadur", district:"Gorkha", ward:4, category:"goods"});
@@ -354,7 +354,7 @@ describe("flags", () => {
     const kp=makeKeyPair();
     const ddb=new FakeDdb();
     const {handler} = makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok=createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const {id} = await createNeed(handler, { district:"Gorkha", ward:2 });
     // invalid reason
@@ -425,7 +425,7 @@ describe("flags", () => {
     // create need without secret first
     let handlerWrap = makeHandler({kp, ddb, envOverrides:{}});
     let handler = handlerWrap.handler;
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const {id} = await createNeed(handler, { name:"Turnstile Test", district:"Gorkha", ward:1 });
     // now switch to secret-enforced handler
     const withSecret = makeHandler({kp, ddb, envOverrides:{TURNSTILE_SECRET:"secret"}});
@@ -446,7 +446,7 @@ describe("safety masking across public outputs", () => {
     const kp=makeKeyPair();
     const ddb=new FakeDdb();
     const {handler}=makeHandler({kp, ddb});
-    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok=createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     const {id} = await createNeed(handler, { name:"Secret Person", district:"Gorkha", ward:6, category:"goods", beneficiary:{ phone:"+9779800000011", householdSize:5 }});
     // need already has householdSize etc stored
