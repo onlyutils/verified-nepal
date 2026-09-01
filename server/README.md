@@ -75,3 +75,25 @@ pnpm build
 - `POST /admin/users/{sub}/role` → admin set `role` + `districts` (self-demotion blocked, writes `AUDIT`)
 - `GET /admin/stats` → admin counts for needs/offers/projects/dispatches by status, moderators, oldest pending age
 - Other routes → `404 {error:"Not Found"}`. Errors never include stack traces.
+- `POST /orgs` → signed-in create org → `201 {id, status:"pending"}` (max 3 owned → 400)
+- `GET /orgs/mine` → signed-in list own orgs → `{items:[{...org, role}]}`
+- `GET /orgs/{id}` → member get org private → `{...org}`
+- `POST /orgs/{id}` → owner update org → `{ok:true}`
+- `POST /orgs/{id}/centers` → owner create center → `201 {id}`
+- `GET /orgs/{id}/centers` → member list centers private → `{items:[]}`
+- `POST /centers/{id}` → owner update center → `{ok:true}`
+- `GET /centers?district=&cursor=` → public list centers → `{items:[center public], cursor?}`
+- `GET /centers/{id}` → public/member get center detail → `{...center, stock:[], recent:[]}` (404 hidden unless member/mod)
+- `GET /centers/{id}/stock` → public stock → `{items:[]}`
+- `GET /centers/{id}/entries?cursor=` → public/member entries newest 50 → `{items:[entry], cursor?}`
+- `POST /centers/{id}/entries` → member intake/distribution → `201 {id, unit, delta}`
+- `GET /goods-ledger?district=&cursor=` → public ledger → `{items:[entry public], cursor?}`
+- `GET /moderation/orgs?status=` → mod list orgs → `{items:[org+centersCount]}`
+- `POST /moderation/orgs/{id}` → mod verify|reject|suspend|reinstate → `{status}`
+- `POST /centers/{id}/entries` (transfer_out) → member transfer goods → `201 {id, transferId}` (destinationType center|external, checks stock, writes INBOUND + TRANSFER meta)
+- `GET /centers/{id}/inbound` → member of center's org list inbound transfers → `{items:[{transferId, fromCenterId, fromCenterName, category, unit, qty, entryId, createdAt}]}`
+- `POST /transfers/{transferId}/receive` → member of destination org receive → `201 {id}` (creates transfer_in, sets received, discrepancy, deletes INBOUND)
+- `POST /centers/{id}/entries` (correction) → member correct entry → `201 {id}` (note 3-500, cannot correct completed transfer)
+- `POST /centers/{id}/flag` → public + Turnstile flag center → `201 {ok:true}` (reason not_real|closed|misuse|other, details ≤500, increments flagCount)
+- `GET /moderation/center-flags` → moderator list flagged centers → `{items:[{centerId, name, district, orgName, flagCount, reasons:[{reason, details?, createdAt}]}]}`
+- `POST /orgs/{id}/vouch` → owner of verified org vouch for pending org → `200 {ok:true}` (one per voucher org, audit org.vouch)
