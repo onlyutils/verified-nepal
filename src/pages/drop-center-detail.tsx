@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, flagCenter, getCenter, type CenterDetailResponse } from "../api";
+import { ApiError, declareDonation, flagCenter, getCenter, type CenterDetailResponse } from "../api";
 import { apiErrorMessage } from "../api-error";
 import { centerStrings } from "../i18n-centers";
 import { districtLabels } from "../geo";
@@ -11,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectItem } from "@/components/ui/select";
-import { Headline, SectionLabel, RuledTable, Rule, StatusMark } from "../ui";
+import { Headline, SectionLabel, RuledTable, Rule, SquareButton, StatusMark } from "../ui";
 import type { Language, Page } from "../types";
 import { fillTemplate } from "../edition";
 import { TurnstileWidget } from "../components/turnstile";
+import { GOODS_CATEGORIES } from "../goods";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const TURNSTILE_KEY = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -71,6 +73,17 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   const [flagSuccess, setFlagSuccess] = useState(false);
   const [flagFieldError, setFlagFieldError] = useState<string | null>(null);
 
+  const [dropOpen, setDropOpen] = useState(false);
+  const [dropCategory, setDropCategory] = useState("");
+  const [dropQty, setDropQty] = useState("");
+  const [dropNote, setDropNote] = useState("");
+  const [dropTurnstileToken, setDropTurnstileToken] = useState("");
+  const [dropSubmitting, setDropSubmitting] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const [dropRef, setDropRef] = useState<string | null>(null);
+  const [dropCopied, setDropCopied] = useState(false);
+  const [dropFieldError, setDropFieldError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -95,6 +108,60 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
       cancelled = true;
     };
   }, [id, language]);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("drop") === "1") setDropOpen(true);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleDeclare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dropCategory) {
+      setDropFieldError(s.dropValidationCategory);
+      return;
+    }
+    const qtyNum = Number(dropQty);
+    const qtyValid = dropQty.trim() !== "" && !Number.isNaN(qtyNum) && Number.isFinite(qtyNum) && qtyNum > 0 && qtyNum <= 1000000 && /^\d+(\.\d{1,2})?$/.test(dropQty.trim());
+    if (!qtyValid) {
+      setDropFieldError(s.dropValidationQty);
+      return;
+    }
+    if (dropNote.trim().length > 500) {
+      setDropFieldError(s.dropValidationNote);
+      return;
+    }
+    setDropFieldError(null);
+    setDropSubmitting(true);
+    setDropError(null);
+    try {
+      const res = await declareDonation(id, {
+        category: dropCategory,
+        qty: qtyNum,
+        note: dropNote.trim() || undefined,
+        turnstileToken: dropTurnstileToken || undefined,
+      });
+      setDropRef(res.ref);
+    } catch (err) {
+      setDropError(apiErrorMessage(err, language));
+    } finally {
+      setDropSubmitting(false);
+    }
+  };
+
+  const handleCopyRef = async () => {
+    if (!dropRef) return;
+    try {
+      await navigator.clipboard.writeText(dropRef);
+      setDropCopied(true);
+      setTimeout(() => setDropCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
 
   const handleFlag = async (e: React.FormEvent) => {
     e.preventDefault();

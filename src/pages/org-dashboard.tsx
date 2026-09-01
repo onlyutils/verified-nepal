@@ -1,20 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  ApiError,
+  confirmDonation,
   createCenter,
   createEntry,
   getCenterStock,
+  inviteOrgMember,
+  listCenterDonations,
   listCenters,
   listCenterEntries,
   listInbound,
   listMyOrgs,
   listOrgCenters,
+  listOrgMembers,
   receiveTransfer,
+  removeOrgMember,
   updateCenter,
   updateOrg,
   vouchOrg,
   type CenterPrivate,
   type CenterPublic,
+  type DonationStatus,
   type MyOrg,
+  type OrgMember,
   type OrgType,
   ORG_TYPES,
   type CenterStatus,
@@ -23,6 +31,8 @@ import {
   type GoodsEntry,
   type InboundTransfer,
 } from "../api";
+import QRCode from "qrcode";
+import { enqueue, flush, load as loadQueue, save as saveQueue, type QueuedEntry } from "../goods-queue";
 import { apiErrorMessage } from "../api-error";
 import { useGoogleAuth } from "../auth";
 import { Button } from "@/components/ui/button";
@@ -208,6 +218,44 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
   const [vouchError, setVouchError] = useState<string | null>(null);
   const [copiedOrgId, setCopiedOrgId] = useState(false);
 
+  // offline queue
+  const [queue, setQueue] = useState<QueuedEntry[]>(() => loadQueue());
+  const [queueFlushing, setQueueFlushing] = useState(false);
+
+  // staff
+  const [members, setMembers] = useState<OrgMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [removeConfirm, setRemoveConfirm] = useState<{ open: boolean; member: OrgMember | null; error: string | null; submitting: boolean }>({
+    open: false,
+    member: null,
+    error: null,
+    submitting: false,
+  });
+
+  // donor drops per center
+  const [donationsById, setDonationsById] = useState<Record<string, DonationStatus[]>>({});
+  const [donationsLoadingById, setDonationsLoadingById] = useState<Record<string, boolean>>({});
+  const [donationsErrorById, setDonationsErrorById] = useState<Record<string, string | null>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; ref: string | null; centerId: string | null; qty: string; error: string | null; submitting: boolean; mode: "receive" | "not_received" }>({
+    open: false,
+    ref: null,
+    centerId: null,
+    qty: "",
+    error: null,
+    submitting: false,
+    mode: "receive",
+  });
+
+  // QR dialog
+  const [qrCenter, setQrCenter] = useState<CenterPrivate | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
   const selectedOrg = orgs?.find((o) => o.id === selectedId) ?? null;
   const isOwner = selectedOrg?.role === "owner";
 
@@ -325,6 +373,162 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
     }
   }, [publicCenters, publicCentersLoading]);
 
+  const fetchMembers = useCallback(async () => {
+    if (!auth.idToken || !selectedOrg) return;
+    setMembersLoading(true);
+    setMembersError(null);
+    try {
+      const res = await listOrgMembers(auth.idToken, selectedOrg.id);
+      setMembers(res.items);
+    } catch (err) {
+      setMembersError(apiErrorMessage(err, language));
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [auth.idToken, selectedOrg, language]);
+
+  const fetchDonations = useCallback(async (centerId: string) => {
+    if (!auth.idToken) return;
+    setDonationsLoadingById((prev) => ({ ...prev, [centerId]: true }));
+    setDonationsErrorById((prev) => ({ ...prev, [centerId]: null }));
+    try {
+      const res = await listCenterDonations(auth.idToken, centerId, "declared");
+      setDonationsById((prev) => ({ ...prev, [centerId]: res.items }));
+    } catch (err) {
+      setDonationsErrorById((prev) => ({ ...prev, [centerId]: apiErrorMessage(err, language) }));
+    } finally {
+      setDonationsLoadingById((prev) => ({ ...prev, [centerId]: false }));
+    }
+  }, [auth.idToken, language]);
+
+  const handleFlushQueue = useCallback(async () => {
+    if (!auth.idToken) return;
+    if (queue.length === 0) return;
+    setQueueFlushing(true);
+    const remaining = await flush(queue, (item) => createEntry(auth.idToken!, item.centerId, item.body));
+    const succeeded = queue.filter((q) => !remaining.some((r) => r.id === q.id));
+    const affected = new Set(succeeded.map((s) => s.centerId));
+    setQueue(remaining);
+    saveQueue(remaining);
+    for (const cid of affected) {
+      fetchStock(cid);
+      fetchEntries(cid);
+    }
+    setQueueFlushing(false);
+  }, [auth.idToken, queue, fetchStock, fetchEntries]);
+
+  useEffect(() => {
+    if (!auth.idToken) return;
+    handleFlushQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.idToken]);
+
+  useEffect(() => {
+    if (!auth.idToken) return;
+    const onOnline = () => handleFlushQueue();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [auth.idToken, handleFlushQueue]);
+
+  useEffect(() => {
+    if (selectedOrg && selectedOrg.role === "owner") {
+      fetchMembers();
+    } else {
+      setMembers([]);
+    }
+  }, [selectedOrg, fetchMembers]);
+
+  useEffect(() => {
+    if (!qrCenter) {
+      setQrDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+    setQrLoading(true);
+    const url = `${window.location.origin}/drop-centers/${qrCenter.id}?drop=1`;
+    QRCode.toDataURL(url, { width: 240, margin: 1 })
+      .then((dataUrl) => {
+        if (!cancelled) {
+          setQrDataUrl(dataUrl);
+          setQrLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setQrLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrCenter]);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.idToken || !selectedOrg) return;
+    const email = inviteEmail.trim();
+    if (!email || !email.includes("@")) {
+      setInviteError(t.staffValidationEmail);
+      return;
+    }
+    setInviteSubmitting(true);
+    setInviteError(null);
+    setInviteMsg(null);
+    try {
+      const res = await inviteOrgMember(auth.idToken, selectedOrg.id, { email });
+      setInviteMsg(res.status === "member" ? t.staffInviteAdded : t.staffInvited);
+      setInviteEmail("");
+      fetchMembers();
+    } catch (err) {
+      setInviteError(apiErrorMessage(err, language));
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!auth.idToken || !selectedOrg || !removeConfirm.member) return;
+    setRemoveConfirm((prev) => ({ ...prev, submitting: true, error: null }));
+    try {
+      const identifier = removeConfirm.member.sub ?? removeConfirm.member.email;
+      await removeOrgMember(auth.idToken, selectedOrg.id, identifier);
+      setRemoveConfirm({ open: false, member: null, error: null, submitting: false });
+      fetchMembers();
+    } catch (err) {
+      setRemoveConfirm((prev) => ({ ...prev, submitting: false, error: apiErrorMessage(err, language) }));
+    }
+  };
+
+  const handleConfirmDonation = async () => {
+    if (!auth.idToken || !confirmDialog.ref || !confirmDialog.centerId) return;
+    if (confirmDialog.mode === "receive") {
+      const qtyStr = confirmDialog.qty.trim();
+      const qtyNum = Number(qtyStr);
+      const qtyValid = qtyStr !== "" && !Number.isNaN(qtyNum) && Number.isFinite(qtyNum) && qtyNum > 0 && qtyNum <= 1000000 && /^\d+(\.\d{1,2})?$/.test(qtyStr);
+      if (!qtyValid) {
+        setConfirmDialog((prev) => ({ ...prev, error: t.donorValidationQty }));
+        return;
+      }
+      setConfirmDialog((prev) => ({ ...prev, submitting: true, error: null }));
+      try {
+        await confirmDonation(auth.idToken, confirmDialog.ref!, { qty: qtyNum });
+        setConfirmDialog({ open: false, ref: null, centerId: null, qty: "", error: null, submitting: false, mode: "receive" });
+        fetchDonations(confirmDialog.centerId!);
+        fetchStock(confirmDialog.centerId!);
+        fetchEntries(confirmDialog.centerId!);
+      } catch (err) {
+        setConfirmDialog((prev) => ({ ...prev, submitting: false, error: apiErrorMessage(err, language) }));
+      }
+    } else {
+      setConfirmDialog((prev) => ({ ...prev, submitting: true, error: null }));
+      try {
+        await confirmDonation(auth.idToken, confirmDialog.ref!, { action: "not_received" });
+        setConfirmDialog({ open: false, ref: null, centerId: null, qty: "", error: null, submitting: false, mode: "receive" });
+        fetchDonations(confirmDialog.centerId!);
+      } catch (err) {
+        setConfirmDialog((prev) => ({ ...prev, submitting: false, error: apiErrorMessage(err, language) }));
+      }
+    }
+  };
+
   const toggleExpanded = (centerId: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -334,6 +538,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
         if (!stockById[centerId] && !stockLoadingById[centerId]) fetchStock(centerId);
         if (!entriesById[centerId] && !entriesLoadingById[centerId]) fetchEntries(centerId);
         if (!inboundById[centerId] && !inboundLoadingById[centerId]) fetchInbound(centerId);
+        if (!donationsById[centerId] && !donationsLoadingById[centerId]) fetchDonations(centerId);
       }
       return next;
     });
@@ -512,24 +717,32 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
       return;
     }
     setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: true, error: null, fieldErrors: {} } }));
+    const body: Record<string, unknown> = {
+      entryType: form.entryType,
+      category: form.category,
+      qty: qtyNum,
+      note: form.note.trim() || undefined,
+    };
+    if (form.entryType === "transfer_out") {
+      body.destinationType = form.destinationType;
+      if (form.destinationType === "center") body.destinationCenterId = form.destinationCenterId;
+      else body.destinationLabel = form.destinationLabel.trim();
+    }
     try {
-      const body: Record<string, unknown> = {
-        entryType: form.entryType,
-        category: form.category,
-        qty: qtyNum,
-        note: form.note.trim() || undefined,
-      };
-      if (form.entryType === "transfer_out") {
-        body.destinationType = form.destinationType;
-        if (form.destinationType === "center") body.destinationCenterId = form.destinationCenterId;
-        else body.destinationLabel = form.destinationLabel.trim();
-      }
       await createEntry(auth.idToken, centerId, body as never);
       setLogFormById((prev) => ({ ...prev, [centerId]: { ...defaultLogForm(), submitting: false, error: null, fieldErrors: {} } }));
       fetchStock(centerId);
       fetchEntries(centerId);
     } catch (err) {
-      setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: false, error: apiErrorMessage(err, language), fieldErrors: {} } }));
+      const isNetwork = err instanceof TypeError || (err instanceof ApiError && err.status === 0);
+      if (isNetwork) {
+        const next = enqueue(queue, centerId, body as never);
+        setQueue(next);
+        saveQueue(next);
+        setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: false, error: null, fieldErrors: {} } }));
+      } else {
+        setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: false, error: apiErrorMessage(err, language), fieldErrors: {} } }));
+      }
     }
   };
 
@@ -817,6 +1030,84 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                 </Button>
               </CardContent>
             </Card>
+          ) : null}
+
+          {queue.length > 0 ? (
+            <div aria-live="polite" className="flex flex-wrap items-center gap-3 border border-amber-600 bg-amber-50 px-4 py-3 font-sans text-sm">
+              <span>
+                {queue.length === 1 ? t.queueBannerOne : fillTemplate(t.queueBanner, { n: String(queue.length) })}
+              </span>
+              <Button variant="outline" size="sm" className="min-h-11" onClick={handleFlushQueue} disabled={queueFlushing}>
+                {queueFlushing ? t.queueRetrying : t.queueRetry}
+              </Button>
+            </div>
+          ) : null}
+
+          {selectedOrg && isOwner ? (
+            <section className="space-y-4 border border-rule p-4">
+              <h2 className="font-serif text-lg font-bold">{t.staffTitle}</h2>
+              {membersLoading ? (
+                <p className="font-sans text-sm text-muted-foreground">{t.staffLoading}</p>
+              ) : membersError ? (
+                <p className="font-sans text-sm text-destructive" role="alert">
+                  {membersError}
+                </p>
+              ) : members.length === 0 ? (
+                <p className="font-sans text-sm text-muted-foreground">{t.staffEmpty}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse font-sans text-sm">
+                    <thead>
+                      <tr className="border-b border-rule text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-3 font-semibold">{t.staffEmailLabel}</th>
+                        <th className="py-2 pr-3 font-semibold">{t.staffNameLabel}</th>
+                        <th className="py-2 pr-3 font-semibold">{t.staffRoleLabel}</th>
+                        <th className="py-2 pr-3 font-semibold">{t.staffStatusLabel}</th>
+                        <th className="py-2 pr-3 font-semibold">{t.staffDateLabel}</th>
+                        <th className="py-2 text-right font-semibold"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((m) => (
+                        <tr key={m.email} className="border-b border-rule">
+                          <td className="py-2 pr-3 font-mono text-xs">{m.email}</td>
+                          <td className="py-2 pr-3">{m.name ?? "—"}</td>
+                          <td className="py-2 pr-3">{m.role === "owner" ? t.staffRoleOwner : t.staffRoleStaff}</td>
+                          <td className="py-2 pr-3">{m.status === "member" ? t.staffStatusMember : t.staffStatusInvited}</td>
+                          <td className="py-2 pr-3 text-xs text-muted-foreground">
+                            {new Date(m.createdAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US")}
+                          </td>
+                          <td className="py-2 text-right">
+                            <Button variant="ghost" size="sm" className="min-h-11 text-xs" onClick={() => setRemoveConfirm({ open: true, member: m, error: null, submitting: false })}>
+                              {t.staffRemove}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-2" noValidate>
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="inviteEmail">{t.staffInviteLabel}</Label>
+                  <Input id="inviteEmail" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder={t.staffInvitePlaceholder} className="min-h-11" required />
+                </div>
+                <Button type="submit" disabled={inviteSubmitting} className="min-h-11">
+                  {inviteSubmitting ? t.staffInviteSubmitting : t.staffInviteSubmit}
+                </Button>
+              </form>
+              {inviteError ? (
+                <p className="font-sans text-sm text-destructive" role="alert">
+                  {inviteError}
+                </p>
+              ) : null}
+              {inviteMsg ? (
+                <p className="font-sans text-sm text-emerald-700" role="status">
+                  {inviteMsg}
+                </p>
+              ) : null}
+            </section>
           ) : null}
 
           <section className="space-y-4">
@@ -1125,6 +1416,58 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                             </div>
 
                             <div className="space-y-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{t.donorDropsTitle}</h3>
+                                <Button variant="outline" size="sm" className="min-h-11" onClick={() => setQrCenter(center)}>
+                                  {t.printQrButton}
+                                </Button>
+                              </div>
+                              {donationsLoadingById[center.id] ? (
+                                <p className="font-sans text-sm text-muted-foreground">{t.donorLoading}</p>
+                              ) : donationsErrorById[center.id] ? (
+                                <p className="font-sans text-sm text-destructive" role="alert">
+                                  {donationsErrorById[center.id]}
+                                </p>
+                              ) : !(donationsById[center.id] ?? []).length ? (
+                                <p className="font-sans text-sm text-muted-foreground">{t.donorDropsEmpty}</p>
+                              ) : (
+                                <ul className="divide-y divide-rule border border-rule">
+                                  {(donationsById[center.id] ?? []).map((d) => (
+                                    <li key={d.ref} className="flex flex-col gap-2 px-3 py-3 font-sans text-sm">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-semibold">{goodsLabel(d.category, language)}</span>
+                                        <span className="tabular-nums">
+                                          {d.qty} {unitLabel(d.unit, language)}
+                                        </span>
+                                        {d.note ? <span className="text-xs text-muted-foreground italic">{d.note}</span> : null}
+                                        <span className="font-mono text-xs">{d.ref}</span>
+                                        <span className="text-xs text-muted-foreground">{new Date(d.declaredAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US")}</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="min-h-11"
+                                          onClick={() => setConfirmDialog({ open: true, ref: d.ref, centerId: center.id, qty: String(d.qty), error: null, submitting: false, mode: "receive" })}
+                                        >
+                                          {t.donorConfirmReceived}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="min-h-11"
+                                          onClick={() => setConfirmDialog({ open: true, ref: d.ref, centerId: center.id, qty: String(d.qty), error: null, submitting: false, mode: "not_received" })}
+                                        >
+                                          {t.donorNotReceived}
+                                        </Button>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
                               <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{t.recentEntriesTitle}</h3>
                               {entriesLoadingById[center.id] && entries.length === 0 ? (
                                 <p className="font-sans text-sm text-muted-foreground">{t.orgDashboardLoading}</p>
@@ -1297,6 +1640,88 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                   {correctDialog.submitting ? t.correctionSubmitting : t.correctionSubmit}
                 </Button>
               </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={removeConfirm.open} onOpenChange={(o) => { if (!o) setRemoveConfirm((prev) => ({ ...prev, open: false })); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="font-serif">{t.staffRemoveConfirmTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">
+                  {removeConfirm.member ? fillTemplate(t.staffRemoveConfirmBody, { email: removeConfirm.member.email }) : ""}
+                </DialogDescription>
+              </DialogHeader>
+              {removeConfirm.error ? (
+                <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                  {removeConfirm.error}
+                </p>
+              ) : null}
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => setRemoveConfirm((prev) => ({ ...prev, open: false }))}>
+                  {t.staffRemoveCancel}
+                </Button>
+                <Button className="min-h-11" onClick={handleRemoveMember} disabled={removeConfirm.submitting}>
+                  {removeConfirm.submitting ? t.staffRemoving : t.staffRemoveConfirm}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={confirmDialog.open} onOpenChange={(o) => { if (!o) setConfirmDialog((prev) => ({ ...prev, open: false })); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="font-serif">{t.donorConfirmDialogTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">{t.donorConfirmDialogDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                {confirmDialog.mode === "receive" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="donorConfirmQty">{t.donorQtyLabel}</Label>
+                    <Input id="donorConfirmQty" type="number" inputMode="decimal" step="0.01" min="0.01" value={confirmDialog.qty} onChange={(e) => setConfirmDialog((prev) => ({ ...prev, qty: e.target.value }))} className="min-h-11" />
+                    <p className="font-sans text-xs text-muted-foreground">{t.donorQtyHint}</p>
+                  </div>
+                ) : null}
+                {confirmDialog.error ? (
+                  <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                    {confirmDialog.error}
+                  </p>
+                ) : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>
+                  {t.staffRemoveCancel}
+                </Button>
+                <Button className="min-h-11" onClick={handleConfirmDonation} disabled={confirmDialog.submitting}>
+                  {confirmDialog.submitting ? (confirmDialog.mode === "receive" ? t.donorConfirmSubmitting : t.donorNotReceivedSubmitting) : confirmDialog.mode === "receive" ? t.donorConfirmSubmit : t.donorNotReceivedConfirm}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={!!qrCenter} onOpenChange={(o) => { if (!o) setQrCenter(null); }}>
+            <DialogContent className="print:border-0 print:shadow-none">
+              <DialogHeader>
+                <DialogTitle className="font-serif">{t.printQrTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">{t.printQrInstruction}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 print:space-y-3">
+                {qrLoading ? (
+                  <p className="font-sans text-sm text-muted-foreground">…</p>
+                ) : qrDataUrl ? (
+                  <img src={qrDataUrl} alt="QR code for donor drop" className="mx-auto h-60 w-60 border border-rule" width={240} height={240} />
+                ) : null}
+                {qrCenter ? (
+                  <>
+                    <p className="break-all font-mono text-xs">{`${typeof window !== "undefined" ? window.location.origin : ""}/drop-centers/${qrCenter.id}?drop=1`}</p>
+                    <p className="font-sans text-xs text-muted-foreground">{t.printQrInstruction}</p>
+                  </>
+                ) : null}
+                <div className="flex justify-end print:hidden">
+                  <Button variant="outline" className="min-h-11" onClick={() => window.print()}>
+                    {t.printButton}
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
 
