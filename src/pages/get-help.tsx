@@ -4,6 +4,7 @@ import { apiErrorMessage } from "../api-error";
 import { TurnstileWidget } from "../components/turnstile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +65,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [success, setSuccess] = useState<{ id: string; refCode: string } | null>(null);
   const [refCopied, setRefCopied] = useState(false);
+  const [hasCopied, setHasCopied] = useState(false);
 
   const [statusCode, setStatusCode] = useState("");
   const [statusLoading, setStatusLoading] = useState(false);
@@ -154,6 +156,7 @@ export function GetHelp({ language }: { language: Language }) {
     setError(null);
     setErrors({});
     setSuccess(null);
+    setHasCopied(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -257,63 +260,67 @@ export function GetHelp({ language }: { language: Language }) {
   if (success) {
     return (
       <div className="mx-auto max-w-3xl space-y-8 px-1">
-        <Card className="border-ink">
-          <CardHeader className="text-center">
-            <CardTitle className="font-display text-2xl">{t.getHelpSuccessTitle}</CardTitle>
-            <CardDescription>{t.getHelpRefCodeHint}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center" role="status">
-              <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpRefCodeLabel}</p>
-              <p className="mt-3 break-all font-mono text-3xl font-bold tracking-widest text-ink sm:text-4xl" aria-live="polite">
-                {success.refCode}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 min-h-11"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(success.refCode);
-                    setRefCopied(true);
-                    setTimeout(() => setRefCopied(false), 2000);
-                  } catch {
-                    // ignore
-                  }
-                }}
-              >
-                {refCopied ? t.getHelpRefCodeCopied : t.getHelpRefCodeCopy}
-              </Button>
+        <Dialog open onOpenChange={() => {}} dismissible={false}>
+          <DialogContent className="border-ink">
+            <DialogHeader className="text-center">
+              <DialogTitle className="font-display text-2xl">{t.getHelpSuccessTitle}</DialogTitle>
+              <DialogDescription>{t.getHelpRefCodeHint}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="text-center" role="status">
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpRefCodeLabel}</p>
+                <p className="mt-3 break-all font-mono text-3xl font-bold tracking-widest text-ink sm:text-4xl" aria-live="polite">
+                  {success.refCode}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 min-h-11"
+                  onClick={async () => {
+                    setHasCopied(true);
+                    try {
+                      await navigator.clipboard.writeText(success.refCode);
+                      setRefCopied(true);
+                      setTimeout(() => setRefCopied(false), 2000);
+                    } catch {
+                      // ignore — clipboard permission may be denied, but the user still saw the code
+                    }
+                  }}
+                >
+                  {refCopied ? t.getHelpRefCodeCopied : t.getHelpRefCodeCopy}
+                </Button>
+              </div>
+              <Separator />
+              <div>
+                <h3 className="font-display text-lg font-semibold">{t.getHelpWhatNextTitle}</h3>
+                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.getHelpWhatNextBody}</p>
+              </div>
+              <Separator />
+              <StatusBox
+                language={language}
+                statusCode={statusCode}
+                setStatusCode={setStatusCode}
+                statusLoading={statusLoading}
+                setStatusLoading={setStatusLoading}
+                statusResult={statusResult}
+                setStatusResult={setStatusResult}
+                statusError={statusError}
+                setStatusError={setStatusError}
+                renewing={renewing}
+                setRenewing={setRenewing}
+                renewDone={renewDone}
+                setRenewDone={setRenewDone}
+                initialCode={success.refCode}
+              />
+              <div className="flex flex-col items-center gap-2">
+                <Button variant="outline" className="min-h-11" onClick={handleRegisterAnother} disabled={!hasCopied}>
+                  {ts.registerAnother}
+                </Button>
+                {!hasCopied ? <p className="font-sans text-xs text-muted-foreground">{t.getHelpCloseHint}</p> : null}
+              </div>
             </div>
-            <Separator />
-            <div>
-              <h3 className="font-display text-lg font-semibold">{t.getHelpWhatNextTitle}</h3>
-              <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.getHelpWhatNextBody}</p>
-            </div>
-            <Separator />
-            <StatusBox
-              language={language}
-              statusCode={statusCode}
-              setStatusCode={setStatusCode}
-              statusLoading={statusLoading}
-              setStatusLoading={setStatusLoading}
-              statusResult={statusResult}
-              setStatusResult={setStatusResult}
-              statusError={statusError}
-              setStatusError={setStatusError}
-              renewing={renewing}
-              setRenewing={setRenewing}
-              renewDone={renewDone}
-              setRenewDone={setRenewDone}
-              initialCode={success.refCode}
-            />
-            <div className="flex justify-center">
-              <Button variant="outline" className="min-h-11" onClick={handleRegisterAnother}>
-                {ts.registerAnother}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
         <StandaloneStatus language={language} />
       </div>
     );

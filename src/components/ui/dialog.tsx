@@ -5,11 +5,13 @@ interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  /** When false, backdrop clicks and Escape cannot dismiss the dialog — only an explicit action inside it can. Default true. */
+  dismissible?: boolean;
 }
 
 const DialogTitleIdContext = React.createContext<string | undefined>(undefined);
 
-export function Dialog({ open, onOpenChange, children }: DialogProps) {
+export function Dialog({ open, onOpenChange, children, dismissible = true }: DialogProps) {
   const ref = React.useRef<HTMLDialogElement>(null);
   const titleId = React.useId();
 
@@ -29,7 +31,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     const onClose = () => onOpenChange(false);
     const onCancel = (e: Event) => {
       e.preventDefault();
-      onOpenChange(false);
+      if (dismissible) onOpenChange(false);
     };
     el.addEventListener("close", onClose);
     el.addEventListener("cancel", onCancel);
@@ -37,7 +39,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
       el.removeEventListener("close", onClose);
       el.removeEventListener("cancel", onCancel);
     };
-  }, [onOpenChange]);
+  }, [onOpenChange, dismissible]);
 
   return (
     <DialogTitleIdContext.Provider value={titleId}>
@@ -46,7 +48,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         aria-labelledby={titleId}
         aria-modal="true"
         onClick={(e) => {
-          if (e.target === ref.current) onOpenChange(false);
+          if (dismissible && e.target === ref.current) onOpenChange(false);
         }}
         className="max-h-[90vh] w-full max-w-lg overflow-auto border-0 bg-transparent p-4 backdrop:bg-ink/60 open:flex open:items-center open:justify-center"
       >
