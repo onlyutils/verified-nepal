@@ -83,6 +83,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Corrections to data, translations,
 and accessibility fixes are especially welcome. Please never add unverified
 emergency numbers or unofficial donation channels — see the hard rules there.
 
+## Auth
+
+Role bootstrap for `GET /me` requires an email claim (`email ?? primary_email ?? emails[0]`); tokens without an email claim are created as `helper`.
+
 ## License
 
 [MIT](LICENSE). The mirrored datasets remain the property of their

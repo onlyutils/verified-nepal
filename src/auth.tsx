@@ -61,6 +61,21 @@ function clearTokens(): void {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    let b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4;
+    if (pad) b64 += "=".repeat(4 - pad);
+    const payload = JSON.parse(atob(b64));
+    if (typeof payload.exp !== "number") return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export function useGoogleAuth() {
   const clientId = import.meta.env.VITE_OU_CLIENT_ID as string | undefined;
   const [accessToken, setAccessToken] = useState<string | null>(() => {
@@ -180,6 +195,7 @@ export function useGoogleAuth() {
     if (!accessToken) {
       setProfile(null);
       setLoading(false);
+      setError(null);
       return;
     }
     if (!API_BASE) {
@@ -192,7 +208,64 @@ export function useGoogleAuth() {
     setLoading(true);
     setError(null);
 
+    const tryRefresh = async (): Promise<boolean> => {
+      const stored = loadTokens();
+      const refreshToken = stored?.refresh_token;
+      if (!refreshToken || !clientId) return false;
+      try {
+        const res = await fetch(`${AUTH_HOST}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+            client_id: clientId,
+          }),
+        });
+        if (!res.ok) throw new Error("refresh failed");
+        const newTokens = (await res.json()) as TokenResponse;
+        saveTokens(newTokens);
+        if (cancelled) return true;
+        setAccessToken(newTokens.access_token);
+        try {
+          const data2 = await getMe(newTokens.access_token);
+          if (cancelled) return true;
+          const raw2 = data2 as DeskProfile & { user?: DeskProfile };
+          const normalized2 = (raw2.user as DeskProfile) ?? (raw2 as DeskProfile);
+          setProfile(normalized2);
+          setError(null);
+        } catch {
+          if (cancelled) return true;
+          setProfile(null);
+          setError(null);
+        }
+        return true;
+      } catch {
+        if (cancelled) return true;
+        clearTokens();
+        setAccessToken(null);
+        setProfile(null);
+        setError(null);
+        return true;
+      }
+    };
+
     const fetchProfile = async () => {
+      if (isTokenExpired(accessToken)) {
+        const handled = await tryRefresh();
+        if (handled) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
+        if (!cancelled) {
+          clearTokens();
+          setAccessToken(null);
+          setProfile(null);
+          setError(null);
+          setLoading(false);
+        }
+        return;
+      }
       try {
         const data = await getMe(accessToken);
         if (cancelled) return;
@@ -203,50 +276,21 @@ export function useGoogleAuth() {
       } catch (e) {
         const err = e as { status?: number };
         if (err?.status === 401) {
-          const stored = loadTokens();
-          const refreshToken = stored?.refresh_token;
-          if (refreshToken && clientId) {
-            try {
-              const res = await fetch(`${AUTH_HOST}/token`, {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                  grant_type: "refresh_token",
-                  refresh_token: refreshToken,
-                  client_id: clientId,
-                }),
-              });
-              if (!res.ok) throw new Error("refresh failed");
-              const newTokens = (await res.json()) as TokenResponse;
-              saveTokens(newTokens);
-              if (cancelled) return;
-              setAccessToken(newTokens.access_token);
-              try {
-                const data2 = await getMe(newTokens.access_token);
-                if (cancelled) return;
-                const raw2 = data2 as DeskProfile & { user?: DeskProfile };
-                const normalized2 = (raw2.user as DeskProfile) ?? (raw2 as DeskProfile);
-                setProfile(normalized2);
-                setError(null);
-              } catch {
-                if (cancelled) return;
-                setError("verify-failed");
-                setProfile(null);
-              }
-              return;
-            } catch {
-              if (cancelled) return;
-              clearTokens();
-              setAccessToken(null);
-              setError("verify-failed");
-              setProfile(null);
-              return;
-            }
+          const handled = await tryRefresh();
+          if (handled) {
+            if (!cancelled) setLoading(false);
+            return;
           }
+          if (cancelled) return;
+          clearTokens();
+          setAccessToken(null);
+          setProfile(null);
+          setError(null);
+          return;
         }
         if (cancelled) return;
-        setError("verify-failed");
         setProfile(null);
+        setError(null);
       } finally {
         if (!cancelled) setLoading(false);
       }

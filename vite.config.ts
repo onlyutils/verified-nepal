@@ -46,6 +46,24 @@ export default defineConfig({
             },
           },
           {
+            urlPattern: ({ url, request }: { url: URL; request: Request }) => {
+              const headers: any = (request as any).headers;
+              if (headers) {
+                try {
+                  if (typeof headers.has === "function" && headers.has("Authorization")) return true;
+                  if (typeof headers.get === "function" && headers.get("Authorization")) return true;
+                } catch {}
+                try {
+                  const auth = (headers as any)["Authorization"] || (headers as any)["authorization"];
+                  if (auth) return true;
+                } catch {}
+              }
+              const p = url.pathname;
+              return p === "/me" || p.startsWith("/auth/") || p.startsWith("/moderation/");
+            },
+            handler: "NetworkOnly",
+          },
+          {
             urlPattern: new RegExp((process.env.VITE_API_BASE || "https://api.verifiednepal.com").replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&") + ".*"),
             handler: "StaleWhileRevalidate",
             options: {

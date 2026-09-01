@@ -32,7 +32,7 @@ pnpm build
 ## Routes
 
 - `GET /health` → `{ok:true}`
-- `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. On first login creates `PK=USER#<sub> SK=PROFILE` with `role` `admin`/`moderator`/`helper` (`ADMIN_EMAILS`/`MODERATOR_EMAILS`). Returns `{sub,email,name,role}`.
+- `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. On first login creates `PK=USER#<sub> SK=PROFILE` with `role` `admin`/`moderator`/`helper` (`ADMIN_EMAILS`/`MODERATOR_EMAILS`). Role bootstrap requires an email claim (`email ?? primary_email ?? emails[0]`); tokens without an email claim fall back to `helper` role. Returns `{sub,email,name,role}`.
 - `POST /auth/exchange` → `{code, code_verifier, redirect_uri}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=authorization_code`, `client_id=OU_CLIENT_ID`, `client_secret` when set)
 - `POST /auth/refresh` → `{refresh_token}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=refresh_token`, `client_id`/`secret` same rule)
 - Other routes → `404 {error:"Not Found"}`. Errors never include stack traces.

@@ -203,6 +203,7 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
     ne.status = 401;
     throw ne;
   }
+  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload) }); } catch {}
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
@@ -212,11 +213,13 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
   try {
     const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: pk, SK: sk } }));
     existing = res.Item;
-  } catch {
-    throw err(500, "Failed to read user");
+  } catch (e) {
+    try { console.error({ tag: "ddb_fail", op: "GetCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
+    return json(500, { error: "storage" });
   }
   let role;
-  let email = payload.email ?? "";
+  const derivedEmail = payload.email ?? payload.primary_email ?? (Array.isArray(payload.emails) ? payload.emails[0] : undefined) ?? "";
+  let email = derivedEmail ?? "";
   let name = payload.name ?? "";
   if (existing) {
     role = existing.role;
@@ -225,15 +228,16 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
   } else {
     const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
     const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-    const emailLower = (payload.email || "").toLowerCase();
+    const emailLower = (derivedEmail || "").toLowerCase();
     if (adminEmails.includes(emailLower)) role = "admin";
     else if (moderatorEmails.includes(emailLower)) role = "moderator";
     else role = "helper";
     const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, email, name: payload.name || "", role, createdAt: new Date().toISOString() };
     try {
       await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
-    } catch {
-      throw err(500, "Failed to create user");
+    } catch (e) {
+      try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
+      return json(500, { error: "storage" });
     }
     return json(200, { sub: payload.sub, email, name: payload.name || "", role });
   }
