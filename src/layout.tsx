@@ -12,8 +12,7 @@ import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const primaryPages = ["search", "getHelp", "giveHelp", "info"] as const;
-const morePages = ["projects", "dispatches", "ledger", "audit", "desk"] as const;
+const navPages = ["search", "getHelp", "giveHelp", "info", "projects", "dispatches", "ledger", "audit"] as const;
 
 export function Masthead({
   page,
@@ -57,13 +56,37 @@ export function Masthead({
 
   return (
     <header className={shell}>
-      <div className="grid items-end gap-4 py-5 text-center lg:grid-cols-[1fr_auto_1fr] lg:text-left">
-        <p className="hidden font-sans text-[0.68rem] uppercase leading-5 tracking-[0.14em] text-muted lg:block">
-          {districts}
-          <br />
-          {t.floodName}
+      {/* Below lg: one slim row replaces the newspaper masthead. */}
+      <div className="flex items-center justify-between gap-2 py-2.5 lg:hidden">
+        <p className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden font-sans text-[0.6rem] uppercase tracking-[0.1em] text-muted">
+          <span className="min-w-0 truncate">{districts}</span>
+          <span aria-hidden="true" className="shrink-0">·</span>
+          <button type="button" onClick={() => navigate("desk")} className={`shrink-0 font-semibold text-ink ${focusRing}`}>
+            {t.deskTitle}
+          </button>
         </p>
-        <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
+        <button type="button" onClick={() => navigate("dashboard")} className={`shrink-0 ${focusRing}`}>
+          <span lang={language === "ne" ? "ne" : "en"} className="font-display text-sm font-black uppercase leading-none tracking-[0.03em] text-ink">
+            {language === "ne" ? "भेरिफाइड नेपाल" : "Verified Nepal"}
+          </span>
+        </button>
+        <div className="flex min-w-0 flex-1 justify-end overflow-hidden">
+          <EditionLine language={language} compact />
+        </div>
+      </div>
+
+      {/* lg and up: the full newspaper masthead. */}
+      <div className="hidden items-end gap-4 py-5 text-left lg:grid lg:grid-cols-[1fr_auto_1fr]">
+        <p className="flex min-w-0 items-center gap-1.5 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted">
+          <span className="min-w-0 truncate">
+            {districts} <span aria-hidden="true">·</span> {t.floodName}
+          </span>
+          <span aria-hidden="true" className="shrink-0">·</span>
+          <button type="button" onClick={() => navigate("desk")} className={`shrink-0 font-semibold text-ink ${focusRing}`}>
+            {t.deskTitle}
+          </button>
+        </p>
+        <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block text-center ${focusRing}`}>
           {language === "ne" ? (
             <>
               <span lang="ne" className="block font-display text-[1.6rem] font-black leading-none text-ink sm:text-[3.2rem] 2xl:text-[4rem]">
@@ -85,7 +108,7 @@ export function Masthead({
           )}
           <span className="mt-3 hidden font-serif text-sm italic text-muted sm:block">{t.unofficial}</span>
         </button>
-        <div className="hidden lg:block"><EditionLine language={language} /></div>
+        <EditionLine language={language} />
       </div>
       <Rule variant="double" />
       <MastheadNav page={page} navigate={navigate} language={language} setLanguage={setLanguage} />
@@ -110,24 +133,15 @@ function MastheadNav({
   compact?: boolean;
 }) {
   const t = labels[language];
-  const ts = shellStrings[language];
-  const isMoreActive = (morePages as readonly string[]).includes(page);
-  const [moreOpen, setMoreOpen] = useState(() => isMoreActive);
-  useEffect(() => {
-    if (isMoreActive) setMoreOpen(true);
-  }, [isMoreActive]);
-  const primaryLabel: Record<string, string> = {
+  const navLabel: Record<string, string> = {
     search: t.search,
     getHelp: t.getHelp,
     giveHelp: t.giveHelp,
     info: t.info,
-  };
-  const moreLabel: Record<string, string> = {
     projects: (t as Record<string, string>).projects ?? "Projects",
     dispatches: (t as Record<string, string>).dispatches ?? "Dispatches",
     ledger: t.ledgerTitle,
     audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
-    desk: t.deskTitle,
   };
   const navButton = (item: string, label: string) => {
     const active = page === item;
@@ -149,16 +163,7 @@ function MastheadNav({
     <nav aria-label="Primary navigation" className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-0">
         <div className="flex flex-wrap gap-x-5 gap-y-0">
-          {(primaryPages as readonly string[]).map((item) => navButton(item, primaryLabel[item] ?? item))}
-          <button
-            type="button"
-            aria-expanded={moreOpen}
-            aria-controls="more-nav-row"
-            onClick={() => setMoreOpen((v) => !v)}
-            className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-1 transition-colors ${moreOpen ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"} ${focusRing}`}
-          >
-            {ts.more}
-          </button>
+          {(navPages as readonly string[]).map((item) => navButton(item, navLabel[item] ?? item))}
         </div>
         {compact ? null : (
           <div className="ml-auto hidden lg:block">
@@ -166,11 +171,6 @@ function MastheadNav({
           </div>
         )}
       </div>
-      {moreOpen ? (
-        <div id="more-nav-row" className="flex flex-wrap gap-x-5 gap-y-0 border-t border-rule">
-          {(morePages as readonly string[]).map((item) => navButton(item, moreLabel[item] ?? item))}
-        </div>
-      ) : null}
     </nav>
   );
 }
@@ -192,18 +192,21 @@ function LanguageToggle({ language, setLanguage }: { language: Language; setLang
   );
 }
 
-function EditionLine({ language }: { language: Language }) {
+function EditionLine({ language, compact = false }: { language: Language; compact?: boolean }) {
   const t = labels[language];
   const now = new Date();
+  const dayOf = fillTemplate(t.dayOf, { n: formatNumber(responseDay(now), language) });
+
+  if (compact) {
+    return <LiveStatusBadge language={language} className="min-w-0 shrink truncate text-[0.6rem]" />;
+  }
+
   return (
-    <div className="font-sans text-[0.68rem] uppercase leading-5 tracking-[0.14em] text-muted lg:text-right">
-      <p>
-        <span className="font-semibold text-ink">{t.edition}</span> <span aria-hidden="true">·</span>{" "}
-        {formatEditionDate(now, language)}
-      </p>
-      <p>{fillTemplate(t.dayOf, { n: formatNumber(responseDay(now), language) })}</p>
-      <LiveStatusBadge language={language} className="mt-1 justify-center lg:justify-end" />
-    </div>
+    <p className="flex flex-wrap items-center justify-end gap-x-1.5 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted">
+      <span className="font-semibold text-ink">{t.edition}</span> <span aria-hidden="true">·</span> {formatEditionDate(now, language)}{" "}
+      <span aria-hidden="true">·</span> {dayOf} <span aria-hidden="true">·</span>
+      <LiveStatusBadge language={language} />
+    </p>
   );
 }
 
