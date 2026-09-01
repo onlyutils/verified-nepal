@@ -3,12 +3,17 @@ import {
   createCenter,
   createEntry,
   getCenterStock,
+  listCenters,
   listCenterEntries,
+  listInbound,
   listMyOrgs,
   listOrgCenters,
+  receiveTransfer,
   updateCenter,
   updateOrg,
+  vouchOrg,
   type CenterPrivate,
+  type CenterPublic,
   type MyOrg,
   type OrgType,
   ORG_TYPES,
@@ -16,6 +21,7 @@ import {
   CENTER_STATUSES,
   type StockItem,
   type GoodsEntry,
+  type InboundTransfer,
 } from "../api";
 import { apiErrorMessage } from "../api-error";
 import { useGoogleAuth } from "../auth";
@@ -32,6 +38,7 @@ import { GOODS_CATEGORIES, goodsLabel, unitLabel } from "../goods";
 import { orgStrings } from "../i18n-orgs";
 import type { Language, Page } from "../types";
 import { Rule, SectionLabel, SquareButton, StatusMark } from "../ui";
+import { fillTemplate } from "../edition";
 
 type FieldKey = "name" | "orgType" | "registrationNumber" | "contactName" | "contactPhone" | "contactEmail" | "districts" | "description" | "website";
 
@@ -63,8 +70,57 @@ function orgStatusText(org: MyOrg, t: Record<string, string>): string {
   return org.status;
 }
 
+type LogForm = {
+  entryType: "intake" | "distribution" | "transfer_out";
+  category: string;
+  qty: string;
+  note: string;
+  destinationType: "center" | "external";
+  destinationCenterId: string;
+  destinationLabel: string;
+  error: string | null;
+  fieldErrors: Record<string, string>;
+  submitting: boolean;
+};
+
+function defaultLogForm(): LogForm {
+  return {
+    entryType: "intake",
+    category: "",
+    qty: "",
+    note: "",
+    destinationType: "center",
+    destinationCenterId: "",
+    destinationLabel: "",
+    error: null,
+    fieldErrors: {},
+    submitting: false,
+  };
+}
+
+function entryDisplayLabel(en: GoodsEntry, language: Language, t: Record<string, string>): string {
+  if (en.entryType === "intake") return t.activityIntake ?? "Received";
+  if (en.entryType === "distribution") return t.activityDistribution ?? "Distributed";
+  if (en.entryType === "transfer_out") {
+    const dest = en.destinationLabel || "";
+    return fillTemplate(t.transferSentLabel, { destination: dest || en.destinationCenterId || "" });
+  }
+  if (en.entryType === "transfer_in") {
+    const src = en.sourceLabel || "";
+    return fillTemplate(t.transferReceivedLabel, { source: src || en.sourceCenterId || "" });
+  }
+  if (en.entryType === "correction") return t.activityCorrection ?? "Correction of an earlier entry";
+  return en.entryType;
+}
+
+function formatDiscrepancy(en: GoodsEntry, language: Language): string | null {
+  if (en.discrepancy === undefined || en.discrepancy === null) return null;
+  if (en.discrepancy === 0) return null;
+  return String(en.discrepancy);
+}
+
 export function OrgDashboard({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
-  const t = orgStrings[language];
+  const t = orgStrings[language] as Record<string, string>;
   const auth = useGoogleAuth();
 
   const [orgs, setOrgs] = useState<MyOrg[] | null>(null);
@@ -115,7 +171,42 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
   const [entriesErrorById, setEntriesErrorById] = useState<Record<string, string | null>>({});
   const [centerStatusUpdating, setCenterStatusUpdating] = useState<Record<string, boolean>>({});
   const [centerStatusError, setCenterStatusError] = useState<Record<string, string | null>>({});
-  const [logFormById, setLogFormById] = useState<Record<string, { entryType: "intake" | "distribution"; category: string; qty: string; note: string; error: string | null; fieldErrors: Record<string, string>; submitting: boolean }>>({});
+  const [logFormById, setLogFormById] = useState<Record<string, LogForm>>({});
+
+  // public centers for transfer destination
+  const [publicCenters, setPublicCenters] = useState<CenterPublic[] | null>(null);
+  const [publicCentersLoading, setPublicCentersLoading] = useState(false);
+
+  // inbound transfers
+  const [inboundById, setInboundById] = useState<Record<string, InboundTransfer[]>>({});
+  const [inboundLoadingById, setInboundLoadingById] = useState<Record<string, boolean>>({});
+  const [inboundErrorById, setInboundErrorById] = useState<Record<string, string | null>>({});
+  const [receiveDialog, setReceiveDialog] = useState<{
+    open: boolean;
+    centerId: string | null;
+    transfer: InboundTransfer | null;
+    qtyReceived: string;
+    note: string;
+    error: string | null;
+    submitting: boolean;
+  }>({ open: false, centerId: null, transfer: null, qtyReceived: "", note: "", error: null, submitting: false });
+
+  // correction dialog
+  const [correctDialog, setCorrectDialog] = useState<{
+    open: boolean;
+    centerId: string | null;
+    entryId: string | null;
+    note: string;
+    error: string | null;
+    submitting: boolean;
+  }>({ open: false, centerId: null, entryId: null, note: "", error: null, submitting: false });
+
+  // vouching
+  const [vouchTargetId, setVouchTargetId] = useState("");
+  const [vouchSubmitting, setVouchSubmitting] = useState(false);
+  const [vouchMsg, setVouchMsg] = useState<string | null>(null);
+  const [vouchError, setVouchError] = useState<string | null>(null);
+  const [copiedOrgId, setCopiedOrgId] = useState(false);
 
   const selectedOrg = orgs?.find((o) => o.id === selectedId) ?? null;
   const isOwner = selectedOrg?.role === "owner";
@@ -201,6 +292,39 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
     }
   }, [auth.idToken, language]);
 
+  const fetchInbound = useCallback(async (centerId: string) => {
+    if (!auth.idToken) return;
+    setInboundLoadingById((prev) => ({ ...prev, [centerId]: true }));
+    setInboundErrorById((prev) => ({ ...prev, [centerId]: null }));
+    try {
+      const res = await listInbound(auth.idToken, centerId);
+      setInboundById((prev) => ({ ...prev, [centerId]: res.items }));
+    } catch (err) {
+      setInboundErrorById((prev) => ({ ...prev, [centerId]: apiErrorMessage(err, language) }));
+    } finally {
+      setInboundLoadingById((prev) => ({ ...prev, [centerId]: false }));
+    }
+  }, [auth.idToken, language]);
+
+  const loadPublicCenters = useCallback(async () => {
+    if (publicCenters !== null || publicCentersLoading) return;
+    setPublicCentersLoading(true);
+    try {
+      const all: CenterPublic[] = [];
+      let cursor: string | undefined = undefined;
+      do {
+        const res = await listCenters(cursor ? { cursor } : {});
+        all.push(...res.items);
+        cursor = res.cursor;
+      } while (cursor);
+      setPublicCenters(all);
+    } catch {
+      setPublicCenters([]);
+    } finally {
+      setPublicCentersLoading(false);
+    }
+  }, [publicCenters, publicCentersLoading]);
+
   const toggleExpanded = (centerId: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -209,6 +333,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
         next.add(centerId);
         if (!stockById[centerId] && !stockLoadingById[centerId]) fetchStock(centerId);
         if (!entriesById[centerId] && !entriesLoadingById[centerId]) fetchEntries(centerId);
+        if (!inboundById[centerId] && !inboundLoadingById[centerId]) fetchInbound(centerId);
       }
       return next;
     });
@@ -267,11 +392,8 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
         description: trimmedDesc,
         website: editWebsite.trim() || undefined,
       });
-      setOrgs((prev) => {
-        if (!prev) return prev;
-        return prev.map((o) => (o.id === selectedOrg.id ? { ...o, name: trimmedName, orgType: editOrgType as OrgType, registrationNumber: editRegistrationNumber.trim() || undefined, contactName: trimmedContactName, contactPhone: trimmedPhone, contactEmail: trimmedEmail || undefined, districts: [...editDistricts], description: trimmedDesc, website: editWebsite.trim() || undefined } : o));
-      });
       setEditOpen(false);
+      fetchOrgs();
     } catch (err) {
       setEditApiError(apiErrorMessage(err, language));
     } finally {
@@ -371,29 +493,130 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
     const form = logFormById[centerId];
     if (!form || !auth.idToken) return;
     const fieldErrors: Record<string, string> = {};
-    if (form.entryType !== "intake" && form.entryType !== "distribution") fieldErrors.entryType = t.validationEntryType;
+    if (!["intake", "distribution", "transfer_out"].includes(form.entryType)) fieldErrors.entryType = t.validationEntryType;
     if (!form.category) fieldErrors.category = t.validationEntryCategory;
     const qtyNum = Number(form.qty);
     const qtyValid = !Number.isNaN(qtyNum) && Number.isFinite(qtyNum) && qtyNum > 0 && qtyNum <= 1000000 && /^\d+(\.\d{1,2})?$/.test(form.qty.trim());
     if (!qtyValid) fieldErrors.qty = t.validationEntryQty;
     if (form.note.trim().length > 500) fieldErrors.note = t.validationEntryNote;
+    if (form.entryType === "transfer_out") {
+      if (form.destinationType === "center") {
+        if (!form.destinationCenterId) fieldErrors.destination = t.validationDestinationCenter;
+      } else {
+        const dl = form.destinationLabel.trim();
+        if (dl.length < 1 || dl.length > 200) fieldErrors.destination = t.validationDestinationLabel;
+      }
+    }
     if (Object.keys(fieldErrors).length > 0) {
       setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, fieldErrors, error: null } }));
       return;
     }
     setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: true, error: null, fieldErrors: {} } }));
     try {
-      await createEntry(auth.idToken, centerId, {
+      const body: Record<string, unknown> = {
         entryType: form.entryType,
         category: form.category,
         qty: qtyNum,
         note: form.note.trim() || undefined,
-      });
-      setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, qty: "", note: "", submitting: false, error: null, fieldErrors: {} } }));
+      };
+      if (form.entryType === "transfer_out") {
+        body.destinationType = form.destinationType;
+        if (form.destinationType === "center") body.destinationCenterId = form.destinationCenterId;
+        else body.destinationLabel = form.destinationLabel.trim();
+      }
+      await createEntry(auth.idToken, centerId, body as never);
+      setLogFormById((prev) => ({ ...prev, [centerId]: { ...defaultLogForm(), submitting: false, error: null, fieldErrors: {} } }));
       fetchStock(centerId);
       fetchEntries(centerId);
     } catch (err) {
       setLogFormById((prev) => ({ ...prev, [centerId]: { ...form, submitting: false, error: apiErrorMessage(err, language), fieldErrors: {} } }));
+    }
+  };
+
+  const handleReceive = async () => {
+    if (!auth.idToken || !receiveDialog.transfer || !receiveDialog.centerId) return;
+    const qtyStr = receiveDialog.qtyReceived.trim();
+    const qtyNum = Number(qtyStr);
+    const qtyValid = qtyStr !== "" && !Number.isNaN(qtyNum) && Number.isFinite(qtyNum) && qtyNum >= 0 && qtyNum <= 1000000 && /^\d+(\.\d{1,2})?$/.test(qtyStr);
+    if (!qtyValid) {
+      setReceiveDialog((prev) => ({ ...prev, error: t.validationQtyReceived }));
+      return;
+    }
+    if (receiveDialog.note.trim().length > 500) {
+      setReceiveDialog((prev) => ({ ...prev, error: t.validationEntryNote }));
+      return;
+    }
+    setReceiveDialog((prev) => ({ ...prev, submitting: true, error: null }));
+    try {
+      await receiveTransfer(auth.idToken, receiveDialog.transfer.transferId, {
+        qtyReceived: qtyNum,
+        note: receiveDialog.note.trim() || undefined,
+      });
+      setReceiveDialog({ open: false, centerId: null, transfer: null, qtyReceived: "", note: "", error: null, submitting: false });
+      if (receiveDialog.centerId) {
+        fetchInbound(receiveDialog.centerId);
+        fetchStock(receiveDialog.centerId);
+        fetchEntries(receiveDialog.centerId);
+      }
+    } catch (err) {
+      setReceiveDialog((prev) => ({ ...prev, submitting: false, error: apiErrorMessage(err, language) }));
+    }
+  };
+
+  const handleCorrection = async () => {
+    if (!auth.idToken || !correctDialog.centerId || !correctDialog.entryId) return;
+    const noteTrim = correctDialog.note.trim();
+    if (noteTrim.length < 3 || noteTrim.length > 500) {
+      setCorrectDialog((prev) => ({ ...prev, error: t.validationCorrectionNote }));
+      return;
+    }
+    setCorrectDialog((prev) => ({ ...prev, submitting: true, error: null }));
+    try {
+      await createEntry(auth.idToken, correctDialog.centerId, {
+        entryType: "correction",
+        correctsEntryId: correctDialog.entryId,
+        note: noteTrim,
+      } as never);
+      setCorrectDialog({ open: false, centerId: null, entryId: null, note: "", error: null, submitting: false });
+      if (correctDialog.centerId) {
+        fetchStock(correctDialog.centerId);
+        fetchEntries(correctDialog.centerId);
+      }
+    } catch (err) {
+      setCorrectDialog((prev) => ({ ...prev, submitting: false, error: apiErrorMessage(err, language) }));
+    }
+  };
+
+  const handleVouch = async () => {
+    if (!auth.idToken || !selectedOrg) return;
+    const target = vouchTargetId.trim();
+    if (!target) {
+      setVouchError(t.vouchValidationRequired);
+      return;
+    }
+    setVouchSubmitting(true);
+    setVouchError(null);
+    setVouchMsg(null);
+    try {
+      await vouchOrg(auth.idToken, target, selectedOrg.id);
+      setVouchMsg(t.vouchSuccess);
+      setVouchTargetId("");
+      fetchOrgs();
+    } catch (err) {
+      setVouchError(apiErrorMessage(err, language));
+    } finally {
+      setVouchSubmitting(false);
+    }
+  };
+
+  const handleCopyOrgId = async () => {
+    if (!selectedOrg) return;
+    try {
+      await navigator.clipboard.writeText(selectedOrg.id);
+      setCopiedOrgId(true);
+      setTimeout(() => setCopiedOrgId(false), 2000);
+    } catch {
+      // ignore
     }
   };
 
@@ -499,7 +722,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <CardTitle className="font-serif text-xl">{selectedOrg.name}</CardTitle>
-                <StatusMark tone={orgStatusTone(selectedOrg.status)}>{orgStatusText(selectedOrg, t as unknown as Record<string, string>)}</StatusMark>
+                <StatusMark tone={orgStatusTone(selectedOrg.status)}>{orgStatusText(selectedOrg, t)}</StatusMark>
               </div>
               <CardDescription className="font-sans text-sm">{selectedOrg.orgType}</CardDescription>
             </CardHeader>
@@ -520,136 +743,108 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                   </a>
                 </p>
               ) : null}
-              {selectedOrg.rejectionReason ? (
-                <p className="text-destructive">
-                  {t.orgStatusReasonPrefix} {selectedOrg.rejectionReason}
-                </p>
-              ) : null}
-              {selectedOrg.suspensionReason ? (
-                <p className="text-destructive">
-                  {t.orgStatusReasonPrefix} {selectedOrg.suspensionReason}
-                </p>
+              {selectedOrg.vouches && selectedOrg.vouches.length > 0 ? (
+                <div className="border border-rule bg-card p-3">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-wide">{t.vouchesLabel}</p>
+                  <ul className="mt-2 space-y-1">
+                    {selectedOrg.vouches.map((v) => (
+                      <li key={v.orgId} className="font-sans text-xs">
+                        {fillTemplate(t.vouchFromAt, { name: v.orgName, date: new Date(v.at).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US") })}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
               {isOwner ? (
                 <Button variant="outline" className="min-h-11" onClick={openEdit}>
                   {t.orgEditButton}
                 </Button>
-              ) : null}
+              ) : (
+                <p className="font-sans text-xs text-muted-foreground">{t.unauthorizedEdit}</p>
+              )}
             </CardContent>
           </Card>
 
-          <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t.orgEditTitle}</DialogTitle>
-                <DialogDescription>{t.orgDistrictsLabel}</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleEditSubmit} className="space-y-4" noValidate>
+          {selectedOrg.status === "pending" ? (
+            <Card className="border-rule">
+              <CardHeader>
+                <CardTitle className="font-serif text-base">{t.pendingVouchBoxTitle}</CardTitle>
+                <CardDescription className="font-sans text-sm leading-6">{t.pendingVouchBoxBody}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Label htmlFor="pendingOrgId">{t.pendingVouchOrgIdLabel}</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <code id="pendingOrgId" className="flex-1 break-all border border-rule bg-secondary px-3 py-2 font-mono text-xs">
+                    {selectedOrg.id}
+                  </code>
+                  <Button type="button" variant="outline" className="min-h-11" onClick={handleCopyOrgId}>
+                    {copiedOrgId ? t.pendingVouchCopied : t.pendingVouchCopyButton}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {selectedOrg.status === "verified" && isOwner ? (
+            <Card className="border-rule">
+              <CardHeader>
+                <CardTitle className="font-serif text-base">{t.vouchBoxTitle}</CardTitle>
+                <CardDescription className="font-sans text-sm leading-6">{t.vouchBoxBody}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="editName">{t.registerOrgNameLabel} *</Label>
-                  <Input id="editName" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11" required />
-                  {editErrors.name ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.name}</p> : null}
+                  <Label htmlFor="vouchTargetId">{t.vouchInputLabel}</Label>
+                  <Input
+                    id="vouchTargetId"
+                    value={vouchTargetId}
+                    onChange={(e) => setVouchTargetId(e.target.value)}
+                    placeholder={t.vouchInputPlaceholder}
+                    className="min-h-11"
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editOrgType">{t.registerOrgOrgTypeLabel} *</Label>
-                  <Select id="editOrgType" value={editOrgType} onChange={(e) => setEditOrgType(e.target.value as OrgType)} className="min-h-11">
-                    <option value="">{t.registerOrgSelectType}</option>
-                    {ORG_TYPES.map((ot) => (
-                      <SelectItem key={ot} value={ot}>
-                        {t[`orgType_${ot}` as keyof typeof t] ?? ot}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  {editErrors.orgType ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.orgType}</p> : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editRegistrationNumber">{t.registerOrgRegistrationNumberLabel}</Label>
-                  <Input id="editRegistrationNumber" value={editRegistrationNumber} onChange={(e) => setEditRegistrationNumber(e.target.value)} className="min-h-11" />
-                  {editErrors.registrationNumber ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.registrationNumber}</p> : null}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="editContactName">{t.registerOrgContactNameLabel} *</Label>
-                    <Input id="editContactName" value={editContactName} onChange={(e) => setEditContactName(e.target.value)} className="min-h-11" required />
-                    {editErrors.contactName ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactName}</p> : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editContactPhone">{t.registerOrgContactPhoneLabel} *</Label>
-                    <Input id="editContactPhone" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} inputMode="tel" className="min-h-11" required />
-                    {editErrors.contactPhone ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactPhone}</p> : null}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editContactEmail">{t.registerOrgContactEmailLabel}</Label>
-                  <Input id="editContactEmail" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} type="email" className="min-h-11" />
-                  {editErrors.contactEmail ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactEmail}</p> : null}
-                </div>
-                <div className="space-y-2">
-                  <fieldset>
-                    <legend className="font-sans text-sm font-medium">{t.registerOrgDistrictsLabel} *</legend>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {districtNames.map((d) => (
-                        <label key={d} className={`cursor-pointer border px-3 py-2 font-sans text-xs ${editDistricts.includes(d) ? "border-ink bg-ink text-paper" : "border-rule bg-paper"}`}>
-                          <input type="checkbox" className="sr-only" checked={editDistricts.includes(d)} onChange={() => setEditDistricts((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))} />
-                          {districtLabels[d][language]}
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  {editErrors.districts ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.districts}</p> : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editDescription">{t.registerOrgDescriptionLabel} *</Label>
-                  <Textarea id="editDescription" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} required />
-                  {editErrors.description ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.description}</p> : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editWebsite">{t.registerOrgWebsiteLabel}</Label>
-                  <Input id="editWebsite" value={editWebsite} onChange={(e) => setEditWebsite(e.target.value)} className="min-h-11" />
-                  {editErrors.website ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.website}</p> : null}
-                </div>
-                {editApiError ? (
-                  <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
-                    {editApiError}
+                {vouchError ? (
+                  <p className="font-sans text-sm text-destructive" role="alert">
+                    {vouchError}
                   </p>
                 ) : null}
-                <DialogFooter>
-                  <Button type="button" variant="outline" className="min-h-11" onClick={() => setEditOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={editSubmitting} className="min-h-11">
-                    {editSubmitting ? t.orgEditSaving : t.orgEditSubmit}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                {vouchMsg ? (
+                  <p className="font-sans text-sm text-emerald-700" role="status">
+                    {vouchMsg}
+                  </p>
+                ) : null}
+                <Button type="button" className="min-h-11" onClick={handleVouch} disabled={vouchSubmitting}>
+                  {vouchSubmitting ? t.vouchSubmitting : t.vouchButton}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <section className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-serif text-xl font-semibold">{t.orgCentersTitle}</h2>
+              <h2 className="font-serif text-xl font-bold">{t.orgCentersTitle}</h2>
               {isOwner ? (
                 <Button onClick={() => setAddCenterOpen(true)} className="min-h-11">
                   {t.orgAddCenter}
                 </Button>
               ) : null}
             </div>
-
             {loadingCenters ? (
               <p className="font-sans text-sm text-muted-foreground">{t.orgDashboardLoading}</p>
             ) : centersError ? (
-              <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+              <p className="font-sans text-sm text-destructive" role="alert">
                 {centersError}
               </p>
             ) : centers.length === 0 ? (
-              <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground">{t.orgCentersEmpty}</p>
+              <p className="font-sans text-sm text-muted-foreground">{t.orgCentersEmpty}</p>
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {centers.map((center) => {
                   const isExpanded = expanded.has(center.id);
                   const stock = stockById[center.id] ?? [];
                   const entries = entriesById[center.id] ?? [];
-                  const logForm = logFormById[center.id] ?? { entryType: "intake" as const, category: "", qty: "", note: "", error: null, fieldErrors: {}, submitting: false };
+                  const inbound = inboundById[center.id] ?? [];
+                  const logForm = logFormById[center.id] ?? defaultLogForm();
+                  const publicOptions = (publicCenters ?? []).filter((c) => c.id !== center.id);
                   return (
                     <Card key={center.id}>
                       <CardHeader className="pb-3">
@@ -743,7 +938,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
 
                             <div className="space-y-3 border border-rule bg-card p-4">
                               <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{t.logEntryTitle}</h3>
-                              <fieldset className="flex gap-4">
+                              <fieldset className="flex flex-wrap gap-4">
                                 <legend className="sr-only">{t.logEntryTypeLabel}</legend>
                                 <label className="flex items-center gap-2 font-sans text-sm">
                                   <input
@@ -763,8 +958,88 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                                   />
                                   {t.logEntryDistribution}
                                 </label>
+                                <label className="flex items-center gap-2 font-sans text-sm">
+                                  <input
+                                    type="radio"
+                                    name={`entryType-${center.id}`}
+                                    checked={logForm.entryType === "transfer_out"}
+                                    onChange={() => {
+                                      loadPublicCenters();
+                                      setLogFormById((prev) => ({ ...prev, [center.id]: { ...logForm, entryType: "transfer_out" } }));
+                                    }}
+                                  />
+                                  {t.logEntryTransferOut}
+                                </label>
                               </fieldset>
                               {logForm.fieldErrors.entryType ? <p className="font-sans text-sm text-destructive" role="alert">{logForm.fieldErrors.entryType}</p> : null}
+
+                              {logForm.entryType === "transfer_out" ? (
+                                <div className="space-y-3 border border-rule p-3">
+                                  <fieldset className="flex flex-col gap-2">
+                                    <legend className="font-sans text-xs font-semibold uppercase tracking-wide">{t.logEntryDestinationLabel} *</legend>
+                                    <label className="flex items-center gap-2 font-sans text-sm">
+                                      <input
+                                        type="radio"
+                                        name={`destType-${center.id}`}
+                                        checked={logForm.destinationType === "center"}
+                                        onChange={() => {
+                                          loadPublicCenters();
+                                          setLogFormById((prev) => ({ ...prev, [center.id]: { ...logForm, destinationType: "center" } }));
+                                        }}
+                                      />
+                                      {t.logEntryDestinationCenterLabel}
+                                    </label>
+                                    <label className="flex items-center gap-2 font-sans text-sm">
+                                      <input
+                                        type="radio"
+                                        name={`destType-${center.id}`}
+                                        checked={logForm.destinationType === "external"}
+                                        onChange={() => setLogFormById((prev) => ({ ...prev, [center.id]: { ...logForm, destinationType: "external" } }))}
+                                      />
+                                      {t.logEntryDestinationExternalLabel}
+                                    </label>
+                                  </fieldset>
+                                  {logForm.destinationType === "center" ? (
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`destCenter-${center.id}`}>{t.logEntryDestinationCenterLabel} *</Label>
+                                      {publicCentersLoading ? (
+                                        <p className="font-sans text-xs text-muted-foreground">{t.logEntryDestinationLoading}</p>
+                                      ) : (
+                                        <Select
+                                          id={`destCenter-${center.id}`}
+                                          value={logForm.destinationCenterId}
+                                          onChange={(e) => setLogFormById((prev) => ({ ...prev, [center.id]: { ...logForm, destinationCenterId: e.target.value } }))}
+                                          className="min-h-11"
+                                        >
+                                          <option value="">{t.logEntryDestinationCenterSelect}</option>
+                                          {publicOptions.map((c) => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                              {c.name} — {districtLabels[c.district as keyof typeof districtLabels]?.[language] ?? c.district} — {c.org.name}
+                                            </SelectItem>
+                                          ))}
+                                        </Select>
+                                      )}
+                                      {publicOptions.length === 0 && !publicCentersLoading ? (
+                                        <p className="font-sans text-xs text-muted-foreground">{t.logEntryDestinationEmpty}</p>
+                                      ) : null}
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`destLabel-${center.id}`}>{t.logEntryDestinationExternalLabel} *</Label>
+                                      <Input
+                                        id={`destLabel-${center.id}`}
+                                        value={logForm.destinationLabel}
+                                        onChange={(e) => setLogFormById((prev) => ({ ...prev, [center.id]: { ...logForm, destinationLabel: e.target.value } }))}
+                                        placeholder={t.logEntryDestinationExternalPlaceholder}
+                                        maxLength={200}
+                                        className="min-h-11"
+                                      />
+                                    </div>
+                                  )}
+                                  {logForm.fieldErrors.destination ? <p className="font-sans text-sm text-destructive" role="alert">{logForm.fieldErrors.destination}</p> : null}
+                                </div>
+                              ) : null}
+
                               <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="space-y-2">
                                   <Label htmlFor={`cat-${center.id}`}>{t.logEntryCategoryLabel} *</Label>
@@ -777,7 +1052,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                                     <option value="">{t.logEntryCategorySelect}</option>
                                     {GOODS_CATEGORIES.map((gc) => (
                                       <SelectItem key={gc.id} value={gc.id}>
-                                        {goodsLabel(gc.id, language)} ({unitLabel(gc.unit, language)})
+                                        {goodsLabel(gc.id, language)}
                                       </SelectItem>
                                     ))}
                                   </Select>
@@ -815,6 +1090,41 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                             </div>
 
                             <div className="space-y-2">
+                              <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{t.inboundTitle}</h3>
+                              {inboundLoadingById[center.id] ? (
+                                <p className="font-sans text-sm text-muted-foreground">{t.orgDashboardLoading}</p>
+                              ) : inboundErrorById[center.id] ? (
+                                <p className="font-sans text-sm text-destructive" role="alert">
+                                  {inboundErrorById[center.id]}
+                                </p>
+                              ) : inbound.length === 0 ? (
+                                <p className="font-sans text-sm text-muted-foreground">{t.inboundEmpty}</p>
+                              ) : (
+                                <ul className="divide-y divide-rule border border-rule">
+                                  {inbound.map((ib) => (
+                                    <li key={ib.transferId} className="flex flex-col gap-2 px-3 py-3 font-sans text-sm">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-semibold">{t.inboundFromLabel} {ib.fromCenterName}</span>
+                                        <span className="text-muted-foreground">
+                                          {goodsLabel(ib.category, language)} · {ib.qty} {unitLabel(ib.unit, language)}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">{new Date(ib.createdAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US")}</span>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="min-h-11 w-fit"
+                                        onClick={() => setReceiveDialog({ open: true, centerId: center.id, transfer: ib, qtyReceived: String(ib.qty), note: "", error: null, submitting: false })}
+                                      >
+                                        {t.inboundConfirmButton}
+                                      </Button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
                               <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{t.recentEntriesTitle}</h3>
                               {entriesLoadingById[center.id] && entries.length === 0 ? (
                                 <p className="font-sans text-sm text-muted-foreground">{t.orgDashboardLoading}</p>
@@ -829,6 +1139,29 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                                   <ul className="divide-y divide-rule border border-rule">
                                     {entries.map((en) => {
                                       const corrected = Boolean(en.correctedByEntryId);
+                                      const isCorrection = en.entryType === "correction";
+                                      const canCorrect = !corrected && !isCorrection && !(en.entryType === "transfer_out" && en.transferStatus === "received");
+                                      // Build transfer status line
+                                      let transferLine: string | null = null;
+                                      if (en.entryType === "transfer_out") {
+                                        const dest = en.destinationLabel || "";
+                                        const status = en.transferStatus === "received"
+                                          ? en.discrepancy !== undefined && en.discrepancy !== 0
+                                            ? fillTemplate(t.transferReceivedStatus, { qty: String(en.qtyReceived ?? ""), discrepancy: String(en.discrepancy) })
+                                            : fillTemplate(t.transferReceivedNoDiscrepancy, { qty: String(en.qtyReceived ?? en.qty) })
+                                          : en.transferStatus === "in_transit" ? t.transferInTransit : t.transferInTransit;
+                                        // if status already contains detail, show "Sent to X · status"
+                                        if (dest) transferLine = `${fillTemplate(t.transferSentLabel, { destination: dest })} · ${status}`;
+                                        else transferLine = status;
+                                      } else if (en.entryType === "transfer_in") {
+                                        const src = en.sourceLabel || "";
+                                        transferLine = fillTemplate(t.transferReceivedLabel, { source: src });
+                                        if (en.discrepancy !== undefined && en.discrepancy !== 0) {
+                                          transferLine += ` · ${fillTemplate(t.inboundDiscrepancy, { value: String(en.discrepancy), unit: unitLabel(en.unit, language) })}`;
+                                        }
+                                      } else if (isCorrection) {
+                                        transferLine = t.activityCorrection;
+                                      }
                                       return (
                                         <li key={en.id} className={`flex flex-col gap-1 px-3 py-2 font-sans text-sm ${corrected ? "line-through opacity-60" : ""}`}>
                                           <div className="flex flex-wrap items-center gap-2">
@@ -839,13 +1172,27 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                                             <span className="tabular-nums">
                                               {en.qty} {unitLabel(en.unit, language)}
                                             </span>
+                                            {en.discrepancy !== undefined && en.discrepancy !== 0 ? (
+                                              <span className="text-xs text-red">{fillTemplate(t.inboundDiscrepancy, { value: String(en.discrepancy), unit: unitLabel(en.unit, language) })}</span>
+                                            ) : null}
                                             {corrected ? <Badge variant="destructive" className="text-xs">{t.correctedMark}</Badge> : null}
                                           </div>
+                                          {transferLine ? <p className="text-xs text-muted-foreground">{transferLine}</p> : null}
                                           {en.note ? <p className="text-xs text-muted-foreground">{en.note}</p> : null}
                                           <p className="text-xs text-muted-foreground">
                                             {new Date(en.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
                                             {en.createdByName ? ` · ${en.createdByName}` : ""}
                                           </p>
+                                          {!corrected && canCorrect ? (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="min-h-11 w-fit px-2 text-xs"
+                                              onClick={() => setCorrectDialog({ open: true, centerId: center.id, entryId: en.id, note: "", error: null, submitting: false })}
+                                            >
+                                              {t.correctionButton}
+                                            </Button>
+                                          ) : null}
                                         </li>
                                       );
                                     })}
@@ -873,6 +1220,85 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
               </div>
             )}
           </section>
+
+          <Dialog open={receiveDialog.open} onOpenChange={(o) => { if (!o) setReceiveDialog((prev) => ({ ...prev, open: false })); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="font-serif">{t.inboundDialogTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">{t.inboundDialogDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="qtyReceived">{t.inboundQtyReceivedLabel} *</Label>
+                  <Input
+                    id="qtyReceived"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={receiveDialog.qtyReceived}
+                    onChange={(e) => setReceiveDialog((prev) => ({ ...prev, qtyReceived: e.target.value }))}
+                    className="min-h-11"
+                  />
+                  {receiveDialog.transfer ? (
+                    (() => {
+                      const declared = receiveDialog.transfer.qty;
+                      const received = Number(receiveDialog.qtyReceived);
+                      if (receiveDialog.qtyReceived.trim() === "" || Number.isNaN(received)) return null;
+                      const diff = declared - received;
+                      if (diff === 0) return null;
+                      return <p className="font-sans text-sm text-red">{fillTemplate(t.inboundDiscrepancy, { value: String(diff), unit: unitLabel(receiveDialog.transfer.unit, language) })}</p>;
+                    })()
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="receiveNote">{t.inboundNoteLabel}</Label>
+                  <Textarea id="receiveNote" value={receiveDialog.note} onChange={(e) => setReceiveDialog((prev) => ({ ...prev, note: e.target.value }))} rows={2} maxLength={500} />
+                </div>
+                {receiveDialog.error ? (
+                  <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                    {receiveDialog.error}
+                  </p>
+                ) : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => setReceiveDialog((prev) => ({ ...prev, open: false }))}>
+                  Cancel
+                </Button>
+                <Button className="min-h-11" onClick={handleReceive} disabled={receiveDialog.submitting}>
+                  {receiveDialog.submitting ? t.inboundSubmitting : t.inboundSubmit}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={correctDialog.open} onOpenChange={(o) => { if (!o) setCorrectDialog((prev) => ({ ...prev, open: false })); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="font-serif">{t.correctionDialogTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">{t.correctionDialogDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="correctionNote">{t.correctionNoteLabel}</Label>
+                  <Textarea id="correctionNote" value={correctDialog.note} onChange={(e) => setCorrectDialog((prev) => ({ ...prev, note: e.target.value }))} rows={3} maxLength={500} placeholder={t.correctionNotePlaceholder} />
+                </div>
+                {correctDialog.error ? (
+                  <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                    {correctDialog.error}
+                  </p>
+                ) : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => setCorrectDialog((prev) => ({ ...prev, open: false }))}>
+                  Cancel
+                </Button>
+                <Button className="min-h-11" onClick={handleCorrection} disabled={correctDialog.submitting}>
+                  {correctDialog.submitting ? t.correctionSubmitting : t.correctionSubmit}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={addCenterOpen} onOpenChange={setAddCenterOpen}>
             <DialogContent>
@@ -963,6 +1389,95 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
                   </Button>
                   <Button type="submit" disabled={cSubmitting} className="min-h-11">
                     {cSubmitting ? t.orgAddCenterSubmitting : t.orgAddCenterSubmit}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t.orgEditTitle}</DialogTitle>
+                <DialogDescription className="font-sans text-sm leading-6">{t.orgEditTitle}</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEditSubmit} className="space-y-4" noValidate>
+                <div className="space-y-2">
+                  <Label htmlFor="editName">{t.registerOrgNameLabel} *</Label>
+                  <Input id="editName" value={editName} onChange={(e) => setEditName(e.target.value)} className="min-h-11" required />
+                  {editErrors.name ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.name}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editOrgType">{t.registerOrgOrgTypeLabel} *</Label>
+                  <Select id="editOrgType" value={editOrgType} onChange={(e) => setEditOrgType(e.target.value as OrgType)} className="min-h-11" required>
+                    <option value="">{t.registerOrgSelectType}</option>
+                    {ORG_TYPES.map((ot) => (
+                      <SelectItem key={ot} value={ot}>
+                        {t[`orgType_${ot}` as keyof typeof t] ?? ot}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                  {editErrors.orgType ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.orgType}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editRegistrationNumber">{t.registerOrgRegistrationNumberLabel}</Label>
+                  <Input id="editRegistrationNumber" value={editRegistrationNumber} onChange={(e) => setEditRegistrationNumber(e.target.value)} className="min-h-11" />
+                  {editErrors.registrationNumber ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.registrationNumber}</p> : null}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="editContactName">{t.registerOrgContactNameLabel} *</Label>
+                    <Input id="editContactName" value={editContactName} onChange={(e) => setEditContactName(e.target.value)} className="min-h-11" required />
+                    {editErrors.contactName ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactName}</p> : null}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editContactPhone">{t.registerOrgContactPhoneLabel} *</Label>
+                    <Input id="editContactPhone" value={editContactPhone} onChange={(e) => setEditContactPhone(e.target.value)} inputMode="tel" className="min-h-11" required />
+                    {editErrors.contactPhone ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactPhone}</p> : null}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editContactEmail">{t.registerOrgContactEmailLabel}</Label>
+                  <Input id="editContactEmail" value={editContactEmail} onChange={(e) => setEditContactEmail(e.target.value)} type="email" className="min-h-11" />
+                  {editErrors.contactEmail ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.contactEmail}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <fieldset>
+                    <legend className="font-sans text-sm font-medium">{t.registerOrgDistrictsLabel} *</legend>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {districtNames.map((d) => (
+                        <label key={d} className={`cursor-pointer border px-2 py-1.5 font-sans text-xs ${editDistricts.includes(d) ? "border-ink bg-ink text-paper" : "border-rule bg-paper"}`}>
+                          <input type="checkbox" className="sr-only" checked={editDistricts.includes(d)} onChange={() => setEditDistricts((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))} />
+                          {districtLabels[d][language]}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  {editErrors.districts ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.districts}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editDescription">{t.registerOrgDescriptionLabel} *</Label>
+                  <Textarea id="editDescription" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={4} maxLength={2000} required />
+                  <p className="font-sans text-xs text-muted-foreground">{t.registerOrgDescriptionHint}</p>
+                  {editErrors.description ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.description}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editWebsite">{t.registerOrgWebsiteLabel}</Label>
+                  <Input id="editWebsite" value={editWebsite} onChange={(e) => setEditWebsite(e.target.value)} placeholder="https://" className="min-h-11" maxLength={200} />
+                  <p className="font-sans text-xs text-muted-foreground">{t.registerOrgWebsiteHint}</p>
+                  {editErrors.website ? <p className="font-sans text-sm text-destructive" role="alert">{editErrors.website}</p> : null}
+                </div>
+                {editApiError ? (
+                  <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                    {editApiError}
+                  </p>
+                ) : null}
+                <DialogFooter>
+                  <Button type="button" variant="outline" className="min-h-11" onClick={() => setEditOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={editSubmitting} className="min-h-11">
+                    {editSubmitting ? t.orgEditSaving : t.orgEditSubmit}
                   </Button>
                 </DialogFooter>
               </form>

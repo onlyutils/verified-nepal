@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, getCenter, type CenterDetailResponse } from "../api";
+import { ApiError, flagCenter, getCenter, type CenterDetailResponse } from "../api";
 import { apiErrorMessage } from "../api-error";
 import { centerStrings } from "../i18n-centers";
 import { districtLabels } from "../geo";
@@ -7,9 +7,16 @@ import { goodsLabel, unitLabel } from "../goods";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectItem } from "@/components/ui/select";
 import { Headline, SectionLabel, RuledTable, Rule, StatusMark } from "../ui";
 import type { Language, Page } from "../types";
 import { fillTemplate } from "../edition";
+import { TurnstileWidget } from "../components/turnstile";
+
+const TURNSTILE_KEY = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 function tierLabel(tier: string | undefined, language: Language): string {
   const s = centerStrings[language];
@@ -54,6 +61,16 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
+  // flag form state
+  const [flagOpen, setFlagOpen] = useState(false);
+  const [flagReason, setFlagReason] = useState("");
+  const [flagDetails, setFlagDetails] = useState("");
+  const [flagTurnstileToken, setFlagTurnstileToken] = useState("");
+  const [flagSubmitting, setFlagSubmitting] = useState(false);
+  const [flagError, setFlagError] = useState<string | null>(null);
+  const [flagSuccess, setFlagSuccess] = useState(false);
+  const [flagFieldError, setFlagFieldError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -79,6 +96,37 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
     };
   }, [id, language]);
 
+  const handleFlag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flagReason) {
+      setFlagFieldError(s.reportValidationReason);
+      return;
+    }
+    if (flagDetails.trim().length > 500) {
+      setFlagFieldError(s.reportValidationDetails);
+      return;
+    }
+    setFlagFieldError(null);
+    setFlagSubmitting(true);
+    setFlagError(null);
+    try {
+      await flagCenter(id, {
+        reason: flagReason as "not_real" | "closed" | "misuse" | "other",
+        details: flagDetails.trim() || undefined,
+        turnstileToken: flagTurnstileToken || undefined,
+      });
+      setFlagSuccess(true);
+      setFlagOpen(false);
+      setFlagReason("");
+      setFlagDetails("");
+      setFlagTurnstileToken("");
+    } catch (err) {
+      setFlagError(apiErrorMessage(err, language));
+    } finally {
+      setFlagSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
@@ -101,6 +149,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
             </Button>
           </CardContent>
         </Card>
+        <Rule />
       </div>
     );
   }
@@ -108,12 +157,12 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   if (error) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <div className="border border-rule bg-card px-4 py-4" role="alert">
-          <p className="font-sans text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" className="mt-3 min-h-11" onClick={() => navigate("dropCenters")}>
-            {s.backToCenters}
-          </Button>
-        </div>
+        <p className="font-sans text-sm text-destructive" role="alert">
+          {error}
+        </p>
+        <Button className="min-h-11" onClick={() => navigate("dropCenters")}>
+          {s.backToCenters}
+        </Button>
       </div>
     );
   }
@@ -209,6 +258,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
             <ul className="divide-y divide-rule border-y border-rule">
               {data.recent.map((entry) => {
                 const corrected = !!entry.correctedByEntryId;
+                const isCorrection = entry.entryType === "correction";
                 return (
                   <li key={entry.id} className={`flex flex-col gap-1 px-2 py-3 font-sans text-sm ${corrected ? "line-through text-muted" : "text-ink"}`}>
                     <div className="flex flex-wrap items-center gap-2">
@@ -217,7 +267,16 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                         {goodsLabel(entry.category, language)} · {entry.qty} {unitLabel(entry.unit, language)}
                       </span>
                       {corrected ? <Badge variant="outline" className="text-[0.62rem]">{s.activityCorrected}</Badge> : null}
+                      {isCorrection ? <Badge variant="secondary" className="text-[0.62rem]">{s.activityCorrection}</Badge> : null}
+                      {entry.discrepancy !== undefined && entry.discrepancy !== 0 ? (
+                        <span className="text-xs text-red">{fillTemplate(s.transferDiscrepancy, { value: String(entry.discrepancy), unit: unitLabel(entry.unit, language) })}</span>
+                      ) : null}
                     </div>
+                    {entry.transferStatus ? (
+                      <span className="font-sans text-xs text-muted">
+                        {entry.transferStatus === "in_transit" ? "in transit" : entry.transferStatus === "received" ? `received${entry.qtyReceived !== undefined ? ` (${entry.qtyReceived} ${unitLabel(entry.unit, language)})` : ""}` : entry.transferStatus}
+                      </span>
+                    ) : null}
                     <span className="font-sans text-xs text-muted">{new Date(entry.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}</span>
                     {entry.note ? <span className="font-sans text-xs italic text-muted">{entry.note}</span> : null}
                   </li>
@@ -225,6 +284,63 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
               })}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-rule">
+        <CardHeader>
+          <CardTitle className="font-serif text-base">{s.reportProblemTitle}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!flagOpen ? (
+            <Button variant="outline" className="min-h-11" onClick={() => setFlagOpen(true)}>
+              {s.reportProblemDisclosure}
+            </Button>
+          ) : (
+            <form onSubmit={handleFlag} className="space-y-4" noValidate>
+              <div className="space-y-2">
+                <Label htmlFor="flagReason">{s.reportReasonLabel}</Label>
+                <Select id="flagReason" value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="min-h-11" required>
+                  <option value="">{s.reportReasonSelect}</option>
+                  <SelectItem value="not_real">{s.reportReasonNotReal}</SelectItem>
+                  <SelectItem value="closed">{s.reportReasonClosed}</SelectItem>
+                  <SelectItem value="misuse">{s.reportReasonMisuse}</SelectItem>
+                  <SelectItem value="other">{s.reportReasonOther}</SelectItem>
+                </Select>
+                {flagFieldError && !flagReason ? <p className="font-sans text-sm text-destructive" role="alert">{flagFieldError}</p> : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flagDetails">{s.reportDetailsLabel}</Label>
+                <Textarea id="flagDetails" value={flagDetails} onChange={(e) => setFlagDetails(e.target.value)} placeholder={s.reportDetailsPlaceholder} rows={3} maxLength={500} />
+                <p className="font-sans text-xs text-muted-foreground">{s.reportDetailsHint}</p>
+                {flagFieldError && flagDetails.trim().length > 500 ? <p className="font-sans text-sm text-destructive" role="alert">{flagFieldError}</p> : null}
+              </div>
+              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setFlagTurnstileToken} /> : null}
+              {flagError ? (
+                <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                  {flagError}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={flagSubmitting} className="min-h-11">
+                  {flagSubmitting ? s.reportSubmitting : s.reportSubmit}
+                </Button>
+                <Button type="button" variant="outline" className="min-h-11" onClick={() => { setFlagOpen(false); setFlagFieldError(null); setFlagError(null); }}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
+          {flagSuccess ? (
+            <p className="font-sans text-sm text-emerald-700" role="status">
+              {s.reportSuccess}
+            </p>
+          ) : null}
+          {flagError && !flagOpen ? (
+            <p className="font-sans text-sm text-destructive" role="alert">
+              {flagError}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 

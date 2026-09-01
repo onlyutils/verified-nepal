@@ -12,6 +12,7 @@ import {
   getModerationDispatches,
   moderateDispatch,
   type ModerationDispatchItem,
+  getModerationCenterFlags,
   getModerationFlags,
   getModerationOrgs,
   getModerationQueue,
@@ -30,6 +31,7 @@ import {
   type NeedPublic,
   type OfferPublic,
   type ClaimPrintItem,
+  type CenterFlagInboxItem,
   type FlagInboxItem,
   type SyncResult,
   type ModerationProjectItem,
@@ -179,6 +181,9 @@ export function Desk({ language }: { language: Language }) {
   const [flags, setFlags] = useState<FlagInboxItem[]>([]);
   const [flagsLoading, setFlagsLoading] = useState(false);
   const [flagsError, setFlagsError] = useState<string | null>(null);
+  const [centerFlags, setCenterFlags] = useState<CenterFlagInboxItem[]>([]);
+  const [centerFlagsLoading, setCenterFlagsLoading] = useState(false);
+  const [centerFlagsError, setCenterFlagsError] = useState<string | null>(null);
 
   // Redeem confirm
   const [redeemCode, setRedeemCode] = useState<string | null>(null);
@@ -248,6 +253,20 @@ export function Desk({ language }: { language: Language }) {
       setFlagsError(apiErrorMessage(e, language));
     } finally {
       setFlagsLoading(false);
+    }
+  };
+
+  const loadCenterFlags = async () => {
+    if (!auth.idToken) return;
+    setCenterFlagsLoading(true);
+    setCenterFlagsError(null);
+    try {
+      const res = await getModerationCenterFlags(auth.idToken);
+      setCenterFlags(res.items);
+    } catch (e) {
+      setCenterFlagsError(apiErrorMessage(e, language));
+    } finally {
+      setCenterFlagsLoading(false);
     }
   };
 
@@ -700,12 +719,16 @@ export function Desk({ language }: { language: Language }) {
       loadQueue();
       loadBoards();
       loadFlags();
+      loadCenterFlags();
       loadOrgsPendingCount();
     }
   }, [auth.profile?.role, auth.idToken]);
 
   useEffect(() => {
-    if (activeTab === "flags" && auth.idToken) loadFlags();
+    if (activeTab === "flags" && auth.idToken) {
+      loadFlags();
+      loadCenterFlags();
+    }
     if (activeTab === "projects" && auth.idToken) loadProjects();
     if (activeTab === "dispatches" && auth.idToken) loadDispatches();
     if (activeTab === "orgs" && auth.idToken) loadOrgs(orgsStatus);
@@ -1781,6 +1804,46 @@ export function Desk({ language }: { language: Language }) {
               ))}
             </div>
           )}
+          <div className="mt-8 space-y-4 border-t border-rule pt-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-base font-semibold">{dos.centerFlagsTitle}</h3>
+              <Button variant="outline" size="sm" onClick={loadCenterFlags}>
+                {dos.centerFlagsRetry}
+              </Button>
+            </div>
+            {centerFlagsLoading ? (
+              <p className="font-sans text-sm text-muted-foreground">{dos.centerFlagsLoading}</p>
+            ) : centerFlagsError ? (
+              <p className="font-sans text-sm text-destructive" role="alert">{centerFlagsError}</p>
+            ) : centerFlags.length === 0 ? (
+              <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground">{dos.centerFlagsEmpty}</p>
+            ) : (
+              <div className="grid gap-4">
+                {centerFlags.map((cf) => (
+                  <Card key={cf.centerId}>
+                    <CardHeader className="pb-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <CardTitle className="text-base">{cf.name} · {cf.district}</CardTitle>
+                        <Badge variant="outline">{fillTemplate(dos.centerFlagCount, { count: String(cf.flagCount) })}</Badge>
+                      </div>
+                      <CardDescription className="font-sans text-xs">{cf.orgName} · <a href={`/drop-centers/${cf.centerId}`} target="_blank" rel="noreferrer" className="underline">{dos.centerFlagsViewPublic}</a></CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {cf.reasons.map((r, idx) => (
+                          <li key={idx} className="border border-rule bg-card px-3 py-2">
+                            <p className="font-sans text-xs font-semibold capitalize">{r.reason}</p>
+                            {r.details ? <p className="mt-1 font-serif text-sm leading-6">{r.details}</p> : null}
+                            <p className="mt-1 font-sans text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString()}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 
