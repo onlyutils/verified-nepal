@@ -141,7 +141,7 @@ export function useGoogleAuth() {
       window.history.replaceState({}, "", newUrl);
     };
 
-    if (!savedState || stateParam !== savedState || !verifier || !clientId) {
+    if (!savedState || stateParam !== savedState || !verifier) {
       setError("verify-failed");
       stripParams();
       return;
@@ -154,15 +154,13 @@ export function useGoogleAuth() {
 
     (async () => {
       try {
-        const res = await fetch(`${AUTH_HOST}/token`, {
+        const res = await fetch(`${API_BASE}/auth/exchange`, {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             code,
             code_verifier: verifier,
             redirect_uri: redirectUri,
-            client_id: clientId,
           }),
         });
         if (!res.ok) {
@@ -213,15 +211,13 @@ export function useGoogleAuth() {
     const tryRefresh = async (): Promise<boolean> => {
       const stored = loadTokens();
       const refreshToken = stored?.refresh_token;
-      if (!refreshToken || !clientId) return false;
+      if (!refreshToken) return false;
       try {
-        const res = await fetch(`${AUTH_HOST}/token`, {
+        const res = await fetch(`${API_BASE}/auth/refresh`, {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            grant_type: "refresh_token",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             refresh_token: refreshToken,
-            client_id: clientId,
           }),
         });
         if (!res.ok) throw new Error("refresh failed");
