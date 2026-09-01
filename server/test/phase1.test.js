@@ -71,6 +71,14 @@ describe("POST /needs", () => {
     assert.equal(res.statusCode, 400);
   });
 
+  it("rejects a malformed optional email but accepts a valid one", async () => {
+    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks });
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "not-an-email", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    assert.equal(res.statusCode, 400);
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "valid@example.com", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    assert.equal(res.statusCode, 201);
+  });
+
   it("skips turnstile when secret unset, verifies when set", async () => {
     const ddb = new FakeDdb();
     // unset -> should succeed without token
@@ -102,7 +110,7 @@ describe("GET /needs public board", () => {
     const ddb = new FakeDdb();
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     // create need with private data
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en" } }));
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001", email: "registrar@example.com" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", email: "rita@example.com", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en" } }));
     const { id, refCode } = JSON.parse(res.body);
     // pending not visible
     res = await handler(makeEvent({ method: "GET", path: "/needs" }));
@@ -122,12 +130,14 @@ describe("GET /needs public board", () => {
     // dedicated leak assertion - check keys, not substrings
     for (const it of items) {
       assert.equal("phone" in it, false, "phone leaked");
+      assert.equal("email" in it, false, "email leaked");
       assert.equal("registrant" in it, false, "registrant leaked");
       assert.equal("householdSize" in it, false, "household leaked");
       assert.equal("household" in it, false, "household leaked");
     }
     const raw = JSON.stringify(items);
     assert.equal(raw.includes("registrant"), false, "registrant leaked");
+    assert.equal(raw.includes("example.com"), false, "email leaked");
     // ensure only allowed keys
     for (const it of items) {
       const keys = Object.keys(it).sort();

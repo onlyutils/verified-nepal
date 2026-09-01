@@ -34,8 +34,10 @@ export function GetHelp({ language }: { language: Language }) {
   const [consent, setConsent] = useState(false);
   const [registrantName, setRegistrantName] = useState("");
   const [registrantPhone, setRegistrantPhone] = useState("");
+  const [registrantEmail, setRegistrantEmail] = useState("");
   const [beneficiaryName, setBeneficiaryName] = useState("");
   const [beneficiaryPhone, setBeneficiaryPhone] = useState("");
+  const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
   const [householdSize, setHouseholdSize] = useState("");
@@ -161,10 +163,13 @@ export function GetHelp({ language }: { language: Language }) {
     try {
       const body: Parameters<typeof createNeed>[0] = {
         onBehalf,
-        registrant: onBehalf ? { name: registrantName.trim(), phone: registrantPhone.trim() } : null,
+        registrant: onBehalf
+          ? { name: registrantName.trim(), phone: registrantPhone.trim(), email: registrantEmail.trim() || undefined }
+          : null,
         beneficiary: {
           name: beneficiaryName.trim(),
           phone: beneficiaryPhone.trim() || undefined,
+          email: beneficiaryEmail.trim() || undefined,
           district,
           ward: wardNum,
           householdSize: householdSize ? Number(householdSize) : undefined,
@@ -219,6 +224,10 @@ export function GetHelp({ language }: { language: Language }) {
                     <Label htmlFor="registrantPhone">{t.getHelpRegistrantPhone} *</Label>
                     <Input id="registrantPhone" value={registrantPhone} onChange={(e) => setRegistrantPhone(e.target.value)} inputMode="tel" required />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="registrantEmail">{t.getHelpRegistrantEmail}</Label>
+                    <Input id="registrantEmail" value={registrantEmail} onChange={(e) => setRegistrantEmail(e.target.value)} type="email" />
+                  </div>
                 </div>
                 <label className="flex items-start gap-2 font-sans text-sm">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 accent-ink" />
@@ -239,6 +248,10 @@ export function GetHelp({ language }: { language: Language }) {
               <div className="space-y-2">
                 <Label htmlFor="beneficiaryPhone">{t.getHelpBeneficiaryPhone}</Label>
                 <Input id="beneficiaryPhone" value={beneficiaryPhone} onChange={(e) => setBeneficiaryPhone(e.target.value)} inputMode="tel" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="beneficiaryEmail">{t.getHelpBeneficiaryEmail}</Label>
+                <Input id="beneficiaryEmail" value={beneficiaryEmail} onChange={(e) => setBeneficiaryEmail(e.target.value)} type="email" />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

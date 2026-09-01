@@ -887,6 +887,11 @@ export function Desk({ language }: { language: Language }) {
                                 <span className="font-semibold">{t.deskQueueContact}:</span> {item.beneficiary.phone}
                               </p>
                             ) : null}
+                            {item.beneficiary.email ? (
+                              <p>
+                                <span className="font-semibold">{t.deskQueueEmail}:</span> {item.beneficiary.email}
+                              </p>
+                            ) : null}
                             <p>
                               {item.beneficiary.district} · W{item.beneficiary.ward}
                             </p>
@@ -900,6 +905,7 @@ export function Desk({ language }: { language: Language }) {
                         {item.registrant ? (
                           <p className="mt-2 font-sans text-sm">
                             <span className="font-semibold">{t.deskQueueRegistrant}:</span> {item.registrant.name} · {item.registrant.phone}
+                            {item.registrant.email ? ` · ${item.registrant.email}` : ""}
                           </p>
                         ) : (
                           <p className="mt-2 font-sans text-xs text-muted-foreground">{t.deskNoRegistrant}</p>
@@ -1301,7 +1307,7 @@ export function Desk({ language }: { language: Language }) {
                     {p.photos.length>0 ? <div className="grid grid-cols-3 gap-2">{p.photos.map(ph=> <img key={ph.fileId} src={ph.url} alt={ph.caption||""} className="h-24 w-full object-cover border border-rule" loading="lazy" />)}</div> : null}
                     <div className="border border-rule bg-secondary px-3 py-2">
                       <p className="font-sans text-xs font-semibold uppercase tracking-wide">{(t as Record<string,string>).deskProjectsPrivateTitle}</p>
-                      <p className="mt-1 font-sans text-sm">{p.committee.name} — {p.committee.contactName} · {p.committee.phone}</p>
+                      <p className="mt-1 font-sans text-sm">{p.committee.name} — {p.committee.contactName} · {p.committee.phone}{p.committee.email ? ` · ${p.committee.email}` : ""}</p>
                       <p className="font-sans text-xs">Bank: {p.committee.bank.bankName} / {p.committee.bank.accountName} / {p.committee.bank.accountNumber} {p.committee.esewaId ? "· eSewa:"+p.committee.esewaId : ""} {p.committee.khaltiId ? "· Khalti:"+p.committee.khaltiId : ""}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">

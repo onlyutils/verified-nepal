@@ -32,8 +32,8 @@ export interface StatusResponse {
 
 export interface CreateNeedBody {
   onBehalf: boolean;
-  registrant: { name: string; phone: string } | null;
-  beneficiary: { name: string; phone?: string; district: string; ward: number; householdSize?: number };
+  registrant: { name: string; phone: string; email?: string } | null;
+  beneficiary: { name: string; phone?: string; email?: string; district: string; ward: number; householdSize?: number };
   category: Category;
   description: string;
   language: "en" | "ne";
@@ -67,6 +67,7 @@ export interface CreateOfferBody {
   districts: string[];
   description: string;
   phone: string;
+  email?: string;
 }
 
 export interface ModerationQueueItem {
@@ -79,13 +80,14 @@ export interface ModerationQueueItem {
   district?: string;
   districts?: string[];
   ward?: number;
-  beneficiary?: { name: string; phone?: string; district: string; ward: number; householdSize?: number };
-  registrant?: { name: string; phone: string } | null;
+  beneficiary?: { name: string; phone?: string; email?: string; district: string; ward: number; householdSize?: number };
+  registrant?: { name: string; phone: string; email?: string } | null;
   onBehalf?: boolean;
   maskedName?: string;
   helperLabel?: string;
   org?: { name: string; contact: string };
   phone?: string;
+  email?: string;
   language?: string;
   createdAt: string;
   dupCandidates?: Array<{ id: string; maskedName: string; ward: number }>;
@@ -382,6 +384,7 @@ export interface ProjectCommitteePublic {
 export interface ProjectCommitteePrivate extends ProjectCommitteePublic {
   contactName: string;
   phone: string;
+  email?: string;
 }
 export interface ProjectPhoto {
   fileId: string;
@@ -432,6 +435,7 @@ export interface CreateProjectBody {
     name: string;
     contactName: string;
     phone: string;
+    email?: string;
     bank: { bankName: string; accountName: string; accountNumber: string };
     esewaId?: string;
     khaltiId?: string;
@@ -566,7 +570,7 @@ export function assertNoDispatchEmail(obj: Record<string, unknown>): boolean {
 }
 
 export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): string[] {
-  const forbidden = ["phone","contactName","updateCodeHash","contactname","updatecode"];
+  const forbidden = ["phone","email","contactName","updateCodeHash","contactname","updatecode"];
   const found: string[] = [];
   for (const k of Object.keys(obj)) {
     const lk = k.toLowerCase();
@@ -578,14 +582,14 @@ export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): stri
     const c = obj.committee as Record<string,unknown>;
     for (const k of Object.keys(c)) {
       const lk = k.toLowerCase();
-      if (lk === "phone" || lk === "contactname") found.push(`committee.${k}`);
+      if (lk === "phone" || lk === "email" || lk === "contactname") found.push(`committee.${k}`);
     }
   }
   return [...new Set(found)];
 }
 
 export function assertNoSensitiveKeys(obj: Record<string, unknown>): string[] {
-  const forbidden = ["householdSize", "phone", "phones", "registrant", "description", "household"];
+  const forbidden = ["householdSize", "phone", "phones", "email", "registrant", "description", "household"];
   const found: string[] = [];
   for (const k of Object.keys(obj)) {
     const lk = k.toLowerCase();

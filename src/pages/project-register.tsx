@@ -27,6 +27,7 @@ export function ProjectRegister({ language }: { language: Language }) {
   const [committeeName, setCommitteeName] = useState("");
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
+  const [committeeEmail, setCommitteeEmail] = useState("");
   const [bankName, setBankName] = useState("");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -62,6 +63,7 @@ export function ProjectRegister({ language }: { language: Language }) {
           name: committeeName.trim(),
           contactName: contactName.trim(),
           phone: phone.trim(),
+          email: committeeEmail.trim() || undefined,
           bank: { bankName: bankName.trim(), accountName: accountName.trim(), accountNumber: accountNumber.trim() },
           esewaId: esewaId.trim() || undefined,
           khaltiId: khaltiId.trim() || undefined,
@@ -177,6 +179,10 @@ export function ProjectRegister({ language }: { language: Language }) {
             <div>
               <Label htmlFor="phone">{t.projectRegisterPhone} *</Label>
               <Input id="phone" value={phone} onChange={e=>setPhone(e.target.value)} required placeholder="+977-98XXXXXXXX" />
+            </div>
+            <div>
+              <Label htmlFor="committeeEmail">{t.projectRegisterEmail}</Label>
+              <Input id="committeeEmail" value={committeeEmail} onChange={e=>setCommitteeEmail(e.target.value)} type="email" />
             </div>
           </CardContent>
         </Card>

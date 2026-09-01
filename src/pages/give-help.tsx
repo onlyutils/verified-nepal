@@ -145,6 +145,7 @@ export function GiveHelp({ language }: { language: Language }) {
   const [offerDistricts, setOfferDistricts] = useState<string[]>([]);
   const [offerDesc, setOfferDesc] = useState("");
   const [offerPhone, setOfferPhone] = useState("");
+  const [offerEmail, setOfferEmail] = useState("");
   const [offerSubmitting, setOfferSubmitting] = useState(false);
   const [offerError, setOfferError] = useState<string | null>(null);
   const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
@@ -216,10 +217,12 @@ export function GiveHelp({ language }: { language: Language }) {
         districts: offerDistricts,
         description: offerDesc.trim(),
         phone: offerPhone.trim(),
+        email: offerEmail.trim() || undefined,
       });
       setOfferSuccess(res.id);
       setOfferDesc("");
       setOfferPhone("");
+      setOfferEmail("");
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Failed";
       setOfferError(msg);
@@ -412,6 +415,11 @@ export function GiveHelp({ language }: { language: Language }) {
                   <Label htmlFor="offerPhone">{t.giveHelpPhone} *</Label>
                   <Input id="offerPhone" value={offerPhone} onChange={(e) => setOfferPhone(e.target.value)} inputMode="tel" required />
                   <p className="font-sans text-xs text-muted-foreground">{t.giveHelpPhoneHint}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="offerEmail">{t.giveHelpEmail}</Label>
+                  <Input id="offerEmail" value={offerEmail} onChange={(e) => setOfferEmail(e.target.value)} type="email" />
                 </div>
 
                 {offerError ? (

@@ -467,6 +467,14 @@ function validatePhone(v, name = "phone") {
   return t;
 }
 
+function validateOptionalEmail(v, name = "email") {
+  if (v === undefined || v === null || v === "") return undefined;
+  if (typeof v !== "string") throw err(400, `${name} must be a string`);
+  const t = v.trim();
+  if (t.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) throw err(400, `${name} is not a valid email`);
+  return t;
+}
+
 async function verifyTurnstile(token, secret) {
   if (!secret) return;
   if (!token || typeof token !== "string" || !token.trim()) throw err(400, "turnstile token required");
@@ -846,15 +854,17 @@ async function handlePostNeeds(event, { getDdb, env }) {
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken } = body;
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
-  let regName, regPhone;
+  let regName, regPhone, regEmail;
   if (onBehalf) {
     if (!registrant || typeof registrant !== "object") throw err(400, "registrant required when onBehalf is true");
     regName = validateString(registrant.name, "registrant.name", 1, 100);
     regPhone = validatePhone(registrant.phone, "registrant.phone");
+    regEmail = validateOptionalEmail(registrant.email, "registrant.email");
   } else if (registrant !== undefined && registrant !== null) {
     if (typeof registrant !== "object") throw err(400, "registrant must be object");
     if (registrant.name !== undefined) regName = validateString(registrant.name, "registrant.name", 1, 100);
     if (registrant.phone !== undefined) regPhone = validatePhone(registrant.phone, "registrant.phone");
+    regEmail = validateOptionalEmail(registrant.email, "registrant.email");
   }
   if (!beneficiary || typeof beneficiary !== "object") throw err(400, "beneficiary required");
   const benName = validateString(beneficiary.name, "beneficiary.name", 1, 100);
@@ -862,6 +872,7 @@ async function handlePostNeeds(event, { getDdb, env }) {
   if (beneficiary.phone !== undefined && beneficiary.phone !== null && String(beneficiary.phone).trim() !== "") {
     benPhone = validatePhone(beneficiary.phone, "beneficiary.phone");
   }
+  const benEmail = validateOptionalEmail(beneficiary.email, "beneficiary.email");
   const district = validateString(beneficiary.district, "beneficiary.district", 1, 100);
   const ward = beneficiary.ward;
   if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "beneficiary.ward must be integer 1-33");
@@ -900,8 +911,8 @@ async function handlePostNeeds(event, { getDdb, env }) {
     id,
     refCode,
     onBehalf,
-    registrant: onBehalf ? { name: regName, phone: regPhone } : (regName || regPhone ? { name: regName, phone: regPhone } : undefined),
-    beneficiary: { name: benName, phone: benPhone, district, ward, householdSize },
+    registrant: onBehalf ? { name: regName, phone: regPhone, email: regEmail } : (regName || regPhone || regEmail ? { name: regName, phone: regPhone, email: regEmail } : undefined),
+    beneficiary: { name: benName, phone: benPhone, email: benEmail, district, ward, householdSize },
     category,
     description: desc,
     language,
@@ -917,8 +928,10 @@ async function handlePostNeeds(event, { getDdb, env }) {
   if (!item.registrant) delete item.registrant;
   if (item.registrant && !item.registrant.name) delete item.registrant.name;
   if (item.registrant && !item.registrant.phone) delete item.registrant.phone;
+  if (item.registrant && !item.registrant.email) delete item.registrant.email;
   if (item.beneficiary.householdSize === undefined) delete item.beneficiary.householdSize;
   if (!item.beneficiary.phone) delete item.beneficiary.phone;
+  if (!item.beneficiary.email) delete item.beneficiary.email;
   const refItem = { PK: `REF#${refCode}`, SK: "META", type: "REF", refCode, needId: id, ttl, createdAt };
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: refItem }));
@@ -1033,13 +1046,14 @@ async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   const auth = await requireAuth(event, { fetchJwks, getDdb, env });
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { org, categories, districts, description, phone } = body;
+  const { org, categories, districts, description, phone, email } = body;
   if (!Array.isArray(categories) || categories.length === 0) throw err(400, "categories must be non-empty array");
   for (const c of categories) if (!CATEGORIES.includes(c)) throw err(400, `invalid category ${c}`);
   if (!Array.isArray(districts) || districts.length === 0) throw err(400, "districts must be non-empty array");
   const cleanDistricts = districts.map((d) => validateString(d, "districts[]", 1, 100));
   const desc = validateString(description, "description", 10, 2000);
   const cleanPhone = validatePhone(phone, "phone");
+  const cleanEmail = validateOptionalEmail(email, "email");
   let cleanOrg;
   if (org !== undefined && org !== null) {
     if (typeof org !== "object") throw err(400, "org must be object");
@@ -1073,6 +1087,7 @@ async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
     districts: cleanDistricts,
     description: desc,
     phone: cleanPhone,
+    email: cleanEmail,
     status,
     createdAt,
     ttl,
@@ -1083,6 +1098,7 @@ async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
     gsi2sk,
   };
   if (!cleanOrg) delete item.org;
+  if (!item.email) delete item.email;
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   return json(201, { id });
 }
@@ -1667,6 +1683,7 @@ async function handlePostProject(event, { getDdb, env }) {
   const committeeName = validateString(committee.name, "committee.name", 1, 100);
   const contactName = validateString(committee.contactName, "committee.contactName", 1, 100);
   const phone = validatePhone(committee.phone, "committee.phone");
+  const email = validateOptionalEmail(committee.email, "committee.email");
   if (!committee.bank || typeof committee.bank !== "object") throw err(400, "committee.bank required");
   const bankName = validateString(committee.bank.bankName, "committee.bank.bankName", 1, 100);
   const accountName = validateString(committee.bank.accountName, "committee.bank.accountName", 1, 100);
@@ -1702,7 +1719,7 @@ async function handlePostProject(event, { getDdb, env }) {
     ward,
     locationText: locationTextClean,
     costEstimateNpr: costClean,
-    committee: { name: committeeName, contactName, phone, bank: { bankName, accountName, accountNumber }, esewaId, khaltiId, verified: false },
+    committee: { name: committeeName, contactName, phone, email, bank: { bankName, accountName, accountNumber }, esewaId, khaltiId, verified: false },
     photos: [],
     status,
     updateCodeHash,
@@ -1714,6 +1731,7 @@ async function handlePostProject(event, { getDdb, env }) {
   };
   if (!item.committee.esewaId) delete item.committee.esewaId;
   if (!item.committee.khaltiId) delete item.committee.khaltiId;
+  if (!item.committee.email) delete item.committee.email;
   const pcode = { PK: `PCODE#${updateCodeHash}`, SK: "META", type: "PCODE", projectId: id, createdAt };
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: pcode }));
