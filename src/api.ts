@@ -812,3 +812,28 @@ export type ModerateOrgBody =
 export function moderateOrg(token: string, id: string, body: ModerateOrgBody): Promise<{ status: OrgStatus }> {
   return request(`/moderation/orgs/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
 }
+
+// Phase 2 — transfers, corrections, flags, vouching
+export function listInbound(token: string, centerId: string): Promise<{ items: InboundTransfer[] }> {
+  return request(`/centers/${encodeURIComponent(centerId)}/inbound`, { token });
+}
+export function receiveTransfer(token: string, transferId: string, body: { qtyReceived: number; note?: string }): Promise<{ id: string }> {
+  return request(`/transfers/${encodeURIComponent(transferId)}/receive`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function flagCenter(id: string, body: { reason: CenterFlagReason; details?: string; turnstileToken?: string }): Promise<{ ok: boolean }> {
+  return request(`/centers/${encodeURIComponent(id)}/flag`, { method: "POST", body: JSON.stringify(body) });
+}
+export function vouchOrg(token: string, targetOrgId: string, voucherOrgId: string): Promise<{ ok: boolean }> {
+  return request(`/orgs/${encodeURIComponent(targetOrgId)}/vouch`, { method: "POST", body: JSON.stringify({ voucherOrgId }), token });
+}
+export interface CenterFlagInboxItem {
+  centerId: string;
+  name: string;
+  district: string;
+  orgName: string;
+  flagCount: number;
+  reasons: Array<{ reason: CenterFlagReason; details?: string; createdAt: string }>;
+}
+export function getModerationCenterFlags(token: string): Promise<{ items: CenterFlagInboxItem[] }> {
+  return request("/moderation/center-flags", { token });
+}
