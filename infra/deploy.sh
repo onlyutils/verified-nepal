@@ -20,7 +20,7 @@ cd "$(dirname "$0")/.."
 case "$ENV" in
   dev)
     PROJECT=verifiednepal-dev
-    # .env carries the dev widget wiring defaults.
+    # Dev wiring comes from env (CI repo variables or a local, untracked .env).
     ;;
   prod)
     PROJECT=verifiednepal

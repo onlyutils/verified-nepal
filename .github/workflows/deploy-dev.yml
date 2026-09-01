@@ -24,3 +24,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          # dev build wiring lives in repo variables, not in a committed .env
+          VITE_CHAT_WIDGET_SRC: ${{ vars.VITE_CHAT_WIDGET_SRC }}
+          VITE_CHAT_KEY: ${{ vars.VITE_CHAT_KEY }}
+          VITE_CHAT_API: ${{ vars.VITE_CHAT_API }}
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          VITE_OU_CLIENT_ID: ${{ vars.VITE_OU_CLIENT_ID }}

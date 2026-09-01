@@ -4,3 +4,6 @@ dist/
 *.local
 .DS_Store
 
+
+# local env — dev values live in GitHub repo variables
+.env
