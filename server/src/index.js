@@ -866,6 +866,7 @@ export function createHandler(opts = {}) {
       const method = (event.requestContext?.http?.method ?? event.requestContext?.httpMethod ?? event.httpMethod ?? "GET").toUpperCase();
       const rawPathFull = event.rawPath ?? event.requestContext?.http?.path ?? event.path ?? "/";
       const path = rawPathFull.split("?")[0];
+      if (method === "OPTIONS") return { statusCode: 204, headers: {}, body: "" };
       if (method === "GET" && path === "/health") return json(200, { ok: true });
       if (method === "POST" && path === "/auth/exchange") return await handleAuthExchange(event, { env, fetchImpl });
       if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });

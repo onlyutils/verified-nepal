@@ -26,6 +26,13 @@ describe("router dispatch", () => {
     assert.equal(res.statusCode, 404);
   });
 
+  it("OPTIONS returns 204 with empty body", async () => {
+    const handler = createHandler({ env: {} });
+    const res = await handler(makeEvent({ method: "OPTIONS", path: "/unknown" }));
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.body, "");
+  });
+
   it("GET /me without auth returns 401", async () => {
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks: async () => ({ keys: [] }) });
     const res = await handler(makeEvent({ method: "GET", path: "/me", headers: {} }));
