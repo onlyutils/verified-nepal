@@ -7,7 +7,7 @@ import {
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { verifyIdToken } from "./verify.js";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes, randomUUID, createHash } from "node:crypto";
 
 const CATEGORIES = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 const LANGUAGES = ["en", "ne"];
@@ -17,6 +17,12 @@ const MOD_STATUS = ["matched", "fulfilled", "archived"];
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const CLAIM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const FLAG_REASONS = ["already_received", "not_real", "other"];
+const PROJECT_TYPES = ["tuin", "bridge", "trail", "water", "school", "other"];
+const PUBLIC_PROJECT_STATUSES = ["published", "in-progress", "completed"];
+const PROJECT_ALL_STATUSES = ["pending", "published", "in-progress", "completed", "rejected", "archived"];
+const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
+let mediaTokenCache = { token: null, expiresAt: 0 };
 
 function json(status, body) {
   return {
@@ -73,6 +79,167 @@ function maskName(name) {
   const last = parts[parts.length - 1];
   return `${first} ${last[0].toUpperCase()}.`;
 }
+
+function hashUpdateCode(code) {
+  return createHash("sha256").update(code).digest("hex");
+}
+
+function generateUpdateCode() {
+  return generateRefCode();
+}
+
+function getUpdateCodeHeader(headers) {
+  if (!headers) return null;
+  for (const [k, v] of Object.entries(headers)) {
+    if (k.toLowerCase() === "x-update-code") return String(v).trim();
+  }
+  return null;
+}
+
+function validateTitle(v, field) {
+  if (v === undefined || v === null) throw err(400, `${field} required`);
+  if (typeof v !== "object" || Array.isArray(v)) throw err(400, `${field} must be object`);
+  const en = v.en;
+  if (typeof en !== "string" || !en.trim() || en.trim().length < 1 || en.trim().length > 200) throw err(400, `${field}.en must be 1-200 characters`);
+  let ne;
+  if (v.ne !== undefined && v.ne !== null) {
+    if (typeof v.ne !== "string") throw err(400, `${field}.ne must be string`);
+    const t = v.ne.trim();
+    if (t.length > 0) {
+      if (t.length < 1 || t.length > 200) throw err(400, `${field}.ne must be 1-200 characters`);
+      ne = t;
+    }
+  }
+  const out = { en: en.trim() };
+  if (ne !== undefined) out.ne = ne;
+  return out;
+}
+
+function validateDescription(v, field) {
+  if (v === undefined || v === null) throw err(400, `${field} required`);
+  if (typeof v !== "object" || Array.isArray(v)) throw err(400, `${field} must be object`);
+  const en = v.en;
+  if (typeof en !== "string" || !en.trim() || en.trim().length < 10 || en.trim().length > 5000) throw err(400, `${field}.en must be 10-5000 characters`);
+  let ne;
+  if (v.ne !== undefined && v.ne !== null) {
+    if (typeof v.ne !== "string") throw err(400, `${field}.ne must be string`);
+    const t = v.ne.trim();
+    if (t.length > 0) {
+      if (t.length < 10 || t.length > 5000) throw err(400, `${field}.ne must be 10-5000 characters`);
+      ne = t;
+    }
+  }
+  const out = { en: en.trim() };
+  if (ne !== undefined) out.ne = ne;
+  return out;
+}
+
+function toPublicCommittee(committee) {
+  if (!committee) return undefined;
+  const out = { name: committee.name, verified: !!committee.verified };
+  if (committee.verified) {
+    if (committee.bank) out.bank = committee.bank;
+    if (committee.esewaId) out.esewaId = committee.esewaId;
+    if (committee.khaltiId) out.khaltiId = committee.khaltiId;
+  }
+  return out;
+}
+
+function toPublicProject(item) {
+  if (!item) return null;
+  const publishedPhotos = Array.isArray(item.photos) ? item.photos.filter((p) => p.status === "published") : [];
+  const coverPhoto = publishedPhotos.length ? publishedPhotos[0].url : undefined;
+  const out = {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    type: item.type,
+    district: item.district,
+    ward: item.ward,
+    locationText: item.locationText,
+    costEstimateNpr: item.costEstimateNpr,
+    committee: toPublicCommittee(item.committee),
+    photos: publishedPhotos,
+    status: item.status,
+    createdAt: item.createdAt,
+  };
+  if (coverPhoto) out.coverPhoto = coverPhoto;
+  return out;
+}
+
+function toFullProject(item) {
+  return item;
+}
+
+async function getMachineToken(env, fetchImpl) {
+  if (mediaTokenCache.token && Date.now() < mediaTokenCache.expiresAt - 60000) return mediaTokenCache.token;
+  const clientId = env.OU_MEDIA_CLIENT_ID;
+  const clientSecret = env.OU_MEDIA_CLIENT_SECRET;
+  if (!clientId || !clientSecret) throw err(500, "media client not configured");
+  const fetchFn = fetchImpl ?? globalThis.fetch;
+  let res;
+  try {
+    res = await fetchFn("https://auth.onlyutils.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }).toString(),
+    });
+  } catch (_e) {
+    throw err(502, "media token fetch failed");
+  }
+  if (!res.ok) {
+    let msg = "media token failed";
+    try { const j = await res.json(); msg = j.message || j.error || msg; } catch {}
+    throw err(502, msg);
+  }
+  let data;
+  try { data = await res.json(); } catch { throw err(502, "media token invalid json"); }
+  const token = data.access_token || data.accessToken;
+  if (!token) throw err(502, "media token missing");
+  const expiresIn = data.expires_in ? Number(data.expires_in) : data.expiresIn ? Number(data.expiresIn) : 900;
+  mediaTokenCache.token = token;
+  mediaTokenCache.expiresAt = Date.now() + expiresIn * 1000;
+  return token;
+}
+
+export function __clearMediaTokenCache() { mediaTokenCache = { token: null, expiresAt: 0 }; }
+
+async function verifyCommitteeAuth(headers, projectId, getDdb, env) {
+  const code = getUpdateCodeHeader(headers);
+  if (!code) return null;
+  const hash = hashUpdateCode(code);
+  const ddb = getDdb();
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  let pointer;
+  try { pointer = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PCODE#${hash}`, SK: "META" } }))).Item; } catch (_e) { return null; }
+  if (!pointer || pointer.projectId !== projectId) return null;
+  let proj;
+  try { proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item; } catch (_e) { return null; }
+  if (!proj || proj.updateCodeHash !== hash) return null;
+  return { code, hash, isCommittee: true };
+}
+
+async function authorizeProjectWrite(event, opts, projectId) {
+  const committee = await verifyCommitteeAuth(event.headers, projectId, opts.getDdb, opts.env);
+  if (committee) return { isCommittee: true, isMod: false, role: "committee" };
+  try {
+    const auth = await requireAuth(event, opts);
+    if (["moderator", "admin"].includes(auth.role)) return { isCommittee: false, isMod: true, role: auth.role, auth };
+    throw err(403, "Forbidden");
+  } catch (e) {
+    if (e.status === 401) throw e;
+    if (committee) return { isCommittee: true, isMod: false, role: "committee" };
+    throw e;
+  }
+}
+
+async function requireModAuth(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  return auth;
+}
+
 
 function generateRefCode() {
   const bytes = randomBytes(9);
@@ -1144,6 +1311,382 @@ async function handleGetFlags(event, opts) {
 }
 
 
+async function handlePostProject(event, { getDdb, env }) {
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { title, description, type, district, ward, locationText, costEstimateNpr, committee, turnstileToken } = body;
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  const titleObj = validateTitle(title, "title");
+  const descObj = validateDescription(description, "description");
+  if (!PROJECT_TYPES.includes(type)) throw err(400, `type must be one of ${PROJECT_TYPES.join(",")}`);
+  const districtClean = validateString(district, "district", 1, 100);
+  if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
+  const locationTextClean = validateString(locationText, "locationText", 1, 500);
+  if (typeof costEstimateNpr !== "number" || !Number.isFinite(costEstimateNpr) || costEstimateNpr <= 0 || costEstimateNpr > 1e12) throw err(400, "costEstimateNpr must be positive number");
+  const costClean = Math.floor(costEstimateNpr);
+  if (!committee || typeof committee !== "object") throw err(400, "committee required");
+  const committeeName = validateString(committee.name, "committee.name", 1, 100);
+  const contactName = validateString(committee.contactName, "committee.contactName", 1, 100);
+  const phone = validatePhone(committee.phone, "committee.phone");
+  if (!committee.bank || typeof committee.bank !== "object") throw err(400, "committee.bank required");
+  const bankName = validateString(committee.bank.bankName, "committee.bank.bankName", 1, 100);
+  const accountName = validateString(committee.bank.accountName, "committee.bank.accountName", 1, 100);
+  const accountNumber = validateString(committee.bank.accountNumber, "committee.bank.accountNumber", 1, 100);
+  let esewaId;
+  if (committee.esewaId !== undefined && committee.esewaId !== null && String(committee.esewaId).trim() !== "") {
+    esewaId = validateString(committee.esewaId, "committee.esewaId", 1, 100);
+  }
+  let khaltiId;
+  if (committee.khaltiId !== undefined && committee.khaltiId !== null && String(committee.khaltiId).trim() !== "") {
+    khaltiId = validateString(committee.khaltiId, "committee.khaltiId", 1, 100);
+  }
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const id = randomUUID();
+  const updateCode = generateUpdateCode();
+  const updateCodeHash = hashUpdateCode(updateCode);
+  const createdAt = new Date().toISOString();
+  const status = "pending";
+  const gsi1pk = `PROJECT#${districtClean}#${status}`;
+  const gsi1sk = createdAt;
+  const gsi2pk = `PROJECT#${status}`;
+  const gsi2sk = createdAt;
+  const item = {
+    PK: `PROJECT#${id}`,
+    SK: "META",
+    id,
+    title: titleObj,
+    description: descObj,
+    type,
+    district: districtClean,
+    ward,
+    locationText: locationTextClean,
+    costEstimateNpr: costClean,
+    committee: { name: committeeName, contactName, phone, bank: { bankName, accountName, accountNumber }, esewaId, khaltiId, verified: false },
+    photos: [],
+    status,
+    updateCodeHash,
+    createdAt,
+    gsi1pk,
+    gsi1sk,
+    gsi2pk,
+    gsi2sk,
+  };
+  if (!item.committee.esewaId) delete item.committee.esewaId;
+  if (!item.committee.khaltiId) delete item.committee.khaltiId;
+  const pcode = { PK: `PCODE#${updateCodeHash}`, SK: "META", type: "PCODE", projectId: id, createdAt };
+  await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  await ddb.send(new PutCommand({ TableName: tableName, Item: pcode }));
+  return json(201, { id, updateCode });
+}
+
+async function handleGetProjects(event, { getDdb, env }) {
+  const q = getQuery(event);
+  const districtRaw = q.district ? String(q.district).trim() : "";
+  const statusRaw = q.status ? String(q.status).trim() : "";
+  const cursorRaw = q.cursor ? String(q.cursor) : "";
+  const cursorKey = decodeCursor(cursorRaw);
+  if (statusRaw && !PUBLIC_PROJECT_STATUSES.includes(statusRaw)) throw err(400, `status must be one of ${PUBLIC_PROJECT_STATUSES.join(",")}`);
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  let items = [];
+  if (districtRaw && statusRaw) {
+    const pk = `PROJECT#${districtRaw}#${statusRaw}`;
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
+    if (res.Items) items.push(...res.Items);
+  } else if (districtRaw && !statusRaw) {
+    for (const s of PUBLIC_PROJECT_STATUSES) {
+      const pk = `PROJECT#${districtRaw}#${s}`;
+      const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
+      if (res.Items) items.push(...res.Items);
+    }
+  } else if (!districtRaw && statusRaw) {
+    const pk = `PROJECT#${statusRaw}`;
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
+    if (res.Items) items.push(...res.Items);
+  } else {
+    for (const s of PUBLIC_PROJECT_STATUSES) {
+      const pk = `PROJECT#${s}`;
+      const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
+      if (res.Items) items.push(...res.Items);
+    }
+  }
+  items.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  let start = 0;
+  if (cursorKey) {
+    const idx = items.findIndex((it)=>it.PK===cursorKey.PK && it.SK===cursorKey.SK);
+    if (idx===-1) throw err(400, "invalid cursor");
+    start = idx+1;
+  }
+  const limit = 20;
+  const sliced = items.slice(start, start+limit);
+  const publicItems = sliced.map((it)=>toPublicProject(it));
+  const body = { items: publicItems };
+  if (start+limit < items.length) {
+    const last = sliced[sliced.length-1];
+    body.cursor = encodeCursor({ PK: last.PK, SK: last.SK });
+  }
+  return json(200, body);
+}
+
+async function handleGetProject(event, { getDdb, env }, projectId) {
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (!proj) throw err(404, "not found");
+  if (!PUBLIC_PROJECT_STATUSES.includes(proj.status)) throw err(404, "not found");
+  const publicProj = toPublicProject(proj);
+  const updRes = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)", ExpressionAttributeValues: { ":pk": `PROJECT#${projectId}`, ":prefix": "UPDATE#" }, ScanIndexForward: false }));
+  const allUpdates = updRes.Items || [];
+  const publishedUpdates = allUpdates.filter((u)=>u.status==="published").sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||"")).map((u)=>({ id: u.id, text: u.text, photos: (u.photos||[]).filter((p)=>true), spentNpr: u.spentNpr, status: u.status, createdAt: u.createdAt }));
+  return json(200, { ...publicProj, updates: publishedUpdates });
+}
+
+async function handlePostPresign(event, opts, projectId) {
+  const { env, getDdb, fetchImpl } = opts;
+  const ddb = getDdb();
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (!proj) throw err(404, "not found");
+  const authz = await authorizeProjectWrite(event, opts, projectId);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { filename, contentType, size } = body;
+  const fname = validateString(filename, "filename", 1, 255);
+  if (!ALLOWED_PHOTO_TYPES.includes(contentType)) throw err(400, `contentType must be one of ${ALLOWED_PHOTO_TYPES.join(",")}`);
+  if (typeof size !== "number" || !Number.isFinite(size) || size <=0 || size > MAX_PHOTO_SIZE) throw err(400, `size must be 1-${MAX_PHOTO_SIZE}`);
+  const clientId = env.OU_MEDIA_CLIENT_ID;
+  const mediaHost = (env.MEDIA_HOST || "https://media.onlyutils.com").replace(/\/+$/, "");
+  if (!clientId) throw err(500, "OU_MEDIA_CLIENT_ID not configured");
+  const token = await getMachineToken(env, fetchImpl);
+  const fetchFn = fetchImpl ?? globalThis.fetch;
+  const idem = randomUUID();
+  let res;
+  try {
+    res = await fetchFn(`${mediaHost}/v1/clients/${clientId}/media/files`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Idempotency-Key": idem },
+      body: JSON.stringify({ filename: fname, content_type: contentType, visibility: "public" }),
+    });
+  } catch (_e) { throw err(502, "media presign failed"); }
+  if (!res.ok) {
+    let msg = "media presign failed";
+    try { const j = await res.json(); msg = j.message || j.error || msg; } catch {}
+    throw err(502, msg);
+  }
+  let data;
+  try { data = await res.json(); } catch { throw err(502, "media presign invalid json"); }
+  const payload = data.data ?? data;
+  const fileId = payload.file_id ?? payload.fileId ?? payload.id;
+  const uploadUrl = payload.upload_url ?? payload.uploadUrl ?? payload.upload_url ?? payload.url;
+  let publicUrl = payload.public_url ?? payload.publicUrl ?? payload.public_url ?? payload.url;
+  const headers = payload.headers ?? payload.upload_headers ?? undefined;
+  if (!fileId || !uploadUrl) throw err(502, "media presign malformed");
+  const base = env.MEDIA_PUBLIC_BASE ? String(env.MEDIA_PUBLIC_BASE).replace(/\/+$/, "") : null;
+  if (base) publicUrl = `${base}/${fileId}`;
+  if (!publicUrl) publicUrl = uploadUrl;
+  const out = { uploadUrl, fileId, publicUrl };
+  if (headers) out.headers = headers;
+  return json(200, out);
+}
+
+async function handlePostPhoto(event, opts, projectId) {
+  const { env, getDdb } = opts;
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (!proj) throw err(404, "not found");
+  const authz = await authorizeProjectWrite(event, opts, projectId);
+  const isMod = authz.isMod;
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { fileId, url, caption } = body;
+  const fid = validateString(fileId, "fileId", 1, 200);
+  const urlClean = validateString(url, "url", 1, 2000);
+  try { const u = new URL(urlClean); if (!["http:","https:"].includes(u.protocol)) throw new Error(); } catch { throw err(400, "url must be http(s)"); }
+  let captionClean;
+  if (caption !== undefined && caption !== null && String(caption).trim()!=="") {
+    captionClean = validateString(caption, "caption", 1, 500);
+  }
+  const status = isMod ? "published" : "pending";
+  const photo = { fileId: fid, url: urlClean, status };
+  if (captionClean) photo.caption = captionClean;
+  proj.photos = Array.isArray(proj.photos) ? proj.photos : [];
+  proj.photos.push(photo);
+  await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  return json(201, { ok: true, photo });
+}
+
+async function handlePostUpdate(event, opts, projectId) {
+  const { env, getDdb } = opts;
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (!proj) throw err(404, "not found");
+  const committee = await verifyCommitteeAuth(event.headers, projectId, getDdb, env);
+  if (!committee) throw err(401, "Missing or invalid X-Update-Code");
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { text, photoFileIds, spentNpr } = body;
+  const textClean = validateString(text, "text", 10, 5000);
+  let fileIds = [];
+  if (photoFileIds !== undefined && photoFileIds !== null) {
+    if (!Array.isArray(photoFileIds)) throw err(400, "photoFileIds must be array");
+    for (const f of photoFileIds) {
+      if (typeof f !== "string" || !f.trim()) throw err(400, "photoFileIds entries must be strings");
+      fileIds.push(f.trim());
+    }
+  }
+  let spent;
+  if (spentNpr !== undefined && spentNpr !== null) {
+    if (typeof spentNpr !== "number" || !Number.isFinite(spentNpr) || spentNpr <0) throw err(400, "spentNpr must be non-negative number");
+    spent = Math.floor(spentNpr);
+  }
+  let photos = [];
+  if (fileIds.length) {
+    const projPhotos = Array.isArray(proj.photos) ? proj.photos : [];
+    for (const fid of fileIds) {
+      const match = projPhotos.find((p)=>p.fileId===fid);
+      if (!match) throw err(400, `photoFileId ${fid} not found`);
+      photos.push({ fileId: match.fileId, url: match.url });
+    }
+  }
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  const sk = `UPDATE#${createdAt}#${id.slice(0,8)}`;
+  const item = { PK: `PROJECT#${projectId}`, SK: sk, type: "UPDATE", id, projectId, text: textClean, photos, status: "pending", createdAt };
+  if (spent !== undefined) item.spentNpr = spent;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  return json(201, { updateId: id });
+}
+
+async function handleGetModerationProjects(event, opts) {
+  const auth = await requireModAuth(event, opts);
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  let all = [];
+  for (const s of PROJECT_ALL_STATUSES) {
+    const pk = `PROJECT#${s}`;
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: true }));
+    if (res.Items) all.push(...res.Items);
+  }
+  all.sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
+  const items = [];
+  for (const proj of all) {
+    const updRes = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)", ExpressionAttributeValues: { ":pk": proj.PK, ":prefix": "UPDATE#" }, ScanIndexForward: true }));
+    const updates = updRes.Items || [];
+    const clone = JSON.parse(JSON.stringify(proj));
+    clone.updates = updates;
+    items.push(clone);
+  }
+  return json(200, { items });
+}
+
+async function handlePostModerationProject(event, opts, projectId) {
+  const auth = await requireModAuth(event, opts);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { action, reason, status, fileId } = body;
+  const allowed = ["verify-committee","publish","reject","set-status","publish-photo","reject-photo"];
+  if (!allowed.includes(action)) throw err(400, `action must be one of ${allowed.join(",")}`);
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const proj = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `PROJECT#${projectId}`, SK: "META" } }))).Item;
+  if (!proj) throw err(404, "not found");
+  const nowIso = new Date().toISOString();
+  const ym = nowIso.slice(0,7);
+  let auditAction = action;
+  if (action === "verify-committee") {
+    proj.committee.verified = true;
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  } else if (action === "publish") {
+    if (!proj.committee.verified) throw err(400, "committee must be verified before publish");
+    if (proj.status !== "pending") throw err(400, "only pending projects can be published");
+    proj.status = "published";
+    proj.gsi1pk = `PROJECT#${proj.district}#published`;
+    proj.gsi1sk = proj.createdAt;
+    proj.gsi2pk = `PROJECT#published`;
+    proj.gsi2sk = proj.createdAt;
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  } else if (action === "reject") {
+    if (!reason || typeof reason !== "string" || !reason.trim() || reason.trim().length <5) throw err(400, "reason required for reject");
+    proj.status = "rejected";
+    proj.gsi1pk = `PROJECT#${proj.district}#rejected`;
+    proj.gsi1sk = proj.createdAt;
+    proj.gsi2pk = `PROJECT#rejected`;
+    proj.gsi2sk = proj.createdAt;
+    if (reason) proj.rejectionReason = reason.trim();
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  } else if (action === "set-status") {
+    if (!status || typeof status !== "string" || !PROJECT_ALL_STATUSES.includes(status)) throw err(400, `status must be one of ${PROJECT_ALL_STATUSES.join(",")}`);
+    if (status === "published" && !proj.committee.verified) throw err(400, "committee must be verified before publish");
+    proj.status = status;
+    proj.gsi1pk = `PROJECT#${proj.district}#${status}`;
+    proj.gsi1sk = proj.createdAt;
+    proj.gsi2pk = `PROJECT#${status}`;
+    proj.gsi2sk = proj.createdAt;
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+    auditAction = `set-status:${status}`;
+  } else if (action === "publish-photo") {
+    if (!fileId || typeof fileId !== "string" || !fileId.trim()) throw err(400, "fileId required");
+    const fid = fileId.trim();
+    const photos = Array.isArray(proj.photos) ? proj.photos : [];
+    const p = photos.find((x)=>x.fileId===fid);
+    if (!p) throw err(404, "photo not found");
+    p.status = "published";
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  } else if (action === "reject-photo") {
+    if (!fileId || typeof fileId !== "string" || !fileId.trim()) throw err(400, "fileId required");
+    const fid = fileId.trim();
+    const photos = Array.isArray(proj.photos) ? proj.photos : [];
+    const idx = photos.findIndex((x)=>x.fileId===fid);
+    if (idx===-1) throw err(404, "photo not found");
+    photos.splice(idx,1);
+    proj.photos = photos;
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
+  }
+  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}#${randomUUID().slice(0,6)}`, type: "AUDIT", action: auditAction, targetId: projectId, targetType: "PROJECT", actorSub: auth.payload.sub, createdAt: nowIso };
+  if (reason) audit.reason = String(reason).trim();
+  if (status) audit.status = status;
+  if (fileId) audit.fileId = String(fileId).trim();
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  return json(200, { status: proj.status });
+}
+
+async function handlePostModerationUpdate(event, opts, projectId, updateId) {
+  const auth = await requireModAuth(event, opts);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { action, reason } = body;
+  if (!["publish","reject"].includes(action)) throw err(400, `action must be publish or reject`);
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const updRes = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)", ExpressionAttributeValues: { ":pk": `PROJECT#${projectId}`, ":prefix": "UPDATE#" } }));
+  const items = updRes.Items || [];
+  const target = items.find((it)=>it.id===updateId);
+  if (!target) throw err(404, "update not found");
+  const nowIso = new Date().toISOString();
+  const ym = nowIso.slice(0,7);
+  if (action === "publish") {
+    target.status = "published";
+    await ddb.send(new PutCommand({ TableName: tableName, Item: target }));
+  } else {
+    target.status = "rejected";
+    if (reason) target.rejectionReason = String(reason).trim();
+    await ddb.send(new PutCommand({ TableName: tableName, Item: target }));
+  }
+  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}#${randomUUID().slice(0,6)}`, type: "AUDIT", action: `update:${action}`, targetId: updateId, targetType: "UPDATE", projectId, actorSub: auth.payload.sub, createdAt: nowIso };
+  if (reason) audit.reason = String(reason).trim();
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  return json(200, { status: target.status });
+}
+
 function getTokenEndpoint(env) {
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
   return `${host}/token`;
@@ -1280,6 +1823,35 @@ export function createHandler(opts = {}) {
         return await handlePostFlag(event, { getDdb, env }, id);
       }
       if (method === "GET" && path === "/moderation/flags") return await handleGetFlags(event, { fetchJwks, getDdb, env });
+      if (method === "POST" && path === "/projects") return await handlePostProject(event, { getDdb, env });
+      if (method === "GET" && path === "/projects") return await handleGetProjects(event, { getDdb, env });
+      if (method === "GET" && /^\/projects\/[^\/]+$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[2]);
+        return await handleGetProject(event, { getDdb, env }, id);
+      }
+      if (method === "POST" && /^\/projects\/[^\/]+\/photos\/presign$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[2]);
+        return await handlePostPresign(event, { getDdb, env, fetchImpl, fetchJwks }, id);
+      }
+      if (method === "POST" && /^\/projects\/[^\/]+\/photos$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[2]);
+        return await handlePostPhoto(event, { getDdb, env, fetchImpl, fetchJwks }, id);
+      }
+      if (method === "POST" && /^\/projects\/[^\/]+\/updates$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[2]);
+        return await handlePostUpdate(event, { getDdb, env, fetchImpl, fetchJwks }, id);
+      }
+      if (method === "GET" && path === "/moderation/projects") return await handleGetModerationProjects(event, { fetchJwks, getDdb, env });
+      if (method === "POST" && /^\/moderation\/projects\/[^\/]+\/updates\/[^\/]+$/.test(path)) {
+        const parts = path.split("/");
+        const id = decodeURIComponent(parts[3]);
+        const updateId = decodeURIComponent(parts[5]);
+        return await handlePostModerationUpdate(event, { fetchJwks, getDdb, env }, id, updateId);
+      }
+      if (method === "POST" && /^\/moderation\/projects\/[^\/]+$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[3]);
+        return await handlePostModerationProject(event, { fetchJwks, getDdb, env }, id);
+      }
       return json(404, { error: "Not Found" });
     } catch (e) {
       const status = e.status ?? e.statusCode ?? 500;
