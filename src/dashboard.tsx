@@ -1,27 +1,34 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { openChatWidget } from "./chat-widget";
 import { data } from "./data";
 import { leadHeadline } from "./edition";
 import { helplines } from "./helplines";
 import { labels, textForLanguage } from "./i18n";
 import { useLiveData } from "./live";
-import { AffectedLocations, ReliefMap } from "./relief-map";
+
 import type { Language, OpmcmGovernmentEffort, OpmcmStats, Page } from "./types";
 import { Byline, Headline, officialLink, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "./ui";
+import { shellStrings } from "./i18n-shell";
 import { opmcmAskHelpUrl, opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber, messageText, sentenceCase } from "./utils";
+
+const ReliefMap = lazy(() => import("./relief-map").then((m) => ({ default: m.ReliefMap })));
+const AffectedLocations = lazy(() => import("./relief-map").then((m) => ({ default: m.AffectedLocations })));
 
 export function Dashboard({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const [region, setRegion] = useRegion();
   const [selected, setSelected] = useState<number | null>(null);
 
+  const ts = shellStrings[language];
   return (
     <div className="space-y-10">
       <Lead language={language} navigate={navigate} />
-      <div>
-        <ReliefMap language={language} selected={selected} onSelect={setSelected} region={region} onRegionChange={setRegion} />
-        <AffectedLocations language={language} selected={selected} onSelect={setSelected} region={region} />
-      </div>
+      <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted">{ts.loading}</p>}>
+        <div>
+          <ReliefMap language={language} selected={selected} onSelect={setSelected} region={region} onRegionChange={setRegion} />
+          <AffectedLocations language={language} selected={selected} onSelect={setSelected} region={region} />
+        </div>
+      </Suspense>
       <Rule />
       <ThreeColumns language={language} navigate={navigate} />
       <Rule />
@@ -53,6 +60,7 @@ function useRegion() {
 
 function Lead({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = labels[language];
+  const ts = shellStrings[language];
   const liveData = useLiveData();
   const rescued = formatNumber(liveData.rescuedStatistics.rescued_count, language);
   const verified = formatNumber(liveData.statusCounts.total_count, language);
@@ -64,7 +72,18 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
   return (
     <section className="grid gap-8 lg:grid-cols-[7fr_5fr] lg:gap-0" aria-labelledby="lead-heading">
       <div className="lg:border-r lg:border-rule lg:pr-10">
-        <SectionLabel as="p" dot="blue">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SquareButton href="tel:1234" tone="red" className="w-full">
+            {ts.call1234}
+          </SquareButton>
+          <SquareButton onClick={() => navigate("search")} tone="primary" className="w-full">
+            {t.search}
+          </SquareButton>
+          <SquareButton onClick={() => navigate("getHelp")} className="w-full">
+            {t.getHelp}
+          </SquareButton>
+        </div>
+        <SectionLabel as="p" dot="blue" className="mt-6">
           {t.officialFigures}
         </SectionLabel>
         <Headline level={1} id="lead-heading" className="mt-5">
@@ -102,9 +121,6 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
         />
         <p className="mt-2 font-sans text-[0.68rem] text-muted">{t.floodDate}</p>
         <div className="mt-6 grid gap-3">
-          <SquareButton href={pmdrfUrl} tone="red" external className="w-full">
-            {t.donateLeadCta}
-          </SquareButton>
           <SquareButton onClick={() => navigate("search")} className="w-full">
             {t.search}
           </SquareButton>

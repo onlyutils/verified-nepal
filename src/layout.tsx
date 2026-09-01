@@ -7,11 +7,13 @@ import { LiveStatusBadge } from "./live";
 import { regionOptions } from "./region";
 import type { Language, Page } from "./types";
 import { focusRing, Rule, SquareButton } from "./ui";
+import { shellStrings } from "./i18n-shell";
 import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["dashboard", "projects", "dispatches", "getHelp", "giveHelp", "ledger", "audit", "search", "desk", "info"] as const;
+const primaryPages = ["search", "getHelp", "giveHelp", "info"] as const;
+const morePages = ["projects", "dispatches", "ledger", "audit", "desk"] as const;
 
 export function Masthead({
   page,
@@ -36,65 +38,113 @@ export function Masthead({
           {t.floodName}
         </p>
         <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
-          <span className="block font-display text-[2.4rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] lg:text-[4.5rem]">
+          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] lg:text-[4.5rem]">
             Verified Nepal
           </span>
           <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
             भेरिफाइड नेपाल
           </span>
-          <span className="mt-3 block font-serif text-sm italic text-muted">{t.unofficial}</span>
+          <span className="mt-3 hidden font-serif text-sm italic text-muted sm:block">{t.unofficial}</span>
         </button>
-        <EditionLine language={language} />
+        <div className="hidden lg:block"><EditionLine language={language} /></div>
       </div>
       <Rule variant="double" />
-      <nav
-        aria-label="Primary navigation"
-        className="flex items-center gap-5 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em]"
-      >
-        <div className="flex min-w-0 flex-1 gap-5 overflow-x-auto">
-        {navPages.map((item) => {
-          const active = page === item;
-          const labelMap: Record<string, string> = {
-            dashboard: t.dashboard,
-            dispatches: (t as Record<string,string>).dispatches ?? "Dispatches",
-            getHelp: t.getHelp,
-            giveHelp: t.giveHelp,
-            ledger: t.ledgerTitle,
-            search: t.search,
-            projects: (t as Record<string,string>).projects ?? "Projects",
-            desk: t.deskTitle,
-            audit: (t as Record<string,string>).navAuditLabel ?? "Audit",
-            info: t.info,
-          };
-          return (
-            <button
-              key={item}
-              type="button"
-              onClick={() => navigate(item)}
-              aria-current={active ? "page" : undefined}
-              className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 transition-colors ${
-                active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
-              } ${focusRing}`}
-            >
-              {labelMap[item] ?? t[item as keyof typeof t]}
-            </button>
-          );
-        })}
-        </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2" aria-label={t.language}>
-          <LanguageButton active={language === "en"} onClick={() => setLanguage("en")}>
-            EN
-          </LanguageButton>
-          <span aria-hidden="true" className="text-rule">
-            |
-          </span>
-          <LanguageButton active={language === "ne"} onClick={() => setLanguage("ne")}>
-            <span lang="ne">नेपाली</span>
-          </LanguageButton>
-        </div>
-      </nav>
+      <MastheadNav page={page} navigate={navigate} language={language} setLanguage={setLanguage} />
       <Rule />
     </header>
+  );
+}
+
+
+function MastheadNav({
+  page,
+  language,
+  setLanguage,
+  navigate,
+}: {
+  page: Page;
+  language: Language;
+  setLanguage: (language: Language) => void;
+  navigate: (page: Page) => void;
+}) {
+  const t = labels[language];
+  const ts = shellStrings[language];
+  const isMoreActive = (morePages as readonly string[]).includes(page);
+  const [moreOpen, setMoreOpen] = useState(() => isMoreActive);
+  useEffect(() => {
+    if (isMoreActive) setMoreOpen(true);
+  }, [isMoreActive]);
+  const primaryLabel: Record<string, string> = {
+    search: t.search,
+    getHelp: t.getHelp,
+    giveHelp: t.giveHelp,
+    info: t.info,
+  };
+  const moreLabel: Record<string, string> = {
+    projects: (t as Record<string, string>).projects ?? "Projects",
+    dispatches: (t as Record<string, string>).dispatches ?? "Dispatches",
+    ledger: t.ledgerTitle,
+    audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
+    desk: t.deskTitle,
+  };
+  const navButton = (item: string, label: string) => {
+    const active = page === item;
+    return (
+      <button
+        key={item}
+        type="button"
+        onClick={() => navigate(item as Page)}
+        aria-current={active ? "page" : undefined}
+        className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-1 transition-colors ${
+          active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
+        } ${focusRing}`}
+      >
+        {label}
+      </button>
+    );
+  };
+  return (
+    <nav aria-label="Primary navigation" className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-0">
+        <div className="flex flex-wrap gap-x-5 gap-y-0">
+          {(primaryPages as readonly string[]).map((item) => navButton(item, primaryLabel[item] ?? item))}
+          <button
+            type="button"
+            aria-expanded={moreOpen}
+            aria-controls="more-nav-row"
+            onClick={() => setMoreOpen((v) => !v)}
+            className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-1 transition-colors ${moreOpen ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"} ${focusRing}`}
+          >
+            {ts.more}
+          </button>
+        </div>
+        <div className="ml-auto hidden lg:block">
+          <LanguageToggle language={language} setLanguage={setLanguage} />
+        </div>
+      </div>
+      {moreOpen ? (
+        <div id="more-nav-row" className="flex flex-wrap gap-x-5 gap-y-0 border-t border-rule">
+          {(morePages as readonly string[]).map((item) => navButton(item, moreLabel[item] ?? item))}
+        </div>
+      ) : null}
+    </nav>
+  );
+}
+
+function LanguageToggle({ language, setLanguage }: { language: Language; setLanguage: (language: Language) => void }) {
+  const t = labels[language];
+  return (
+    <div className="flex shrink-0 items-center gap-2 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em]" aria-label={t.language}>
+      <LanguageButton active={language === "en"} onClick={() => setLanguage("en")}>
+        EN
+      </LanguageButton>
+      <span aria-hidden="true" className="text-rule">
+        |
+      </span>
+      <LanguageButton active={language === "ne"} onClick={() => setLanguage("ne")}>
+        <span lang="ne">नेपाली</span>
+      </LanguageButton>
+    </div>
   );
 }
 
@@ -153,7 +203,7 @@ export function EmergencyLine({ language }: { language: Language }) {
         </span>
         {numbers.map(([number, label]) => (
           <a key={number} href={`tel:${number}`} className={`inline-flex min-h-11 items-center gap-1.5 text-ink ${focusRing}`}>
-            <span className="font-semibold tabular-nums">{number}</span>
+            <span className="text-sm font-semibold tabular-nums">{number}</span>
             <span className="normal-case tracking-normal text-muted">{label}</span>
           </a>
         ))}
@@ -250,12 +300,14 @@ export function BackToTop({ language }: { language: Language }) {
 const textScales = [87.5, 100, 112.5, 125, 137.5] as const;
 
 /** Government-site style controls: A− / A / A+ text size and a high-contrast toggle, persisted per browser. */
-export function AccessibilityBar({ language }: { language: Language }) {
+export function AccessibilityBar({ language, setLanguage }: { language: Language; setLanguage: (language: Language) => void }) {
   const t = labels[language];
+  const ts = shellStrings[language];
   const [scale, setScale] = useState<number>(() => Number(localStorage.getItem("vn:text-scale")) || 100);
   const [contrast, setContrast] = useState<"normal" | "high">(() =>
     localStorage.getItem("vn:contrast") === "high" ? "high" : "normal",
   );
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.fontSize = scale === 100 ? "" : `${scale}%`;
@@ -272,45 +324,67 @@ export function AccessibilityBar({ language }: { language: Language }) {
   const step = (delta: number) => setScale(textScales[Math.min(textScales.length - 1, Math.max(0, index + delta))]);
   const control = `inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-sans text-[0.72rem] font-semibold tracking-[0.08em] text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent disabled:hover:text-muted ${focusRing}`;
 
+  const controls = (
+    <>
+      <span className="mr-2 font-sans text-[0.62rem] uppercase tracking-[0.18em] text-muted">{t.accessibility}</span>
+      <button type="button" onClick={() => step(-1)} disabled={index <= 0} aria-label={t.textSmaller} className={control}>
+        A−
+      </button>
+      <button type="button" onClick={() => setScale(100)} aria-label={t.textReset} className={control}>
+        A
+      </button>
+      <button
+        type="button"
+        onClick={() => step(1)}
+        disabled={index >= textScales.length - 1}
+        aria-label={t.textLarger}
+        className={`${control} text-[0.85rem]`}
+      >
+        A+
+      </button>
+      <span aria-hidden="true" className="mx-1 text-rule">
+        |
+      </span>
+      <button
+        type="button"
+        onClick={() => setContrast(contrast === "high" ? "normal" : "high")}
+        aria-pressed={contrast === "high"}
+        className={`${control} gap-2 uppercase ${contrast === "high" ? "bg-ink text-paper" : ""}`}
+      >
+        <span
+          aria-hidden="true"
+          className={`inline-block h-3 w-3 rounded-full border border-current ${contrast === "high" ? "bg-paper" : "bg-[linear-gradient(90deg,currentColor_50%,transparent_50%)]"}`}
+        />
+        {t.highContrast}
+      </button>
+    </>
+  );
+
   return (
     <div className={shell}>
-      <div
-        role="group"
-        aria-label={t.accessibility}
-        className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 border-b border-rule sm:justify-end"
-      >
-        <span className="mr-2 font-sans text-[0.62rem] uppercase tracking-[0.18em] text-muted">{t.accessibility}</span>
-        <button type="button" onClick={() => step(-1)} disabled={index <= 0} aria-label={t.textSmaller} className={control}>
-          A−
-        </button>
-        <button type="button" onClick={() => setScale(100)} aria-label={t.textReset} className={control}>
-          A
-        </button>
-        <button
-          type="button"
-          onClick={() => step(1)}
-          disabled={index >= textScales.length - 1}
-          aria-label={t.textLarger}
-          className={`${control} text-[0.85rem]`}
-        >
-          A+
-        </button>
-        <span aria-hidden="true" className="mx-1 text-rule">
-          |
-        </span>
-        <button
-          type="button"
-          onClick={() => setContrast(contrast === "high" ? "normal" : "high")}
-          aria-pressed={contrast === "high"}
-          className={`${control} gap-2 uppercase ${contrast === "high" ? "bg-ink text-paper" : ""}`}
-        >
-          <span
-            aria-hidden="true"
-            className={`inline-block h-3 w-3 rounded-full border border-current ${contrast === "high" ? "bg-paper" : "bg-[linear-gradient(90deg,currentColor_50%,transparent_50%)]"}`}
-          />
-          {t.highContrast}
-        </button>
+      <div className="hidden lg:flex flex-wrap items-center justify-end gap-x-1 gap-y-0 border-b border-rule" role="group" aria-label={t.accessibility}>
+        {controls}
       </div>
+      <div className="flex items-center border-b border-rule lg:hidden">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="a11y-controls"
+          aria-label={ts.accessibilityToggle}
+          onClick={() => setOpen((v) => !v)}
+          className={`inline-flex min-h-11 min-w-11 items-center justify-center px-3 font-sans text-sm font-semibold tracking-[0.08em] text-ink ${focusRing}`}
+        >
+          Aa
+        </button>
+        <div className="ml-auto">
+          <LanguageToggle language={language} setLanguage={setLanguage} />
+        </div>
+      </div>
+      {open ? (
+        <div id="a11y-controls" role="group" aria-label={t.accessibility} className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-rule py-1 lg:hidden">
+          {controls}
+        </div>
+      ) : null}
     </div>
   );
 }
