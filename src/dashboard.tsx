@@ -140,7 +140,7 @@ function ThreeColumns({ language, navigate }: { language: Language; navigate: (p
   return (
     <div className={`grid gap-10 lg:gap-0 ${grid} lg:divide-x lg:divide-rule`}>
       <div className="lg:pr-8">
-        <MissingPersonsColumn language={language} navigate={navigate} />
+        <MissingPersonsColumn language={language} />
       </div>
       {showHelp ? (
         <div className="lg:px-8">
@@ -156,15 +156,8 @@ function ThreeColumns({ language, navigate }: { language: Language; navigate: (p
   );
 }
 
-function MissingPersonsColumn({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+function MissingPersonsColumn({ language }: { language: Language }) {
   const t = labels[language];
-  const [query, setQuery] = useState("");
-
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (query.trim()) sessionStorage.setItem("vn:search-prefill", query.trim());
-    navigate("search");
-  };
 
   return (
     <section aria-labelledby="missing-heading">
@@ -172,25 +165,11 @@ function MissingPersonsColumn({ language, navigate }: { language: Language; navi
       <Headline level={3} as="p" className="mt-4">
         {t.searchLead}
       </Headline>
-      <form onSubmit={submit} className="mt-4 flex border border-ink bg-white">
-        <label htmlFor="front-search" className="sr-only">
-          {t.nameLabel}
-        </label>
-        <input
-          id="front-search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.searchPlaceholder}
-          autoComplete="off"
-          className="min-h-11 w-full min-w-0 border-0 bg-transparent px-3 font-serif text-base text-ink outline-none placeholder:text-muted"
-        />
-        <SquareButton type="submit" tone="primary" className="shrink-0 border-0">
-          {t.searchButton}
-        </SquareButton>
-      </form>
       <p className="mt-3 font-serif text-sm italic text-muted">{t.absenceNote}</p>
-      <SquareButton href={opmcmMissingPersonUrl} external className="mt-4">
+      <SquareButton href={opmcmMissingPersonUrl} external tone="primary" className="mt-4">
+        {t.searchByNameCta}
+      </SquareButton>
+      <SquareButton href={opmcmMissingPersonUrl} external className="mt-3">
         {t.reportMissingPerson}
       </SquareButton>
     </section>

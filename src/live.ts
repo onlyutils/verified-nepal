@@ -14,12 +14,11 @@ import type {
   MessageItem,
   MissingPersonRecord,
   OpmcmGovernmentEffort,
-  OpmcmPersonReport,
   OpmcmStats,
   RescueStatisticsData,
   StatusCountsData,
 } from "./types";
-import { opmcmApiBase, opmcmReportSearchUrl } from "./urls";
+import { opmcmApiBase } from "./urls";
 import { extractMessages } from "./utils";
 
 export const rescueApiBase = "https://ndrrma.gov.np/api/v1/rescues/";
@@ -154,30 +153,6 @@ export function LiveStatusBadge({ language, className = "" }: { language: Langua
     }),
     label,
   );
-}
-
-export async function fetchMissingPersons(signal?: AbortSignal) {
-  let url: string | null = `${rescueApiBase}missing-persons/`;
-  const results: MissingPersonRecord[] = [];
-  let count = 0;
-
-  while (url) {
-    const page: MissingPersonsPage = await fetchJson(url, signal);
-    count = page.count;
-    results.push(...page.results);
-    url = page.next;
-  }
-
-  return { count, results };
-}
-
-export async function searchOpmcmReports(query: string, signal?: AbortSignal) {
-  const payload = await fetchJson<{
-    success?: boolean;
-    data?: { items?: OpmcmPersonReport[] };
-  }>(opmcmReportSearchUrl(query), signal);
-  if (payload.success === false) throw new Error("OPMCM person-reports returned success=false");
-  return payload.data?.items ?? [];
 }
 
 async function fetchLivePayload(signal: AbortSignal): Promise<Partial<LivePayload>> {
