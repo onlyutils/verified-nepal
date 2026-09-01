@@ -2,7 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
-// runtime caching for import.meta.env.VITE_API_BASE GET requests -> StaleWhileRevalidate
+import { isPrivateApiPath, isPublicApiPath, hasAuthHeader } from "./src/lib/sw-rules";
+
+void isPrivateApiPath;
+void isPublicApiPath;
+void hasAuthHeader;
 
 export default defineConfig({
   plugins: [
@@ -47,24 +51,58 @@ export default defineConfig({
           },
           {
             urlPattern: ({ url, request }: { url: URL; request: Request }) => {
-              const headers: any = (request as any).headers;
+              const method = (request as unknown as { method?: string })?.method ?? "GET";
+              if (method !== "GET") return true;
+              const headers: unknown = (request as unknown as { headers?: unknown })?.headers;
               if (headers) {
                 try {
-                  if (typeof headers.has === "function" && headers.has("Authorization")) return true;
-                  if (typeof headers.get === "function" && headers.get("Authorization")) return true;
+                  const h = headers as { has?: (k: string) => boolean; get?: (k: string) => unknown };
+                  if (typeof h.has === "function" && (h.has("Authorization") || h.has("authorization"))) return true;
+                  if (typeof h.get === "function" && (h.get("Authorization") || h.get("authorization"))) return true;
                 } catch {}
                 try {
-                  const auth = (headers as any)["Authorization"] || (headers as any)["authorization"];
-                  if (auth) return true;
+                  const rec = headers as Record<string, unknown>;
+                  if (rec["Authorization"] || rec["authorization"]) return true;
                 } catch {}
               }
               const p = url.pathname;
-              return p === "/me" || p.startsWith("/auth/") || p.startsWith("/moderation/");
+              if (p === "/me" || p.startsWith("/me/")) return true;
+              if (p === "/auth" || p.startsWith("/auth/")) return true;
+              if (p.startsWith("/moderation/")) return true;
+              if (p.startsWith("/admin/")) return true;
+              if (p === "/claims" || p.startsWith("/claims/")) return true;
+              return false;
             },
             handler: "NetworkOnly",
           },
           {
-            urlPattern: new RegExp((process.env.VITE_API_BASE || "https://api.verifiednepal.com").replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&") + ".*"),
+            urlPattern: ({ url, request }: { url: URL; request: Request }) => {
+              const method = (request as unknown as { method?: string })?.method ?? "GET";
+              if (method !== "GET") return false;
+              const headers: unknown = (request as unknown as { headers?: unknown })?.headers;
+              if (headers) {
+                try {
+                  const h = headers as { has?: (k: string) => boolean; get?: (k: string) => unknown };
+                  if (typeof h.has === "function" && (h.has("Authorization") || h.has("authorization"))) return false;
+                  if (typeof h.get === "function" && (h.get("Authorization") || h.get("authorization"))) return false;
+                } catch {}
+                try {
+                  const rec = headers as Record<string, unknown>;
+                  if (rec["Authorization"] || rec["authorization"]) return false;
+                } catch {}
+              }
+              const p = url.pathname;
+              if (p === "/me" || p.startsWith("/me/")) return false;
+              if (p === "/auth" || p.startsWith("/auth/")) return false;
+              if (p.startsWith("/moderation/")) return false;
+              if (p.startsWith("/admin/")) return false;
+              if (p === "/claims" || p.startsWith("/claims/")) return false;
+              if (p === "/needs" || p === "/offers" || p === "/ledger" || p === "/audit") return true;
+              if (p === "/projects" || p.startsWith("/projects/")) return true;
+              if (p === "/dispatches" || p.startsWith("/dispatches/")) return true;
+              if (p.startsWith("/status/")) return true;
+              return false;
+            },
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "vn-api",
