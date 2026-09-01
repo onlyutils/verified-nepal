@@ -33,7 +33,7 @@
     // Apply saved accessibility settings before first paint (see AccessibilityBar in src/layout.tsx).
     try {
       var s = localStorage.getItem("vn:text-scale");
-      if (s) document.documentElement.style.fontSize = s + "%";
+      if (s && ["100", "112.5", "125", "137.5", "150"].includes(s)) document.documentElement.style.fontSize = s + "%";
       var c = localStorage.getItem("vn:contrast");
       if (c) document.documentElement.setAttribute("data-contrast", c);
     } catch (e) {}

@@ -104,6 +104,11 @@ html[data-contrast="high"] button {
   box-sizing: border-box;
 }
 
+/* Default text scale = 125% (the former "two A+ clicks"); the accessibility bar overrides this inline. */
+html {
+  font-size: 125%;
+}
+
 body {
   margin: 0;
   min-width: 320px;

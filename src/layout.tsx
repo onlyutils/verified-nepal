@@ -38,7 +38,7 @@ export function Masthead({
           {t.floodName}
         </p>
         <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block ${focusRing}`}>
-          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] lg:text-[4.5rem]">
+          <span className="block font-display text-[1.75rem] font-black uppercase leading-none tracking-[0.06em] text-ink sm:text-[3.6rem] xl:text-[4.5rem]">
             Verified Nepal
           </span>
           <span lang="ne" className="mt-2 block font-display text-lg leading-none text-ink sm:text-xl">
@@ -297,21 +297,26 @@ export function BackToTop({ language }: { language: Language }) {
   );
 }
 
-const textScales = [87.5, 100, 112.5, 125, 137.5] as const;
+// Root font-size ladder in %. The site default is 125% (set in styles.css) — the old "two A+ clicks" — so text is readable without touching the bar.
+const textScales = [100, 112.5, 125, 137.5, 150] as const;
+const defaultScale = 125;
 
 /** Government-site style controls: A− / A / A+ text size and a high-contrast toggle, persisted per browser. */
 export function AccessibilityBar({ language, setLanguage }: { language: Language; setLanguage: (language: Language) => void }) {
   const t = labels[language];
   const ts = shellStrings[language];
-  const [scale, setScale] = useState<number>(() => Number(localStorage.getItem("vn:text-scale")) || 100);
+  const [scale, setScale] = useState<number>(() => {
+    const stored = Number(localStorage.getItem("vn:text-scale"));
+    return (textScales as readonly number[]).includes(stored) ? stored : defaultScale;
+  });
   const [contrast, setContrast] = useState<"normal" | "high">(() =>
     localStorage.getItem("vn:contrast") === "high" ? "high" : "normal",
   );
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    document.documentElement.style.fontSize = scale === 100 ? "" : `${scale}%`;
-    if (scale === 100) localStorage.removeItem("vn:text-scale");
+    document.documentElement.style.fontSize = scale === defaultScale ? "" : `${scale}%`;
+    if (scale === defaultScale) localStorage.removeItem("vn:text-scale");
     else localStorage.setItem("vn:text-scale", String(scale));
   }, [scale]);
 
@@ -330,7 +335,7 @@ export function AccessibilityBar({ language, setLanguage }: { language: Language
       <button type="button" onClick={() => step(-1)} disabled={index <= 0} aria-label={t.textSmaller} className={control}>
         A−
       </button>
-      <button type="button" onClick={() => setScale(100)} aria-label={t.textReset} className={control}>
+      <button type="button" onClick={() => setScale(defaultScale)} aria-label={t.textReset} className={control}>
         A
       </button>
       <button
