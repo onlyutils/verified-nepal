@@ -7,6 +7,8 @@ import { Ledger } from "./pages/ledger";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
 import { ProjectsList } from "./pages/projects";
+import { DispatchesPage } from "./pages/dispatches";
+import { DispatchDetail } from "./pages/dispatch-detail";
 import { ProjectDetail } from "./pages/project-detail";
 import { ProjectRegister } from "./pages/project-register";
 import { ProjectUpdate } from "./pages/project-update";
@@ -24,6 +26,9 @@ const pagePaths: Record<Page, string> = {
   getHelp: "/get-help",
   giveHelp: "/give-help",
   ledger: "/ledger",
+  dispatches: "/dispatches",
+  dispatchDetail: "/dispatches/:id",
+  dispatchWrite: "/dispatches",
   projects: "/projects",
   projectDetail: "/projects/:id",
   projectRegister: "/projects/register",
@@ -31,6 +36,8 @@ const pagePaths: Record<Page, string> = {
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.match(/^\/dispatches\/[^\/]+/)) return "dispatchDetail";
+  if (pathname.startsWith("/dispatches")) return "dispatches";
   if (pathname.startsWith("/projects/register")) return "projectRegister";
   if (pathname.startsWith("/projects/update")) return "projectUpdate";
   if (pathname.match(/^\/projects\/[^\/]+/)) return "projectDetail";
@@ -107,6 +114,8 @@ export function App() {
           {page === "projects" ? <ProjectsList language={language} /> : null}
           {page === "projectRegister" ? <ProjectRegister language={language} /> : null}
           {page === "projectUpdate" ? <ProjectUpdate language={language} /> : null}
+          {page === "dispatches" ? <DispatchesPage language={language} /> : null}
+          {page === "dispatchDetail" ? <DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /> : null}
           {page === "projectDetail" ? <ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />

@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import {
   ApiError,
   getClaimsPrint,
+  getModerationDispatches,
+  moderateDispatch,
+  type ModerationDispatchItem,
   getModerationFlags,
   getModerationQueue,
   getModerationProjects,
@@ -77,7 +80,7 @@ export function Desk({ language }: { language: Language }) {
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches">("queue");
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(false);
@@ -102,6 +105,15 @@ export function Desk({ language }: { language: Language }) {
   const [verifyConfirmId, setVerifyConfirmId] = useState<string|null>(null);
   const [photoActionLoading, setPhotoActionLoading] = useState<string|null>(null);
   const [statusSelect, setStatusSelect] = useState<Record<string,string>>({});
+
+  // Dispatches moderation
+  const [dispatches, setDispatches] = useState<ModerationDispatchItem[]>([]);
+  const [dispatchesLoading, setDispatchesLoading] = useState(false);
+  const [dispatchesError, setDispatchesError] = useState<string|null>(null);
+  const [dispatchActionLoading, setDispatchActionLoading] = useState<string|null>(null);
+  const [dispatchRejectId, setDispatchRejectId] = useState<string|null>(null);
+  const [dispatchRejectReason, setDispatchRejectReason] = useState("");
+  const [dispatchRejectError, setDispatchRejectError] = useState<string|null>(null);
 
   // Print
   const [printDistrict, setPrintDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
@@ -167,6 +179,53 @@ export function Desk({ language }: { language: Language }) {
       setFlagsError(err.message || t.deskFlagsError);
     } finally {
       setFlagsLoading(false);
+    }
+  };
+
+  const loadDispatches = async () => {
+    if (!auth.idToken) return;
+    setDispatchesLoading(true);
+    setDispatchesError(null);
+    try {
+      const res = await getModerationDispatches(auth.idToken);
+      setDispatches(res.items);
+    } catch (e) {
+      const err = e as ApiError;
+      setDispatchesError(err.message || (t as Record<string,string>).deskDispatchesError);
+    } finally {
+      setDispatchesLoading(false);
+    }
+  };
+
+  const handleDispatchPublish = async (id: string) => {
+    if (!auth.idToken) return;
+    setDispatchActionLoading(id);
+    try {
+      await moderateDispatch(auth.idToken, id, { action: "publish" });
+      await loadDispatches();
+      setActionMsg((t as Record<string,string>).deskActionSuccess);
+    } catch (e) {
+      const err = e as ApiError;
+      setDispatchesError(err.message || (t as Record<string,string>).deskDispatchesError);
+    } finally {
+      setDispatchActionLoading(null);
+    }
+  };
+  const handleDispatchReject = async () => {
+    if (!auth.idToken || !dispatchRejectId) return;
+    if (!dispatchRejectReason.trim()) { setDispatchRejectError((t as Record<string,string>).deskDispatchesRejectPlaceholder); return; }
+    setDispatchActionLoading(dispatchRejectId);
+    try {
+      await moderateDispatch(auth.idToken, dispatchRejectId, { action: "reject", reason: dispatchRejectReason.trim() });
+      setDispatchRejectId(null);
+      setDispatchRejectReason("");
+      await loadDispatches();
+      setActionMsg((t as Record<string,string>).deskActionSuccess);
+    } catch (e) {
+      const err = e as ApiError;
+      setDispatchRejectError(err.message || (t as Record<string,string>).deskDispatchesError);
+    } finally {
+      setDispatchActionLoading(null);
     }
   };
 
@@ -345,6 +404,7 @@ export function Desk({ language }: { language: Language }) {
   useEffect(() => {
     if (activeTab === "flags" && auth.idToken) loadFlags();
     if (activeTab === "projects" && auth.idToken) loadProjects();
+    if (activeTab === "dispatches" && auth.idToken) loadDispatches();
   }, [activeTab]);
 
   if (!auth.idToken) {
@@ -574,6 +634,14 @@ export function Desk({ language }: { language: Language }) {
           className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "projects" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
         >
           {(t as Record<string,string>).deskProjectsTab} {projects.length ? `· ${projects.length}` : ""}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("dispatches")}
+          aria-pressed={activeTab === "dispatches"}
+          className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "dispatches" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+        >
+          {(t as Record<string,string>).deskDispatchesTab} {dispatches.length ? `· ${dispatches.length}` : ""}
         </button>
       </div>
 
@@ -921,6 +989,63 @@ export function Desk({ language }: { language: Language }) {
               ) : null}
             </CardContent>
           </Card>
+        </div>
+      ) : null}
+
+      {activeTab === "dispatches" ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">{(t as Record<string,string>).deskDispatchesTitle}</h2>
+            <Button variant="outline" size="sm" onClick={loadDispatches}>{(t as Record<string,string>).dispatchesTryAgain ?? "Retry"}</Button>
+          </div>
+          {dispatchesLoading ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskDispatchesLoading}</p> : dispatchesError ? <p className="font-sans text-sm text-destructive" role="alert">{dispatchesError}</p> : dispatches.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskDispatchesEmpty}</p> : (
+            <div className="grid gap-4">
+              {dispatches.map(d=> {
+                const title = typeof d.title === "string" ? d.title : (d.title as {en:string; ne?:string}).en || (Object.values(d.title as object)[0] as string);
+                const body = typeof d.body === "string" ? d.body : (d.body as {en:string; ne?:string}).en || (Object.values(d.body as object)[0] as string);
+                return (
+                <Card key={d.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-6">{title}</CardTitle>
+                      <Badge variant="secondary">{d.status}</Badge>
+                    </div>
+                    <CardDescription className="font-sans text-xs">
+                      {(t as Record<string,string>).dispatchMetaBy} {d.author.displayName}{d.author.place ? ` · ${d.author.place}` : ""} · {new Date(d.createdAt).toLocaleString()} · {d.tags.join(", ")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="border border-rule bg-paper p-3">
+                      <p className="font-serif text-sm leading-6 whitespace-pre-wrap break-words">{body}</p>
+                    </div>
+                    <div className="border border-dashed border-rule bg-card p-3">
+                      <p className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">Private (moderators only)</p>
+                      <p className="mt-2 font-sans text-sm"><span className="font-semibold">Email:</span> {d.author.email}</p>
+                      <p className="font-sans text-xs text-muted-foreground">{(t as Record<string,string>).dispatchWriteEmailHint}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" onClick={()=>handleDispatchPublish(d.id)} disabled={!!dispatchActionLoading}>{dispatchActionLoading===d.id ? "…" : (t as Record<string,string>).deskDispatchesPublish}</Button>
+                      <Button size="sm" variant="outline" onClick={()=>{ setDispatchRejectId(d.id); setDispatchRejectError(null); }}>{(t as Record<string,string>).deskDispatchesReject}</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )})}
+            </div>
+          )}
+          <Dialog open={!!dispatchRejectId} onOpenChange={(open)=>{ if (!open) { setDispatchRejectId(null); setDispatchRejectReason(""); setDispatchRejectError(null); }}}>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{(t as Record<string,string>).deskDispatchesRejectTitle}</DialogTitle><DialogDescription>{(t as Record<string,string>).deskDispatchesRejectPlaceholder}</DialogDescription></DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="dispatchRejectReason">{(t as Record<string,string>).deskDispatchesRejectTitle}</Label>
+                <Textarea id="dispatchRejectReason" value={dispatchRejectReason} onChange={e=>{setDispatchRejectReason(e.target.value); setDispatchRejectError(null);}} placeholder={(t as Record<string,string>).deskDispatchesRejectPlaceholder} rows={3} />
+                {dispatchRejectError ? <p className="font-sans text-sm text-destructive">{dispatchRejectError}</p> : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={()=>{ setDispatchRejectId(null); setDispatchRejectReason("");}}>{t.deskCancel}</Button>
+                <Button onClick={handleDispatchReject} disabled={!!dispatchActionLoading}>{dispatchActionLoading ? "…" : (t as Record<string,string>).deskDispatchesRejectConfirm}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       ) : null}
 

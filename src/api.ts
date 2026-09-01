@@ -412,6 +412,79 @@ export function moderateProjectUpdate(token: string, id: string, updateId: strin
   return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}/updates/${encodeURIComponent(updateId)}`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
+
+export type DispatchTag = "climate" | "mountains" | "floods" | "landslides" | "glaciers" | "community" | "story";
+export const DISPATCH_TAGS: DispatchTag[] = ["climate","mountains","floods","landslides","glaciers","community","story"];
+
+export interface DispatchAuthorPublic { displayName: string; place?: string; }
+export interface DispatchPublicItem {
+  id: string;
+  title: string;
+  excerpt: string;
+  author: DispatchAuthorPublic;
+  tags: DispatchTag[];
+  publishedAt: string;
+  createdAt?: string;
+}
+export interface DispatchListResponse { items: DispatchPublicItem[]; cursor?: string; }
+
+export interface DispatchDetailResponse {
+  id: string;
+  title: string;
+  body: string;
+  author: DispatchAuthorPublic;
+  tags: DispatchTag[];
+  publishedAt: string;
+  createdAt: string;
+}
+
+export interface CreateDispatchBody {
+  title: string;
+  body: string;
+  author: { displayName: string; place?: string; email: string };
+  tags: DispatchTag[];
+  language: "en" | "ne";
+  turnstileToken?: string;
+}
+export interface CreateDispatchResponse { id: string; }
+
+export interface ModerationDispatchItem {
+  id: string;
+  title: { en: string; ne?: string } | string;
+  body: { en: string; ne?: string } | string;
+  author: { displayName: string; place?: string; email: string };
+  tags: DispatchTag[];
+  status: "pending" | "published" | "rejected";
+  createdAt: string;
+  publishedAt?: string;
+}
+export interface ModerationDispatchResponse { items: ModerationDispatchItem[]; }
+
+export function createDispatch(body: CreateDispatchBody): Promise<CreateDispatchResponse> {
+  return request<CreateDispatchResponse>("/dispatches", { method: "POST", body: JSON.stringify(body) });
+}
+export function listDispatches(params: { tag?: string; cursor?: string } = {}): Promise<DispatchListResponse> {
+  const q = new URLSearchParams();
+  if (params.tag) q.set("tag", params.tag);
+  if (params.cursor) q.set("cursor", params.cursor);
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  return request<DispatchListResponse>(`/dispatches${suffix}`);
+}
+export function getDispatch(id: string): Promise<DispatchDetailResponse> {
+  return request<DispatchDetailResponse>(`/dispatches/${encodeURIComponent(id)}`);
+}
+export function getModerationDispatches(token: string): Promise<ModerationDispatchResponse> {
+  return request<ModerationDispatchResponse>("/moderation/dispatches", { token });
+}
+export function moderateDispatch(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/dispatches/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function assertNoDispatchEmail(obj: Record<string, unknown>): boolean {
+  const json = JSON.stringify(obj);
+  return !json.toLowerCase().includes('"email"');
+}
+
 export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): string[] {
   const forbidden = ["phone","contactName","updateCodeHash","contactname","updatecode"];
   const found: string[] = [];

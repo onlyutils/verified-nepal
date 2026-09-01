@@ -11,7 +11,7 @@ import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["dashboard", "projects", "getHelp", "giveHelp", "ledger", "search", "desk", "info"] as const;
+const navPages = ["dashboard", "projects", "dispatches", "getHelp", "giveHelp", "ledger", "search", "desk", "info"] as const;
 
 export function Masthead({
   page,
@@ -56,6 +56,7 @@ export function Masthead({
           const active = page === item;
           const labelMap: Record<string, string> = {
             dashboard: t.dashboard,
+            dispatches: (t as Record<string,string>).dispatches ?? "Dispatches",
             getHelp: t.getHelp,
             giveHelp: t.giveHelp,
             ledger: t.ledgerTitle,
