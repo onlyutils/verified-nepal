@@ -1,120 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
-import { data } from "./data";
 import { labels, textForLanguage } from "./i18n";
-import { fetchMissingPersons, useLiveData } from "./live";
-import type { Language, MissingPersonRecord, PersonRecord } from "./types";
+import { useLiveData } from "./live";
+import type { Language, Page } from "./types";
 import { opmcmMissingPersonUrl } from "./urls";
-import { formatNumber, matchesPerson, messageText, officialRescueUrl, sentenceCase } from "./utils";
-import { uiStrings } from "./i18n-ui";
-import { Byline, Headline, officialLink, Rule, SectionLabel, SquareButton, Standfirst, StatusMark } from "./ui";
+import { formatNumber, messageText } from "./utils";
+import { Byline, Headline, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "./ui";
 
-type PersonSearchResult =
-  | { kind: "rescued"; person: PersonRecord }
-  | { kind: "missing"; person: MissingPersonRecord };
-
-export function FindPerson({ language }: { language: Language }) {
+export function FindPerson({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = labels[language];
   const liveData = useLiveData();
-  // Initializer stays pure (StrictMode runs it twice); the key is cleared on mount instead.
-  const [query, setQuery] = useState(() => sessionStorage.getItem("vn:search-prefill") ?? "");
-  useEffect(() => {
-    sessionStorage.removeItem("vn:search-prefill");
-  }, []);
-  const [persons, setPersons] = useState<PersonRecord[] | null>(null);
-  const [missingPersons, setMissingPersons] = useState<MissingPersonRecord[] | null>(null);
-  const [rescuedLoading, setRescuedLoading] = useState(false);
-  const [missingLoading, setMissingLoading] = useState(false);
-  const [rescuedError, setRescuedError] = useState(false);
-  const [missingError, setMissingError] = useState(false);
-  const normalizedQuery = query.trim();
-  const searched = normalizedQuery.length >= 2;
-
-  useEffect(() => {
-    // Guard on data only: putting the loading flag in the deps re-ran this effect and its
-    // cleanup set `cancelled` before the fetch resolved, so results were always discarded.
-    if (!searched || persons || rescuedError) return;
-    let cancelled = false;
-    setRescuedLoading(true);
-    fetch("/data/rescued-persons.json")
-      .then((response) => {
-        if (!response.ok) throw new Error(`Failed to load person records: ${response.status}`);
-        return response.json() as Promise<{ results: PersonRecord[] }>;
-      })
-      .then((payload) => {
-        if (!cancelled) setPersons(payload.results);
-      })
-      .catch((error) => {
-        console.warn("Rescued records fetch failed", error);
-        if (!cancelled) setRescuedError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setRescuedLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [persons, rescuedError, searched]);
-
-  useEffect(() => {
-    if (!searched || missingPersons || missingError) return;
-    let cancelled = false;
-    const controller = new AbortController();
-    setMissingLoading(true);
-
-    fetchMissingPersons(controller.signal)
-      .then((payload) => {
-        if (!cancelled) setMissingPersons(payload.results);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          console.warn("Missing-person records fetch failed", error);
-          if (!cancelled) setMissingError(true);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setMissingLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [missingError, missingPersons, searched]);
-
-  const results = useMemo(
-    () => {
-      if (!searched) return [];
-      const missingResults: PersonSearchResult[] = missingPersons
-        ? missingPersons
-            .filter((person) => matchesPerson(person, normalizedQuery))
-            .map((person) => ({ kind: "missing", person }))
-        : [];
-      const rescuedResults: PersonSearchResult[] = persons
-        ? persons
-            .filter((person) => matchesPerson(person, normalizedQuery))
-            .map((person) => ({ kind: "rescued", person }))
-        : [];
-      return [...missingResults, ...rescuedResults].slice(0, 50);
-    },
-    [missingPersons, normalizedQuery, persons, searched],
-  );
-  const disclaimers = liveData.messages
-    .map((message) => messageText(message, language))
-    .filter(Boolean);
-  const anyLoading = rescuedLoading || missingLoading;
-  const [announce, setAnnounce] = useState("");
-  useEffect(() => {
-    if (anyLoading) return;
-    const u = uiStrings[language];
-    let text = "";
-    if (!searched) text = u.searchNoQuery;
-    else if (rescuedError && missingError) text = u.searchUnavailable;
-    else if (results.length > 0) text = u.searchResultsFor.replace("{count}", formatNumber(results.length, language)).replace("{query}", normalizedQuery);
-    else if (persons || missingPersons) text = u.searchNoResultsFor.replace("{query}", normalizedQuery);
-    else text = "";
-    setAnnounce(text);
-  }, [anyLoading, searched, results.length, normalizedQuery, persons, missingPersons, rescuedError, missingError, language]);
+  const rescued = formatNumber(liveData.rescuedStatistics.rescued_count, language);
+  const verified = formatNumber(liveData.statusCounts.total_count, language);
+  const missing = liveData.missingCount === null ? t.unavailable : formatNumber(liveData.missingCount, language);
+  const number = (value: number | null | undefined) =>
+    value === null || value === undefined ? t.unavailable : formatNumber(value, language);
+  const disclaimers = liveData.messages.map((message) => messageText(message, language)).filter(Boolean);
+  const total = Math.max(liveData.statusCounts.total_count, 1);
 
   return (
     <div className="space-y-8">
@@ -124,62 +24,57 @@ export function FindPerson({ language }: { language: Language }) {
           {t.searchTitle}
         </Headline>
         <Standfirst className="mt-3 max-w-2xl">{t.searchIntro}</Standfirst>
-        <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr] lg:gap-10">
-          <div>
-            <label htmlFor="person-search" className="block font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink">
-              {t.searchLabel}
-            </label>
-            <input
-              id="person-search"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t.searchPlaceholder}
-              autoComplete="off"
-              className="mt-2 min-h-12 w-full border border-rule border-b-ink bg-white px-3 font-serif text-lg text-ink outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-            />
-            <p className="mt-2 font-sans text-xs text-muted">{t.searchLanguageHint}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="font-serif text-sm text-muted">{t.reportMissingPersonHint}</span>
-              <SquareButton href={opmcmMissingPersonUrl} external>
-                {t.reportMissingPerson}
-              </SquareButton>
-            </div>
-          </div>
-          <DisclaimerBlock language={language} disclaimers={disclaimers} />
+        <div className="mt-6 flex flex-wrap gap-3">
+          <SquareButton href={opmcmMissingPersonUrl} external tone="primary">
+            {t.searchByNameCta}
+          </SquareButton>
+          <SquareButton onClick={() => navigate("missing")} tone="red">
+            {t.missingGuideLink}
+          </SquareButton>
         </div>
       </section>
 
       <Rule />
 
-      <p role="status" aria-live="polite" className="sr-only">{announce}</p>
-
-      <section className="space-y-6">
-        {!searched ? (
-          <p className="font-serif leading-7 text-muted">{t.noSearch}</p>
-        ) : (
-          <>
-            {rescuedLoading ? <p className="font-sans text-sm text-muted">{t.loadingVerifiedRecords}</p> : null}
-            {missingLoading ? <p className="font-sans text-sm text-muted">{t.loadingMissingRecords}</p> : null}
-            {rescuedError ? <p className="font-sans text-sm font-semibold text-red">{t.errorVerifiedRecords}</p> : null}
-            {missingError ? <p className="font-sans text-sm font-semibold text-red">{t.errorMissingRecords}</p> : null}
-            {results.length > 0 ? (
-              <>
-                <p className="font-sans text-[0.72rem] uppercase tracking-[0.14em] text-muted">
-                  {formatNumber(results.length, language)} {t.results}
-                </p>
-                <div className="divide-y divide-rule border-y border-rule">
-                  {results.map((result) => (
-                    <PersonEntry key={`${result.kind}-${result.person.id}`} result={result} language={language} />
-                  ))}
-                </div>
-              </>
-            ) : !anyLoading && (persons || missingPersons) ? (
-              <p className="font-serif leading-7 text-muted">{t.noMatch}</p>
-            ) : null}
-          </>
-        )}
+      <section className="grid gap-8 lg:grid-cols-2">
+        <div>
+          <SectionLabel as="p">{t.byTheNumbers}</SectionLabel>
+          <RuledTable
+            caption={t.byTheNumbers}
+            className="mt-1"
+            rows={[
+              { key: "rescued", label: t.rescuedStatus, value: rescued },
+              { key: "missing", label: t.missing, value: missing, red: true },
+              { key: "reach", label: t.outOfReach, value: number(liveData.rescuedStatistics.out_of_reach) },
+              { key: "force", label: t.forceDeployed, value: number(liveData.rescuedStatistics.force_deployed) },
+              { key: "verified", label: t.verifiedRecords, value: verified },
+            ]}
+          />
+          <Byline language={language} className="mt-2" />
+        </div>
+        <div>
+          <SectionLabel as="p">{t.statusOfRecords}</SectionLabel>
+          <RuledTable
+            caption={t.statusOfRecords}
+            className="mt-1"
+            rows={liveData.statusCounts.status_counts.map((status) => ({
+              key: String(status.id),
+              label: textForLanguage(status, language),
+              value: (
+                <>
+                  {formatNumber(status.count, language)}
+                  <span className="ml-2 font-normal text-muted">{((status.count / total) * 100).toFixed(1)}%</span>
+                </>
+              ),
+              bar: status.count / total,
+            }))}
+          />
+        </div>
       </section>
+
+      <Rule />
+
+      <DisclaimerBlock language={language} disclaimers={disclaimers} />
     </div>
   );
 }
@@ -203,93 +98,3 @@ function DisclaimerBlock({ language, disclaimers }: { language: Language; discla
     </aside>
   );
 }
-
-function PersonEntry({ result, language }: { result: PersonSearchResult; language: Language }) {
-  const t = labels[language];
-  const { person, kind } = result;
-  const status = person.status;
-  const isMissing = kind === "missing";
-  const isRescued = kind === "rescued" && status?.id === 4;
-  const statusLabel = isMissing ? t.missing : isRescued ? t.rescuedStatus : status ? textForLanguage(status, language) : t.unavailable;
-  const tone = isMissing ? "missing" : isRescued ? "verified" : status ? "pending" : "neutral";
-
-  return (
-    <article className="grid gap-4 py-6 lg:grid-cols-[2fr_3fr] lg:gap-10">
-      <div>
-        <div className="flex items-start justify-between gap-4 lg:flex-col lg:gap-2">
-          <Headline level={3} as="h2">
-            {person.name_ne || person.name || person.display_name}
-          </Headline>
-          <StatusMark tone={tone}>{statusLabel}</StatusMark>
-        </div>
-        {person.name && person.name_ne ? <p className="mt-1 font-serif text-muted">{person.name}</p> : null}
-        <div className="mt-4 hidden lg:block">
-          <Byline language={language} updatedAt={data.meta.synced_at} />
-          <a
-            href={officialRescueUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`mt-2 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
-          >
-            {t.verifyOfficial} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      </div>
-      <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-        <RecordField label={t.age} value={person.age === null ? null : formatNumber(person.age, language)} unavailable={t.unavailable} />
-        <RecordField label={t.gender} value={sentenceCase(person.gender)} unavailable={t.unavailable} />
-        <RecordField label={t.nationality} value={sentenceCase(person.country || person.nationality)} unavailable={t.unavailable} />
-        {kind === "rescued" ? (
-          <>
-            <RecordField label={t.rescuedDate} value={person.rescued_date} unavailable={t.unavailable} />
-            <RecordField label={t.rescuedLocation} value={locationValue(person.rescued_location, language)} unavailable={t.unavailable} />
-            <RecordField label={t.stationedLocation} value={locationValue(person.stationed_location, language)} unavailable={t.unavailable} />
-          </>
-        ) : (
-          <>
-            <RecordField label={t.lastContact} value={person.last_contact} unavailable={t.unavailable} />
-            <RecordField label={t.reportedAt} value={person.reported_at} unavailable={t.unavailable} />
-          </>
-        )}
-        <RecordField label={t.remarks} value={person.remarks} unavailable={t.unavailable} wide />
-        <div className="sm:col-span-2 lg:hidden">
-          <Byline language={language} updatedAt={data.meta.synced_at} />
-          <a
-            href={officialRescueUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`mt-1 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
-          >
-            {t.verifyOfficial} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      </dl>
-    </article>
-  );
-}
-
-function RecordField({
-  label,
-  value,
-  unavailable,
-  wide,
-}: {
-  label: string;
-  value: string | null | undefined;
-  unavailable: string;
-  wide?: boolean;
-}) {
-  return (
-    <div className={`border-b border-rule pb-2 ${wide ? "sm:col-span-2" : ""}`}>
-      <dt className="font-sans text-[0.65rem] uppercase tracking-[0.14em] text-muted">{label}</dt>
-      <dd className="mt-1 font-serif text-ink">{value || unavailable}</dd>
-    </div>
-  );
-}
-
-function locationValue(location: PersonRecord["rescued_location"], language: Language) {
-  if (!location) return null;
-  if (typeof location === "string") return location;
-  return textForLanguage(location, language);
-}
-

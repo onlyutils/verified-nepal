@@ -7,7 +7,8 @@ Live figures (rescued, missing, forces deployed) are fetched from NDRRMA's publi
 ## Pages
 
 - [Dashboard](https://verifiednepal.com/): live rescued/missing/deployed counts, relief map, official updates.
-- [Find a person](https://verifiednepal.com/search): name search across the verified rescued and missing-persons lists. Not indexed (results are per-query, not a browsable listing).
+- [Find a person](https://verifiednepal.com/search): name search across NDRRMA's verified rescued and missing-persons lists and the public lost/found reports on the OPMCM rescue portal. Not indexed (results are per-query, not a browsable listing).
+- [Someone is missing](https://verifiednepal.com/missing): step-by-step guide for families — search the lists, register on the OPMCM portal, police/DAO report, hospitals, the Rasuwagadhi border channel, scam warning, verified hotlines.
 - [Info & Help](https://verifiednepal.com/info): verified emergency hotlines, data sources, how to report a missing person or ask for help.
 - [Privacy & Terms](https://verifiednepal.com/privacy): data handling, liability, and source-attribution policy.
 

@@ -12,6 +12,7 @@ const GiveHelp = lazy(() => import("./pages/give-help").then((m) => ({ default: 
 const Ledger = lazy(() => import("./pages/ledger").then((m) => ({ default: m.Ledger })));
 const AuditPage = lazy(() => import("./pages/audit").then((m) => ({ default: m.AuditPage })));
 const FindPerson = lazy(() => import("./find-person").then((m) => ({ default: m.FindPerson })));
+const MissingGuide = lazy(() => import("./missing-guide").then((m) => ({ default: m.MissingGuide })));
 const InfoHelp = lazy(() => import("./info-help").then((m) => ({ default: m.InfoHelp })));
 const ProjectsList = lazy(() => import("./pages/projects").then((m) => ({ default: m.ProjectsList })));
 const DispatchesPage = lazy(() => import("./pages/dispatches").then((m) => ({ default: m.DispatchesPage })));
@@ -24,6 +25,7 @@ const PrivacyPolicy = lazy(() => import("./privacy").then((m) => ({ default: m.P
 const pagePaths: Record<Page, string> = {
   dashboard: "/",
   search: "/search",
+  missing: "/missing",
   info: "/info",
   privacy: "/privacy",
   desk: "/desk",
@@ -53,6 +55,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/ledger")) return "ledger";
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
+  if (pathname.startsWith("/missing")) return "missing";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
   return "dashboard";
@@ -63,6 +66,7 @@ function pageTitle(page: Page, language: Language): string {
   const map: Record<Page, string> = {
     dashboard: t.dashboard,
     search: t.search,
+    missing: t.missingGuideTitle,
     info: t.info,
     privacy: t.privacyTitle,
     desk: t.deskTitle,
@@ -156,7 +160,8 @@ export function App() {
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[80rem] px-4 pb-16 pt-8 sm:px-6 lg:px-8 outline-none">
           {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : (
             <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted">{shellStrings[language].loading}</p>}>
-              {page === "search" ? <FindPerson language={language} /> : null}
+              {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
+              {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "info" ? <InfoHelp language={language} /> : null}
               {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
               {page === "desk" ? <Desk language={language} /> : null}

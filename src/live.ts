@@ -14,14 +14,15 @@ import type {
   MessageItem,
   MissingPersonRecord,
   OpmcmGovernmentEffort,
+  OpmcmPersonReport,
   OpmcmStats,
   RescueStatisticsData,
   StatusCountsData,
 } from "./types";
+import { opmcmApiBase, opmcmReportSearchUrl } from "./urls";
 import { extractMessages } from "./utils";
 
 export const rescueApiBase = "https://ndrrma.gov.np/api/v1/rescues/";
-const opmcmApiBase = "https://rescue.opmcm.gov.np/api/";
 
 const refreshMs = 5 * 60 * 1000;
 const minRefreshMs = 60 * 1000;
@@ -168,6 +169,15 @@ export async function fetchMissingPersons(signal?: AbortSignal) {
   }
 
   return { count, results };
+}
+
+export async function searchOpmcmReports(query: string, signal?: AbortSignal) {
+  const payload = await fetchJson<{
+    success?: boolean;
+    data?: { items?: OpmcmPersonReport[] };
+  }>(opmcmReportSearchUrl(query), signal);
+  if (payload.success === false) throw new Error("OPMCM person-reports returned success=false");
+  return payload.data?.items ?? [];
 }
 
 async function fetchLivePayload(signal: AbortSignal): Promise<Partial<LivePayload>> {

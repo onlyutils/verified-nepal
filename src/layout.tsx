@@ -246,6 +246,9 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
           <button type="button" onClick={() => navigate("audit")} className={`block ${link}`}>
             {(t as Record<string,string>).footerAuditLink ?? "Audit log"}
           </button>
+          <button type="button" onClick={() => navigate("missing")} className={`block ${link}`}>
+            {t.missingGuideLink}
+          </button>
           <button type="button" onClick={() => navigate("privacy")} className={`block ${link}`}>
             {t.privacyTitle}
           </button>

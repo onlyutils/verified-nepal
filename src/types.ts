@@ -1,6 +1,6 @@
 export type Language = "en" | "ne";
 
-export type Page = "dashboard" | "search" | "info" | "privacy" | "desk" | "getHelp" | "giveHelp" | "ledger" | "audit" | "projects" | "projectDetail" | "projectRegister" | "projectUpdate" | "dispatches" | "dispatchDetail" | "dispatchWrite";
+export type Page = "dashboard" | "search" | "missing" | "info" | "privacy" | "desk" | "getHelp" | "giveHelp" | "ledger" | "audit" | "projects" | "projectDetail" | "projectRegister" | "projectUpdate" | "dispatches" | "dispatchDetail" | "dispatchWrite";
 
 export interface RescueStatus {
   id: number;
@@ -37,6 +37,21 @@ export interface MissingPersonRecord {
   last_contact: string | null;
   reported_at: string | null;
   status: RescueStatus | null;
+}
+
+/** Public lost/found report on the OPMCM rescue portal (rescue.opmcm.gov.np). */
+export interface OpmcmPersonReport {
+  _id: string;
+  type: "lost" | "found";
+  status: string;
+  fullName: string;
+  approximateAge?: string;
+  gender?: string;
+  locationText?: string;
+  eventAt?: string | null;
+  description?: string;
+  verified?: boolean;
+  createdAt?: string;
 }
 
 export interface PersonsData {
