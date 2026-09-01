@@ -1,6 +1,6 @@
 export type Language = "en" | "ne";
 
-export type Page = "dashboard" | "search" | "missing" | "info" | "privacy" | "desk" | "getHelp" | "giveHelp" | "ledger" | "audit" | "projects" | "projectDetail" | "projectRegister" | "projectUpdate" | "dispatches" | "dispatchDetail" | "dispatchWrite";
+export type Page = "dashboard" | "search" | "missing" | "info" | "privacy" | "desk" | "getHelp" | "giveHelp" | "ledger" | "audit" | "projects" | "projectDetail" | "projectRegister" | "projectUpdate" | "dispatches" | "dispatchDetail" | "dispatchWrite" | "registerOrg" | "org" | "dropCenters" | "dropCenterDetail";
 
 export interface RescueStatus {
   id: number;

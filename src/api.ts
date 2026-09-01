@@ -601,3 +601,214 @@ export function assertNoSensitiveKeys(obj: Record<string, unknown>): string[] {
   return found;
 }
 
+
+// ---------------------------------------------------------------------------
+// Organizations, drop centers and the goods ledger
+// (spec: docs/superpowers/specs/2026-09-01-drop-centers-design.md)
+
+export type OrgType = "ngo" | "community" | "company" | "religious" | "government" | "other";
+export const ORG_TYPES: OrgType[] = ["ngo", "community", "company", "religious", "government", "other"];
+export type OrgStatus = "pending" | "verified" | "rejected" | "suspended";
+export const ORG_STATUSES: OrgStatus[] = ["pending", "verified", "rejected", "suspended"];
+export type OrgTier = "known" | "vouched" | "self_declared";
+export const ORG_TIERS: OrgTier[] = ["known", "vouched", "self_declared"];
+export type OrgRole = "owner" | "staff";
+export type CenterStatus = "open" | "paused" | "closed";
+export const CENTER_STATUSES: CenterStatus[] = ["open", "paused", "closed"];
+export type GoodsUnit = "kg" | "litre" | "piece" | "packet" | "kit" | "set";
+export type EntryType = "intake" | "distribution" | "transfer_out" | "transfer_in" | "correction";
+export type TransferStatus = "in_transit" | "received" | "sent";
+export type CenterFlagReason = "not_real" | "closed" | "misuse" | "other";
+
+export interface OrgVouch { orgId: string; orgName: string; at: string }
+
+export interface OrgPrivate {
+  id: string;
+  name: string;
+  orgType: OrgType;
+  registrationNumber?: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail?: string;
+  districts: string[];
+  description: string;
+  website?: string;
+  status: OrgStatus;
+  tier?: OrgTier;
+  ownerEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+  verifiedAt?: string;
+  verificationNote?: string;
+  rejectionReason?: string;
+  suspensionReason?: string;
+  vouches?: OrgVouch[];
+}
+export interface MyOrg extends OrgPrivate { role: OrgRole }
+export interface CreateOrgBody {
+  name: string;
+  orgType: OrgType;
+  registrationNumber?: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail?: string;
+  districts: string[];
+  description: string;
+  website?: string;
+}
+export interface CenterOrgRef { id: string; name: string; status: OrgStatus; tier?: OrgTier }
+export interface CenterPublic {
+  id: string;
+  name: string;
+  district: string;
+  ward?: number;
+  address: string;
+  lat?: number;
+  lng?: number;
+  hours?: string;
+  contactPhone: string;
+  accepts: string[];
+  status: CenterStatus;
+  org: CenterOrgRef;
+  createdAt: string;
+  updatedAt: string;
+  flagCount?: number;
+}
+export interface CenterPrivate extends CenterPublic { orgId: string; notes?: string }
+export interface CreateCenterBody {
+  name: string;
+  district: string;
+  ward?: number;
+  address: string;
+  lat?: number;
+  lng?: number;
+  hours?: string;
+  contactPhone: string;
+  accepts: string[];
+  notes?: string;
+}
+export interface StockItem { category: string; unit: GoodsUnit; qty: number }
+export interface GoodsEntry {
+  id: string;
+  centerId: string;
+  district: string;
+  entryType: EntryType;
+  category: string;
+  unit: GoodsUnit;
+  qty: number;
+  delta: number;
+  note?: string;
+  createdAt: string;
+  createdByName?: string;
+  transferId?: string;
+  transferStatus?: TransferStatus;
+  destinationType?: "center" | "external";
+  destinationCenterId?: string;
+  destinationLabel?: string;
+  sourceCenterId?: string;
+  sourceLabel?: string;
+  qtyReceived?: number;
+  discrepancy?: number;
+  correctsEntryId?: string;
+  correctedByEntryId?: string;
+  donationRef?: string;
+}
+export interface CreateEntryBody {
+  entryType: "intake" | "distribution" | "transfer_out" | "correction";
+  category?: string;
+  qty?: number;
+  note?: string;
+  destinationType?: "center" | "external";
+  destinationCenterId?: string;
+  destinationLabel?: string;
+  correctsEntryId?: string;
+}
+export interface CenterDetailResponse extends CenterPublic { stock: StockItem[]; recent: GoodsEntry[] }
+export interface ModerationOrgItem extends OrgPrivate { centersCount: number; ownerSub?: string }
+export interface InboundTransfer {
+  transferId: string;
+  fromCenterId: string;
+  fromCenterName: string;
+  category: string;
+  unit: GoodsUnit;
+  qty: number;
+  entryId: string;
+  createdAt: string;
+}
+export interface OrgMember {
+  sub?: string;
+  email: string;
+  name?: string;
+  role: OrgRole;
+  status: "member" | "invited";
+  createdAt: string;
+}
+export interface DonationStatus {
+  ref: string;
+  center: { id: string; name: string; district: string };
+  category: string;
+  unit: GoodsUnit;
+  qty: number;
+  note?: string;
+  status: "declared" | "received" | "not_received";
+  declaredAt: string;
+  receivedAt?: string;
+  sinceReceived?: { distributed: number; transferred: number };
+}
+
+function qs(params: Record<string, string | number | undefined>): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") p.set(k, String(v));
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+export function createOrg(token: string, body: CreateOrgBody): Promise<{ id: string; status: OrgStatus }> {
+  return request("/orgs", { method: "POST", body: JSON.stringify(body), token });
+}
+export function listMyOrgs(token: string): Promise<{ items: MyOrg[] }> {
+  return request("/orgs/mine", { token });
+}
+export function getOrg(token: string, id: string): Promise<OrgPrivate> {
+  return request(`/orgs/${encodeURIComponent(id)}`, { token });
+}
+export function updateOrg(token: string, id: string, body: Partial<CreateOrgBody>): Promise<{ ok: boolean }> {
+  return request(`/orgs/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function createCenter(token: string, orgId: string, body: CreateCenterBody): Promise<{ id: string }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { token });
+}
+export function updateCenter(token: string, id: string, body: Partial<CreateCenterBody> & { status?: CenterStatus }): Promise<{ ok: boolean }> {
+  return request(`/centers/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function listCenters(params: { district?: string; cursor?: string } = {}): Promise<{ items: CenterPublic[]; cursor?: string }> {
+  return request(`/centers${qs(params)}`);
+}
+export function getCenter(id: string, token?: string): Promise<CenterDetailResponse> {
+  return request(`/centers/${encodeURIComponent(id)}`, token ? { token } : {});
+}
+export function getCenterStock(id: string): Promise<{ items: StockItem[] }> {
+  return request(`/centers/${encodeURIComponent(id)}/stock`);
+}
+export function listCenterEntries(id: string, params: { cursor?: string } = {}, token?: string): Promise<{ items: GoodsEntry[]; cursor?: string }> {
+  return request(`/centers/${encodeURIComponent(id)}/entries${qs(params)}`, token ? { token } : {});
+}
+export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string }> {
+  return request(`/centers/${encodeURIComponent(centerId)}/entries`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function getGoodsLedger(params: { district: string; cursor?: string }): Promise<{ items: GoodsEntry[]; cursor?: string }> {
+  return request(`/goods-ledger${qs(params)}`);
+}
+export function getModerationOrgs(token: string, status: OrgStatus = "pending"): Promise<{ items: ModerationOrgItem[] }> {
+  return request(`/moderation/orgs${qs({ status })}`, { token });
+}
+export type ModerateOrgBody =
+  | { action: "verify"; tier: OrgTier; note: string }
+  | { action: "reject" | "suspend"; reason: string }
+  | { action: "reinstate" };
+export function moderateOrg(token: string, id: string, body: ModerateOrgBody): Promise<{ status: OrgStatus }> {
+  return request(`/moderation/orgs/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
+}

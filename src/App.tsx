@@ -5,6 +5,8 @@ import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./
 import { LiveDataProvider } from "./live";
 import { labels } from "./i18n";
 import { shellStrings } from "./i18n-shell";
+import { orgStrings } from "./i18n-orgs";
+import { centerStrings } from "./i18n-centers";
 import type { Language, Page } from "./types";
 
 const Desk = lazy(() => import("./desk").then((m) => ({ default: m.Desk })));
@@ -22,6 +24,10 @@ const ProjectDetail = lazy(() => import("./pages/project-detail").then((m) => ({
 const ProjectRegister = lazy(() => import("./pages/project-register").then((m) => ({ default: m.ProjectRegister })));
 const ProjectUpdate = lazy(() => import("./pages/project-update").then((m) => ({ default: m.ProjectUpdate })));
 const PrivacyPolicy = lazy(() => import("./privacy").then((m) => ({ default: m.PrivacyPolicy })));
+const RegisterOrganization = lazy(() => import("./pages/register-organization").then((m) => ({ default: m.RegisterOrganization })));
+const OrgDashboard = lazy(() => import("./pages/org-dashboard").then((m) => ({ default: m.OrgDashboard })));
+const DropCenters = lazy(() => import("./pages/drop-centers").then((m) => ({ default: m.DropCenters })));
+const DropCenterDetail = lazy(() => import("./pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
 
 const pagePaths: Record<Page, string> = {
   dashboard: "/",
@@ -41,9 +47,17 @@ const pagePaths: Record<Page, string> = {
   projectDetail: "/projects/:id",
   projectRegister: "/projects/register",
   projectUpdate: "/projects/update",
+  registerOrg: "/register-organization",
+  org: "/org",
+  dropCenters: "/drop-centers",
+  dropCenterDetail: "/drop-centers/:id",
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.startsWith("/register-organization")) return "registerOrg";
+  if (pathname.startsWith("/org")) return "org";
+  if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
+  if (pathname.startsWith("/drop-centers")) return "dropCenters";
   if (pathname.match(/^\/dispatches\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/dispatches")) return "dispatches";
   if (pathname.startsWith("/projects/register")) return "projectRegister";
@@ -82,6 +96,10 @@ function pageTitle(page: Page, language: Language): string {
     projectDetail: (t as Record<string, string>).projects ?? "Projects",
     projectRegister: t.projectRegisterTitle,
     projectUpdate: t.projectUpdateTitle,
+    registerOrg: orgStrings[language].registerOrgTitle,
+    org: orgStrings[language].orgDashboardTitle,
+    dropCenters: centerStrings[language].dropCentersTitle,
+    dropCenterDetail: centerStrings[language].dropCentersTitle,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -180,6 +198,10 @@ export function App() {
               {page === "dispatches" ? <ComponentErrorBoundary language={language}><DispatchesPage language={language} /></ComponentErrorBoundary> : null}
               {page === "dispatchDetail" ? <ComponentErrorBoundary language={language}><DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
               {page === "projectDetail" ? <ComponentErrorBoundary language={language}><ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
+              {page === "registerOrg" ? <ComponentErrorBoundary language={language}><RegisterOrganization language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
+              {page === "org" ? <ComponentErrorBoundary language={language}><OrgDashboard language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
+              {page === "dropCenters" ? <ComponentErrorBoundary language={language}><DropCenters language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
+              {page === "dropCenterDetail" ? <ComponentErrorBoundary language={language}><DropCenterDetail language={language} navigate={navigate} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
             </Suspense>
           )}
         </main>

@@ -8,11 +8,12 @@ import { regionOptions } from "./region";
 import type { Language, Page } from "./types";
 import { focusRing, Rule, SquareButton } from "./ui";
 import { shellStrings } from "./i18n-shell";
+import { centerStrings } from "./i18n-centers";
 import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["search", "getHelp", "giveHelp", "info", "projects", "dispatches", "ledger", "audit"] as const;
+const navPages = ["search", "getHelp", "giveHelp", "dropCenters", "info", "projects", "dispatches", "ledger", "audit"] as const;
 
 export function Masthead({
   page,
@@ -134,6 +135,7 @@ function MastheadNav({
     search: t.search,
     getHelp: t.getHelp,
     giveHelp: t.giveHelp,
+    dropCenters: centerStrings[language].navDropCenters,
     info: t.info,
     projects: (t as Record<string, string>).projects ?? "Projects",
     dispatches: (t as Record<string, string>).dispatches ?? "Dispatches",

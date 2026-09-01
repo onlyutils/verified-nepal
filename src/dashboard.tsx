@@ -9,6 +9,7 @@ import { useLiveData } from "./live";
 import type { Language, OpmcmGovernmentEffort, OpmcmStats, Page } from "./types";
 import { Byline, Headline, officialLink, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "./ui";
 import { shellStrings } from "./i18n-shell";
+import { orgStrings } from "./i18n-orgs";
 import { opmcmAskHelpUrl, opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber, messageText, sentenceCase } from "./utils";
 
@@ -123,6 +124,9 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
         <div className="mt-6 grid gap-3">
           <SquareButton onClick={() => navigate("search")} className="w-full">
             {t.search}
+          </SquareButton>
+          <SquareButton onClick={() => navigate("registerOrg")} className="w-full">
+            {orgStrings[language].registerOrgCta}
           </SquareButton>
         </div>
       </div>
