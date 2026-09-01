@@ -188,7 +188,7 @@ function logAuthFail(token, err) {
   } catch {}
 }
 
-async function handleMe(event, { fetchJwks, getDdb, env }) {
+async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   const auth = getAuthToken(event.headers);
   if (!auth || !auth.startsWith("Bearer ")) throw err(401, "Missing or invalid Authorization header");
   const token = auth.slice("Bearer ".length).trim();
@@ -203,7 +203,6 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
     ne.status = 401;
     throw ne;
   }
-  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload) }); } catch {}
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
@@ -217,31 +216,58 @@ async function handleMe(event, { fetchJwks, getDdb, env }) {
     try { console.error({ tag: "ddb_fail", op: "GetCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
     return json(500, { error: "storage" });
   }
-  let role;
-  const derivedEmail = payload.email ?? payload.primary_email ?? (Array.isArray(payload.emails) ? payload.emails[0] : undefined) ?? "";
-  let email = derivedEmail ?? "";
-  let name = payload.name ?? "";
   if (existing) {
-    role = existing.role;
-    if (existing.email) email = existing.email;
-    if (existing.name) name = existing.name;
-  } else {
-    const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-    const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-    const emailLower = (derivedEmail || "").toLowerCase();
-    if (adminEmails.includes(emailLower)) role = "admin";
-    else if (moderatorEmails.includes(emailLower)) role = "moderator";
-    else role = "helper";
-    const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, email, name: payload.name || "", role, createdAt: new Date().toISOString() };
-    try {
-      await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
-    } catch (e) {
-      try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
-      return json(500, { error: "storage" });
-    }
-    return json(200, { sub: payload.sub, email, name: payload.name || "", role });
+    const role = existing.role;
+    const email = existing.email ?? "";
+    const name = existing.name ?? "";
+    const emailResolved = Boolean(email);
+    try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch {}
+    return json(200, { sub: payload.sub, email, name, role });
   }
-  return json(200, { sub: payload.sub, email, name, role });
+  const fetchFn = fetchImpl ?? globalThis.fetch;
+  const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
+  const url = `${host}/userinfo`;
+  let res;
+  try {
+    res = await fetchFn(url, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
+  } catch (e) {
+    try { console.error({ tag: "userinfo_fail", status: undefined }); } catch {}
+    return json(502, { error: "userinfo" });
+  }
+  if (!res || !res.ok) {
+    try { console.error({ tag: "userinfo_fail", status: res?.status }); } catch {}
+    return json(502, { error: "userinfo" });
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    try { console.error({ tag: "userinfo_fail", status: res.status }); } catch {}
+    return json(502, { error: "userinfo" });
+  }
+  const rawEmail = data?.email ?? data?.primary_email;
+  const rawName = data?.name ?? data?.display_name;
+  const email = typeof rawEmail === "string" && rawEmail.trim() ? rawEmail.trim() : undefined;
+  const name = typeof rawName === "string" && rawName.trim() ? rawName.trim() : undefined;
+  const emailResolved = Boolean(email);
+  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch {}
+  const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const emailLower = (email || "").toLowerCase();
+  let role;
+  if (adminEmails.includes(emailLower)) role = "admin";
+  else if (moderatorEmails.includes(emailLower)) role = "moderator";
+  else role = "helper";
+  const item = { PK: pk, SK: sk, type: "USER", sub: payload.sub, role, createdAt: new Date().toISOString() };
+  if (email !== undefined) item.email = email;
+  if (name !== undefined) item.name = name;
+  try {
+    await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  } catch (e) {
+    try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
+    return json(500, { error: "storage" });
+  }
+  return json(200, { sub: payload.sub, email: email ?? "", name: name ?? "", role });
 }
 
 async function requireAuth(event, { fetchJwks, getDdb, env }) {
@@ -901,7 +927,7 @@ export function createHandler(opts = {}) {
       if (method === "GET" && path === "/health") return json(200, { ok: true });
       if (method === "POST" && path === "/auth/exchange") return await handleAuthExchange(event, { env, fetchImpl });
       if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });
-      if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env, fetchImpl });
       if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env });
       if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });
       if (method === "GET" && path.startsWith("/status/")) {
