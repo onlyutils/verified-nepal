@@ -11,7 +11,7 @@ import { labels } from "../i18n";
 import { apiErrorMessage } from "../api-error";
 import type { Language } from "../types";
 import { Headline, Rule, SectionLabel } from "../ui";
-import { formatDateTime } from "../utils";
+import { formatDateTime, localizedText } from "../utils";
 import { TurnstileWidget } from "../components/turnstile";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -158,8 +158,8 @@ export function DispatchesPage({ language }: { language: Language }) {
                 {item.tags.map(tag=> <Badge key={tag} variant="secondary" className="text-[10px] uppercase tracking-wide">{tagLabel(tag as DispatchTag, t)}</Badge>)}
               </div>
               <a href={url} className="group block">
-                <h2 className="font-display text-xl font-bold leading-tight text-ink group-hover:underline sm:text-2xl">{item.title}</h2>
-                <p className="mt-2 line-clamp-3 font-serif text-[15px] leading-7 text-ink/90">{item.excerpt}</p>
+                <h2 className="font-display text-xl font-bold leading-tight text-ink group-hover:underline sm:text-2xl">{localizedText(item.title, language)}</h2>
+                <p className="mt-2 line-clamp-3 font-serif text-[15px] leading-7 text-ink/90">{localizedText(item.excerpt, language)}</p>
               </a>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground">
                 <span>{t.dispatchMetaBy} <span className="font-semibold text-ink">{item.author.displayName}</span>{item.author.place ? <> · {item.author.place}</> : null}</span>

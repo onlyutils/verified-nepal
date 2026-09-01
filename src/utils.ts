@@ -15,6 +15,12 @@ export function formatDateTime(value: string, language: Language) {
   }).format(new Date(value));
 }
 
+/** Some API fields come back as a plain string or as a {en, ne?} bilingual object; always render a string. */
+export function localizedText(value: string | { en: string; ne?: string }, language: Language) {
+  if (typeof value === "string") return value;
+  return language === "ne" ? value.ne || value.en : value.en;
+}
+
 export function normalizeSearch(value: string) {
   return value
     .normalize("NFC")

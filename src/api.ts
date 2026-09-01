@@ -503,8 +503,8 @@ export const DISPATCH_TAGS: DispatchTag[] = ["climate","mountains","floods","lan
 export interface DispatchAuthorPublic { displayName: string; place?: string; }
 export interface DispatchPublicItem {
   id: string;
-  title: string;
-  excerpt: string;
+  title: string | { en: string; ne?: string };
+  excerpt: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
   publishedAt: string;
@@ -514,8 +514,8 @@ export interface DispatchListResponse { items: DispatchPublicItem[]; cursor?: st
 
 export interface DispatchDetailResponse {
   id: string;
-  title: string;
-  body: string;
+  title: string | { en: string; ne?: string };
+  body: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
   publishedAt: string;

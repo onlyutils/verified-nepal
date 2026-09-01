@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { labels } from "../i18n";
 import type { Language } from "../types";
 import { Headline, Rule } from "../ui";
-import { formatDateTime } from "../utils";
+import { formatDateTime, localizedText } from "../utils";
 
 function tagLabel(tag: string, t: Record<string,string>): string {
   const map: Record<string,string> = {
@@ -67,7 +67,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         <div className="flex flex-wrap gap-1">
           {item.tags.map(tag=> <Badge key={tag} variant="secondary" className="text-[10px] uppercase tracking-wide">{tagLabel(tag, t)}</Badge>)}
         </div>
-        <Headline level={2} as="h1" className="mt-3 !text-3xl sm:!text-[2.1rem]">{item.title}</Headline>
+        <Headline level={2} as="h1" className="mt-3 !text-3xl sm:!text-[2.1rem]">{localizedText(item.title, language)}</Headline>
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground">
           <span>{t.dispatchMetaBy} <span className="font-semibold text-ink">{item.author.displayName}</span>{item.author.place ? <> · {item.author.place}</> : null}</span>
           <span aria-hidden="true">·</span>
@@ -76,7 +76,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         <Rule className="mt-4" />
 
         <div className="mt-6 font-serif text-[17px] leading-8 text-ink print:text-black print:leading-7">
-          <p className="whitespace-pre-wrap break-words">{item.body}</p>
+          <p className="whitespace-pre-wrap break-words">{localizedText(item.body, language)}</p>
         </div>
       </article>
 
