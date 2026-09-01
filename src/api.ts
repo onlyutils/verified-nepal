@@ -193,8 +193,88 @@ export function updateNeedStatus(
   });
 }
 
-export function getMe(token: string): Promise<{ sub: string; email?: string; name?: string; role?: string; displayName?: string; user?: unknown }> {
-  return request("/me", { token });
+export interface MeResponse {
+  sub: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  displayName?: string;
+  districts?: string[];
+  guidelinesAckAt?: string;
+  user?: MeResponse;
+}
+
+export function getMe(token: string): Promise<MeResponse> {
+  return request<MeResponse>("/me", { token });
+}
+
+export function ackGuidelines(token: string): Promise<{ guidelinesAckAt: string }> {
+  return request<{ guidelinesAckAt: string }>("/me/ack-guidelines", { method: "POST", token, body: JSON.stringify({}) });
+}
+
+export interface AdminUser {
+  sub: string;
+  email: string;
+  name?: string;
+  role: string;
+  districts: string[];
+  guidelinesAckAt?: string;
+  createdAt: string;
+}
+
+export interface AdminUsersResponse {
+  items: AdminUser[];
+  cursor?: string;
+}
+
+export interface AdminStatsResponse {
+  needs: { pending: number; published: number; matched: number; fulfilled: number };
+  offers: { pending: number; published: number };
+  projects: { pending: number; published: number; "in-progress": number; completed: number };
+  dispatches: { pending: number; published: number };
+  oldestPendingAgeHours: number;
+  moderators: number;
+}
+
+export interface AuditItem {
+  ts: string;
+  actorName: string;
+  action: string;
+  targetType: string;
+  targetLabel: string;
+  reason?: string;
+}
+
+export interface AuditResponse {
+  items: AuditItem[];
+  cursor?: string;
+}
+
+export function getAdminUsers(token: string, params: { role?: string; cursor?: string } = {}): Promise<AdminUsersResponse> {
+  const q = new URLSearchParams();
+  if (params.role) q.set("role", params.role);
+  if (params.cursor) q.set("cursor", params.cursor);
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  return request<AdminUsersResponse>(`/admin/users${suffix}`, { token });
+}
+
+export function lookupAdminUser(token: string, email: string): Promise<AdminUser> {
+  const q = new URLSearchParams({ email });
+  return request<AdminUser>(`/admin/users/lookup?${q.toString()}`, { token });
+}
+
+export function setAdminUserRole(token: string, sub: string, body: { role: string; districts?: string[] }): Promise<{ role: string; districts: string[] }> {
+  return request<{ role: string; districts: string[] }>(`/admin/users/${encodeURIComponent(sub)}/role`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function getAdminStats(token: string): Promise<AdminStatsResponse> {
+  return request<AdminStatsResponse>("/admin/stats", { token });
+}
+
+export function getAudit(params: { month: string; cursor?: string }): Promise<AuditResponse> {
+  const q = new URLSearchParams({ month: params.month });
+  if (params.cursor) q.set("cursor", params.cursor);
+  return request<AuditResponse>(`/audit?${q.toString()}`);
 }
 
 export interface ClaimPrintItem {

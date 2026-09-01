@@ -1,6 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import {
   ApiError,
+  ackGuidelines,
+  getAdminStats,
+  getAdminUsers,
+  lookupAdminUser,
+  setAdminUserRole,
+  type AdminStatsResponse,
+  type AdminUser,
   getClaimsPrint,
   getModerationDispatches,
   moderateDispatch,
@@ -24,6 +31,7 @@ import {
   type SyncResult,
   type ModerationProjectItem,
 } from "./api";
+import guidelinesRaw from "../docs/MODERATION-GUIDELINES.md?raw";
 import { useGoogleAuth } from "./auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +88,7 @@ export function Desk({ language }: { language: Language }) {
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "admin">("queue");
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(false);
@@ -137,6 +145,27 @@ export function Desk({ language }: { language: Language }) {
   const [redeemCode, setRedeemCode] = useState<string | null>(null);
   const [redeemNeedId, setRedeemNeedId] = useState<string | null>(null);
   const [redeemNote, setRedeemNote] = useState("");
+
+  // Guidelines gate
+  const [ackLoading, setAckLoading] = useState(false);
+  const [ackError, setAckError] = useState<string | null>(null);
+
+  // Admin tab
+  const [adminLookupEmail, setAdminLookupEmail] = useState("");
+  const [adminLookupUser, setAdminLookupUser] = useState<AdminUser | null>(null);
+  const [adminLookupLoading, setAdminLookupLoading] = useState(false);
+  const [adminLookupError, setAdminLookupError] = useState<string | null>(null);
+  const [adminRole, setAdminRole] = useState<string>("moderator");
+  const [adminDistricts, setAdminDistricts] = useState<Record<string, boolean>>({});
+  const [adminSaveLoading, setAdminSaveLoading] = useState(false);
+  const [adminSaveMsg, setAdminSaveMsg] = useState<string | null>(null);
+  const [adminSaveError, setAdminSaveError] = useState<string | null>(null);
+  const [adminConfirmOpen, setAdminConfirmOpen] = useState(false);
+  const [adminModerators, setAdminModerators] = useState<AdminUser[]>([]);
+  const [adminModeratorsLoading, setAdminModeratorsLoading] = useState(false);
+  const [adminStats, setAdminStats] = useState<AdminStatsResponse | null>(null);
+  const [adminStatsLoading, setAdminStatsLoading] = useState(false);
+  const [adminStatsError, setAdminStatsError] = useState<string | null>(null);
 
   const loadQueue = async () => {
     if (!auth.idToken) return;
@@ -393,6 +422,106 @@ export function Desk({ language }: { language: Language }) {
     }
   };
 
+  const isScoped = (auth.profile?.districts?.length ?? 0) > 0;
+  const scopeLabel = isScoped ? (auth.profile?.districts ?? []).join(", ") : ((t as Record<string,string>).deskScopeAll ?? "All districts");
+
+  const filteredQueue = isScoped ? queue.filter((q) => !q.district || (auth.profile?.districts ?? []).includes(String(q.district))) : queue;
+  const filteredNeeds = isScoped ? publishedNeeds.filter((n) => (auth.profile?.districts ?? []).includes(String(n.district))) : publishedNeeds;
+  const filteredProjects = isScoped ? projects.filter((pr)=> (auth.profile?.districts ?? []).includes(String((pr as unknown as Record<string,unknown>).district ?? pr.district))) : projects;
+  const filteredOffers = isScoped ? offers.filter((o)=> o.districts.some(d=> (auth.profile?.districts ?? []).includes(d)) || o.districts.length===0) : offers;
+  const filteredPrintItems = isScoped ? printItems.filter((p) => (auth.profile?.districts ?? []).includes(String((p as unknown as Record<string,unknown>).district ?? "")) || true) : printItems;
+
+  const loadAdminModerators = async () => {
+    if (!auth.idToken) return;
+    setAdminModeratorsLoading(true);
+    try {
+      const res = await getAdminUsers(auth.idToken, { role: "moderator" });
+      setAdminModerators(res.items);
+    } catch { setAdminModerators([]); } finally { setAdminModeratorsLoading(false); }
+  };
+  useEffect(() => {
+    if (isScoped && auth.profile?.districts?.length) {
+      const first = auth.profile.districts[0];
+      if (first) setPrintDistrict(first);
+    }
+  }, [isScoped, auth.profile?.districts?.join(",")]);
+
+  const loadAdminStats = async () => {
+    if (!auth.idToken) return;
+    setAdminStatsLoading(true);
+    setAdminStatsError(null);
+    try {
+      const res = await getAdminStats(auth.idToken);
+      setAdminStats(res);
+    } catch (e) {
+      const err = e as ApiError;
+      setAdminStatsError(err.message || (t as Record<string,string>).deskAdminStatsError);
+    } finally { setAdminStatsLoading(false); }
+  };
+
+  const handleAck = async () => {
+    if (!auth.idToken) return;
+    setAckLoading(true);
+    setAckError(null);
+    try {
+      const res = await ackGuidelines(auth.idToken);
+      const updated = { ...auth.profile, guidelinesAckAt: res.guidelinesAckAt } as typeof auth.profile;
+      // mutate auth profile in place via hack: reload page or set via setProfile not exposed; store in session and reload
+      // Instead, update local state by forcing reload of /me via page reload
+      // We will directly patch profile by reusing auth.profile object reference update and trigger re-render by setting a dummy
+      if (auth.profile) (auth.profile as Record<string,unknown>).guidelinesAckAt = res.guidelinesAckAt;
+      window.location.reload();
+    } catch (e) {
+      const err = e as ApiError;
+      const body = err.body as Record<string, unknown> | null;
+      const code = body && typeof body.error === "string" ? body.error : err.message;
+      setAckError(code || (t as Record<string,string>).deskGuidelinesAckError);
+    } finally { setAckLoading(false); }
+  };
+
+  const handleAdminLookup = async () => {
+    if (!auth.idToken || !adminLookupEmail.trim()) return;
+    setAdminLookupLoading(true);
+    setAdminLookupError(null);
+    setAdminSaveMsg(null);
+    setAdminSaveError(null);
+    try {
+      const u = await lookupAdminUser(auth.idToken, adminLookupEmail.trim());
+      setAdminLookupUser(u);
+      setAdminRole(u.role);
+      const map: Record<string, boolean> = {};
+      for (const d of (u.districts ?? [])) map[d] = true;
+      setAdminDistricts(map);
+    } catch (e) {
+      const err = e as ApiError;
+      if (err.status === 404) { setAdminLookupError((t as Record<string,string>).deskAdminLookupEmpty); setAdminLookupUser(null); }
+      else { setAdminLookupError((t as Record<string,string>).deskAdminLookupError); }
+    } finally { setAdminLookupLoading(false); }
+  };
+
+  const handleAdminSave = async () => {
+    if (!auth.idToken || !adminLookupUser) return;
+    const districts = Object.keys(adminDistricts).filter((k) => adminDistricts[k]);
+    setAdminSaveLoading(true);
+    setAdminSaveError(null);
+    setAdminSaveMsg(null);
+    try {
+      await setAdminUserRole(auth.idToken, adminLookupUser.sub, { role: adminRole, districts });
+      setAdminSaveMsg((t as Record<string,string>).deskAdminSaveSuccess);
+      setAdminConfirmOpen(false);
+      loadAdminModerators();
+      loadAdminStats();
+    } catch (e) {
+      const err = e as ApiError;
+      const body = err.body as Record<string, unknown> | null;
+      const code = body && typeof body.error === "string" ? String(body.error) : "";
+      if (code === "cannot_demote_self" || err.message.includes("demote")) setAdminSaveError((t as Record<string,string>).deskAdminDemoteSelfError);
+      else if (code === "out_of_scope") setAdminSaveError((t as Record<string,string>).deskAdminOutOfScopeError);
+      else if (code === "guidelines_not_acknowledged") setAdminSaveError((t as Record<string,string>).deskAdminGuidelinesNotAckError);
+      else setAdminSaveError(err.message || (t as Record<string,string>).deskAdminSaveError);
+    } finally { setAdminSaveLoading(false); }
+  };
+
   useEffect(() => {
     if (auth.profile && (auth.profile.role === "moderator" || auth.profile.role === "admin")) {
       loadQueue();
@@ -405,6 +534,7 @@ export function Desk({ language }: { language: Language }) {
     if (activeTab === "flags" && auth.idToken) loadFlags();
     if (activeTab === "projects" && auth.idToken) loadProjects();
     if (activeTab === "dispatches" && auth.idToken) loadDispatches();
+    if (activeTab === "admin" && auth.idToken) { loadAdminModerators(); loadAdminStats(); }
   }, [activeTab]);
 
   if (!auth.idToken) {
@@ -491,6 +621,29 @@ export function Desk({ language }: { language: Language }) {
 
   const role = auth.profile?.role;
   const isModerator = role === "moderator" || role === "admin";
+
+  const needsGate = role === "moderator" && !(auth.profile as Record<string, unknown>)?.guidelinesAckAt;
+  if (needsGate) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6 px-1 py-6 sm:px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>{(t as Record<string,string>).deskGuidelinesGateTitle}</CardTitle>
+            <CardDescription>{(t as Record<string,string>).deskGuidelinesGateLead}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="max-h-[50vh] overflow-auto border border-rule bg-paper p-4 font-sans text-xs leading-5 whitespace-pre-wrap">
+              {guidelinesRaw}
+            </div>
+            {ackError ? <p className="font-sans text-sm text-destructive" role="alert">{ackError}</p> : null}
+            <Button onClick={handleAck} disabled={ackLoading}>
+              {ackLoading ? (t as Record<string,string>).deskGuidelinesAcking : (t as Record<string,string>).deskGuidelinesAckButton}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isModerator) {
     return (
@@ -643,8 +796,21 @@ export function Desk({ language }: { language: Language }) {
         >
           {(t as Record<string,string>).deskDispatchesTab} {dispatches.length ? `· ${dispatches.length}` : ""}
         </button>
+        {role === "admin" ? (
+          <button
+            type="button"
+            onClick={() => setActiveTab("admin")}
+            aria-pressed={activeTab === "admin"}
+            className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "admin" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+          >
+            {(t as Record<string,string>).deskAdminTab}
+          </button>
+        ) : null}
       </div>
 
+      {isScoped ? (
+        <p className="mb-4 font-sans text-xs text-muted-foreground">{(t as Record<string,string>).deskScopeFilteredHint}</p>
+      ) : null}
       {actionMsg ? (
         <div className="mb-4 border border-rule bg-card px-3 py-2 font-sans text-sm" role="status">
           {actionMsg}
@@ -655,7 +821,14 @@ export function Desk({ language }: { language: Language }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">{t.deskQueueTitleRevised}</h2>
-            <Badge variant="secondary">{t.deskModeratorBadge}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{t.deskModeratorBadge}</Badge>
+              {isScoped || role === "admin" || role === "moderator" ? (
+                <Badge variant="outline" className="font-sans text-xs">
+                  {isScoped ? fillTemplate((t as Record<string,string>).deskScopeBadge, { districts: scopeLabel }) : (t as Record<string,string>).deskScopeAll}
+                </Badge>
+              ) : null}
+            </div>
           </div>
           {queueLoading ? (
             <p className="font-sans text-sm text-muted-foreground">{t.deskQueueLoading}</p>
@@ -668,11 +841,11 @@ export function Desk({ language }: { language: Language }) {
                 Retry
               </Button>
             </div>
-          ) : queue.length === 0 ? (
+          ) : filteredQueue.length === 0 ? (
             <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.deskQueueEmpty}</p>
           ) : (
             <div className="grid gap-4">
-              {queue.map((item) => {
+              {filteredQueue.map((item) => {
                 const flagCount = (item.flagCount as number | undefined) ?? 0;
                 return (
                 <Card key={item.id} className="overflow-hidden">
@@ -765,18 +938,25 @@ export function Desk({ language }: { language: Language }) {
       {activeTab === "boards" ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold">{t.deskBoardsTitle}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-lg font-semibold">{t.deskBoardsTitle}</h2>
+              {isScoped ? (
+                <Badge variant="outline" className="font-sans text-xs">
+                  {fillTemplate((t as Record<string,string>).deskScopeBadge, { districts: scopeLabel })}
+                </Badge>
+              ) : null}
+            </div>
             <Button variant="outline" size="sm" onClick={loadBoards}>
               {t.deskRetry}
             </Button>
           </div>
           {boardsLoading ? (
             <p className="font-sans text-sm text-muted-foreground">{t.deskBoardsLoading}</p>
-          ) : publishedNeeds.length === 0 ? (
+          ) : filteredNeeds.length === 0 ? (
             <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.deskBoardsEmpty}</p>
           ) : (
             <div className="grid gap-4">
-              {publishedNeeds.map((need) => {
+              {filteredNeeds.map((need) => {
                 const flagCount = need.flagCount ?? 0;
                 const claimCode = need.claimCode;
                 const showRedeem = (need.status === "published" || need.status === "matched") && claimCode;
@@ -805,7 +985,7 @@ export function Desk({ language }: { language: Language }) {
                       <div className="flex flex-wrap gap-2">
                         <Select value={selectedOfferId[need.id] || ""} onChange={(e) => setSelectedOfferId((p) => ({ ...p, [need.id]: e.target.value }))}>
                           <option value="">{t.deskSelectOfferPlaceholder}</option>
-                          {offers.map((o) => (
+                          {filteredOffers.map((o) => (
                             <SelectItem key={o.id} value={o.id}>
                               {o.helperLabel} — {o.categories.join(", ")} ({o.id.slice(0, 8)})
                             </SelectItem>
@@ -849,7 +1029,7 @@ export function Desk({ language }: { language: Language }) {
                           </Button>
                         ) : null}
                       </div>
-                      {offers.length === 0 ? <p className="font-sans text-xs text-muted-foreground">{t.deskNoOffersHint}</p> : null}
+                      {filteredOffers.length === 0 ? <p className="font-sans text-xs text-muted-foreground">{t.deskNoOffersHint}</p> : null}
                       {matchedContact[need.id] ? (
                         <div className="border border-ink bg-paper p-3">
                           <p className="font-sans text-xs font-semibold uppercase tracking-wide">{t.deskMatchedContactTitle}</p>
@@ -875,9 +1055,9 @@ export function Desk({ language }: { language: Language }) {
                 <div className="min-w-[14rem]">
                   <Label>{t.deskPrintDistrict}</Label>
                   <Select value={printDistrict} onChange={(e) => setPrintDistrict(e.target.value)}>
-                    {districtNames.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {districtLabels[d][language]}
+                    {(isScoped ? (auth.profile?.districts ?? []) as typeof districtNames : districtNames).map((d) => (
+                      <SelectItem key={d as string} value={d as string}>
+                        {districtLabels[d as keyof typeof districtLabels]?.[language] ?? d}
                       </SelectItem>
                     ))}
                   </Select>
@@ -1102,9 +1282,9 @@ export function Desk({ language }: { language: Language }) {
             <h2 className="font-display text-lg font-semibold">{(t as Record<string,string>).deskProjectsTitle}</h2>
             <Button variant="outline" size="sm" onClick={loadProjects}>{(t as Record<string,string>).projectsTryAgain}</Button>
           </div>
-          {projectsLoading ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsLoading}</p> : projectsError ? <p className="font-sans text-sm text-destructive" role="alert">{projectsError}</p> : projects.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsEmpty}</p> : (
+          {projectsLoading ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsLoading}</p> : projectsError ? <p className="font-sans text-sm text-destructive" role="alert">{projectsError}</p> : filteredProjects.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsEmpty}</p> : (
             <div className="grid gap-4">
-              {projects.map(p=> (
+              {filteredProjects.map(p=> (
                 <Card key={p.id}>
                   <CardHeader className="pb-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1182,6 +1362,85 @@ export function Desk({ language }: { language: Language }) {
         </div>
       ) : null}
 
+      {activeTab === "admin" && role === "admin" ? (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{(t as Record<string,string>).deskAdminLookupTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input placeholder={(t as Record<string,string>).deskAdminLookupPlaceholder} value={adminLookupEmail} onChange={(e)=> setAdminLookupEmail(e.target.value)} />
+                <Button onClick={handleAdminLookup} disabled={adminLookupLoading}>{adminLookupLoading ? "..." : (t as Record<string,string>).deskAdminLookupButton}</Button>
+              </div>
+              {adminLookupError ? <p className="font-sans text-sm text-destructive" role="alert">{adminLookupError}</p> : null}
+              {adminLookupUser ? (
+                <div className="border border-rule bg-paper p-4 font-sans text-sm space-y-3">
+                  <p><span className="font-semibold">{adminLookupUser.email}</span> · {adminLookupUser.name ?? ""} · {adminLookupUser.sub}</p>
+                  <p className="text-xs text-muted-foreground">Current: {adminLookupUser.role} · {(adminLookupUser.districts ?? []).join(", ") || (t as Record<string,string>).deskScopeAll} {adminLookupUser.guidelinesAckAt ? "· acked" : "· not acked"}</p>
+                  <div>
+                    <Label>{(t as Record<string,string>).deskAdminRoleLabel}</Label>
+                    <Select value={adminRole} onChange={(e)=> setAdminRole(e.target.value)}>
+                      <SelectItem value="helper">{(t as Record<string,string>).deskAdminRoleHelper}</SelectItem>
+                      <SelectItem value="moderator">{(t as Record<string,string>).deskAdminRoleModerator}</SelectItem>
+                      <SelectItem value="admin">{(t as Record<string,string>).deskAdminRoleAdmin}</SelectItem>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>{(t as Record<string,string>).deskAdminDistrictsLabel}</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {districtNames.map((d) => (
+                        <label key={d} className="flex items-center gap-2 font-sans text-xs">
+                          <input type="checkbox" checked={!!adminDistricts[d]} onChange={(e)=> setAdminDistricts((prev)=> ({...prev, [d]: e.target.checked}))} />
+                          {districtLabels[d][language]}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {adminSaveError ? <p className="font-sans text-sm text-destructive" role="alert">{adminSaveError}</p> : null}
+                  {adminSaveMsg ? <p className="font-sans text-sm text-green-700" role="status">{adminSaveMsg}</p> : null}
+                  <Button onClick={()=> setAdminConfirmOpen(true)} disabled={adminSaveLoading}>{adminSaveLoading ? (t as Record<string,string>).deskAdminSaving : (t as Record<string,string>).deskAdminSave}</Button>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>{(t as Record<string,string>).deskAdminModeratorsTitle}</CardTitle></CardHeader>
+            <CardContent>
+              {adminModeratorsLoading ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskAdminModeratorsLoading}</p> : adminModerators.length===0 ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskAdminModeratorsEmpty}</p> : (
+                <div className="space-y-2">
+                  {adminModerators.map((u)=> (
+                    <div key={u.sub} className="border border-rule bg-paper p-3 font-sans text-sm">
+                      <p className="font-medium">{u.email} · {u.name ?? ""}</p>
+                      <p className="text-xs text-muted-foreground">{u.role} · {(u.districts ?? []).join(", ") || (t as Record<string,string>).deskScopeAll} · {new Date(u.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>{(t as Record<string,string>).deskAdminStatsTitle}</CardTitle></CardHeader>
+            <CardContent className="space-y-2 font-sans text-sm">
+              {adminStatsLoading ? <p className="text-muted-foreground">{(t as Record<string,string>).deskAdminStatsLoading}</p> : adminStatsError ? <p className="text-destructive" role="alert">{adminStatsError}</p> : adminStats ? (
+                <>
+                  <p>{fillTemplate((t as Record<string,string>).deskAdminStatsPendingNeeds, { n: String(adminStats.needs.pending) })} · {fillTemplate((t as Record<string,string>).deskAdminStatsPublishedNeeds, { n: String(adminStats.needs.published) })}</p>
+                  <p>{fillTemplate((t as Record<string,string>).deskAdminStatsPendingOffers, { n: String(adminStats.offers.pending) })}</p>
+                  <p>{fillTemplate((t as Record<string,string>).deskAdminStatsPendingProjects, { n: String(adminStats.projects.pending) })}</p>
+                  <p className={adminStats.oldestPendingAgeHours > 48 ? "text-destructive font-semibold" : ""}>
+                    {fillTemplate((t as Record<string,string>).deskAdminStatsOldestPending, { hours: String(adminStats.oldestPendingAgeHours) })}
+                    {adminStats.oldestPendingAgeHours > 48 ? ` — ${(t as Record<string,string>).deskAdminStatsOld}` : ""}
+                  </p>
+                  <p>{fillTemplate((t as Record<string,string>).deskAdminStatsModerators, { n: String(adminStats.moderators) })}</p>
+                </>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
       <Dialog open={!!verifyConfirmId} onOpenChange={(o)=> { if(!o) setVerifyConfirmId(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsVerify}</DialogTitle><DialogDescription>{(() => {
@@ -1238,6 +1497,15 @@ export function Desk({ language }: { language: Language }) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={adminConfirmOpen} onOpenChange={(o)=> { if(!o) setAdminConfirmOpen(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{(t as Record<string,string>).deskAdminConfirmTitle}</DialogTitle><DialogDescription>{fillTemplate((t as Record<string,string>).deskAdminConfirmBody, { email: adminLookupUser?.email ?? "", role: adminRole, districts: Object.keys(adminDistricts).filter(k=>adminDistricts[k]).join(", ") || (t as Record<string,string>).deskScopeAll })}</DialogDescription></DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setAdminConfirmOpen(false)}>{(t as Record<string,string>).deskCancel}</Button>
+            <Button onClick={handleAdminSave} disabled={adminSaveLoading}>{adminSaveLoading ? (t as Record<string,string>).deskAdminSaving : (t as Record<string,string>).deskAdminSave}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!redeemCode} onOpenChange={(o) => { if (!o) { setRedeemCode(null); setRedeemNote(""); } }}>
         <DialogContent>
           <DialogHeader>

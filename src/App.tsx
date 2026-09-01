@@ -4,6 +4,7 @@ import { Desk } from "./desk";
 import { GetHelp } from "./pages/get-help";
 import { GiveHelp } from "./pages/give-help";
 import { Ledger } from "./pages/ledger";
+import { AuditPage } from "./pages/audit";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
 import { ProjectsList } from "./pages/projects";
@@ -26,6 +27,7 @@ const pagePaths: Record<Page, string> = {
   getHelp: "/get-help",
   giveHelp: "/give-help",
   ledger: "/ledger",
+  audit: "/audit",
   dispatches: "/dispatches",
   dispatchDetail: "/dispatches/:id",
   dispatchWrite: "/dispatches",
@@ -44,6 +46,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/projects")) return "projects";
   if (pathname.startsWith("/get-help")) return "getHelp";
   if (pathname.startsWith("/give-help")) return "giveHelp";
+  if (pathname.startsWith("/audit")) return "audit";
   if (pathname.startsWith("/ledger")) return "ledger";
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
@@ -111,6 +114,7 @@ export function App() {
           {page === "getHelp" ? <GetHelp language={language} /> : null}
           {page === "giveHelp" ? <GiveHelp language={language} /> : null}
           {page === "ledger" ? <Ledger language={language} /> : null}
+          {page === "audit" ? <AuditPage language={language} /> : null}
           {page === "projects" ? <ProjectsList language={language} /> : null}
           {page === "projectRegister" ? <ProjectRegister language={language} /> : null}
           {page === "projectUpdate" ? <ProjectUpdate language={language} /> : null}

@@ -7,6 +7,8 @@ export interface DeskProfile {
   name?: string;
   displayName?: string;
   email?: string;
+  districts?: string[];
+  guidelinesAckAt?: string;
 }
 
 const AUTH_HOST = "https://auth.onlyutils.com";

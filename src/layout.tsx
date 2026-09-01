@@ -11,7 +11,7 @@ import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["dashboard", "projects", "dispatches", "getHelp", "giveHelp", "ledger", "search", "desk", "info"] as const;
+const navPages = ["dashboard", "projects", "dispatches", "getHelp", "giveHelp", "ledger", "audit", "search", "desk", "info"] as const;
 
 export function Masthead({
   page,
@@ -63,6 +63,7 @@ export function Masthead({
             search: t.search,
             projects: (t as Record<string,string>).projects ?? "Projects",
             desk: t.deskTitle,
+            audit: (t as Record<string,string>).navAuditLabel ?? "Audit",
             info: t.info,
           };
           return (
@@ -192,6 +193,9 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
           <a className={`block ${link}`} href="mailto:verifiednepal01@gmail.com">
             {t.contactUs}: <span className="normal-case tracking-normal">verifiednepal01@gmail.com</span>
           </a>
+          <button type="button" onClick={() => navigate("audit")} className={`block ${link}`}>
+            {(t as Record<string,string>).footerAuditLink ?? "Audit log"}
+          </button>
           <button type="button" onClick={() => navigate("privacy")} className={`block ${link}`}>
             {t.privacyTitle}
           </button>
