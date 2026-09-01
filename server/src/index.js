@@ -1853,12 +1853,13 @@ async function handlePostPresign(event, opts, projectId) {
   try { data = await res.json(); } catch { return json(502, { error: "media_upstream", message: "media presign invalid json" }); }
   const payload = data.data ?? data;
   const fileId = payload.file_id ?? payload.fileId ?? payload.id;
-  const uploadUrl = payload.upload_url ?? payload.uploadUrl ?? payload.upload_url ?? payload.url;
-  let publicUrl = payload.public_url ?? payload.publicUrl ?? payload.public_url ?? payload.url;
-  const headers = payload.headers ?? payload.upload_headers ?? undefined;
+  const uploadUrl = payload.upload?.url ?? payload.upload_url ?? payload.uploadUrl ?? payload.url;
+  let publicUrl = payload.public_url ?? payload.publicUrl ?? payload.url;
+  const headers = payload.upload?.headers ?? payload.headers ?? payload.upload_headers ?? undefined;
   if (!fileId || !uploadUrl) return json(502, { error: "media_upstream", message: "media presign malformed" });
   const base = env.MEDIA_PUBLIC_BASE ? String(env.MEDIA_PUBLIC_BASE).replace(/\/+$/, "") : null;
-  if (base) publicUrl = `${base}/${fileId}`;
+  // CloudFront serves the bucket as-is, so the public path is the S3 object key, not the file id
+  if (base) publicUrl = `${base}/${payload.key ?? fileId}`;
   if (!publicUrl) publicUrl = uploadUrl;
   const out = { uploadUrl, fileId, publicUrl };
   if (headers) out.headers = headers;

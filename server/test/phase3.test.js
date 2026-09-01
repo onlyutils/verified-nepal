@@ -420,6 +420,34 @@ describe("POST /projects/{id}/photos/presign", () => {
     assert.equal(res.statusCode, 200);
     assert.equal(JSON.parse(res.body).fileId, "abc");
   });
+
+  it("reads the live OnlyUtils media shape: id + key + nested upload.url, public URL is CDN/key", async () => {
+    const kp = makeKeyPair();
+    const ddb = new FakeDdb();
+    const live = {
+      id: "ou_file_34HK75975oJZQZm0pENjp",
+      filename: "e2e.png",
+      content_type: "image/png",
+      key: "media/ou_client_x/ou_file_34HK75975oJZQZm0pENjp/e2e.png",
+      visibility: "public",
+      status: "pending",
+      upload: { url: "https://bucket.s3.ap-south-1.amazonaws.com/media/ou_client_x/ou_file_34HK75975oJZQZm0pENjp/e2e.png?X-Amz-Signature=abc", method: "PUT", expires_at: "2026-09-01T15:16:38Z" },
+    };
+    const fetchMock = async (url) => {
+      if (url.includes("/token")) return { ok: true, json: async () => ({ access_token: "tok", expires_in: 900 }) };
+      if (url.includes("/media/files")) return { ok: true, json: async () => live };
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+    const { handler } = makeHandler({ kp, ddb, fetchImpl: fetchMock, envOverrides: { MEDIA_PUBLIC_BASE: "https://cdn.dev.verifiednepal.com" } });
+    const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
+    const { id, updateCode } = JSON.parse(r.body);
+    const res = await handler(makeEvent({ method: "POST", path: `/projects/${id}/photos/presign`, headers: { "x-update-code": updateCode }, body: { filename: "e2e.png", contentType: "image/png", size: 100 } }));
+    assert.equal(res.statusCode, 200, res.body);
+    const body = JSON.parse(res.body);
+    assert.equal(body.fileId, live.id);
+    assert.equal(body.uploadUrl, live.upload.url);
+    assert.equal(body.publicUrl, `https://cdn.dev.verifiednepal.com/${live.key}`);
+  });
 });
 
 describe("POST /projects/{id}/photos", () => {
