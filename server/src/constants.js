@@ -1,0 +1,12 @@
+export const CATEGORIES = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
+export const LANGUAGES = ["en", "ne"];
+export const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
+export const PUBLIC_OFFER_STATUSES = ["published", "matched", "fulfilled"];
+export const MOD_STATUS = ["matched", "fulfilled", "archived"];
+export const FLAG_REASONS = ["already_received", "not_real", "other"];
+export const PROJECT_TYPES = ["tuin", "bridge", "trail", "water", "school", "other"];
+export const PUBLIC_PROJECT_STATUSES = ["published", "in-progress", "completed"];
+export const PROJECT_ALL_STATUSES = ["pending", "published", "in-progress", "completed", "rejected", "archived"];
+export const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
+export const DISPATCH_TAGS = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
