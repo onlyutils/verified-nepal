@@ -50,9 +50,12 @@ export function Dialog({ open, onOpenChange, children, dismissible = true }: Dia
         onClick={(e) => {
           if (dismissible && e.target === ref.current) onOpenChange(false);
         }}
-        className="max-h-[90vh] w-full max-w-lg overflow-auto border-0 bg-transparent p-4 backdrop:bg-ink/60 open:flex open:items-center open:justify-center"
+        className="fixed inset-0 m-0 h-full w-full max-h-none max-w-none overflow-hidden border-0 bg-transparent p-4 open:flex open:items-center open:justify-center"
       >
-        <div className="w-full">{children}</div>
+        {/* Sized and scrolled here, not on the <dialog> box itself — some engines (headless Chrome included) shrink-wrap
+            a modal <dialog>'s own box to its content instead of the viewport when it isn't explicitly full-bleed, which
+            leaves the ::backdrop covering only that box and the page's own scrollbar showing through. */}
+        <div className="max-h-full w-full max-w-lg overflow-y-auto">{children}</div>
       </dialog>
     </DialogTitleIdContext.Provider>
   );

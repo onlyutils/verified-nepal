@@ -109,6 +109,13 @@ html {
   font-size: 125%;
 }
 
+/* Plain rule, not a Tailwind `backdrop:` utility class: the compiled class selector for that variant escapes
+   both the colon and the slash (`.backdrop\:bg-ink\/60::backdrop`), which some browsers fail to match against
+   `::backdrop` — the color silently never applies and the dialog falls back to the UA default ~10% dim. */
+dialog::backdrop {
+  background-color: rgb(var(--ink) / 0.6);
+}
+
 body {
   margin: 0;
   min-width: 320px;
