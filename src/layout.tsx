@@ -11,7 +11,7 @@ import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8";
-const navPages = ["dashboard", "getHelp", "giveHelp", "ledger", "search", "desk", "info"] as const;
+const navPages = ["dashboard", "projects", "getHelp", "giveHelp", "ledger", "search", "desk", "info"] as const;
 
 export function Masthead({
   page,
@@ -60,6 +60,7 @@ export function Masthead({
             giveHelp: t.giveHelp,
             ledger: t.ledgerTitle,
             search: t.search,
+            projects: (t as Record<string,string>).projects ?? "Projects",
             desk: t.deskTitle,
             info: t.info,
           };

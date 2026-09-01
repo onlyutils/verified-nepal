@@ -6,6 +6,10 @@ import { GiveHelp } from "./pages/give-help";
 import { Ledger } from "./pages/ledger";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
+import { ProjectsList } from "./pages/projects";
+import { ProjectDetail } from "./pages/project-detail";
+import { ProjectRegister } from "./pages/project-register";
+import { ProjectUpdate } from "./pages/project-update";
 import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
 import { LiveDataProvider } from "./live";
 import { PrivacyPolicy } from "./privacy";
@@ -20,9 +24,17 @@ const pagePaths: Record<Page, string> = {
   getHelp: "/get-help",
   giveHelp: "/give-help",
   ledger: "/ledger",
+  projects: "/projects",
+  projectDetail: "/projects/:id",
+  projectRegister: "/projects/register",
+  projectUpdate: "/projects/update",
 };
 
 function pageFromPath(pathname: string): Page {
+  if (pathname.startsWith("/projects/register")) return "projectRegister";
+  if (pathname.startsWith("/projects/update")) return "projectUpdate";
+  if (pathname.match(/^\/projects\/[^\/]+/)) return "projectDetail";
+  if (pathname.startsWith("/projects")) return "projects";
   if (pathname.startsWith("/get-help")) return "getHelp";
   if (pathname.startsWith("/give-help")) return "giveHelp";
   if (pathname.startsWith("/ledger")) return "ledger";
@@ -92,6 +104,10 @@ export function App() {
           {page === "getHelp" ? <GetHelp language={language} /> : null}
           {page === "giveHelp" ? <GiveHelp language={language} /> : null}
           {page === "ledger" ? <Ledger language={language} /> : null}
+          {page === "projects" ? <ProjectsList language={language} /> : null}
+          {page === "projectRegister" ? <ProjectRegister language={language} /> : null}
+          {page === "projectUpdate" ? <ProjectUpdate language={language} /> : null}
+          {page === "projectDetail" ? <ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />
         <BackToTop language={language} />

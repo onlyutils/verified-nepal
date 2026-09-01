@@ -286,6 +286,151 @@ export function getModerationFlags(token: string): Promise<FlagsInboxResponse> {
   return request<FlagsInboxResponse>("/moderation/flags", { token });
 }
 
+
+export type ProjectType = "tuin" | "bridge" | "trail" | "water" | "school" | "other";
+export const PROJECT_TYPES: ProjectType[] = ["tuin","bridge","trail","water","school","other"];
+export type ProjectStatus = "pending" | "published" | "in-progress" | "completed" | "rejected" | "archived";
+export const PROJECT_STATUSES_PUBLIC: ProjectStatus[] = ["published","in-progress","completed"];
+
+export interface ProjectCommitteePublic {
+  name: string;
+  bank: { bankName: string; accountName: string; accountNumber: string };
+  esewaId?: string;
+  khaltiId?: string;
+  verified: boolean;
+}
+export interface ProjectCommitteePrivate extends ProjectCommitteePublic {
+  contactName: string;
+  phone: string;
+}
+export interface ProjectPhoto {
+  fileId: string;
+  url: string;
+  caption?: string;
+  status: "pending" | "published";
+}
+export interface ProjectUpdate {
+  id: string;
+  text: string;
+  photos: ProjectPhoto[];
+  spentNpr?: number;
+  status: "pending" | "published";
+  createdAt: string;
+}
+export interface ProjectPublic {
+  id: string;
+  title: { en: string; ne?: string };
+  description: { en: string; ne?: string };
+  type: ProjectType;
+  district: string;
+  ward: number;
+  locationText: string;
+  costEstimateNpr: number;
+  committee: ProjectCommitteePublic;
+  photos: ProjectPhoto[];
+  coverPhoto?: { url: string; fileId?: string } | string;
+  status: ProjectStatus;
+  createdAt: string;
+  updates?: ProjectUpdate[];
+}
+export interface ProjectListResponse {
+  items: ProjectPublic[];
+  cursor?: string;
+}
+export interface ProjectDetailResponse extends ProjectPublic {
+  updates: ProjectUpdate[];
+}
+export interface CreateProjectBody {
+  title: { en: string; ne?: string };
+  description: { en: string; ne?: string };
+  type: ProjectType;
+  district: string;
+  ward: number;
+  locationText: string;
+  costEstimateNpr: number;
+  committee: {
+    name: string;
+    contactName: string;
+    phone: string;
+    bank: { bankName: string; accountName: string; accountNumber: string };
+    esewaId?: string;
+    khaltiId?: string;
+  };
+  turnstileToken?: string;
+}
+export interface CreateProjectResponse { id: string; updateCode: string; }
+
+export interface PresignResponse { uploadUrl: string; fileId: string; publicUrl: string; headers?: Record<string,string>; }
+
+export interface ModerationProjectItem extends ProjectPublic {
+  committee: ProjectCommitteePrivate & { verified: boolean };
+  pendingPhotos?: ProjectPhoto[];
+  pendingUpdates?: ProjectUpdate[];
+  createdAt: string;
+  updateCodeHash?: string;
+}
+export interface ModerationProjectsResponse { items: ModerationProjectItem[]; }
+
+export function listProjects(params: { district?: string; status?: string; cursor?: string } = {}): Promise<ProjectListResponse> {
+  const q = new URLSearchParams();
+  if (params.district) q.set("district", params.district);
+  if (params.status) q.set("status", params.status);
+  if (params.cursor) q.set("cursor", params.cursor);
+  const suffix = q.toString() ? `?${q.toString()}` : "";
+  return request<ProjectListResponse>(`/projects${suffix}`);
+}
+export function getProject(id: string): Promise<ProjectDetailResponse> {
+  return request<ProjectDetailResponse>(`/projects/${encodeURIComponent(id)}`);
+}
+export function createProject(body: CreateProjectBody): Promise<CreateProjectResponse> {
+  return request<CreateProjectResponse>("/projects", { method: "POST", body: JSON.stringify(body) });
+}
+export function presignProjectPhoto(id: string, body: { filename: string; contentType: string; size: number }, opts: { token?: string; updateCode?: string } = {}): Promise<PresignResponse> {
+  const headers: Record<string,string> = {};
+  if (opts.updateCode) headers["X-Update-Code"] = opts.updateCode;
+  const req: RequestInit & { token?: string } = { method: "POST", body: JSON.stringify(body), headers };
+  if (opts.token) req.token = opts.token;
+  return request<PresignResponse>(`/projects/${encodeURIComponent(id)}/photos/presign`, req);
+}
+export function attachProjectPhoto(id: string, body: { fileId: string; url: string; caption?: string }, opts: { token?: string; updateCode?: string } = {}): Promise<{ ok: boolean }> {
+  const headers: Record<string,string> = {};
+  if (opts.updateCode) headers["X-Update-Code"] = opts.updateCode;
+  const req: RequestInit & { token?: string } = { method: "POST", body: JSON.stringify(body), headers };
+  if (opts.token) req.token = opts.token;
+  return request<{ ok: boolean }>(`/projects/${encodeURIComponent(id)}/photos`, req);
+}
+export function createProjectUpdate(id: string, body: { text: string; photoFileIds: string[]; spentNpr?: number }, updateCode: string): Promise<{ updateId: string }> {
+  return request<{ updateId: string }>(`/projects/${encodeURIComponent(id)}/updates`, { method: "POST", body: JSON.stringify(body), headers: { "X-Update-Code": updateCode } });
+}
+export function getModerationProjects(token: string): Promise<ModerationProjectsResponse> {
+  return request<ModerationProjectsResponse>("/moderation/projects", { token });
+}
+export function moderateProject(token: string, id: string, body: { action: "verify-committee"|"publish"|"reject"|"set-status"|"publish-photo"|"reject-photo"; reason?: string; status?: ProjectStatus; fileId?: string }): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+}
+export function moderateProjectUpdate(token: string, id: string, updateId: string, body: { action: "publish"|"reject"; reason?: string }): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}/updates/${encodeURIComponent(updateId)}`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): string[] {
+  const forbidden = ["phone","contactName","updateCodeHash","contactname","updatecode"];
+  const found: string[] = [];
+  for (const k of Object.keys(obj)) {
+    const lk = k.toLowerCase();
+    for (const f of forbidden) {
+      if (lk.includes(f.toLowerCase())) found.push(k);
+    }
+  }
+  if ("committee" in obj && obj.committee && typeof obj.committee === "object") {
+    const c = obj.committee as Record<string,unknown>;
+    for (const k of Object.keys(c)) {
+      const lk = k.toLowerCase();
+      if (lk === "phone" || lk === "contactname") found.push(`committee.${k}`);
+    }
+  }
+  return [...new Set(found)];
+}
+
 export function assertNoSensitiveKeys(obj: Record<string, unknown>): string[] {
   const forbidden = ["householdSize", "phone", "phones", "registrant", "description", "household"];
   const found: string[] = [];

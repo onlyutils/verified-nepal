@@ -4,9 +4,12 @@ import {
   getClaimsPrint,
   getModerationFlags,
   getModerationQueue,
+  getModerationProjects,
   listNeeds,
   listOffers,
   moderateNeed,
+  moderateProject,
+  moderateProjectUpdate,
   redeemClaim,
   syncClaims,
   updateNeedStatus,
@@ -16,6 +19,7 @@ import {
   type ClaimPrintItem,
   type FlagInboxItem,
   type SyncResult,
+  type ModerationProjectItem,
 } from "./api";
 import { useGoogleAuth } from "./auth";
 import { Button } from "@/components/ui/button";
@@ -73,7 +77,7 @@ export function Desk({ language }: { language: Language }) {
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects">("queue");
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(false);
@@ -86,6 +90,18 @@ export function Desk({ language }: { language: Language }) {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Projects moderation
+  const [projects, setProjects] = useState<ModerationProjectItem[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState<string|null>(null);
+  const [projectActionLoading, setProjectActionLoading] = useState<string|null>(null);
+  const [projectRejectId, setProjectRejectId] = useState<string|null>(null);
+  const [projectRejectReason, setProjectRejectReason] = useState("");
+  const [projectRejectError, setProjectRejectError] = useState<string|null>(null);
+  const [verifyConfirmId, setVerifyConfirmId] = useState<string|null>(null);
+  const [photoActionLoading, setPhotoActionLoading] = useState<string|null>(null);
+  const [statusSelect, setStatusSelect] = useState<Record<string,string>>({});
 
   // Print
   const [printDistrict, setPrintDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
@@ -152,6 +168,96 @@ export function Desk({ language }: { language: Language }) {
     } finally {
       setFlagsLoading(false);
     }
+  };
+
+  const loadProjects = async () => {
+    if (!auth.idToken) return;
+    setProjectsLoading(true);
+    setProjectsError(null);
+    try {
+      const res = await getModerationProjects(auth.idToken);
+      setProjects(res.items);
+    } catch (e) {
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const handleVerify = async (p: ModerationProjectItem) => {
+    if (!auth.idToken) return;
+    setProjectActionLoading(p.id);
+    try {
+      await moderateProject(auth.idToken, p.id, { action: "verify-committee" });
+      await loadProjects();
+    } catch (e) {
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally {
+      setProjectActionLoading(null);
+      setVerifyConfirmId(null);
+    }
+  };
+  const handleProjectPublish = async (id: string) => {
+    if (!auth.idToken) return;
+    setProjectActionLoading(id);
+    try{
+      await moderateProject(auth.idToken, id, { action: "publish" });
+      await loadProjects();
+    } catch(e){
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally { setProjectActionLoading(null); }
+  };
+  const handleProjectReject = async () => {
+    if (!auth.idToken || !projectRejectId) return;
+    if (!projectRejectReason.trim()) { setProjectRejectError((t as Record<string,string>).deskProjectsRejectPlaceholder); return; }
+    setProjectActionLoading(projectRejectId);
+    try{
+      await moderateProject(auth.idToken, projectRejectId, { action: "reject", reason: projectRejectReason.trim() });
+      setProjectRejectId(null);
+      setProjectRejectReason("");
+      await loadProjects();
+    } catch(e){
+      const err = e as ApiError;
+      setProjectRejectError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally { setProjectActionLoading(null); }
+  };
+  const handleSetStatus = async (id: string) => {
+    if (!auth.idToken) return;
+    const s = statusSelect[id];
+    if (!s) return;
+    setProjectActionLoading(id);
+    try{
+      await moderateProject(auth.idToken, id, { action: "set-status", status: s as never });
+      await loadProjects();
+    } catch(e){
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally { setProjectActionLoading(null); }
+  };
+  const handlePhotoAction = async (projectId: string, fileId: string, action: "publish-photo"|"reject-photo") => {
+    if (!auth.idToken) return;
+    setPhotoActionLoading(fileId);
+    try{
+      await moderateProject(auth.idToken, projectId, { action, fileId });
+      await loadProjects();
+    } catch(e){
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally { setPhotoActionLoading(null); }
+  };
+  const handleUpdateAction = async (projectId: string, updateId: string, action: "publish"|"reject") => {
+    if (!auth.idToken) return;
+    setPhotoActionLoading(updateId);
+    try{
+      await moderateProjectUpdate(auth.idToken, projectId, updateId, { action, reason: action==="reject" ? "rejected" : undefined });
+      await loadProjects();
+    } catch(e){
+      const err = e as ApiError;
+      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+    } finally { setPhotoActionLoading(null); }
   };
 
   const loadPrint = async () => {
@@ -238,6 +344,7 @@ export function Desk({ language }: { language: Language }) {
 
   useEffect(() => {
     if (activeTab === "flags" && auth.idToken) loadFlags();
+    if (activeTab === "projects" && auth.idToken) loadProjects();
   }, [activeTab]);
 
   if (!auth.idToken) {
@@ -459,6 +566,14 @@ export function Desk({ language }: { language: Language }) {
           className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "flags" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
         >
           {t.deskFlagsTab} {flags.length ? `· ${flags.length}` : ""}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("projects")}
+          aria-pressed={activeTab === "projects"}
+          className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "projects" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+        >
+          {(t as Record<string,string>).deskProjectsTab} {projects.length ? `· ${projects.length}` : ""}
         </button>
       </div>
 
@@ -855,6 +970,122 @@ export function Desk({ language }: { language: Language }) {
           )}
         </div>
       ) : null}
+
+      {activeTab === "projects" ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">{(t as Record<string,string>).deskProjectsTitle}</h2>
+            <Button variant="outline" size="sm" onClick={loadProjects}>{(t as Record<string,string>).projectsTryAgain}</Button>
+          </div>
+          {projectsLoading ? <p className="font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsLoading}</p> : projectsError ? <p className="font-sans text-sm text-destructive" role="alert">{projectsError}</p> : projects.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{(t as Record<string,string>).deskProjectsEmpty}</p> : (
+            <div className="grid gap-4">
+              {projects.map(p=> (
+                <Card key={p.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <CardTitle className="text-base">{language==='ne' ? (p.title.ne || p.title.en) : p.title.en} <Badge variant="outline" className="ml-2 capitalize">{p.status}</Badge> {p.committee.verified ? <Badge variant="default" className="ml-1">{(t as Record<string,string>).deskProjectsVerified}</Badge> : <Badge variant="secondary" className="ml-1">{(t as Record<string,string>).deskProjectsNotVerified}</Badge>}</CardTitle>
+                      <span className="font-sans text-xs text-muted-foreground">{p.district} · W{p.ward}</span>
+                    </div>
+                    <CardDescription className="font-mono text-xs">{p.id} · {p.type} · NPR {p.costEstimateNpr}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="font-serif text-sm leading-6 whitespace-pre-wrap">{language==='ne' ? (p.description.ne || p.description.en) : p.description.en}</p>
+                    <p className="font-sans text-xs text-muted-foreground">{p.locationText}</p>
+                    {p.photos.length>0 ? <div className="grid grid-cols-3 gap-2">{p.photos.map(ph=> <img key={ph.fileId} src={ph.url} alt={ph.caption||""} className="h-24 w-full object-cover border border-rule" loading="lazy" />)}</div> : null}
+                    <div className="border border-rule bg-secondary px-3 py-2">
+                      <p className="font-sans text-xs font-semibold uppercase tracking-wide">{(t as Record<string,string>).deskProjectsPrivateTitle}</p>
+                      <p className="mt-1 font-sans text-sm">{p.committee.name} — {p.committee.contactName} · {p.committee.phone}</p>
+                      <p className="font-sans text-xs">Bank: {p.committee.bank.bankName} / {p.committee.bank.accountName} / {p.committee.bank.accountNumber} {p.committee.esewaId ? "· eSewa:"+p.committee.esewaId : ""} {p.committee.khaltiId ? "· Khalti:"+p.committee.khaltiId : ""}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={()=> setVerifyConfirmId(p.id)} disabled={!!projectActionLoading}>{(t as Record<string,string>).deskProjectsVerify}</Button>
+                      <Button size="sm" onClick={()=> handleProjectPublish(p.id)} disabled={!!projectActionLoading || !p.committee.verified} title={!p.committee.verified ? (t as Record<string,string>).deskProjectsPublishDisabledHint : undefined}>{projectActionLoading===p.id ? "…" : (t as Record<string,string>).deskProjectsPublish}</Button>
+                      <Button size="sm" variant="destructive" onClick={()=> { setProjectRejectId(p.id); setProjectRejectError(null); }}>{(t as Record<string,string>).deskProjectsReject}</Button>
+                      <div className="flex items-center gap-1">
+                        <Select value={statusSelect[p.id] || p.status} onChange={e=> setStatusSelect(prev=> ({...prev, [p.id]: e.target.value}))}>
+                          {["pending","published","in-progress","completed","rejected","archived"].map(s=> <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </Select>
+                        <Button size="sm" variant="secondary" onClick={()=> handleSetStatus(p.id)} disabled={!!projectActionLoading}>{(t as Record<string,string>).deskProjectsSetStatus}</Button>
+                      </div>
+                    </div>
+                    {/* pending photos - supports both pendingPhotos field and photos with status pending */}
+                    {(() => {
+                      const pending = (p as unknown as { pendingPhotos?: { fileId:string; url:string; caption?:string }[] }).pendingPhotos || p.photos.filter(ph=>ph.status==="pending");
+                      return pending.length>0 ? (
+                      <div className="border border-rule px-3 py-3">
+                        <p className="font-sans text-xs font-semibold uppercase tracking-wide mb-2">{(t as Record<string,string>).deskProjectsPhotoPending}</p>
+                        <div className="grid gap-3">
+                          {pending.map(ph=> (
+                            <div key={ph.fileId} className="flex items-center gap-2">
+                              <img src={ph.url} alt={ph.caption||""} className="h-20 w-20 object-cover border border-rule" />
+                              <span className="font-sans text-xs flex-1 truncate">{ph.caption || ph.fileId}</span>
+                              <Button size="sm" onClick={()=> handlePhotoAction(p.id, ph.fileId, "publish-photo")} disabled={photoActionLoading===ph.fileId}>{(t as Record<string,string>).deskProjectsPhotoPublish}</Button>
+                              <Button size="sm" variant="destructive" onClick={()=> handlePhotoAction(p.id, ph.fileId, "reject-photo")} disabled={photoActionLoading===ph.fileId}>{(t as Record<string,string>).deskProjectsPhotoReject}</Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                    })()}
+                    {/* pending updates */}
+                    {(() => {
+                      const pendingU = (p as unknown as { pendingUpdates?: { id:string; text:string; photos: { fileId:string; url:string }[]; spentNpr?:number; createdAt:string }[] }).pendingUpdates || (p.updates || []).filter((u: unknown)=> (u as {status:string}).status==="pending") as never[];
+                      return pendingU.length>0 ? (
+                      <div className="border border-rule px-3 py-3">
+                        <p className="font-sans text-xs font-semibold uppercase tracking-wide mb-2">{(t as Record<string,string>).deskProjectsUpdatePending}</p>
+                        <div className="grid gap-3">
+                          {pendingU.map(u=> (
+                            <div key={u.id} className="border border-rule bg-card p-3">
+                              <p className="font-serif text-sm leading-6">{u.text}</p>
+                              {u.spentNpr!=null ? <p className="font-sans text-xs text-muted-foreground">Spent NPR {u.spentNpr}</p> : null}
+                              {u.photos && u.photos.length>0 ? <div className="flex gap-2 mt-2">{u.photos.map(ph=> <img key={ph.fileId} src={ph.url} alt="" className="h-16 w-16 object-cover border border-rule" />)}</div> : null}
+                              <div className="mt-2 flex gap-2">
+                                <Button size="sm" onClick={()=> handleUpdateAction(p.id, u.id, "publish")} disabled={photoActionLoading===u.id}>{(t as Record<string,string>).deskProjectsUpdatePublish}</Button>
+                                <Button size="sm" variant="destructive" onClick={()=> handleUpdateAction(p.id, u.id, "reject")} disabled={photoActionLoading===u.id}>{(t as Record<string,string>).deskProjectsUpdateReject}</Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                    })()}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      <Dialog open={!!verifyConfirmId} onOpenChange={(o)=> { if(!o) setVerifyConfirmId(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsVerify}</DialogTitle><DialogDescription>{(() => {
+            const proj = projects.find(x=> x.id===verifyConfirmId);
+            if (!proj) return "";
+            const tmpl = (t as Record<string,string>).deskProjectsVerifyConfirm;
+            return tmpl.replace("{contactName}", proj.committee.contactName).replace("{phone}", proj.committee.phone);
+          })()}</DialogDescription></DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setVerifyConfirmId(null)}>{(t as Record<string,string>).deskCancel}</Button>
+            <Button onClick={()=> { const proj = projects.find(x=> x.id===verifyConfirmId); if (proj) handleVerify(proj); }} disabled={!!projectActionLoading}>{projectActionLoading ? "…" : (t as Record<string,string>).deskProjectsVerify}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!projectRejectId} onOpenChange={(o)=> { if(!o){ setProjectRejectId(null); setProjectRejectError(null);} }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsRejectReason}</DialogTitle><DialogDescription>{(t as Record<string,string>).deskProjectsRejectPlaceholder}</DialogDescription></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="projectRejectReason">{(t as Record<string,string>).deskProjectsRejectReason} *</Label>
+            <Textarea id="projectRejectReason" value={projectRejectReason} onChange={e=>setProjectRejectReason(e.target.value)} placeholder={(t as Record<string,string>).deskProjectsRejectPlaceholder} rows={3} />
+            {projectRejectError ? <p className="font-sans text-sm text-destructive" role="alert">{projectRejectError}</p> : null}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> { setProjectRejectId(null); setProjectRejectError(null); }}>{(t as Record<string,string>).deskCancel}</Button>
+            <Button variant="destructive" onClick={handleProjectReject} disabled={!!projectActionLoading}>{projectActionLoading ? "…" : (t as Record<string,string>).deskProjectsReject}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!rejectId} onOpenChange={(o) => { if (!o) { setRejectId(null); setRejectError(null); } }}>
         <DialogContent>
