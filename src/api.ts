@@ -1,4 +1,4 @@
-export const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
+export const API_BASE = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
 
 export type Category = "goods" | "shelter" | "transport" | "medical" | "skilled-labor" | "funds-guidance";
 export const CATEGORIES: Category[] = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
@@ -12,6 +12,8 @@ export interface NeedPublic {
   description: string;
   status: string;
   createdAt: string;
+  claimCode?: string;
+  flagCount?: number;
 }
 
 export interface NeedsListResponse {
@@ -25,6 +27,7 @@ export interface StatusResponse {
   district: string;
   createdAt: string;
   expiresAt: string;
+  claimCode?: string;
 }
 
 export interface CreateNeedBody {
@@ -133,13 +136,13 @@ export function createNeed(body: CreateNeedBody): Promise<CreateNeedResponse> {
   return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body) });
 }
 
-export function listNeeds(params: { district?: string; category?: string; cursor?: string } = {}): Promise<NeedsListResponse> {
+export function listNeeds(params: { district?: string; category?: string; cursor?: string } = {}, token?: string): Promise<NeedsListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.category) q.set("category", params.category);
   if (params.cursor) q.set("cursor", params.cursor);
   const suffix = q.toString() ? `?${q.toString()}` : "";
-  return request<NeedsListResponse>(`/needs${suffix}`);
+  return request<NeedsListResponse>(`/needs${suffix}`, { token });
 }
 
 export function getStatus(refCode: string): Promise<StatusResponse> {
@@ -154,12 +157,12 @@ export function createOffer(token: string, body: CreateOfferBody): Promise<{ id:
   return request<{ id: string }>("/offers", { method: "POST", token, body: JSON.stringify(body) });
 }
 
-export function listOffers(params: { district?: string; category?: string } = {}): Promise<OffersListResponse> {
+export function listOffers(params: { district?: string; category?: string } = {}, token?: string): Promise<OffersListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.category) q.set("category", params.category);
   const suffix = q.toString() ? `?${q.toString()}` : "";
-  return request<OffersListResponse>(`/offers${suffix}`);
+  return request<OffersListResponse>(`/offers${suffix}`, { token });
 }
 
 export function getModerationQueue(token: string): Promise<ModerationQueueResponse> {
@@ -193,3 +196,105 @@ export function updateNeedStatus(
 export function getMe(token: string): Promise<{ sub: string; email?: string; name?: string; role?: string; displayName?: string; user?: unknown }> {
   return request("/me", { token });
 }
+
+export interface ClaimPrintItem {
+  claimCode: string;
+  maskedName: string;
+  category: Category;
+  ward: number;
+  status: string;
+}
+
+export interface ClaimsPrintResponse {
+  items: ClaimPrintItem[];
+}
+
+export interface LedgerItem {
+  maskedName: string;
+  category: Category;
+  district: string;
+  ward: number;
+  redeemedAt: string;
+}
+
+export interface LedgerResponse {
+  items: LedgerItem[];
+}
+
+export interface FlagInput {
+  reason: "already_received" | "not_real" | "other";
+  details?: string;
+  turnstileToken?: string;
+}
+
+export interface ModerationFlag {
+  reason: string;
+  details?: string;
+  createdAt: string;
+}
+
+export interface FlagInboxItem {
+  needId: string;
+  maskedName: string;
+  ward: number;
+  district: string;
+  flagCount: number;
+  flags: ModerationFlag[];
+}
+
+export interface FlagsInboxResponse {
+  items: FlagInboxItem[];
+}
+
+export interface SyncResult {
+  code: string;
+  status: "redeemed" | "already_redeemed" | "unknown";
+  needId?: string;
+}
+
+export function getClaimsPrint(token: string, params: { district: string; ward: number }): Promise<ClaimsPrintResponse> {
+  const q = new URLSearchParams({ district: params.district, ward: String(params.ward) });
+  return request<ClaimsPrintResponse>(`/claims/print?${q.toString()}`, { token });
+}
+
+export function redeemClaim(token: string, code: string, body?: { note?: string }): Promise<{ status: string; needId: string; redeemedAt: string }> {
+  return request(`/claims/${encodeURIComponent(code)}/redeem`, { method: "POST", token, body: JSON.stringify(body || {}) });
+}
+
+export function syncClaims(token: string, body: { redemptions: Array<{ code: string; redeemedAt: string; note?: string }> }): Promise<{ results: SyncResult[] }> {
+  return request<{ results: SyncResult[] }>("/claims/sync", { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function getLedger(params: { district: string; ward?: number }): Promise<LedgerResponse> {
+  const q = new URLSearchParams({ district: params.district });
+  if (params.ward != null) q.set("ward", String(params.ward));
+  return request<LedgerResponse>(`/ledger?${q.toString()}`);
+}
+
+export function getLedgerCsvUrl(district: string, ward?: number): string {
+  if (!API_BASE) return "";
+  const q = new URLSearchParams({ district, format: "csv" });
+  if (ward != null) q.set("ward", String(ward));
+  return `${API_BASE}/ledger?${q.toString()}`;
+}
+
+export function flagNeed(id: string, body: FlagInput): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/needs/${encodeURIComponent(id)}/flag`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function getModerationFlags(token: string): Promise<FlagsInboxResponse> {
+  return request<FlagsInboxResponse>("/moderation/flags", { token });
+}
+
+export function assertNoSensitiveKeys(obj: Record<string, unknown>): string[] {
+  const forbidden = ["householdSize", "phone", "phones", "registrant", "description", "household"];
+  const found: string[] = [];
+  for (const k of Object.keys(obj)) {
+    const lk = k.toLowerCase();
+    for (const f of forbidden) {
+      if (lk.includes(f.toLowerCase())) found.push(k);
+    }
+  }
+  return found;
+}
+

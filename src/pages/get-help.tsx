@@ -49,7 +49,7 @@ export function GetHelp({ language }: { language: Language }) {
 
   const [statusCode, setStatusCode] = useState("");
   const [statusLoading, setStatusLoading] = useState(false);
-  const [statusResult, setStatusResult] = useState<{ status: string; category: string; district: string; createdAt: string; expiresAt: string } | null>(null);
+  const [statusResult, setStatusResult] = useState<{ status: string; category: string; district: string; createdAt: string; expiresAt: string; claimCode?: string } | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [renewing, setRenewing] = useState(false);
   const [renewDone, setRenewDone] = useState(false);
@@ -300,6 +300,21 @@ export function GetHelp({ language }: { language: Language }) {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t.getHelpHowPrioritisedTitle}</CardTitle>
+          <CardDescription>{t.getHelpHowPrioritisedLead}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 font-sans text-sm leading-6">
+          <ul className="list-disc space-y-1 pl-5">
+            <li>{t.getHelpHowPrioritisedItem1}</li>
+            <li>{t.getHelpHowPrioritisedItem2}</li>
+            <li>{t.getHelpHowPrioritisedItem3}</li>
+          </ul>
+          <p className="text-xs text-muted-foreground">{t.getHelpHowPrioritisedFootnote}</p>
+        </CardContent>
+      </Card>
+
       <StandaloneStatus language={language} />
     </div>
   );
@@ -326,8 +341,8 @@ function StatusBox({
   setStatusCode: (v: string) => void;
   statusLoading: boolean;
   setStatusLoading: (v: boolean) => void;
-  statusResult: { status: string; category: string; district: string; createdAt: string; expiresAt: string } | null;
-  setStatusResult: React.Dispatch<React.SetStateAction<{ status: string; category: string; district: string; createdAt: string; expiresAt: string } | null>>;
+  statusResult: { status: string; category: string; district: string; createdAt: string; expiresAt: string; claimCode?: string } | null;
+  setStatusResult: React.Dispatch<React.SetStateAction<{ status: string; category: string; district: string; createdAt: string; expiresAt: string; claimCode?: string } | null>>;
   statusError: string | null;
   setStatusError: (v: string | null) => void;
   renewing: boolean;
@@ -395,10 +410,17 @@ function StatusBox({
         </p>
       ) : null}
       {statusResult ? (
-        <div className="mt-3 space-y-2 font-sans text-sm">
+        <div className="mt-3 space-y-3 font-sans text-sm">
           <p>
             <span className="font-semibold">{statusResult.status}</span> · {statusResult.category} · {statusResult.district}
           </p>
+          {statusResult.claimCode && (statusResult.status === "published" || statusResult.status === "matched") ? (
+            <div className="border border-ink bg-paper p-3 text-center">
+              <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpClaimCodeLabel}</p>
+              <p className="mt-2 break-all font-mono text-2xl font-bold tracking-widest text-ink" aria-live="polite">{statusResult.claimCode}</p>
+              <p className="mt-1 font-sans text-xs text-muted-foreground">{t.getHelpClaimCodeHint}</p>
+            </div>
+          ) : null}
           <p className="text-xs text-muted-foreground">
             {new Date(statusResult.createdAt).toLocaleString()} → {new Date(statusResult.expiresAt).toLocaleString()}
           </p>
@@ -415,7 +437,7 @@ function StandaloneStatus({ language }: { language: Language }) {
   const t = labels[language];
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ status: string; category: string; district: string; createdAt: string; expiresAt: string } | null>(null);
+  const [result, setResult] = useState<{ status: string; category: string; district: string; createdAt: string; expiresAt: string; claimCode?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [renewing, setRenewing] = useState(false);
   const [renewDone, setRenewDone] = useState(false);
@@ -459,10 +481,17 @@ function StandaloneStatus({ language }: { language: Language }) {
           </p>
         ) : null}
         {result ? (
-          <div className="space-y-2 font-sans text-sm">
+          <div className="space-y-3 font-sans text-sm">
             <p>
               <span className="font-semibold">{result.status}</span> · {result.category} · {result.district}
             </p>
+            {result.claimCode && (result.status === "published" || result.status === "matched") ? (
+              <div className="border border-ink bg-paper p-3 text-center">
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpClaimCodeLabel}</p>
+                <p className="mt-2 break-all font-mono text-2xl font-bold tracking-widest text-ink" aria-live="polite">{result.claimCode}</p>
+                <p className="mt-1 font-sans text-xs text-muted-foreground">{t.getHelpClaimCodeHint}</p>
+              </div>
+            ) : null}
             <p className="text-xs text-muted-foreground">
               {new Date(result.createdAt).toLocaleString()} → {new Date(result.expiresAt).toLocaleString()}
             </p>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError, CATEGORIES, type Category, createOffer, listNeeds, listOffers, type NeedPublic, type OfferPublic } from "../api";
+import { ApiError, CATEGORIES, type Category, createOffer, flagNeed, listNeeds, listOffers, type NeedPublic, type OfferPublic } from "../api";
 import { useGoogleAuth } from "../auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TurnstileWidget } from "../components/turnstile";
 import { districtLabels, districtNames } from "../geo";
 import { labels } from "../i18n";
 import type { Language } from "../types";
+
+const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 function categoryLabel(cat: string, lang: Language): string {
   const t = labels[lang];
@@ -25,6 +29,98 @@ function categoryLabel(cat: string, lang: Language): string {
   return map[cat] ?? cat;
 }
 
+function FlagDialog({ language, needId, open, onClose }: { language: Language; needId: string | null; open: boolean; onClose: () => void }) {
+  const t = labels[language];
+  const [reason, setReason] = useState<"already_received" | "not_real" | "other">("already_received");
+  const [details, setDetails] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setReason("already_received");
+      setDetails("");
+      setTurnstileToken("");
+      setError(null);
+      setDone(false);
+    }
+  }, [open, needId]);
+
+  const handleSubmit = async () => {
+    if (!needId) return;
+    if (details.length > 500) {
+      setError(t.flagDetailsHint);
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await flagNeed(needId, { reason, details: details.trim() || undefined, turnstileToken: turnstileToken || undefined });
+      setDone(true);
+    } catch (e) {
+      const err = e as ApiError;
+      setError(err.message || t.flagError);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        {done ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t.flagSuccessTitle}</DialogTitle>
+              <DialogDescription>{t.flagSuccessBody}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={onClose}>{t.deskCancel}</Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t.flagDialogTitle}</DialogTitle>
+              <DialogDescription>{t.flagDetailsHint}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <fieldset className="space-y-2">
+                <legend className="font-sans text-xs font-semibold uppercase tracking-wide">{t.flagReasonLabel}</legend>
+                <label className="flex items-center gap-2 font-sans text-sm">
+                  <input type="radio" name="flagReason" checked={reason === "already_received"} onChange={() => setReason("already_received")} />
+                  {t.flagReasonAlready}
+                </label>
+                <label className="flex items-center gap-2 font-sans text-sm">
+                  <input type="radio" name="flagReason" checked={reason === "not_real"} onChange={() => setReason("not_real")} />
+                  {t.flagReasonNotReal}
+                </label>
+                <label className="flex items-center gap-2 font-sans text-sm">
+                  <input type="radio" name="flagReason" checked={reason === "other"} onChange={() => setReason("other")} />
+                  {t.flagReasonOther}
+                </label>
+              </fieldset>
+              <div className="space-y-2">
+                <Label htmlFor="flagDetails">{t.flagDetailsLabel}</Label>
+                <Textarea id="flagDetails" value={details} onChange={(e) => setDetails(e.target.value)} rows={3} placeholder={t.flagDetailsPlaceholder} maxLength={500} />
+                <p className="font-sans text-xs text-muted-foreground">{details.length}/500</p>
+              </div>
+              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground">{t.flagTurnstileHint}</p>}
+              {error ? <p className="font-sans text-sm text-destructive" role="alert">{error}</p> : null}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>{t.deskCancel}</Button>
+              <Button onClick={handleSubmit} disabled={submitting}>{submitting ? t.flagSubmitting : t.flagSubmit}</Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function GiveHelp({ language }: { language: Language }) {
   const t = labels[language];
   const auth = useGoogleAuth();
@@ -35,6 +131,7 @@ export function GiveHelp({ language }: { language: Language }) {
   const [needsLoading, setNeedsLoading] = useState(false);
   const [needsError, setNeedsError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState<string | null>(null);
+  const [flagNeedId, setFlagNeedId] = useState<string | null>(null);
 
   const [offersDistrict, setOffersDistrict] = useState("");
   const [offersCategory, setOffersCategory] = useState("");
@@ -196,7 +293,7 @@ export function GiveHelp({ language }: { language: Language }) {
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-3">
                   <p className="line-clamp-4 font-serif text-sm leading-6">{need.description}</p>
-                  <div className="mt-auto flex gap-2">
+                  <div className="mt-auto flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -207,12 +304,14 @@ export function GiveHelp({ language }: { language: Language }) {
                           setShareCopied(need.id);
                           setTimeout(() => setShareCopied(null), 2000);
                         } catch {
-                          // fallback
                           window.prompt("Share link", url);
                         }
                       }}
                     >
                       {shareCopied === need.id ? t.giveHelpShareCopied : t.giveHelpShare}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setFlagNeedId(need.id)}>
+                      {t.flagReportProblem}
                     </Button>
                     <Badge variant="outline" className="ml-auto capitalize">
                       {need.status}
@@ -224,6 +323,8 @@ export function GiveHelp({ language }: { language: Language }) {
           </div>
         )}
       </section>
+
+      <FlagDialog language={language} needId={flagNeedId} open={!!flagNeedId} onClose={() => setFlagNeedId(null)} />
 
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold">{t.giveHelpOfferTitle}</h2>
@@ -250,35 +351,29 @@ export function GiveHelp({ language }: { language: Language }) {
             </CardContent>
           </Card>
         ) : offerSuccess ? (
-          <Card className="border-ink">
+          <Card>
             <CardHeader>
-              <CardTitle>{t.giveHelpOfferSuccessTitle}</CardTitle>
+              <CardTitle className="text-base">{t.giveHelpOfferSuccessTitle}</CardTitle>
               <CardDescription>{t.giveHelpOfferSuccessBody}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="font-mono text-xs text-muted-foreground">ID: {offerSuccess}</p>
-              <Button variant="outline" className="mt-4" onClick={() => setOfferSuccess(null)}>
-                {t.giveHelpSubmitOffer} — {t.commonAgain}
-              </Button>
-            </CardContent>
           </Card>
         ) : (
           <Card>
-            <CardContent className="pt-6">
-              <form onSubmit={handleOfferSubmit} className="space-y-5">
-                <label className="flex items-center gap-2 font-sans text-sm">
-                  <input type="checkbox" checked={orgOnBehalf} onChange={(e) => setOrgOnBehalf(e.target.checked)} className="accent-ink" />
-                  {t.giveHelpOrgCheckbox}
-                </label>
+            <CardContent className="space-y-4 pt-6">
+              <form onSubmit={handleOfferSubmit} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="orgCheck" checked={orgOnBehalf} onChange={(e) => setOrgOnBehalf(e.target.checked)} />
+                  <Label htmlFor="orgCheck">{t.giveHelpOrgCheckbox}</Label>
+                </div>
                 {orgOnBehalf ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="orgName">{t.giveHelpOrgName} *</Label>
-                      <Input id="orgName" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                      <Input id="orgName" value={orgName} onChange={(e) => setOrgName(e.target.value)} required={orgOnBehalf} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="orgContact">{t.giveHelpOrgContact} *</Label>
-                      <Input id="orgContact" value={orgContact} onChange={(e) => setOrgContact(e.target.value)} />
+                      <Input id="orgContact" value={orgContact} onChange={(e) => setOrgContact(e.target.value)} required={orgOnBehalf} />
                     </div>
                   </div>
                 ) : null}

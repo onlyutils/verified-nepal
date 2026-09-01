@@ -3,6 +3,7 @@ import { Dashboard } from "./dashboard";
 import { Desk } from "./desk";
 import { GetHelp } from "./pages/get-help";
 import { GiveHelp } from "./pages/give-help";
+import { Ledger } from "./pages/ledger";
 import { FindPerson } from "./find-person";
 import { InfoHelp } from "./info-help";
 import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
@@ -18,11 +19,13 @@ const pagePaths: Record<Page, string> = {
   desk: "/desk",
   getHelp: "/get-help",
   giveHelp: "/give-help",
+  ledger: "/ledger",
 };
 
 function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/get-help")) return "getHelp";
   if (pathname.startsWith("/give-help")) return "giveHelp";
+  if (pathname.startsWith("/ledger")) return "ledger";
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/info")) return "info";
@@ -88,6 +91,7 @@ export function App() {
           {page === "desk" ? <Desk language={language} /> : null}
           {page === "getHelp" ? <GetHelp language={language} /> : null}
           {page === "giveHelp" ? <GiveHelp language={language} /> : null}
+          {page === "ledger" ? <Ledger language={language} /> : null}
         </main>
         <Footer language={language} navigate={navigate} />
         <BackToTop language={language} />
