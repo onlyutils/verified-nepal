@@ -13,29 +13,35 @@ import {
   moderateDispatch,
   type ModerationDispatchItem,
   getModerationFlags,
+  getModerationOrgs,
   getModerationQueue,
   getModerationProjects,
   listNeeds,
   listOffers,
   moderateNeed,
+  moderateOrg,
   moderateProject,
   moderateProjectUpdate,
   redeemClaim,
   syncClaims,
   updateNeedStatus,
   type ModerationQueueItem,
+  type ModerationOrgItem,
   type NeedPublic,
   type OfferPublic,
   type ClaimPrintItem,
   type FlagInboxItem,
   type SyncResult,
   type ModerationProjectItem,
+  type OrgStatus,
+  type OrgTier,
 } from "./api";
 import guidelinesRaw from "../docs/MODERATION-GUIDELINES.md?raw";
 import { useGoogleAuth } from "./auth";
 import { Headline, SimpleMarkdown, focusRing } from "./ui";
 import { apiErrorMessage } from "./api-error";
 import { deskStrings } from "./i18n-desk";
+import { deskOrgStrings } from "./i18n-desk-orgs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,12 +95,13 @@ function QrCell({ code }: { code: string }) {
 export function Desk({ language }: { language: Language }) {
   const t = labels[language];
   const ds = deskStrings[language];
+  const dos = deskOrgStrings[language];
   const auth = useGoogleAuth();
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [ackedNow, setAckedNow] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "admin">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "orgs" | "admin">("queue");
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(false);
@@ -136,6 +143,24 @@ export function Desk({ language }: { language: Language }) {
   const [dispatchRejectCode, setDispatchRejectCode] = useState("");
   const [dispatchRejectDetail, setDispatchRejectDetail] = useState("");
   const [dispatchRejectError, setDispatchRejectError] = useState<string|null>(null);
+
+  // Organizations moderation
+  const [orgs, setOrgs] = useState<ModerationOrgItem[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(false);
+  const [orgsError, setOrgsError] = useState<string | null>(null);
+  const [orgsStatus, setOrgsStatus] = useState<OrgStatus>("pending");
+  const [orgsPendingCount, setOrgsPendingCount] = useState(0);
+  const [orgActionLoading, setOrgActionLoading] = useState<string | null>(null);
+  const [orgVerifyId, setOrgVerifyId] = useState<string | null>(null);
+  const [orgVerifyTier, setOrgVerifyTier] = useState<OrgTier>("known");
+  const [orgVerifyNote, setOrgVerifyNote] = useState("");
+  const [orgVerifyError, setOrgVerifyError] = useState<string | null>(null);
+  const [orgRejectId, setOrgRejectId] = useState<string | null>(null);
+  const [orgRejectReason, setOrgRejectReason] = useState("");
+  const [orgRejectError, setOrgRejectError] = useState<string | null>(null);
+  const [orgSuspendId, setOrgSuspendId] = useState<string | null>(null);
+  const [orgSuspendReason, setOrgSuspendReason] = useState("");
+  const [orgSuspendError, setOrgSuspendError] = useState<string | null>(null);
 
   // Print
   const [printDistrict, setPrintDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
@@ -234,10 +259,118 @@ export function Desk({ language }: { language: Language }) {
       const res = await getModerationDispatches(auth.idToken);
       setDispatches(res.items);
     } catch (e) {
-      const err = e as ApiError;
       setDispatchesError(apiErrorMessage(e, language));
     } finally {
       setDispatchesLoading(false);
+    }
+  };
+
+  const loadOrgs = async (status: OrgStatus = orgsStatus) => {
+    if (!auth.idToken) return;
+    setOrgsLoading(true);
+    setOrgsError(null);
+    try {
+      const res = await getModerationOrgs(auth.idToken, status);
+      setOrgs(res.items);
+    } catch (e) {
+      setOrgsError(apiErrorMessage(e, language));
+    } finally {
+      setOrgsLoading(false);
+    }
+  };
+
+  const loadOrgsPendingCount = async () => {
+    if (!auth.idToken) return;
+    try {
+      const res = await getModerationOrgs(auth.idToken, "pending");
+      setOrgsPendingCount(res.items.length);
+    } catch {
+      // keep previous count
+    }
+  };
+
+  const handleOrgVerify = async () => {
+    if (!auth.idToken || !orgVerifyId) return;
+    if (orgVerifyNote.trim().length < 5) {
+      setOrgVerifyError(dos.orgNoteRequired);
+      return;
+    }
+    clearActionFeedback();
+    setOrgActionLoading(orgVerifyId);
+    try {
+      await moderateOrg(auth.idToken, orgVerifyId, { action: "verify", tier: orgVerifyTier, note: orgVerifyNote.trim() });
+      setOrgVerifyId(null);
+      setOrgVerifyNote("");
+      setOrgVerifyError(null);
+      await loadOrgs();
+      await loadOrgsPendingCount();
+      setSuccessMsg(dos.orgActionSuccess);
+    } catch (e) {
+      setOrgVerifyError(apiErrorMessage(e, language));
+    } finally {
+      setOrgActionLoading(null);
+    }
+  };
+
+  const handleOrgReject = async () => {
+    if (!auth.idToken || !orgRejectId) return;
+    if (orgRejectReason.trim().length < 5) {
+      setOrgRejectError(dos.orgReasonRequired);
+      return;
+    }
+    clearActionFeedback();
+    setOrgActionLoading(orgRejectId);
+    try {
+      await moderateOrg(auth.idToken, orgRejectId, { action: "reject", reason: orgRejectReason.trim() });
+      setOrgRejectId(null);
+      setOrgRejectReason("");
+      setOrgRejectError(null);
+      await loadOrgs();
+      await loadOrgsPendingCount();
+      setSuccessMsg(dos.orgActionSuccess);
+    } catch (e) {
+      setOrgRejectError(apiErrorMessage(e, language));
+    } finally {
+      setOrgActionLoading(null);
+    }
+  };
+
+  const handleOrgSuspend = async () => {
+    if (!auth.idToken || !orgSuspendId) return;
+    if (orgSuspendReason.trim().length < 5) {
+      setOrgSuspendError(dos.orgReasonRequired);
+      return;
+    }
+    clearActionFeedback();
+    setOrgActionLoading(orgSuspendId);
+    try {
+      await moderateOrg(auth.idToken, orgSuspendId, { action: "suspend", reason: orgSuspendReason.trim() });
+      setOrgSuspendId(null);
+      setOrgSuspendReason("");
+      setOrgSuspendError(null);
+      await loadOrgs();
+      await loadOrgsPendingCount();
+      setSuccessMsg(dos.orgActionSuccess);
+    } catch (e) {
+      setOrgSuspendError(apiErrorMessage(e, language));
+    } finally {
+      setOrgActionLoading(null);
+    }
+  };
+
+  const handleOrgReinstate = async (id: string) => {
+    if (!auth.idToken) return;
+    clearActionFeedback();
+    setOrgActionLoading(id);
+    try {
+      await moderateOrg(auth.idToken, id, { action: "reinstate" });
+      await loadOrgs();
+      await loadOrgsPendingCount();
+      setSuccessMsg(dos.orgActionSuccess);
+    } catch (e) {
+      setOrgsError(apiErrorMessage(e, language));
+    } finally {
+      setOrgActionLoading(null);
     }
   };
 
@@ -567,6 +700,7 @@ export function Desk({ language }: { language: Language }) {
       loadQueue();
       loadBoards();
       loadFlags();
+      loadOrgsPendingCount();
     }
   }, [auth.profile?.role, auth.idToken]);
 
@@ -574,8 +708,13 @@ export function Desk({ language }: { language: Language }) {
     if (activeTab === "flags" && auth.idToken) loadFlags();
     if (activeTab === "projects" && auth.idToken) loadProjects();
     if (activeTab === "dispatches" && auth.idToken) loadDispatches();
+    if (activeTab === "orgs" && auth.idToken) loadOrgs(orgsStatus);
     if (activeTab === "admin" && auth.idToken) { loadAdminModerators(); loadAdminStats(); }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "orgs" && auth.idToken) loadOrgs(orgsStatus);
+  }, [orgsStatus]);
 
   if (!auth.idToken) {
     return (
@@ -853,6 +992,14 @@ export function Desk({ language }: { language: Language }) {
           className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "dispatches" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
         >
           {(t as Record<string,string>).deskDispatchesTab} {dispatches.length ? `· ${dispatches.length}` : ""}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("orgs")}
+          aria-pressed={activeTab === "orgs"}
+          className={`min-h-10 border-b-2 px-4 font-sans text-xs font-semibold uppercase tracking-wide ${activeTab === "orgs" ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+        >
+          {dos.orgsTab} {orgsPendingCount ? `· ${orgsPendingCount}` : ""}
         </button>
         {role === "admin" ? (
           <button
@@ -1332,6 +1479,258 @@ export function Desk({ language }: { language: Language }) {
               <DialogFooter>
                 <Button variant="outline" onClick={()=>{ setDispatchRejectId(null); setDispatchRejectCode(""); setDispatchRejectDetail("");}}>{t.deskCancel}</Button>
                 <Button onClick={handleDispatchReject} disabled={!!dispatchActionLoading}>{dispatchActionLoading ? "…" : (t as Record<string,string>).deskDispatchesRejectConfirm}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      ) : null}
+
+      {activeTab === "orgs" ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 className="font-display text-lg font-semibold">{dos.orgsTitle}</h2>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="orgsStatus" className="font-sans text-xs font-semibold uppercase tracking-wide">
+                {dos.orgsFilterLabel}
+              </Label>
+              <select
+                id="orgsStatus"
+                value={orgsStatus}
+                onChange={(e) => setOrgsStatus(e.target.value as OrgStatus)}
+                className={"flex min-h-11 border border-ink bg-paper px-3 py-2 font-sans text-sm " + focusRing}
+              >
+                <SelectItem value="pending">{dos.orgsStatusPending}</SelectItem>
+                <SelectItem value="verified">{dos.orgsStatusVerified}</SelectItem>
+                <SelectItem value="suspended">{dos.orgsStatusSuspended}</SelectItem>
+                <SelectItem value="rejected">{dos.orgsStatusRejected}</SelectItem>
+              </select>
+              <Button variant="outline" size="sm" onClick={() => loadOrgs(orgsStatus)} className="min-h-11">
+                {dos.orgsRetry}
+              </Button>
+            </div>
+          </div>
+          {orgsLoading ? (
+            <p className="font-sans text-sm text-muted">{dos.orgsLoading}</p>
+          ) : orgsError ? (
+            <div className="space-y-2">
+              <p className="font-sans text-sm text-destructive" role="alert">
+                {orgsError}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => loadOrgs(orgsStatus)} className="min-h-11">
+                {dos.orgsRetry}
+              </Button>
+            </div>
+          ) : orgs.length === 0 ? (
+            <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted">{dos.orgsEmpty}</p>
+          ) : (
+            <div className="grid gap-4">
+              {orgs.map((org) => (
+                <Card key={org.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-6">{org.name}</CardTitle>
+                      <Badge variant={org.status === "verified" ? "default" : org.status === "pending" ? "secondary" : org.status === "suspended" ? "destructive" : "outline"}>
+                        {org.status === "pending"
+                          ? dos.orgsStatusPending
+                          : org.status === "verified"
+                            ? dos.orgsStatusVerified
+                            : org.status === "suspended"
+                              ? dos.orgsStatusSuspended
+                              : dos.orgsStatusRejected}
+                      </Badge>
+                    </div>
+                    <CardDescription className="font-sans text-xs">
+                      {dos.orgTypeLabel}: {org.orgType}
+                      {org.registrationNumber ? ` · ${dos.orgRegLabel}: ${org.registrationNumber}` : ""} · {dos.orgCreatedAtLabel}: {new Date(org.createdAt).toLocaleDateString()} · {fillTemplate(dos.orgCentersCount, { count: String(org.centersCount) })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid gap-2 font-sans text-sm md:grid-cols-2">
+                      <p>
+                        <span className="font-semibold">{dos.orgContactNameLabel}:</span> {org.contactName}
+                      </p>
+                      <p>
+                        <span className="font-semibold">{dos.orgContactPhoneLabel}:</span>{" "}
+                        <a href={`tel:${org.contactPhone}`} className={"text-ink underline-offset-4 hover:underline " + focusRing}>
+                          {org.contactPhone}
+                        </a>
+                      </p>
+                      {org.contactEmail ? (
+                        <p>
+                          <span className="font-semibold">{dos.orgContactEmailLabel}:</span> {org.contactEmail}
+                        </p>
+                      ) : null}
+                      {org.ownerEmail ? (
+                        <p>
+                          <span className="font-semibold">{dos.orgOwnerEmailLabel}:</span> {org.ownerEmail}
+                        </p>
+                      ) : null}
+                      <p>
+                        <span className="font-semibold">{dos.orgDistrictsLabel}:</span> {org.districts.join(", ")}
+                      </p>
+                      {org.website ? (
+                        <p>
+                          <span className="font-semibold">{dos.orgWebsiteLabel}:</span>{" "}
+                          <a href={org.website} target="_blank" rel="noopener noreferrer" className={"text-ink underline " + focusRing}>
+                            {org.website}
+                          </a>
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="border border-rule bg-paper p-3 font-sans text-sm leading-6">{org.description}</p>
+                    {org.vouches && org.vouches.length > 0 ? (
+                      <div className="border border-dashed border-rule bg-card p-3">
+                        <p className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">{dos.orgVouchesLabel}</p>
+                        <ul className="mt-1 list-disc pl-5 font-sans text-sm">
+                          {org.vouches.map((v) => (
+                            <li key={v.orgId}>{fillTemplate(dos.orgVouchFrom, { name: v.orgName })} · {new Date(v.at).toLocaleDateString()}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {org.status === "verified" && org.tier ? (
+                      <div className="border border-rule bg-card p-3">
+                        <p className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">{dos.orgTierLabel}</p>
+                        <p className="font-sans text-sm font-semibold">
+                          {org.tier === "known" ? dos.orgTierKnownShort : org.tier === "vouched" ? dos.orgTierVouchedShort : dos.orgTierSelfDeclaredShort}
+                        </p>
+                        {org.verificationNote ? <p className="mt-1 font-sans text-sm italic text-muted">{org.verificationNote}</p> : null}
+                      </div>
+                    ) : null}
+                    {org.status === "rejected" && org.rejectionReason ? (
+                      <p className="border border-rule bg-card px-3 py-2 font-sans text-sm">
+                        <span className="font-semibold">{dos.orgRejectionReasonLabel}:</span> {org.rejectionReason}
+                      </p>
+                    ) : null}
+                    {org.status === "suspended" && org.suspensionReason ? (
+                      <p className="border border-rule bg-card px-3 py-2 font-sans text-sm">
+                        <span className="font-semibold">{dos.orgSuspensionReasonLabel}:</span> {org.suspensionReason}
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      {org.status === "pending" ? (
+                        <>
+                          <Button size="sm" className="min-h-11" onClick={() => { setOrgVerifyId(org.id); setOrgVerifyTier("known"); setOrgVerifyNote(""); setOrgVerifyError(null); }} disabled={!!orgActionLoading}>
+                            {dos.orgVerify}
+                          </Button>
+                          <Button size="sm" variant="outline" className="min-h-11" onClick={() => { setOrgRejectId(org.id); setOrgRejectReason(""); setOrgRejectError(null); }}>
+                            {dos.orgReject}
+                          </Button>
+                        </>
+                      ) : null}
+                      {org.status === "verified" ? (
+                        <Button size="sm" variant="outline" className="min-h-11" onClick={() => { setOrgSuspendId(org.id); setOrgSuspendReason(""); setOrgSuspendError(null); }}>
+                          {dos.orgSuspend}
+                        </Button>
+                      ) : null}
+                      {org.status === "suspended" ? (
+                        <Button size="sm" className="min-h-11" onClick={() => handleOrgReinstate(org.id)} disabled={orgActionLoading === org.id}>
+                          {orgActionLoading === org.id ? "…" : dos.orgReinstate}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          <Dialog
+            open={!!orgVerifyId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setOrgVerifyId(null);
+                setOrgVerifyNote("");
+                setOrgVerifyError(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{dos.orgVerifyTitle}</DialogTitle>
+                <DialogDescription>{dos.orgVerifyDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="orgVerifyTier">{dos.orgTierSelectLabel}</Label>
+                  <select id="orgVerifyTier" value={orgVerifyTier} onChange={(e) => setOrgVerifyTier(e.target.value as OrgTier)} className={"flex min-h-11 w-full border border-ink bg-paper px-3 py-2 font-sans text-sm " + focusRing}>
+                    <SelectItem value="known">{dos.orgTierKnown}</SelectItem>
+                    <SelectItem value="vouched">{dos.orgTierVouched}</SelectItem>
+                    <SelectItem value="self_declared">{dos.orgTierSelfDeclared}</SelectItem>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="orgVerifyNote">{dos.orgNoteLabel}</Label>
+                  <Textarea id="orgVerifyNote" value={orgVerifyNote} onChange={(e) => { setOrgVerifyNote(e.target.value); setOrgVerifyError(null); }} placeholder={dos.orgNotePlaceholder} rows={3} />
+                </div>
+                {orgVerifyError ? <p className="font-sans text-sm text-destructive" role="alert">{orgVerifyError}</p> : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => { setOrgVerifyId(null); setOrgVerifyNote(""); setOrgVerifyError(null); }}>
+                  {t.deskCancel}
+                </Button>
+                <Button className="min-h-11" onClick={handleOrgVerify} disabled={!!orgActionLoading}>
+                  {orgActionLoading ? "…" : dos.orgVerify}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            open={!!orgRejectId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setOrgRejectId(null);
+                setOrgRejectReason("");
+                setOrgRejectError(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{dos.orgRejectTitle}</DialogTitle>
+                <DialogDescription>{dos.orgRejectDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="orgRejectReason">{dos.orgRejectLabel}</Label>
+                <Textarea id="orgRejectReason" value={orgRejectReason} onChange={(e) => { setOrgRejectReason(e.target.value); setOrgRejectError(null); }} placeholder={dos.orgRejectPlaceholder} rows={3} />
+                {orgRejectError ? <p className="font-sans text-sm text-destructive" role="alert">{orgRejectError}</p> : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => { setOrgRejectId(null); setOrgRejectReason(""); setOrgRejectError(null); }}>
+                  {t.deskCancel}
+                </Button>
+                <Button className="min-h-11" onClick={handleOrgReject} disabled={!!orgActionLoading}>
+                  {orgActionLoading ? "…" : dos.orgReject}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            open={!!orgSuspendId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setOrgSuspendId(null);
+                setOrgSuspendReason("");
+                setOrgSuspendError(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{dos.orgSuspendTitle}</DialogTitle>
+                <DialogDescription>{dos.orgSuspendDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="orgSuspendReason">{dos.orgSuspendLabel}</Label>
+                <Textarea id="orgSuspendReason" value={orgSuspendReason} onChange={(e) => { setOrgSuspendReason(e.target.value); setOrgSuspendError(null); }} placeholder={dos.orgSuspendPlaceholder} rows={3} />
+                {orgSuspendError ? <p className="font-sans text-sm text-destructive" role="alert">{orgSuspendError}</p> : null}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="min-h-11" onClick={() => { setOrgSuspendId(null); setOrgSuspendReason(""); setOrgSuspendError(null); }}>
+                  {t.deskCancel}
+                </Button>
+                <Button className="min-h-11" onClick={handleOrgSuspend} disabled={!!orgActionLoading}>
+                  {orgActionLoading ? "…" : dos.orgSuspend}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
