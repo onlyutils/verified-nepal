@@ -10,6 +10,15 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-01-drop-centers-design.md`
 
+## Status (updated 2026-09-02 00:35)
+
+All three phases are on `main` and deployed to dev (frontend via `deploy-dev`, Lambda via `aws lambda update-function-code`).
+
+- P1: `83ac48d` `c134e23` `128ace5` (frontend) · P2: `0794cbc` `56e8065` · P3: `f93e47b` `1f58272`.
+- Backend: `1cc48c2` (the parallel session's MVC refactor, committed here because it was left uncommitted and the deployed Lambda depends on it) + `1ef9fb7` (orgs/centers/goods/donations modules; `routeOrgs()` wired in `server/src/router.js`; 133 server tests).
+- Not yet done / for the owner: walk the flows in a browser as an org owner and as a moderator (no test org exists on dev yet); seed known orgs; Nepali copy review; `terraform apply` in the infra repo will re-upload the same Lambda zip (harmless).
+- The Codex key returned `402 Payment Required` at the end of Phase 3 — the last ~10% (donation status page, one test line, one type error) was finished by hand.
+
 ## Global Constraints
 
 - Commit messages: plain conventional style (`feat(orgs): …`), **no** Co-Authored-By / Claude-Session trailers.
