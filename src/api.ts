@@ -353,10 +353,11 @@ export function getLedger(params: { district: string; ward?: number }): Promise<
   return request<LedgerResponse>(`/ledger?${q.toString()}`);
 }
 
-export function getLedgerCsvUrl(district: string, ward?: number): string {
+export function getLedgerCsvUrl(district: string, ward?: number, turnstileToken?: string): string {
   if (!API_BASE) return "";
   const q = new URLSearchParams({ district, format: "csv" });
   if (ward != null) q.set("ward", String(ward));
+  if (turnstileToken) q.set("turnstileToken", turnstileToken);
   return `${API_BASE}/ledger?${q.toString()}`;
 }
 

@@ -6,9 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TurnstileWidget } from "../components/turnstile";
 import { districtLabels, districtNames } from "../geo";
 import { labels } from "../i18n";
 import type { Language } from "../types";
+
+const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 export function Ledger({ language }: { language: Language }) {
   const t = labels[language];
@@ -17,6 +20,7 @@ export function Ledger({ language }: { language: Language }) {
   const [items, setItems] = useState<LedgerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const fetchLedger = async () => {
     if (!district) return;
@@ -42,7 +46,7 @@ export function Ledger({ language }: { language: Language }) {
     fetchLedger();
   }, [district, ward]);
 
-  const csvUrl = district ? getLedgerCsvUrl(district, ward ? Number(ward) : undefined) : "";
+  const csvUrl = district ? getLedgerCsvUrl(district, ward ? Number(ward) : undefined, turnstileToken || undefined) : "";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-1 sm:px-4">
@@ -95,6 +99,7 @@ export function Ledger({ language }: { language: Language }) {
             </div>
           </div>
           <p className="font-sans text-xs text-muted-foreground">{t.ledgerDownloadHint}</p>
+          {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground">{t.ledgerTurnstileHint}</p>}
         </CardContent>
       </Card>
 
