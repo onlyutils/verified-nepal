@@ -76,7 +76,7 @@ const enSections: Section[] = [
     title: "9. Your rights — correction and removal",
     body: [
       "You have the right under the Individual Privacy Act, 2075 to request correction or removal of your personal data held for needs, offers, projects, or dispatches.",
-      "Contact: REPLACE_ME_CONTACT. Include your reference code or dispatch/project ID and what to correct or remove. We target a response within 7 days.",
+      "Contact: verifiednepal01@gmail.com. Include your reference code or dispatch/project ID and what to correct or remove. We target a response within 7 days.",
       "For the mirrored NDRRMA rescue and missing-person lists, corrections must be made at the official source; once the source updates, the mirror reflects it at the next sync. We will still handle courtesy takedown requests for the mirrored copy.",
     ],
   },
@@ -167,7 +167,7 @@ const enSections: Section[] = [
   {
     title: "23. Changes and contact",
     body: [
-      `These Terms may be updated at any time; the version published on this page is the current one, and continued use of the site after an update constitutes acceptance. Effective date: ${effectiveDate}. For questions, corrections, removal requests or takedown requests regarding submissions or the mirrored copy, contact: REPLACE_ME_CONTACT (target response 7 days). For the underlying NDRRMA records, contact the attributed official source.`,
+      `These Terms may be updated at any time; the version published on this page is the current one, and continued use of the site after an update constitutes acceptance. Effective date: ${effectiveDate}. For questions, corrections, removal requests or takedown requests regarding submissions or the mirrored copy, contact: verifiednepal01@gmail.com (target response 7 days). For the underlying NDRRMA records, contact the attributed official source.`,
     ],
   },
 ];
@@ -239,7 +239,7 @@ const neSections: Section[] = [
     title: "९. तपाईंका अधिकार — सच्याउने र हटाउने",
     body: [
       "व्यक्तिगत गोपनीयता ऐन २०७५ बमोजिम तपाईंले आवश्यकता/प्रस्ताव/परियोजना/लेखमा रहेको आफ्नो व्यक्तिगत डेटा सच्याउन वा हटाउन अनुरोध गर्न सक्नुहुन्छ।",
-      "सम्पर्क: REPLACE_ME_CONTACT । सन्दर्भ कोड वा लेख/परियोजना ID र के सच्याउने/हटाउने भन्ने खुलाउनुहोस्। हामी ७ दिनभित्र जवाफ दिने लक्ष्य राख्छौं।",
+      "सम्पर्क: verifiednepal01@gmail.com । सन्दर्भ कोड वा लेख/परियोजना ID र के सच्याउने/हटाउने भन्ने खुलाउनुहोस्। हामी ७ दिनभित्र जवाफ दिने लक्ष्य राख्छौं।",
       "NDRRMA को उद्धार/बेपत्ता मिरर सूचीका लागि आधिकारिक स्रोतमा नै सच्याउनुपर्छ; स्रोत अपडेट भएपछि मिरर अर्को सिंकमा मिल्छ। मिरर प्रतिका लागि सद्भावपूर्ण हटाउने अनुरोध पनि हामी हेर्छौं।",
     ],
   },
@@ -330,7 +330,7 @@ const neSections: Section[] = [
   {
     title: "२३. परिवर्तन र सम्पर्क",
     body: [
-      `यी सर्त कुनै पनि बेला अद्यावधिक हुन सक्छन्; यस पृष्ठमा प्रकाशित संस्करण नै हालको हो, र अद्यावधिकपछि साइट प्रयोग जारी राख्नु स्वीकृति मानिन्छ। लागू मिति: ${effectiveDate}। पेशी वा मिरर प्रतिका प्रश्न/सच्याउने/हटाउने अनुरोधका लागि सम्पर्क: REPLACE_ME_CONTACT (लक्ष्य जवाफ ७ दिन)। NDRRMA रेकर्डका लागि सम्बन्धित आधिकारिक स्रोतमा सम्पर्क गर्नुहोस्।`,
+      `यी सर्त कुनै पनि बेला अद्यावधिक हुन सक्छन्; यस पृष्ठमा प्रकाशित संस्करण नै हालको हो, र अद्यावधिकपछि साइट प्रयोग जारी राख्नु स्वीकृति मानिन्छ। लागू मिति: ${effectiveDate}। पेशी वा मिरर प्रतिका प्रश्न/सच्याउने/हटाउने अनुरोधका लागि सम्पर्क: verifiednepal01@gmail.com (लक्ष्य जवाफ ७ दिन)। NDRRMA रेकर्डका लागि सम्बन्धित आधिकारिक स्रोतमा सम्पर्क गर्नुहोस्।`,
     ],
   },
 ];
@@ -340,7 +340,7 @@ const nepaliSummaryHonest = [
   "हामी आवश्यकता, सहयोग प्रस्ताव, परियोजना र लेखमा तपाईंले दिने विवरण (नाम, जिल्ला/वडा, विवरण, सहमतिमा दर्ता गरिएको फोन) र OnlyUtils मार्फत Google साइन-इन मात्र लिन्छौं। कुनै एनालिटिक्स/विज्ञापन ट्र्याकर छैन, साइन-इन सत्रबाहेक कुनै कुकी छैन।",
   "सार्वजनिकमा मास्क गरिएको नाम र वडा-स्तरको स्थान मात्र देखिन्छ; फोन, दर्ता गर्नेको विवरण र परिवार जानकारी कहिल्यै सार्वजनिक हुँदैन। परियोजनाको बैंक विवरण समिति फोनबाट प्रमाणित भएपछि मात्र देखिन्छ।",
   "आवश्यकता ३० दिनपछि म्याद सकिन्छ (नवीकरण नगरे हट्छ); लेजर मास्क गरिएको सार्वजनिक अडिट रेकर्डका रूपमा रहन्छ। निजी डेटा सम्पादकले मात्र देख्छन् र हरेक कार्य अडिट-लग हुन्छ।",
-  "आफ्नो डेटा सच्याउन/हटाउन REPLACE_ME_CONTACT मा सम्पर्क गर्नुहोस् — लक्ष्य ७ दिन। अरूका लागि दर्ता गर्दा उनीहरूको सहमति अनिवार्य छ। यो साइटले कहिल्यै पैसा चलाउँदैन। लागू कानून: व्यक्तिगत गोपनीयता ऐन २०७५।",
+  "आफ्नो डेटा सच्याउन/हटाउन verifiednepal01@gmail.com मा सम्पर्क गर्नुहोस् — लक्ष्य ७ दिन। अरूका लागि दर्ता गर्दा उनीहरूको सहमति अनिवार्य छ। यो साइटले कहिल्यै पैसा चलाउँदैन। लागू कानून: व्यक्तिगत गोपनीयता ऐन २०७५।",
   "कानुनी रूपमा अंग्रेजी पाठ आधिकारिक हो, तर यहाँ दिइएको नेपाली विवरणले नै व्यवहार निर्धारण गर्छ।",
 ];
 
@@ -373,8 +373,8 @@ export function PrivacyPolicy({ language }: { language: Language }) {
         </p>
         <p className="mt-3 max-w-[44rem] border-l-2 border-ink pl-4 font-serif text-sm leading-6 text-muted-foreground">
           {language === "ne"
-            ? "सञ्चालक: एक निजी स्वयंसेवी (Maintainer)। लागू कानून: नेपालको व्यक्तिगत गोपनीयता ऐन, २०७५। सम्पर्क: REPLACE_ME_CONTACT।"
-            : "Maintainer: a single private volunteer. Governing law: Nepal, Individual Privacy Act, 2075. Contact: REPLACE_ME_CONTACT."}
+            ? "सञ्चालक: एक निजी स्वयंसेवी (Maintainer)। लागू कानून: नेपालको व्यक्तिगत गोपनीयता ऐन, २०७५। सम्पर्क: verifiednepal01@gmail.com।"
+            : "Maintainer: a single private volunteer. Governing law: Nepal, Individual Privacy Act, 2075. Contact: verifiednepal01@gmail.com."}
         </p>
         <Rule className="mt-6" />
         <div className="mt-8 max-w-[44rem] space-y-8">
