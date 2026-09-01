@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  DeleteCommand,
   GetCommand,
   PutCommand,
   QueryCommand,
@@ -14,6 +15,8 @@ const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
 const PUBLIC_OFFER_STATUSES = ["published", "matched", "fulfilled"];
 const MOD_STATUS = ["matched", "fulfilled", "archived"];
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const CLAIM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const FLAG_REASONS = ["already_received", "not_real", "other"];
 
 function json(status, body) {
   return {
@@ -54,7 +57,7 @@ function parseBody(event) {
   if (!str.trim()) return null;
   try {
     return JSON.parse(str);
-  } catch {
+  } catch (_e) {
     const e = new Error("Invalid JSON");
     e.status = 400;
     throw e;
@@ -86,6 +89,29 @@ function generateRefCode() {
   }
   if (bits > 0) out += BASE32_ALPHABET[(value << (5 - bits)) & 31];
   return out.slice(0, 12);
+}
+
+function generateClaimCode() {
+  const bytes = randomBytes(5);
+  let bits = 0;
+  let value = 0;
+  let out = "";
+  for (const b of bytes) {
+    value = (value << 8) | b;
+    bits += 8;
+    while (bits >= 5) {
+      out += CLAIM_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (out.length < 8) {
+    const extra = randomBytes(2);
+    for (const b of extra) {
+      if (out.length >= 8) break;
+      out += CLAIM_ALPHABET[b % CLAIM_ALPHABET.length];
+    }
+  }
+  return out.slice(0, 8);
 }
 
 function ttlSeconds(days = 30) {
@@ -135,13 +161,13 @@ async function verifyTurnstile(token, secret) {
       method: "POST",
       body: params,
     });
-  } catch {
+  } catch (_e) {
     throw err(400, "turnstile verification failed");
   }
   let data;
   try {
     data = await res.json();
-  } catch {
+  } catch (_e) {
     throw err(400, "turnstile verification failed");
   }
   if (!data.success) throw err(400, "turnstile verification failed");
@@ -158,7 +184,7 @@ function decodeCursor(cur) {
     const obj = JSON.parse(s);
     if (!obj || typeof obj !== "object" || typeof obj.PK !== "string" || typeof obj.SK !== "string") throw new Error();
     return obj;
-  } catch {
+  } catch (_e) {
     throw err(400, "invalid cursor");
   }
 }
@@ -173,19 +199,19 @@ function logAuthFail(token, err) {
       try {
         const headerJson = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
         if (headerJson && typeof headerJson.alg === "string") alg = headerJson.alg;
-      } catch {}
+      } catch (_e) {}
     }
     if (parts.length >= 2) {
       try {
         const payloadJson = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
         if (payloadJson && typeof payloadJson.iss === "string") iss = payloadJson.iss;
         if (payloadJson && payloadJson.aud !== undefined) aud = payloadJson.aud;
-      } catch {}
+      } catch (_e) {}
     }
-  } catch {}
+  } catch (_e) {}
   try {
     console.error(JSON.stringify({ tag: "auth_fail", reason: err.message, iss, aud, alg }));
-  } catch {}
+  } catch (_e) {}
 }
 
 async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
@@ -198,7 +224,7 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
-    try { logAuthFail(token, e); } catch {}
+    try { logAuthFail(token, e); } catch (_e) {}
     const ne = new Error(e.message || "Invalid token");
     ne.status = 401;
     throw ne;
@@ -213,7 +239,7 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: pk, SK: sk } }));
     existing = res.Item;
   } catch (e) {
-    try { console.error({ tag: "ddb_fail", op: "GetCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
+    try { console.error({ tag: "ddb_fail", op: "GetCommand", message: e instanceof Error ? e.message : String(e) }); } catch (_e) {}
     return json(500, { error: "storage" });
   }
   if (existing) {
@@ -221,7 +247,7 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     const email = existing.email ?? "";
     const name = existing.name ?? "";
     const emailResolved = Boolean(email);
-    try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch {}
+    try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
     return json(200, { sub: payload.sub, email, name, role });
   }
   const fetchFn = fetchImpl ?? globalThis.fetch;
@@ -231,18 +257,18 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   try {
     res = await fetchFn(url, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
   } catch (e) {
-    try { console.error({ tag: "userinfo_fail", status: undefined }); } catch {}
+    try { console.error({ tag: "userinfo_fail", status: undefined }); } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   if (!res || !res.ok) {
-    try { console.error({ tag: "userinfo_fail", status: res?.status }); } catch {}
+    try { console.error({ tag: "userinfo_fail", status: res?.status }); } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   let data;
   try {
     data = await res.json();
   } catch (e) {
-    try { console.error({ tag: "userinfo_fail", status: res.status }); } catch {}
+    try { console.error({ tag: "userinfo_fail", status: res.status }); } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   const rawEmail = data?.email ?? data?.primary_email;
@@ -250,7 +276,7 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   const email = typeof rawEmail === "string" && rawEmail.trim() ? rawEmail.trim() : undefined;
   const name = typeof rawName === "string" && rawName.trim() ? rawName.trim() : undefined;
   const emailResolved = Boolean(email);
-  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch {}
+  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
   const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const emailLower = (email || "").toLowerCase();
@@ -264,7 +290,7 @@ async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   try {
     await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   } catch (e) {
-    try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch {}
+    try { console.error({ tag: "ddb_fail", op: "PutCommand", message: e instanceof Error ? e.message : String(e) }); } catch (_e) {}
     return json(500, { error: "storage" });
   }
   return json(200, { sub: payload.sub, email: email ?? "", name: name ?? "", role });
@@ -280,7 +306,7 @@ async function requireAuth(event, { fetchJwks, getDdb, env }) {
     payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
-    try { logAuthFail(token, e); } catch {}
+    try { logAuthFail(token, e); } catch (_e) {}
     const ne = new Error(e.message || "Invalid token");
     ne.status = 401;
     throw ne;
@@ -294,7 +320,7 @@ async function requireAuth(event, { fetchJwks, getDdb, env }) {
   try {
     const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: pk, SK: sk } }));
     user = res.Item;
-  } catch {
+  } catch (_e) {
     throw err(500, "Failed to read user");
   }
   let role = user?.role;
@@ -460,13 +486,17 @@ async function handleGetStatus(event, { getDdb, env }, refCode) {
   if (!ref) throw err(404, "not found");
   const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${ref.needId}`, SK: "META" } }))).Item;
   if (!need) throw err(404, "not found");
-  return json(200, {
+  const out = {
     status: need.status,
     category: need.category,
     district: need.beneficiary?.district || need.district,
     createdAt: need.createdAt,
     expiresAt: need.expiresAt || toExpiresAt(need.ttl),
-  });
+  };
+  if (need.claimCode && ["published", "matched", "fulfilled"].includes(need.status)) {
+    out.claimCode = need.claimCode;
+  }
+  return json(200, out);
 }
 
 async function handlePostRenew(event, { getDdb, env }, refCode) {
@@ -747,7 +777,26 @@ async function handlePostModeration(event, opts, id) {
   if (newStatus === "rejected") {
     item.rejectReason = reason.trim();
   }
+  let mintedClaimCode = null;
+  if (type === "NEED" && newStatus === "published") {
+    for (let tries = 0; tries < 5; tries++) {
+      const code = generateClaimCode();
+      const existing = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CLAIM#${code}`, SK: "META" } })).catch(() => ({ Item: undefined }));
+      if (!existing.Item) { mintedClaimCode = code; break; }
+      if (tries === 4) throw err(500, "Failed to generate claimCode");
+    }
+    item.claimCode = mintedClaimCode;
+  }
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  if (type === "NEED" && newStatus === "rejected") {
+    try {
+      await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: "FLAGGED", SK: id } }));
+    } catch (_e) {}
+  }
+  if (mintedClaimCode) {
+    const claimPtr = { PK: `CLAIM#${mintedClaimCode}`, SK: "META", type: "CLAIM", claimCode: mintedClaimCode, needId: id, createdAt: new Date().toISOString() };
+    await ddb.send(new PutCommand({ TableName: tableName, Item: claimPtr }));
+  }
   const nowIso = new Date().toISOString();
   const ym = nowIso.slice(0, 7);
   const audit = {
@@ -766,7 +815,9 @@ async function handlePostModeration(event, opts, id) {
   if (!audit.reason) delete audit.reason;
   if (!audit.edits) delete audit.edits;
   await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
-  return json(200, { status: newStatus });
+  const resp = { status: newStatus };
+  if (mintedClaimCode) resp.claimCode = mintedClaimCode;
+  return json(200, resp);
 }
 
 async function handlePostNeedStatus(event, opts, needId) {
@@ -789,6 +840,16 @@ async function handlePostNeedStatus(event, opts, needId) {
   need.gsi2sk = need.createdAt;
   if (offerId) need.matchedOfferId = offerId;
   await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
+  if (status === "archived") {
+    try {
+      await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: "FLAGGED", SK: needId } }));
+    } catch (_e) {}
+  }
+  if (status === "rejected") {
+    try {
+      await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: "FLAGGED", SK: needId } }));
+    } catch (_e) {}
+  }
   const nowIso = new Date().toISOString();
   const ym = nowIso.slice(0, 7);
   const audit = {
@@ -825,6 +886,263 @@ async function handlePostNeedStatus(event, opts, needId) {
   return json(200, { status });
 }
 
+function csvEscape(val) {
+  const s = String(val ?? "");
+  if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function isValidISO(s) {
+  if (typeof s !== "string") return false;
+  const d = new Date(s);
+  return !Number.isNaN(d.getTime()) && d.toISOString() === s || !Number.isNaN(Date.parse(s));
+}
+
+async function performRedeem({ ddb, tableName, claimCode, providedRedeemedAt, note, auth }) {
+  const claim = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CLAIM#${claimCode}`, SK: "META" } }))).Item;
+  if (!claim) return { status: "unknown" };
+  const needId = claim.needId;
+  const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${needId}`, SK: "META" } }))).Item;
+  if (!need) return { status: "unknown" };
+  if (need.redeemedAt) {
+    return { status: "already_redeemed", needId, redeemedAt: need.redeemedAt };
+  }
+  const redeemedAt = providedRedeemedAt || new Date().toISOString();
+  if (providedRedeemedAt) {
+    const d = new Date(providedRedeemedAt);
+    if (Number.isNaN(d.getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
+  }
+  const district = need.beneficiary?.district || need.district || "";
+  const ward = need.beneficiary?.ward ?? need.ward;
+  if (!district || ward === undefined) throw err(500, "need missing district/ward");
+  need.status = "fulfilled";
+  need.redeemedAt = redeemedAt;
+  need.gsi1pk = `NEED#${district}#fulfilled`;
+  need.gsi1sk = need.createdAt;
+  need.gsi2pk = `NEED#fulfilled`;
+  need.gsi2sk = need.createdAt;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
+  const masked = maskName(need.beneficiary?.name || "");
+  const ledgerBase = { type: "LEDGER", needId, claimCode, maskedName: masked, category: need.category, district, ward, redeemedAt };
+  if (note !== undefined && note !== null && String(note).trim() !== "") {
+    const n = String(note).trim();
+    if (n.length > 500) throw err(400, "note too long");
+    ledgerBase.note = n;
+  }
+  const item1 = { PK: `LEDGER#${district}#${ward}`, SK: `${redeemedAt}#${needId}`, ...ledgerBase };
+  const item2 = { PK: `LEDGER#${district}`, SK: `${redeemedAt}#${needId}`, ...ledgerBase };
+  await ddb.send(new PutCommand({ TableName: tableName, Item: item1 }));
+  await ddb.send(new PutCommand({ TableName: tableName, Item: item2 }));
+  const nowIso = new Date().toISOString();
+  const ym = nowIso.slice(0, 7);
+  const audit = { PK: `AUDIT#${ym}`, SK: `${nowIso}#${auth.payload.sub}`, type: "AUDIT", action: "redeem", targetId: needId, targetType: "NEED", claimCode, actorSub: auth.payload.sub, createdAt: nowIso, redeemedAt, note: ledgerBase.note };
+  if (!audit.note) delete audit.note;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: audit }));
+  return { status: "redeemed", needId, redeemedAt };
+}
+
+async function handleRedeem(event, opts, code) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  const body = parseBody(event) || {};
+  let note;
+  if (body.note !== undefined && body.note !== null) {
+    if (typeof body.note !== "string") throw err(400, "note must be string");
+    const t = body.note.trim();
+    if (t.length > 500) throw err(400, "note too long");
+    if (t) note = t;
+  }
+  const ddb = auth.ddb;
+  const tableName = auth.tableName;
+  if (!code || typeof code !== "string" || !code.trim()) throw err(400, "code required");
+  const claimCode = code.trim().toUpperCase();
+  const result = await performRedeem({ ddb, tableName, claimCode, providedRedeemedAt: undefined, note, auth });
+  if (result.status === "unknown") throw err(404, "unknown claim code");
+  if (result.status === "already_redeemed") {
+    return json(409, { error: "already_redeemed", redeemedAt: result.redeemedAt });
+  }
+  return json(200, { status: "redeemed", needId: result.needId, redeemedAt: result.redeemedAt });
+}
+
+async function handleSync(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  const body = parseBody(event);
+  if (!body || typeof body !== "object" || !Array.isArray(body.redemptions)) throw err(400, "redemptions must be array");
+  const redemptions = body.redemptions;
+  if (redemptions.length > 200) throw err(400, "max 200 redemptions");
+  const ddb = auth.ddb;
+  const tableName = auth.tableName;
+  const results = [];
+  for (const r of redemptions) {
+    if (!r || typeof r !== "object" || typeof r.code !== "string" || !r.code.trim()) {
+      results.push({ code: r?.code ?? "", status: "unknown" });
+      continue;
+    }
+    const code = r.code.trim().toUpperCase();
+    if (!r.redeemedAt || typeof r.redeemedAt !== "string") {
+      throw err(400, "redeemedAt required and must be ISO string");
+    }
+    const d = new Date(r.redeemedAt);
+    if (Number.isNaN(d.getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
+    const iso = d.toISOString();
+    let note;
+    if (r.note !== undefined && r.note !== null) {
+      if (typeof r.note !== "string") throw err(400, "note must be string");
+      const t = r.note.trim();
+      if (t.length > 500) throw err(400, "note too long");
+      if (t) note = t;
+    }
+    const res = await performRedeem({ ddb, tableName, claimCode: code, providedRedeemedAt: iso, note, auth });
+    if (res.status === "unknown") results.push({ code, status: "unknown" });
+    else if (res.status === "already_redeemed") results.push({ code, status: "already_redeemed", needId: res.needId });
+    else results.push({ code, status: "redeemed", needId: res.needId });
+  }
+  return json(200, { results });
+}
+
+async function handlePrint(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  const q = getQuery(event);
+  const district = q.district ? String(q.district).trim() : "";
+  const wardRaw = q.ward ? String(q.ward).trim() : "";
+  if (!district) throw err(400, "district required");
+  if (!wardRaw) throw err(400, "ward required");
+  const ward = Number(wardRaw);
+  if (!Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
+  const ddb = auth.ddb;
+  const tableName = auth.tableName;
+  let items = [];
+  for (const status of ["published", "matched"]) {
+    const pk = `NEED#${district}#${status}`;
+    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk } }));
+    if (res.Items) items.push(...res.Items);
+  }
+  items = items.filter((it) => (it.beneficiary?.ward ?? it.ward) === ward);
+  const mapped = items.map((it) => ({ claimCode: it.claimCode, maskedName: maskName(it.beneficiary?.name || ""), category: it.category, ward: it.beneficiary?.ward ?? it.ward, status: it.status }));
+  mapped.sort((a, b) => a.maskedName.localeCompare(b.maskedName));
+  return json(200, { items: mapped });
+}
+
+async function handleLedger(event, { getDdb, env }) {
+  const q = getQuery(event);
+  const district = q.district ? String(q.district).trim() : "";
+  const wardRaw = q.ward ? String(q.ward).trim() : "";
+  const format = q.format ? String(q.format).trim().toLowerCase() : "json";
+  if (format !== "json" && format !== "csv") throw err(400, "format must be json or csv");
+  if (!district) throw err(400, "district required");
+  let ward;
+  if (wardRaw) {
+    ward = Number(wardRaw);
+    if (!Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
+  }
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  let pk;
+  if (ward !== undefined) pk = `LEDGER#${district}#${ward}`;
+  else pk = `LEDGER#${district}`;
+  const res = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
+  const rawItems = res.Items || [];
+  const items = rawItems.map((it) => ({ maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt }));
+  if (format === "csv") {
+    const header = ["maskedName", "category", "district", "ward", "redeemedAt"].map(csvEscape).join(",");
+    const rows = items.map((it) => [it.maskedName, it.category, it.district, String(it.ward), it.redeemedAt].map(csvEscape).join(","));
+    const csv = [header, ...rows].join("\n");
+    return { statusCode: 200, headers: { "content-type": "text/csv", "cache-control": "public, max-age=60" }, body: csv };
+  }
+  return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify({ items }) };
+}
+
+async function handlePostFlag(event, { getDdb, env }, needId) {
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { reason, details, turnstileToken } = body;
+  if (!FLAG_REASONS.includes(reason)) throw err(400, `reason must be one of ${FLAG_REASONS.join(",")}`);
+  let cleanDetails;
+  if (details !== undefined && details !== null) {
+    if (typeof details !== "string") throw err(400, "details must be string");
+    if (details.length > 500) throw err(400, "details too long");
+    cleanDetails = details;
+  }
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  const tableName = env.TABLE_NAME;
+  if (!tableName) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${needId}`, SK: "META" } }))).Item;
+  if (!need) throw err(404, "not found");
+  const nowIso = new Date().toISOString();
+  const flagItem = { PK: `NEED#${needId}`, SK: `FLAG#${nowIso}#${randomUUID().slice(0,8)}`, type: "FLAG", needId, reason, details: cleanDetails, createdAt: nowIso };
+  if (!flagItem.details) delete flagItem.details;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: flagItem }));
+  need.flagCount = (need.flagCount || 0) + 1;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
+  const maskedName = maskName(need.beneficiary?.name || "");
+  const district = need.beneficiary?.district || need.district || "";
+  const ward = need.beneficiary?.ward ?? need.ward;
+  const pointer = {
+    PK: "FLAGGED",
+    SK: needId,
+    type: "FLAGGED",
+    needId,
+    flagCount: need.flagCount,
+    maskedName,
+    district,
+    ward,
+    updatedAt: nowIso,
+  };
+  await ddb.send(new PutCommand({ TableName: tableName, Item: pointer }));
+  return json(201, { ok: true });
+}
+
+async function handleGetFlags(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const pointers = [];
+  let ExclusiveStartKey;
+  do {
+    const res = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": "FLAGGED" },
+        ...(ExclusiveStartKey ? { ExclusiveStartKey } : {}),
+      }),
+    );
+    if (res.Items) pointers.push(...res.Items);
+    ExclusiveStartKey = res.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  const out = [];
+  for (const p of pointers) {
+    const needId = p.needId || p.SK;
+    const flagRes = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+        ExpressionAttributeValues: { ":pk": `NEED#${needId}`, ":prefix": "FLAG#" },
+      }),
+    );
+    const flags = (flagRes.Items || [])
+      .map((f) => ({ reason: f.reason, details: f.details, createdAt: f.createdAt }))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    out.push({
+      needId,
+      maskedName: p.maskedName,
+      ward: p.ward,
+      district: p.district,
+      flagCount: p.flagCount,
+      flags,
+    });
+  }
+  out.sort((a, b) => b.flagCount - a.flagCount || a.maskedName.localeCompare(b.maskedName));
+  return json(200, { items: out });
+}
+
 
 function getTokenEndpoint(env) {
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
@@ -853,13 +1171,13 @@ async function handleAuthExchange(event, { env, fetchImpl }) {
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: params.toString(),
     });
-  } catch {
+  } catch (_e) {
     throw err(400, "token exchange failed");
   }
   let data;
   try {
     data = await res.json();
-  } catch {
+  } catch (_e) {
     data = null;
   }
   if (res.ok) {
@@ -889,13 +1207,13 @@ async function handleAuthRefresh(event, { env, fetchImpl }) {
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: params.toString(),
     });
-  } catch {
+  } catch (_e) {
     throw err(400, "token refresh failed");
   }
   let data;
   try {
     data = await res.json();
-  } catch {
+  } catch (_e) {
     data = null;
   }
   if (res.ok) {
@@ -950,6 +1268,18 @@ export function createHandler(opts = {}) {
         const id = decodeURIComponent(path.split("/")[2]);
         return await handlePostNeedStatus(event, { fetchJwks, getDdb, env }, id);
       }
+      if (method === "POST" && /^\/claims\/[^\/]+\/redeem$/.test(path)) {
+        const code = decodeURIComponent(path.split("/")[2]);
+        return await handleRedeem(event, { fetchJwks, getDdb, env }, code);
+      }
+      if (method === "POST" && path === "/claims/sync") return await handleSync(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/claims/print") return await handlePrint(event, { fetchJwks, getDdb, env });
+      if (method === "GET" && path === "/ledger") return await handleLedger(event, { getDdb, env });
+      if (method === "POST" && /^\/needs\/[^\/]+\/flag$/.test(path)) {
+        const id = decodeURIComponent(path.split("/")[2]);
+        return await handlePostFlag(event, { getDdb, env }, id);
+      }
+      if (method === "GET" && path === "/moderation/flags") return await handleGetFlags(event, { fetchJwks, getDdb, env });
       return json(404, { error: "Not Found" });
     } catch (e) {
       const status = e.status ?? e.statusCode ?? 500;

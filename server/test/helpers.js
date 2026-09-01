@@ -87,6 +87,9 @@ export class FakeDdb {
         const firstKey = Object.keys(vals)[0];
         if (firstKey) pkVal = vals[firstKey];
       }
+      const expr = input.KeyConditionExpression || "";
+      const hasBegins = expr.includes("begins_with");
+      const hasPkCond = expr.includes("PK =") || expr.includes("PK=") || vals[":pk"] !== undefined;
       if (pkVal) {
         if (input.IndexName === "GSI1") {
           items = items.filter((it) => it.gsi1pk === pkVal);
@@ -94,12 +97,27 @@ export class FakeDdb {
         } else if (input.IndexName === "GSI2") {
           items = items.filter((it) => it.gsi2pk === pkVal);
           items.sort((a, b) => (a.gsi2sk || "").localeCompare(b.gsi2sk || ""));
+        } else if (!input.IndexName) {
+          if (hasBegins && vals[":prefix"] !== undefined) {
+            const prefix = vals[":prefix"];
+            items = items.filter((it) => it.PK === pkVal && typeof it.SK === "string" && it.SK.startsWith(prefix));
+          } else if (hasBegins && vals[":skPrefix"] !== undefined) {
+            const prefix = vals[":skPrefix"];
+            items = items.filter((it) => it.PK === pkVal && typeof it.SK === "string" && it.SK.startsWith(prefix));
+          } else {
+            items = items.filter((it) => it.PK === pkVal);
+          }
+          items.sort((a, b) => (a.SK || "").localeCompare(b.SK || ""));
         } else {
           items = items.filter((it) => it.gsi1pk === pkVal || it.gsi2pk === pkVal);
           items.sort((a, b) => (a.gsi1sk || a.gsi2sk || "").localeCompare(b.gsi1sk || b.gsi2sk || ""));
         }
         if (input.ScanIndexForward === false) items.reverse();
       } else {
+        if (input.IndexName === undefined && hasPkCond) {
+          // no pkVal resolved but expression references PK - treat as empty
+          items = [];
+        }
         items.sort((a, b) => (a.gsi1sk || a.gsi2sk || "").localeCompare(b.gsi1sk || b.gsi2sk || ""));
         if (input.ScanIndexForward === false) items.reverse();
       }
@@ -118,7 +136,12 @@ export class FakeDdb {
       }
       return result;
     }
-    if (name === "UpdateCommand" || name === "DeleteCommand") {
+    if (name === "DeleteCommand") {
+      const k = this.key(input.Key.PK, input.Key.SK);
+      this.store.delete(k);
+      return {};
+    }
+    if (name === "UpdateCommand") {
       throw new Error(`unknown command ${name} - use Put/Get for tests`);
     }
     throw new Error(`unknown command ${name}`);
