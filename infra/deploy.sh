@@ -27,6 +27,8 @@ case "$ENV" in
     export VITE_CHAT_WIDGET_SRC=https://onyutils-chat-widget.pages.dev/onyutils-chat.js
     export VITE_CHAT_KEY=ou_chatpk_34G34ZplIA7A1WqqRT9ri
     export VITE_CHAT_API=https://chat.onlyutils.com
+    # public Turnstile site key; one widget covers verifiednepal.com + dev + localhost
+    export VITE_TURNSTILE_SITE_KEY=0x4AAAAAAEkBp90mEl2o4Ebs
     ;;
   *) echo "unknown env: $ENV" >&2; exit 1 ;;
 esac

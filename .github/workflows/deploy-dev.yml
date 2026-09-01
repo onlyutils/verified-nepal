@@ -31,3 +31,4 @@ jobs:
           VITE_CHAT_API: ${{ vars.VITE_CHAT_API }}
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
           VITE_OU_CLIENT_ID: ${{ vars.VITE_OU_CLIENT_ID }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
