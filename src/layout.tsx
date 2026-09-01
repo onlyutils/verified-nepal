@@ -58,13 +58,12 @@ export function Masthead({
     <header className={shell}>
       {/* Below lg: one slim row replaces the newspaper masthead. */}
       <div className="flex items-center justify-between gap-2 py-2.5 lg:hidden">
-        <p className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden font-sans text-[0.6rem] uppercase tracking-[0.1em] text-muted">
-          <span className="min-w-0 truncate">{districts}</span>
-          <span aria-hidden="true" className="shrink-0">·</span>
-          <button type="button" onClick={() => navigate("desk")} className={`shrink-0 font-semibold text-ink ${focusRing}`}>
+        <div className="flex min-w-0 flex-1 flex-col items-start overflow-hidden font-sans text-[0.6rem] uppercase tracking-[0.1em] text-muted">
+          <span className="min-w-0 max-w-full truncate">{districts}</span>
+          <button type="button" onClick={() => navigate("desk")} className={`font-semibold text-ink ${focusRing}`}>
             {t.deskTitle}
           </button>
-        </p>
+        </div>
         <button type="button" onClick={() => navigate("dashboard")} className={`shrink-0 ${focusRing}`}>
           <span lang={language === "ne" ? "ne" : "en"} className="font-display text-sm font-black uppercase leading-none tracking-[0.03em] text-ink">
             {language === "ne" ? "भेरिफाइड नेपाल" : "Verified Nepal"}
@@ -76,16 +75,15 @@ export function Masthead({
       </div>
 
       {/* lg and up: the full newspaper masthead. */}
-      <div className="hidden items-end gap-4 py-5 text-left lg:grid lg:grid-cols-[1fr_auto_1fr]">
-        <p className="flex min-w-0 items-center gap-1.5 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted">
-          <span className="min-w-0 truncate">
+      <div className="hidden items-center gap-4 py-5 text-left lg:grid lg:grid-cols-[1fr_auto_1fr]">
+        <div className="flex min-w-0 flex-col items-start font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted">
+          <span className="min-w-0 max-w-full truncate">
             {districts} <span aria-hidden="true">·</span> {t.floodName}
           </span>
-          <span aria-hidden="true" className="shrink-0">·</span>
-          <button type="button" onClick={() => navigate("desk")} className={`shrink-0 font-semibold text-ink ${focusRing}`}>
+          <button type="button" onClick={() => navigate("desk")} className={`font-semibold text-ink ${focusRing}`}>
             {t.deskTitle}
           </button>
-        </p>
+        </div>
         <button type="button" onClick={() => navigate("dashboard")} className={`mx-auto block text-center ${focusRing}`}>
           {language === "ne" ? (
             <>
@@ -106,7 +104,6 @@ export function Masthead({
               </span>
             </>
           )}
-          <span className="mt-3 hidden font-serif text-sm italic text-muted sm:block">{t.unofficial}</span>
         </button>
         <EditionLine language={language} />
       </div>
