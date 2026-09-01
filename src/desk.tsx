@@ -33,7 +33,9 @@ import {
 } from "./api";
 import guidelinesRaw from "../docs/MODERATION-GUIDELINES.md?raw";
 import { useGoogleAuth } from "./auth";
-import { SimpleMarkdown } from "./ui";
+import { Headline, SimpleMarkdown, focusRing } from "./ui";
+import { apiErrorMessage } from "./api-error";
+import { deskStrings } from "./i18n-desk";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +50,6 @@ import { districtLabels, districtNames } from "./geo";
 import { labels } from "./i18n";
 import type { Language } from "./types";
 import { fillTemplate } from "./edition";
-import QRCode from "qrcode";
 
 function statusBadgeVariant(status: string) {
   if (status === "published") return "default";
@@ -70,11 +71,13 @@ function QrCell({ code }: { code: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    QRCode.toDataURL(code, { width: 64, margin: 1 })
-      .then((u) => {
+    (async () => {
+      try {
+        const mod = await import("qrcode");
+        const u = await mod.default.toDataURL(code, { width: 64, margin: 1 });
         if (!cancelled) setUrl(u);
-      })
-      .catch(() => {});
+      } catch {}
+    })();
     return () => {
       cancelled = true;
     };
@@ -85,9 +88,11 @@ function QrCell({ code }: { code: string }) {
 
 export function Desk({ language }: { language: Language }) {
   const t = labels[language];
+  const ds = deskStrings[language];
   const auth = useGoogleAuth();
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
+  const [ackedNow, setAckedNow] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "admin">("queue");
 
@@ -97,11 +102,17 @@ export function Desk({ language }: { language: Language }) {
   const [selectedOfferId, setSelectedOfferId] = useState<Record<string, string>>({});
   const [matchedContact, setMatchedContact] = useState<Record<string, unknown>>({});
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const actionMsgTimerRef = useRef<number | null>(null);
 
   const [rejectId, setRejectId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [rejectCode, setRejectCode] = useState("");
+  const [rejectDetail, setRejectDetail] = useState("");
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [publishConfirmed, setPublishConfirmed] = useState<Record<string, boolean>>({});
+  const [archiveConfirmId, setArchiveConfirmId] = useState<string | null>(null);
+  const [fulfillConfirmId, setFulfillConfirmId] = useState<string | null>(null);
 
   // Projects moderation
   const [projects, setProjects] = useState<ModerationProjectItem[]>([]);
@@ -109,7 +120,8 @@ export function Desk({ language }: { language: Language }) {
   const [projectsError, setProjectsError] = useState<string|null>(null);
   const [projectActionLoading, setProjectActionLoading] = useState<string|null>(null);
   const [projectRejectId, setProjectRejectId] = useState<string|null>(null);
-  const [projectRejectReason, setProjectRejectReason] = useState("");
+  const [projectRejectCode, setProjectRejectCode] = useState("");
+  const [projectRejectDetail, setProjectRejectDetail] = useState("");
   const [projectRejectError, setProjectRejectError] = useState<string|null>(null);
   const [verifyConfirmId, setVerifyConfirmId] = useState<string|null>(null);
   const [photoActionLoading, setPhotoActionLoading] = useState<string|null>(null);
@@ -121,7 +133,8 @@ export function Desk({ language }: { language: Language }) {
   const [dispatchesError, setDispatchesError] = useState<string|null>(null);
   const [dispatchActionLoading, setDispatchActionLoading] = useState<string|null>(null);
   const [dispatchRejectId, setDispatchRejectId] = useState<string|null>(null);
-  const [dispatchRejectReason, setDispatchRejectReason] = useState("");
+  const [dispatchRejectCode, setDispatchRejectCode] = useState("");
+  const [dispatchRejectDetail, setDispatchRejectDetail] = useState("");
   const [dispatchRejectError, setDispatchRejectError] = useState<string|null>(null);
 
   // Print
@@ -150,6 +163,7 @@ export function Desk({ language }: { language: Language }) {
   // Guidelines gate
   const [ackLoading, setAckLoading] = useState(false);
   const [ackError, setAckError] = useState<string | null>(null);
+  const [guidelinesChecked, setGuidelinesChecked] = useState(false);
 
   // Admin tab
   const [adminLookupEmail, setAdminLookupEmail] = useState("");
@@ -177,7 +191,7 @@ export function Desk({ language }: { language: Language }) {
       setQueue(res.items);
     } catch (e) {
       const err = e as ApiError;
-      setQueueError(err.message || t.deskQueueError);
+      setQueueError(apiErrorMessage(e, language));
     } finally {
       setQueueLoading(false);
     }
@@ -206,7 +220,7 @@ export function Desk({ language }: { language: Language }) {
       setFlags(res.items);
     } catch (e) {
       const err = e as ApiError;
-      setFlagsError(err.message || t.deskFlagsError);
+      setFlagsError(apiErrorMessage(e, language));
     } finally {
       setFlagsLoading(false);
     }
@@ -221,7 +235,7 @@ export function Desk({ language }: { language: Language }) {
       setDispatches(res.items);
     } catch (e) {
       const err = e as ApiError;
-      setDispatchesError(err.message || (t as Record<string,string>).deskDispatchesError);
+      setDispatchesError(apiErrorMessage(e, language));
     } finally {
       setDispatchesLoading(false);
     }
@@ -236,24 +250,27 @@ export function Desk({ language }: { language: Language }) {
       setActionMsg((t as Record<string,string>).deskActionSuccess);
     } catch (e) {
       const err = e as ApiError;
-      setDispatchesError(err.message || (t as Record<string,string>).deskDispatchesError);
+      setDispatchesError(apiErrorMessage(e, language));
     } finally {
       setDispatchActionLoading(null);
     }
   };
   const handleDispatchReject = async () => {
     if (!auth.idToken || !dispatchRejectId) return;
-    if (!dispatchRejectReason.trim()) { setDispatchRejectError((t as Record<string,string>).deskDispatchesRejectPlaceholder); return; }
+    const reason = formatRejectReason(dispatchRejectCode, dispatchRejectDetail);
+    if (!dispatchRejectCode) { setDispatchRejectError(t.deskRejectReasonRequired); return; }
+    if (!reason.trim()) { setDispatchRejectError(t.deskRejectReasonRequired); return; }
+    clearActionFeedback();
     setDispatchActionLoading(dispatchRejectId);
     try {
-      await moderateDispatch(auth.idToken, dispatchRejectId, { action: "reject", reason: dispatchRejectReason.trim() });
+      await moderateDispatch(auth.idToken, dispatchRejectId, { action: "reject", reason });
       setDispatchRejectId(null);
-      setDispatchRejectReason("");
+      setDispatchRejectCode("");
+      setDispatchRejectDetail("");
       await loadDispatches();
-      setActionMsg((t as Record<string,string>).deskActionSuccess);
+      setSuccessMsg((t as Record<string,string>).deskActionSuccess);
     } catch (e) {
-      const err = e as ApiError;
-      setDispatchRejectError(err.message || (t as Record<string,string>).deskDispatchesError);
+      setDispatchRejectError(apiErrorMessage(e, language));
     } finally {
       setDispatchActionLoading(null);
     }
@@ -268,7 +285,7 @@ export function Desk({ language }: { language: Language }) {
       setProjects(res.items);
     } catch (e) {
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally {
       setProjectsLoading(false);
     }
@@ -282,7 +299,7 @@ export function Desk({ language }: { language: Language }) {
       await loadProjects();
     } catch (e) {
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally {
       setProjectActionLoading(null);
       setVerifyConfirmId(null);
@@ -296,21 +313,25 @@ export function Desk({ language }: { language: Language }) {
       await loadProjects();
     } catch(e){
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally { setProjectActionLoading(null); }
   };
   const handleProjectReject = async () => {
     if (!auth.idToken || !projectRejectId) return;
-    if (!projectRejectReason.trim()) { setProjectRejectError((t as Record<string,string>).deskProjectsRejectPlaceholder); return; }
+    const reason = formatRejectReason(projectRejectCode, projectRejectDetail);
+    if (!projectRejectCode) { setProjectRejectError(t.deskRejectReasonRequired); return; }
+    if (!reason.trim()) { setProjectRejectError(t.deskRejectReasonRequired); return; }
+    clearActionFeedback();
     setProjectActionLoading(projectRejectId);
     try{
-      await moderateProject(auth.idToken, projectRejectId, { action: "reject", reason: projectRejectReason.trim() });
+      await moderateProject(auth.idToken, projectRejectId, { action: "reject", reason });
       setProjectRejectId(null);
-      setProjectRejectReason("");
+      setProjectRejectCode("");
+      setProjectRejectDetail("");
       await loadProjects();
+      setSuccessMsg((t as Record<string,string>).deskActionSuccess);
     } catch(e){
-      const err = e as ApiError;
-      setProjectRejectError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectRejectError(apiErrorMessage(e, language));
     } finally { setProjectActionLoading(null); }
   };
   const handleSetStatus = async (id: string) => {
@@ -323,7 +344,7 @@ export function Desk({ language }: { language: Language }) {
       await loadProjects();
     } catch(e){
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally { setProjectActionLoading(null); }
   };
   const handlePhotoAction = async (projectId: string, fileId: string, action: "publish-photo"|"reject-photo") => {
@@ -334,7 +355,7 @@ export function Desk({ language }: { language: Language }) {
       await loadProjects();
     } catch(e){
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally { setPhotoActionLoading(null); }
   };
   const handleUpdateAction = async (projectId: string, updateId: string, action: "publish"|"reject") => {
@@ -345,7 +366,7 @@ export function Desk({ language }: { language: Language }) {
       await loadProjects();
     } catch(e){
       const err = e as ApiError;
-      setProjectsError(err.message || (t as Record<string,string>).deskProjectsError);
+      setProjectsError(apiErrorMessage(e, language));
     } finally { setPhotoActionLoading(null); }
   };
 
@@ -359,7 +380,7 @@ export function Desk({ language }: { language: Language }) {
       setPrintItems(res.items);
     } catch (e) {
       const err = e as ApiError;
-      setPrintError(err.message || t.deskPrintError);
+      setPrintError(apiErrorMessage(e, language));
       setPrintItems([]);
     } finally {
       setPrintLoading(false);
@@ -377,7 +398,7 @@ export function Desk({ language }: { language: Language }) {
       return;
     }
     if (lines.length > 200) {
-      setSyncError("Max 200 codes");
+      setSyncError(ds.syncMaxCodes);
       return;
     }
     const redemptions = lines.map((line) => {
@@ -391,11 +412,11 @@ export function Desk({ language }: { language: Language }) {
     try {
       const res = await syncClaims(auth.idToken, { redemptions });
       setSyncResults(res.results);
-      setActionMsg(t.deskActionSuccess);
+      setSuccessMsg(t.deskActionSuccess);
       loadBoards();
     } catch (e) {
       const err = e as ApiError;
-      setSyncError(err.message || t.deskActionError);
+      setSyncError(apiErrorMessage(e, language));
     } finally {
       setSyncLoading(false);
     }
@@ -403,20 +424,20 @@ export function Desk({ language }: { language: Language }) {
 
   const handleRedeem = async () => {
     if (!auth.idToken || !redeemCode) return;
+    clearActionFeedback();
     setActionLoading(redeemCode);
     try {
       await redeemClaim(auth.idToken, redeemCode, { note: redeemNote || undefined });
-      setActionMsg(t.deskRedeemSuccess);
+      setSuccessMsg(t.deskRedeemSuccess);
       setRedeemCode(null);
       setRedeemNote("");
       loadBoards();
     } catch (e) {
-      const err = e as ApiError;
-      const body = err.body as Record<string, unknown> | null;
-      const errCode = body && typeof body.error === "string" ? body.error : err.message;
-      if (errCode === "already_redeemed" || err.status === 409) setActionMsg(t.deskRedeemAlready);
-      else if (err.status === 404) setActionMsg(t.deskRedeemUnknown);
-      else setActionMsg(err.message || t.deskActionError);
+      const body = (e as ApiError).body as Record<string, unknown> | null;
+      const errCode = body && typeof body.error === "string" ? body.error : (e as ApiError).message;
+      if (errCode === "already_redeemed" || (e as ApiError).status === 409) setActionError(t.deskRedeemAlready);
+      else if ((e as ApiError).status === 404) setActionError(t.deskRedeemUnknown);
+      else setActionError(apiErrorMessage(e, language));
       setRedeemCode(null);
     } finally {
       setActionLoading(null);
@@ -430,7 +451,7 @@ export function Desk({ language }: { language: Language }) {
   const filteredNeeds = isScoped ? publishedNeeds.filter((n) => (auth.profile?.districts ?? []).includes(String(n.district))) : publishedNeeds;
   const filteredProjects = isScoped ? projects.filter((pr)=> (auth.profile?.districts ?? []).includes(String((pr as unknown as Record<string,unknown>).district ?? pr.district))) : projects;
   const filteredOffers = isScoped ? offers.filter((o)=> o.districts.some(d=> (auth.profile?.districts ?? []).includes(d)) || o.districts.length===0) : offers;
-  const filteredPrintItems = isScoped ? printItems.filter((p) => (auth.profile?.districts ?? []).includes(String((p as unknown as Record<string,unknown>).district ?? "")) || true) : printItems;
+  const filteredPrintItems = isScoped ? printItems.filter((p) => (auth.profile?.districts ?? []).includes(String((p as unknown as Record<string,unknown>).district ?? ""))) : printItems;
 
   const loadAdminModerators = async () => {
     if (!auth.idToken) return;
@@ -456,27 +477,45 @@ export function Desk({ language }: { language: Language }) {
       setAdminStats(res);
     } catch (e) {
       const err = e as ApiError;
-      setAdminStatsError(err.message || (t as Record<string,string>).deskAdminStatsError);
+      setAdminStatsError(apiErrorMessage(e, language));
     } finally { setAdminStatsLoading(false); }
+  };
+
+  const clearActionFeedback = () => {
+    setActionMsg(null);
+    setActionError(null);
+    if (actionMsgTimerRef.current) {
+      window.clearTimeout(actionMsgTimerRef.current);
+      actionMsgTimerRef.current = null;
+    }
+  };
+  const setSuccessMsg = (msg: string) => {
+    setActionError(null);
+    setActionMsg(msg);
+    if (actionMsgTimerRef.current) window.clearTimeout(actionMsgTimerRef.current);
+    actionMsgTimerRef.current = window.setTimeout(() => setActionMsg(null), 6000);
+  };
+  const formatRejectReason = (code: string, detail: string) => {
+    const c = code.trim();
+    const d = detail.trim();
+    if (!c) return d;
+    return d ? `${c}: ${d}` : c;
   };
 
   const handleAck = async () => {
     if (!auth.idToken) return;
+    if (!guidelinesChecked) {
+      setAckError(ds.guidelinesAckRequired);
+      return;
+    }
     setAckLoading(true);
     setAckError(null);
     try {
-      const res = await ackGuidelines(auth.idToken);
-      const updated = { ...auth.profile, guidelinesAckAt: res.guidelinesAckAt } as typeof auth.profile;
-      // mutate auth profile in place via hack: reload page or set via setProfile not exposed; store in session and reload
-      // Instead, update local state by forcing reload of /me via page reload
-      // We will directly patch profile by reusing auth.profile object reference update and trigger re-render by setting a dummy
-      if (auth.profile) (auth.profile as Record<string,unknown>).guidelinesAckAt = res.guidelinesAckAt;
-      window.location.reload();
+      await ackGuidelines(auth.idToken);
+      setAckedNow(true);
+      setGuidelinesChecked(false);
     } catch (e) {
-      const err = e as ApiError;
-      const body = err.body as Record<string, unknown> | null;
-      const code = body && typeof body.error === "string" ? body.error : err.message;
-      setAckError(code || (t as Record<string,string>).deskGuidelinesAckError);
+      setAckError(apiErrorMessage(e, language));
     } finally { setAckLoading(false); }
   };
 
@@ -519,7 +558,7 @@ export function Desk({ language }: { language: Language }) {
       if (code === "cannot_demote_self" || err.message.includes("demote")) setAdminSaveError((t as Record<string,string>).deskAdminDemoteSelfError);
       else if (code === "out_of_scope") setAdminSaveError((t as Record<string,string>).deskAdminOutOfScopeError);
       else if (code === "guidelines_not_acknowledged") setAdminSaveError((t as Record<string,string>).deskAdminGuidelinesNotAckError);
-      else setAdminSaveError(err.message || (t as Record<string,string>).deskAdminSaveError);
+      else setAdminSaveError(apiErrorMessage(e, language));
     } finally { setAdminSaveLoading(false); }
   };
 
@@ -543,7 +582,7 @@ export function Desk({ language }: { language: Language }) {
       <div className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center px-4 py-10">
         <Card className="w-full">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{t.deskTitle}</CardTitle>
+            <Headline level={1} className="text-2xl">{t.deskTitle}</Headline>
             <CardDescription>{t.deskInviteOnly}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
@@ -623,7 +662,7 @@ export function Desk({ language }: { language: Language }) {
   const role = auth.profile?.role;
   const isModerator = role === "moderator" || role === "admin";
 
-  const needsGate = role === "moderator" && !(auth.profile as Record<string, unknown>)?.guidelinesAckAt;
+  const needsGate = role === "moderator" && !ackedNow && !(auth.profile as Record<string, unknown>)?.guidelinesAckAt;
   if (needsGate) {
     return (
       <div className="mx-auto max-w-3xl space-y-6 px-1 py-6 sm:px-4">
@@ -635,9 +674,18 @@ export function Desk({ language }: { language: Language }) {
           <CardContent className="space-y-4">
             <SimpleMarkdown
               text={guidelinesRaw}
-              className="max-h-[50vh] overflow-auto border border-rule bg-paper p-4 font-sans text-xs leading-5"
+              className="max-h-[60vh] overflow-auto border border-rule bg-paper p-4 font-sans text-sm leading-6"
             />
             {ackError ? <p className="font-sans text-sm text-destructive" role="alert">{ackError}</p> : null}
+            <label className="flex items-start gap-2 font-sans text-sm">
+              <input
+                type="checkbox"
+                checked={guidelinesChecked}
+                onChange={(e) => setGuidelinesChecked(e.target.checked)}
+                className={"mt-1 h-4 w-4 border border-ink " + focusRing}
+              />
+              <span>{ds.guidelinesAckCheckboxLabel}</span>
+            </label>
             <Button onClick={handleAck} disabled={ackLoading}>
               {ackLoading ? (t as Record<string,string>).deskGuidelinesAcking : (t as Record<string,string>).deskGuidelinesAckButton}
             </Button>
@@ -674,16 +722,16 @@ export function Desk({ language }: { language: Language }) {
 
   const handlePublish = async (id: string) => {
     if (!auth.idToken) return;
+    clearActionFeedback();
     setActionLoading(id);
-    setActionMsg(null);
     try {
       await moderateNeed(auth.idToken, id, { action: "publish" });
-      setActionMsg(t.deskActionSuccess);
+      setSuccessMsg(t.deskActionSuccess);
       setQueue((prev) => prev.filter((x) => x.id !== id));
+      setPublishConfirmed((prev) => { const n = { ...prev }; delete n[id]; return n; });
       loadBoards();
     } catch (e) {
-      const err = e as ApiError;
-      setActionMsg(err.message || t.deskActionError);
+      setActionError(apiErrorMessage(e, language));
     } finally {
       setActionLoading(null);
     }
@@ -691,21 +739,27 @@ export function Desk({ language }: { language: Language }) {
 
   const handleReject = async () => {
     if (!rejectId || !auth.idToken) return;
-    if (!rejectReason.trim()) {
+    const reason = formatRejectReason(rejectCode, rejectDetail);
+    if (!reason.trim()) {
       setRejectError(t.deskRejectReasonRequired);
       return;
     }
+    if (!rejectCode) {
+      setRejectError(t.deskRejectReasonRequired);
+      return;
+    }
+    clearActionFeedback();
     setActionLoading(rejectId);
     try {
-      await moderateNeed(auth.idToken, rejectId, { action: "reject", reason: rejectReason.trim() });
-      setActionMsg(t.deskActionSuccess);
+      await moderateNeed(auth.idToken, rejectId, { action: "reject", reason });
+      setSuccessMsg(t.deskActionSuccess);
       setQueue((prev) => prev.filter((x) => x.id !== rejectId));
       setRejectId(null);
-      setRejectReason("");
+      setRejectCode("");
+      setRejectDetail("");
       setRejectError(null);
     } catch (e) {
-      const err = e as ApiError;
-      setRejectError(err.message || t.deskActionError);
+      setRejectError(apiErrorMessage(e, language));
     } finally {
       setActionLoading(null);
     }
@@ -715,15 +769,17 @@ export function Desk({ language }: { language: Language }) {
     if (!auth.idToken) return;
     const offerId = selectedOfferId[needId];
     if (status === "matched" && !offerId) return;
+    clearActionFeedback();
     setActionLoading(needId + status);
     try {
       const res = await updateNeedStatus(auth.idToken, needId, { status, offerId: status === "matched" ? offerId : undefined });
       if (status === "matched" && res.contact) setMatchedContact((prev) => ({ ...prev, [needId]: res.contact }));
-      setActionMsg(t.deskActionSuccess);
+      setSuccessMsg(t.deskActionSuccess);
       loadBoards();
+      setArchiveConfirmId(null);
+      setFulfillConfirmId(null);
     } catch (e) {
-      const err = e as ApiError;
-      setActionMsg(err.message || t.deskActionError);
+      setActionError(apiErrorMessage(e, language));
     } finally {
       setActionLoading(null);
     }
@@ -733,7 +789,7 @@ export function Desk({ language }: { language: Language }) {
     <div className="mx-auto max-w-6xl px-1 py-2 sm:px-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">{t.deskTitle}</h1>
+          <Headline level={1} className="text-2xl">{t.deskTitle}</Headline>
           {displayName ? <p className="mt-1 font-sans text-sm text-muted-foreground">{fillTemplate(t.deskWelcome, { name: displayName })}</p> : null}
         </div>
         <Button variant="outline" size="sm" onClick={auth.signOut}>
@@ -813,8 +869,13 @@ export function Desk({ language }: { language: Language }) {
       {isScoped ? (
         <p className="mb-4 font-sans text-xs text-muted-foreground">{(t as Record<string,string>).deskScopeFilteredHint}</p>
       ) : null}
+      {actionError ? (
+        <div className="mb-4 border border-red bg-card px-3 py-2 font-sans text-sm text-red" role="alert">
+          {actionError}
+        </div>
+      ) : null}
       {actionMsg ? (
-        <div className="mb-4 border border-rule bg-card px-3 py-2 font-sans text-sm" role="status">
+        <div className="mb-4 border border-rule bg-card px-3 py-2 font-sans text-sm" role="status" aria-live="polite">
           {actionMsg}
         </div>
       ) : null}
@@ -927,11 +988,26 @@ export function Desk({ language }: { language: Language }) {
                         )}
                       </div>
                     </div>
+                    <label className="flex items-start gap-2 font-sans text-xs">
+                      <input
+                        type="checkbox"
+                        checked={!!publishConfirmed[item.id]}
+                        onChange={(e) => setPublishConfirmed((prev) => ({ ...prev, [item.id]: e.target.checked }))}
+                        className={"mt-0.5 h-4 w-4 border border-ink " + focusRing}
+                      />
+                      <span>{ds.publishConfirmLabel}</span>
+                    </label>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => handlePublish(item.id)} disabled={!!actionLoading}>
+                      <Button
+                        size="sm"
+                        onClick={() => handlePublish(item.id)}
+                        disabled={!!actionLoading || !publishConfirmed[item.id]}
+                        className={!publishConfirmed[item.id] ? "border-muted text-muted disabled:opacity-100" : ""}
+                        aria-disabled={!publishConfirmed[item.id] ? "true" : undefined}
+                      >
                         {actionLoading === item.id ? "…" : t.deskPublish}
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setRejectId(item.id)}>
+                      <Button size="sm" variant="outline" onClick={() => { setRejectId(item.id); setRejectCode(""); setRejectDetail(""); setRejectError(null); }}>
                         {t.deskReject}
                       </Button>
                     </div>
@@ -1011,7 +1087,7 @@ export function Desk({ language }: { language: Language }) {
                           size="sm"
                           variant="outline"
                           disabled={actionLoading === need.id + "fulfilled"}
-                          onClick={() => handleStatus(need.id, "fulfilled")}
+                          onClick={() => setFulfillConfirmId(need.id)}
                         >
                           {t.deskFulfill}
                         </Button>
@@ -1019,7 +1095,7 @@ export function Desk({ language }: { language: Language }) {
                           size="sm"
                           variant="ghost"
                           disabled={actionLoading === need.id + "archived"}
-                          onClick={() => handleStatus(need.id, "archived")}
+                          onClick={() => setArchiveConfirmId(need.id)}
                         >
                           {t.deskArchive}
                         </Button>
@@ -1041,7 +1117,16 @@ export function Desk({ language }: { language: Language }) {
                       {matchedContact[need.id] ? (
                         <div className="border border-ink bg-paper p-3">
                           <p className="font-sans text-xs font-semibold uppercase tracking-wide">{t.deskMatchedContactTitle}</p>
-                          <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs">{JSON.stringify(matchedContact[need.id], null, 2)}</pre>
+                          <dl className="mt-2 grid gap-1 font-sans text-xs">
+                            {Object.entries(matchedContact[need.id] as Record<string, unknown>)
+                              .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
+                              .map(([k, v]) => (
+                                <div key={k} className="flex gap-2">
+                                  <dt className="min-w-[4rem] font-semibold capitalize text-muted">{k}</dt>
+                                  <dd className="break-words text-ink">{String(v)}</dd>
+                                </div>
+                              ))}
+                          </dl>
                         </div>
                       ) : null}
                     </div>
@@ -1084,15 +1169,15 @@ export function Desk({ language }: { language: Language }) {
                   <Button onClick={loadPrint} disabled={printLoading}>
                     {printLoading ? "…" : t.deskPrintLoad}
                   </Button>
-                  <Button variant="outline" onClick={() => window.print()} disabled={printItems.length === 0}>
+                  <Button variant="outline" onClick={() => window.print()} disabled={filteredPrintItems.length === 0}>
                     {t.deskPrintPrintAction}
                   </Button>
                 </div>
               </div>
               {printError ? <p className="font-sans text-sm text-destructive" role="alert">{printError}</p> : null}
               {printLoading ? <p className="font-sans text-sm text-muted-foreground">{t.deskBoardsLoading}</p> : null}
-              {!printLoading && !printError && printItems.length === 0 ? <p className="font-sans text-sm text-muted-foreground">{t.deskPrintEmpty}</p> : null}
-              {printItems.length > 0 ? (
+              {!printLoading && !printError && filteredPrintItems.length === 0 ? <p className="font-sans text-sm text-muted-foreground">{t.deskPrintEmpty}</p> : null}
+              {filteredPrintItems.length > 0 ? (
                 <div className="overflow-x-auto border border-rule bg-paper print:border-black print:bg-white">
                   <div className="p-4 text-center print:block">
                     <h3 className="font-display text-lg font-bold">{printDistrict} · W{printWard}</h3>
@@ -1109,7 +1194,7 @@ export function Desk({ language }: { language: Language }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {printItems.map((it) => (
+                      {filteredPrintItems.map((it) => (
                         <TableRow key={it.claimCode} className="print:break-inside-avoid">
                           <TableCell className="text-center">
                             <span className="inline-block h-5 w-5 border border-ink text-center leading-5">☐</span>
@@ -1154,7 +1239,7 @@ export function Desk({ language }: { language: Language }) {
               </Button>
               {syncResults ? (
                 <div className="space-y-2">
-                  <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">Results</h3>
+                  <h3 className="font-sans text-xs font-semibold uppercase tracking-wide">{ds.syncResultsTitle}</h3>
                   <ul className="space-y-1">
                     {syncResults.map((r) => (
                       <li key={r.code} className="flex justify-between border border-rule px-3 py-2 font-mono text-sm">
@@ -1207,29 +1292,45 @@ export function Desk({ language }: { language: Language }) {
                       <p className="font-serif text-sm leading-6 whitespace-pre-wrap break-words">{body}</p>
                     </div>
                     <div className="border border-dashed border-rule bg-card p-3">
-                      <p className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">Private (moderators only)</p>
+                      <p className="font-sans text-xs font-semibold uppercase tracking-wide text-muted">{ds.dispatchPrivateLabel}</p>
                       <p className="mt-2 font-sans text-sm"><span className="font-semibold">Email:</span> {d.author.email}</p>
                       <p className="font-sans text-xs text-muted-foreground">{(t as Record<string,string>).dispatchWriteEmailHint}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" onClick={()=>handleDispatchPublish(d.id)} disabled={!!dispatchActionLoading}>{dispatchActionLoading===d.id ? "…" : (t as Record<string,string>).deskDispatchesPublish}</Button>
-                      <Button size="sm" variant="outline" onClick={()=>{ setDispatchRejectId(d.id); setDispatchRejectError(null); }}>{(t as Record<string,string>).deskDispatchesReject}</Button>
+                      <Button size="sm" variant="outline" onClick={()=>{ setDispatchRejectId(d.id); setDispatchRejectCode(""); setDispatchRejectDetail(""); setDispatchRejectError(null); }}>{(t as Record<string,string>).deskDispatchesReject}</Button>
                     </div>
                   </CardContent>
                 </Card>
               )})}
             </div>
           )}
-          <Dialog open={!!dispatchRejectId} onOpenChange={(open)=>{ if (!open) { setDispatchRejectId(null); setDispatchRejectReason(""); setDispatchRejectError(null); }}}>
+          <Dialog open={!!dispatchRejectId} onOpenChange={(open)=>{ if (!open) { setDispatchRejectId(null); setDispatchRejectCode(""); setDispatchRejectDetail(""); setDispatchRejectError(null); }}}>
             <DialogContent>
-              <DialogHeader><DialogTitle>{(t as Record<string,string>).deskDispatchesRejectTitle}</DialogTitle><DialogDescription>{(t as Record<string,string>).deskDispatchesRejectPlaceholder}</DialogDescription></DialogHeader>
+              <DialogHeader><DialogTitle>{(t as Record<string,string>).deskDispatchesRejectTitle}</DialogTitle><DialogDescription>{ds.rejectDialogDescription}</DialogDescription></DialogHeader>
               <div className="space-y-2">
-                <Label htmlFor="dispatchRejectReason">{(t as Record<string,string>).deskDispatchesRejectTitle}</Label>
-                <Textarea id="dispatchRejectReason" value={dispatchRejectReason} onChange={e=>{setDispatchRejectReason(e.target.value); setDispatchRejectError(null);}} placeholder={(t as Record<string,string>).deskDispatchesRejectPlaceholder} rows={3} />
-                {dispatchRejectError ? <p className="font-sans text-sm text-destructive">{dispatchRejectError}</p> : null}
+                <Label htmlFor="dispatchRejectCode">{ds.rejectReasonCodeLabel} *</Label>
+                <select
+                  id="dispatchRejectCode"
+                  value={dispatchRejectCode}
+                  onChange={(e) => { setDispatchRejectCode(e.target.value); setDispatchRejectError(null); }}
+                  className={"flex min-h-11 w-full border border-ink bg-paper px-3 py-2 font-sans text-sm " + focusRing}
+                >
+                  <option value="">{ds.rejectReasonCodePlaceholder}</option>
+                  <option value="not_consented">{ds.rejectCode_not_consented}</option>
+                  <option value="duplicate">{ds.rejectCode_duplicate}</option>
+                  <option value="unreachable">{ds.rejectCode_unreachable}</option>
+                  <option value="out_of_scope">{ds.rejectCode_out_of_scope}</option>
+                  <option value="insufficient_detail">{ds.rejectCode_insufficient_detail}</option>
+                  <option value="other">{ds.rejectCode_other}</option>
+                </select>
+                <Label htmlFor="dispatchRejectDetail">{ds.rejectReasonDetailLabel}</Label>
+                <Textarea id="dispatchRejectDetail" value={dispatchRejectDetail} onChange={e=>{setDispatchRejectDetail(e.target.value); setDispatchRejectError(null);}} placeholder={ds.rejectReasonDetailPlaceholder} rows={3} />
+                <p className="font-sans text-xs text-muted-foreground">{ds.rejectReasonHelper}</p>
+                {dispatchRejectError ? <p className="font-sans text-sm text-destructive" role="alert">{dispatchRejectError}</p> : null}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={()=>{ setDispatchRejectId(null); setDispatchRejectReason("");}}>{t.deskCancel}</Button>
+                <Button variant="outline" onClick={()=>{ setDispatchRejectId(null); setDispatchRejectCode(""); setDispatchRejectDetail("");}}>{t.deskCancel}</Button>
                 <Button onClick={handleDispatchReject} disabled={!!dispatchActionLoading}>{dispatchActionLoading ? "…" : (t as Record<string,string>).deskDispatchesRejectConfirm}</Button>
               </DialogFooter>
             </DialogContent>
@@ -1449,6 +1550,24 @@ export function Desk({ language }: { language: Language }) {
         </div>
       ) : null}
 
+      <Dialog open={!!archiveConfirmId} onOpenChange={(o)=> { if(!o) setArchiveConfirmId(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{ds.archiveConfirmTitle}</DialogTitle><DialogDescription>{archiveConfirmId ? fillTemplate(ds.archiveConfirmBody, { name: publishedNeeds.find(n=>n.id===archiveConfirmId)?.maskedName ?? archiveConfirmId.slice(0,8) }) : ""}</DialogDescription></DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setArchiveConfirmId(null)}>{t.deskCancel}</Button>
+            <Button variant="ghost" onClick={()=> { if (archiveConfirmId) handleStatus(archiveConfirmId, "archived"); }} disabled={!!actionLoading}>{actionLoading ? "…" : t.deskArchive}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!fulfillConfirmId} onOpenChange={(o)=> { if(!o) setFulfillConfirmId(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{ds.fulfillConfirmTitle}</DialogTitle><DialogDescription>{fulfillConfirmId ? fillTemplate(ds.fulfillConfirmBody, { name: publishedNeeds.find(n=>n.id===fulfillConfirmId)?.maskedName ?? fulfillConfirmId.slice(0,8) }) : ""}</DialogDescription></DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setFulfillConfirmId(null)}>{t.deskCancel}</Button>
+            <Button onClick={()=> { if (fulfillConfirmId) handleStatus(fulfillConfirmId, "fulfilled"); }} disabled={!!actionLoading}>{actionLoading ? "…" : t.deskFulfill}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!verifyConfirmId} onOpenChange={(o)=> { if(!o) setVerifyConfirmId(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsVerify}</DialogTitle><DialogDescription>{(() => {
@@ -1466,10 +1585,26 @@ export function Desk({ language }: { language: Language }) {
 
       <Dialog open={!!projectRejectId} onOpenChange={(o)=> { if(!o){ setProjectRejectId(null); setProjectRejectError(null);} }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsRejectReason}</DialogTitle><DialogDescription>{(t as Record<string,string>).deskProjectsRejectPlaceholder}</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{(t as Record<string,string>).deskProjectsRejectReason}</DialogTitle><DialogDescription>{ds.rejectDialogDescription}</DialogDescription></DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="projectRejectReason">{(t as Record<string,string>).deskProjectsRejectReason} *</Label>
-            <Textarea id="projectRejectReason" value={projectRejectReason} onChange={e=>setProjectRejectReason(e.target.value)} placeholder={(t as Record<string,string>).deskProjectsRejectPlaceholder} rows={3} />
+            <Label htmlFor="projectRejectCode">{ds.rejectReasonCodeLabel} *</Label>
+            <select
+              id="projectRejectCode"
+              value={projectRejectCode}
+              onChange={(e) => setProjectRejectCode(e.target.value)}
+              className={"flex min-h-11 w-full border border-ink bg-paper px-3 py-2 font-sans text-sm " + focusRing}
+            >
+              <option value="">{ds.rejectReasonCodePlaceholder}</option>
+              <option value="not_consented">{ds.rejectCode_not_consented}</option>
+              <option value="duplicate">{ds.rejectCode_duplicate}</option>
+              <option value="unreachable">{ds.rejectCode_unreachable}</option>
+              <option value="out_of_scope">{ds.rejectCode_out_of_scope}</option>
+              <option value="insufficient_detail">{ds.rejectCode_insufficient_detail}</option>
+              <option value="other">{ds.rejectCode_other}</option>
+            </select>
+            <Label htmlFor="projectRejectDetail">{ds.rejectReasonDetailLabel}</Label>
+            <Textarea id="projectRejectDetail" value={projectRejectDetail} onChange={e=>setProjectRejectDetail(e.target.value)} placeholder={ds.rejectReasonDetailPlaceholder} rows={3} />
+            <p className="font-sans text-xs text-muted-foreground">{ds.rejectReasonHelper}</p>
             {projectRejectError ? <p className="font-sans text-sm text-destructive" role="alert">{projectRejectError}</p> : null}
           </div>
           <DialogFooter>
@@ -1483,11 +1618,27 @@ export function Desk({ language }: { language: Language }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.deskRejectReasonTitle}</DialogTitle>
-            <DialogDescription>{t.deskQueuePrivateDetails}</DialogDescription>
+            <DialogDescription>{ds.rejectDialogDescription}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="rejectReason">{t.deskRejectReasonTitle} *</Label>
-            <Textarea id="rejectReason" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder={t.deskRejectReasonPlaceholder} rows={3} />
+            <Label htmlFor="rejectCode">{ds.rejectReasonCodeLabel} *</Label>
+            <select
+              id="rejectCode"
+              value={rejectCode}
+              onChange={(e) => setRejectCode(e.target.value)}
+              className={"flex min-h-11 w-full border border-ink bg-paper px-3 py-2 font-sans text-sm " + focusRing}
+            >
+              <option value="">{ds.rejectReasonCodePlaceholder}</option>
+              <option value="not_consented">{ds.rejectCode_not_consented}</option>
+              <option value="duplicate">{ds.rejectCode_duplicate}</option>
+              <option value="unreachable">{ds.rejectCode_unreachable}</option>
+              <option value="out_of_scope">{ds.rejectCode_out_of_scope}</option>
+              <option value="insufficient_detail">{ds.rejectCode_insufficient_detail}</option>
+              <option value="other">{ds.rejectCode_other}</option>
+            </select>
+            <Label htmlFor="rejectDetail">{ds.rejectReasonDetailLabel}</Label>
+            <Textarea id="rejectDetail" value={rejectDetail} onChange={(e) => setRejectDetail(e.target.value)} placeholder={ds.rejectReasonDetailPlaceholder} rows={3} />
+            <p className="font-sans text-xs text-muted-foreground">{ds.rejectReasonHelper}</p>
             {rejectError ? (
               <p className="font-sans text-sm text-destructive" role="alert">
                 {rejectError}
@@ -1521,8 +1672,8 @@ export function Desk({ language }: { language: Language }) {
             <DialogDescription>{redeemCode ? fillTemplate(t.deskRedeemConfirmBody, { code: redeemCode }) : ""}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="redeemNote">Note (optional)</Label>
-            <Input id="redeemNote" value={redeemNote} onChange={(e) => setRedeemNote(e.target.value)} placeholder="note" />
+            <Label htmlFor="redeemNote">{ds.redeemNoteLabel}</Label>
+            <Input id="redeemNote" value={redeemNote} onChange={(e) => setRedeemNote(e.target.value)} placeholder={ds.redeemNotePlaceholder} />
             {redeemCode ? <p className="font-mono text-lg font-bold tracking-widest">{redeemCode}</p> : null}
           </div>
           <DialogFooter>
