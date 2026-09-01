@@ -155,10 +155,14 @@ export function App() {
         >
           Skip to main content
         </a>
-        <AccessibilityBar language={language} setLanguage={setLanguage} />
-        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
-        <EmergencyLine language={language} />
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[80rem] px-4 pb-16 pt-8 sm:px-6 lg:px-8 outline-none">
+        <AccessibilityBar language={language} setLanguage={setLanguage} compact={page === "desk"} />
+        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} compact={page === "desk"} />
+        {page === "desk" ? null : <EmergencyLine language={language} />}
+        <main
+          id="main"
+          tabIndex={-1}
+          className={`mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8 outline-none ${page === "desk" ? "pb-8 pt-4" : "pb-16 pt-8"}`}
+        >
           {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : (
             <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted">{shellStrings[language].loading}</p>}>
               {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
