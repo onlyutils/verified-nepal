@@ -99,6 +99,10 @@ export function useGoogleAuth() {
     const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
     sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
     sessionStorage.setItem(PKCE_STATE_KEY, state);
+    try {
+      if (window.location.pathname.startsWith("/desk")) sessionStorage.removeItem("vn:return_to");
+      else sessionStorage.setItem("vn:return_to", window.location.pathname + window.location.search);
+    } catch {}
     const redirectUri = window.location.origin + "/desk";
     const authorizeUrl =
       `${AUTH_HOST}/authorize?` +
@@ -178,6 +182,19 @@ export function useGoogleAuth() {
         if (cancelled) return;
         stripParams();
         setAccessToken(tokens.access_token);
+        try {
+          const returnTo = sessionStorage.getItem("vn:return_to");
+          if (
+            typeof returnTo === "string" &&
+            returnTo.startsWith("/") &&
+            !returnTo.startsWith("//") &&
+            returnTo !== "/desk" &&
+            !returnTo.startsWith("/desk/")
+          ) {
+            sessionStorage.removeItem("vn:return_to");
+            window.location.replace(returnTo);
+          }
+        } catch {}
       } catch {
         if (cancelled) return;
         setError("verify-failed");
