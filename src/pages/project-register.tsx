@@ -85,13 +85,13 @@ export function ProjectRegister({ language }: { language: Language }) {
         <Card className="border-ink">
           <CardHeader><CardTitle className="text-xl">{t.projectRegisterSuccessTitle}</CardTitle><p className="font-sans text-sm text-muted-foreground">{t.projectRegisterSuccessBody}</p></CardHeader>
           <CardContent className="space-y-6">
-            <div className="border border-rule bg-secondary px-4 py-6 text-center">
-              <p className="font-sans text-xs uppercase tracking-wide text-muted-foreground">{t.projectRegisterUpdateCodeLabel}</p>
-              <p className="mt-3 break-all font-mono text-3xl font-bold tracking-widest text-ink sm:text-4xl" aria-live="polite">{result.updateCode}</p>
+            <div className="border border-rule bg-secondary px-4 py-6 text-center text-secondary-foreground">
+              <p className="font-sans text-xs uppercase tracking-wide">{t.projectRegisterUpdateCodeLabel}</p>
+              <p className="mt-3 break-all font-mono text-3xl font-bold tracking-widest sm:text-4xl" aria-live="polite">{result.updateCode}</p>
               <Button variant="outline" size="sm" className="mt-3" onClick={async()=>{ try{ await navigator.clipboard.writeText(result.updateCode); setCopied(true); setTimeout(()=>setCopied(false),2000);}catch{}}}>
                 {copied ? t.projectRegisterCodeCopied : t.projectRegisterCopyCode}
               </Button>
-              <p className="mt-3 font-sans text-xs leading-5 text-muted-foreground">{t.projectRegisterUpdateCodeHint}</p>
+              <p className="mt-3 font-sans text-xs leading-5">{t.projectRegisterUpdateCodeHint}</p>
             </div>
             <div className="border border-ink bg-paper px-4 py-3">
               <h3 className="font-display text-base font-semibold">{t.projectRegisterWhatNextTitle}</h3>

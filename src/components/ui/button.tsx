@@ -10,8 +10,8 @@ const buttonVariants = cva(
         default: "bg-ink text-paper hover:bg-ink/90 border-ink disabled:bg-muted disabled:border-muted disabled:text-paper",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive disabled:bg-muted disabled:border-muted disabled:text-paper",
         outline: "border-rule bg-paper text-ink hover:bg-paper hover:border-ink disabled:text-muted disabled:border-rule",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-secondary disabled:text-muted disabled:border-rule",
-        ghost: "border-transparent bg-transparent hover:bg-secondary text-ink disabled:text-muted disabled:border-rule",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-secondary disabled:bg-muted disabled:border-muted disabled:text-paper",
+        ghost: "border-transparent bg-transparent hover:bg-secondary text-ink hover:text-secondary-foreground disabled:text-muted disabled:border-rule",
         link: "text-ink underline-offset-4 hover:underline border-transparent bg-transparent",
       },
       size: {

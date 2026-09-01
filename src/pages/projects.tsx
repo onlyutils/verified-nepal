@@ -126,7 +126,7 @@ export function ProjectsList({ language }: { language: Language }) {
           const cover = coverUrl(p);
           return (
             <Card key={p.id} className="flex flex-col overflow-hidden">
-              {cover ? <img src={cover} alt={t.projectsCoverAlt} className="h-44 w-full object-cover" loading="lazy" /> : <div className="flex h-44 w-full items-center justify-center bg-secondary font-sans text-xs uppercase tracking-wide text-muted-foreground">{t.projectsNoCover}</div>}
+              {cover ? <img src={cover} alt={t.projectsCoverAlt} className="h-44 w-full object-cover" loading="lazy" /> : <div className="flex h-44 w-full items-center justify-center bg-secondary font-sans text-xs uppercase tracking-wide text-secondary-foreground">{t.projectsNoCover}</div>}
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="uppercase">{typeLabel(p.type, language)}</Badge>

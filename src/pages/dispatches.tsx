@@ -180,9 +180,9 @@ export function DispatchesPage({ language }: { language: Language }) {
           <CardHeader><CardTitle className="text-base">{t.dispatchWriteTitle}</CardTitle></CardHeader>
           <CardContent>
             {formSuccess ? (
-              <div className="space-y-4 border border-ink bg-secondary px-4 py-6 text-center">
+              <div className="space-y-4 border border-ink bg-secondary px-4 py-6 text-center text-secondary-foreground">
                 <h3 className="font-display text-lg font-bold">{t.dispatchWriteSuccessTitle}</h3>
-                <p className="mx-auto max-w-xl font-serif text-sm leading-6 text-ink">{t.dispatchWriteSuccessBody}</p>
+                <p className="mx-auto max-w-xl font-serif text-sm leading-6">{t.dispatchWriteSuccessBody}</p>
                 <Button variant="outline" onClick={()=>setFormSuccess(false)}>{t.commonAgain ?? "Again"}</Button>
               </div>
             ) : (
@@ -233,7 +233,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                             onClick={()=>toggleTag(tag)}
                             disabled={disabled}
                             aria-pressed={selected}
-                            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide ${selected ? "border-ink bg-ink text-paper" : disabled ? "border-rule bg-secondary text-muted-foreground opacity-50" : "border-rule bg-paper text-ink hover:border-ink"}`}
+                            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide ${selected ? "border-ink bg-ink text-paper" : disabled ? "border-rule bg-secondary text-secondary-foreground opacity-50" : "border-rule bg-paper text-ink hover:border-ink"}`}
                           >
                             {tagLabel(tag, t)}
                           </button>

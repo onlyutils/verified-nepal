@@ -6,7 +6,7 @@ const badgeVariants = cva("inline-flex items-center border px-2.5 py-0.5 font-sa
   variants: {
     variant: {
       default: "border-ink bg-ink text-paper",
-      secondary: "border-rule bg-secondary text-ink",
+      secondary: "border-rule bg-secondary text-secondary-foreground",
       destructive: "border-destructive bg-destructive text-destructive-foreground",
       outline: "border-rule bg-paper text-ink",
     },
