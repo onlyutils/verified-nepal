@@ -9,7 +9,8 @@
 
 ## Checklist
 
-- [ ] `pnpm typecheck` and `pnpm build` pass
+- [ ] `pnpm typecheck`, `pnpm test`, and `pnpm build` pass
+- [ ] Touched `server/`: `cd server && pnpm test` passes
 - [ ] Every new user-visible string has both `en` and `ne` entries
 - [ ] No new runtime dependencies (or discussed in an issue first)
 - [ ] UI change: screenshot attached (including mobile width)

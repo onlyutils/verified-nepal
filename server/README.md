@@ -1,4 +1,4 @@
-# VerifiedNepal Server — Phase 0
+# VerifiedNepal Server
 
 Standalone Lambda for API Gateway HTTP API v2 (`Node 22`, ESM).
 
@@ -36,7 +36,7 @@ pnpm build
 ## Routes
 
 - `GET /health` → `{ok:true}`
-- `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. OnlyUtils access tokens carry no email/name claims (`iss, sub, aud, exp, iat, jti, tid, cid, typ, scp, email_verified`). On first login (no `USER` item) fetches `GET ${AUTH_HOST}/userinfo` with the same Bearer token, uses `email ?? primary_email` and `name ?? display_name` from the userinfo response for the stored `USER` item and `ADMIN_EMAILS`/`MODERATOR_EMAILS` role bootstrap; userinfo failure returns `502 {error:'userinfo'}`. Existing users keep stored `email`/`role` without a userinfo call; missing fields are omitted from the stored item. Returns `{sub,email,name,role}`.
+- `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. OnlyUtils access tokens carry no email/name claims (`iss, sub, aud, exp, iat, jti, tid, cid, typ, scp, email_verified`). On first login (no `USER` item) fetches `GET ${AUTH_HOST}/userinfo` with the same Bearer token, uses `email ?? primary_email ?? emails[0]` and `name ?? display_name` from the userinfo response for the stored `USER` item and `ADMIN_EMAILS`/`MODERATOR_EMAILS` role bootstrap; userinfo failure returns `502 {error:'userinfo'}`. Existing users keep stored `email`/`role` without a userinfo call; missing fields are omitted from the stored item. Returns `{sub,email,name,role}`.
 - `POST /auth/exchange` → `{code, code_verifier, redirect_uri}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=authorization_code`, `client_id=OU_CLIENT_ID`, `client_secret` when set)
 - `POST /auth/refresh` → `{refresh_token}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=refresh_token`, `client_id`/`secret` same rule)
 - `POST /projects` → anonymous (+ Turnstile) create project → `201 {id, updateCode}` (12-char base32, `updateCode` shown once, stored as `sha256` `updateCodeHash`; pointer `PCODE#<hash>`) 
@@ -48,4 +48,30 @@ pnpm build
 - `GET /moderation/projects` → mod list all projects oldest-first with private fields + pending photos/updates 
 - `POST /moderation/projects/{id}` → mod `verify-committee|publish|reject|set-status|publish-photo|reject-photo` (`publish` requires `committee.verified`; every action writes `AUDIT` item) 
 - `POST /moderation/projects/{id}/updates/{updateId}` → mod `publish|reject` update 
+- `POST /dispatches` → anonymous (+ Turnstile) create dispatch → `201 {id}` (pending)
+- `GET /dispatches?tag=&cursor=` → anonymous list published dispatches (excerpts, tag filter)
+- `GET /dispatches/{id}` → anonymous get single published dispatch
+- `GET /moderation/dispatches` → moderator/admin list pending dispatches
+- `POST /moderation/dispatches/{id}` → moderator/admin `publish|reject` dispatch (writes `AUDIT`)
+- `POST /needs` → anonymous (+ Turnstile) create need → `201 {id, refCode}` (pending; the `claimCode` is minted by the moderator on publish)
+- `GET /needs?district=&ward=&category=&status=&cursor=` → anonymous list needs (masked, status-filtered)
+- `GET /status/{refCode}` → anonymous lookup need by refCode → `{status, category, district, createdAt, expiresAt}` plus `claimCode` once the need is published/matched/fulfilled
+- `POST /needs/{refCode}/renew` → anonymous renew own need by refCode (extends TTL)
+- `POST /offers` → helper (Bearer) create offer → `201 {id}` (pending)
+- `GET /offers?district=&category=&cursor=` → anonymous list published offers
+- `GET /moderation/queue` → moderator/admin (guidelines ack, district-scoped) list pending needs + offers
+- `POST /moderation/{id}` → moderator/admin (guidelines ack, district-scoped) `publish|reject` need/offer (writes `AUDIT`, creates claim on publish)
+- `POST /needs/{id}/status` → moderator/admin (guidelines ack, district-scoped) set status `matched|fulfilled|archived|rejected` (audit; matched may return contact)
+- `POST /needs/{id}/flag` → anonymous (+ Turnstile) flag need → `201 {ok:true}` (increments flagCount, FLAGGED pointer)
+- `GET /moderation/flags` → moderator/admin (guidelines ack) list flagged needs with reasons
+- `POST /claims/{code}/redeem` → moderator/admin (guidelines ack, district-scoped) redeem single claim → `200 {status:"redeemed"}` or `409 already_redeemed`
+- `POST /claims/sync` → moderator/admin (guidelines ack) batch redeem `{redemptions:[{code, redeemedAt, note?}]}` → `200 {results}`
+- `GET /claims/print?district=&ward=` → moderator/admin (guidelines ack, district-scoped) printable claim codes for ward (masked, sorted)
+- `GET /ledger?district=&ward=&format=` → anonymous public ledger (masked names, `json` or `csv`, requires district)
+- `GET /audit?month=YYYY-MM&cursor=` → anonymous public audit log (masked targetLabel, `actorName` public)
+- `POST /me/ack-guidelines` → authenticated (Bearer) acknowledge moderation guidelines → `200 {guidelinesAckAt}`
+- `GET /admin/users?role=&cursor=` → admin list users by role
+- `GET /admin/users/lookup?email=` → admin lookup user by email
+- `POST /admin/users/{sub}/role` → admin set `role` + `districts` (self-demotion blocked, writes `AUDIT`)
+- `GET /admin/stats` → admin counts for needs/offers/projects/dispatches by status, moderators, oldest pending age
 - Other routes → `404 {error:"Not Found"}`. Errors never include stack traces.

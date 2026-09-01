@@ -38,13 +38,17 @@ pnpm dev        # http://localhost:8765
 `pnpm sync` refreshes the bundled data snapshot from the NDRRMA API — you
 generally don't need it; the app fetches live data in the browser anyway.
 
+Backend work needs no AWS account — `cd server && pnpm test` runs fully offline with fake JWKS/DynamoDB.
+
 Before pushing:
 
 ```bash
-pnpm typecheck && pnpm build
+pnpm typecheck && pnpm test && pnpm build
 ```
 
-Both must pass; CI runs the same checks on every PR.
+If you touched `server/`, also `cd server && pnpm test`.
+
+All of these run in CI on every PR.
 
 ## Pull requests
 
@@ -61,9 +65,7 @@ Both must pass; CI runs the same checks on every PR.
 
 ## Code style
 
-Match what's there: one-file UI (`src/App.tsx`) with small function
-components, Tailwind utility classes, no CSS-in-JS, TypeScript strict.
-Comments explain constraints, not restate code.
+`src/App.tsx` is a routing shell; pages live in `src/pages/`, shared primitives in `src/ui.tsx` and `src/components/ui/`, and all backend calls go through `src/api.ts`. The backend is a single Lambda handler `server/src/index.js` with `node --test` tests in `server/test/`. Use Tailwind utility classes with no CSS-in-JS, keep TypeScript strict, and write comments that explain constraints rather than restating code.
 
 ## Reporting issues
 

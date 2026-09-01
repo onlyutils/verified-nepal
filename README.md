@@ -21,6 +21,7 @@ affected people, relatives, and donors get one fast, bilingual (English /
   coordination stats and updates feed.
 - **AI assistant** — a chat widget grounded in the same live data (powered by
   [OnlyUtils](https://onlyutils.com)).
+- **Mutual-aid portal** — request help (`/get-help`) or offer help (`/give-help`) by category and district; moderators match needs to offers and issue claim codes. Redeemed claims appear on a public, masked ledger. Helpers can browse community projects (`/projects`) with photo updates and dispatches, while district-scoped moderators work a queue at `/desk` and every action is recorded in a public masked audit log (`/audit`).
 
 This is **not** a government website. It exists to make already-public
 disaster information easier to read. Verify individual records on the
@@ -44,29 +45,62 @@ pnpm install       # dependencies
 pnpm sync          # refresh the local data snapshot (optional)
 pnpm dev           # http://localhost:8765
 pnpm typecheck     # TypeScript checks
+pnpm test          # frontend unit checks (node --test)
 pnpm build         # static production build in dist/
-pnpm test          # edition helper checks (node --test)
 ```
 
-The dev server uses port 8765 because the chat widget's origin allowlist
-accepts that origin.
+Copy `.env.example` to `.env` for the optional portal/auth wiring (`VITE_API_BASE`, `VITE_OU_CLIENT_ID`); with an empty `.env` the app renders the read-only snapshot with live NDRRMA fallback. The dev server uses port 8765 because the chat widget's origin allowlist accepts that origin.
+
+### Backend
+
+```bash
+cd server && pnpm install && pnpm test   # fully offline — fake JWKS/DynamoDB, no AWS credentials needed
+```
+
+See [`server/README.md`](server/README.md) for env vars and routes.
 
 ## Repository layout
 
 ```
-src/App.tsx        routing shell
-src/layout.tsx     masthead, nav, emergency line, footer
-src/ui.tsx         editorial primitives (Rule, SectionLabel, Headline, SquareButton, RuledTable, …)
-src/edition.ts     edition line helpers (response day, lead headline)
-src/dashboard.tsx  front page · src/find-person.tsx · src/info-help.tsx · src/privacy.tsx
-src/relief-map.tsx map plate and affected locations
-src/live.ts        live NDRRMA/OPMCM fetching + React context
-src/geo.ts         place-name → coordinate lookup, district shapes
-src/i18n.ts        en/ne string dictionaries — every string has both
-src/helplines.ts   verified emergency numbers (sources in comments)
-src/chat-widget.ts branding glue for the embedded chat widget
-scripts/sync.mjs   snapshot generator (NDRRMA API → public/data/)
-infra/deploy.sh    Cloudflare Pages deploy (maintainer credentials required)
+src/App.tsx              routing shell — maps URL paths to pages and sets language/robots state
+src/layout.tsx           masthead, nav, emergency line, footer
+src/ui.tsx               editorial primitives (Rule, SectionLabel, Headline, SquareButton, RuledTable, …)
+src/dashboard.tsx        front-page dashboard composition
+src/find-person.tsx      name search across rescued/missing lists
+src/relief-map.tsx       Leaflet map plate and affected locations
+src/info-help.tsx        Info / Help page
+src/privacy.tsx          Privacy & Disclaimer page
+src/pages/get-help.tsx   mutual-aid: submit a need (category/district/ward) with Turnstile
+src/pages/give-help.tsx  mutual-aid: offer help, browse needs/offers, flag inaccurate listings
+src/pages/projects.tsx   project registry list (filters by district/status)
+src/pages/project-detail.tsx  project detail (photos/updates, published-only)
+src/pages/project-register.tsx  anonymous project registration (Turnstile, returns updateCode)
+src/pages/project-update.tsx    committee project update / photo upload (updateCode or moderator)
+src/pages/dispatches.tsx community dispatches list (published, tag filter)
+src/pages/dispatch-detail.tsx  dispatch detail view
+src/pages/ledger.tsx     public masked ledger of redeemed claims
+src/pages/audit.tsx      public masked audit log (month + cursor, public)
+src/desk.tsx             moderator/admin desk at /desk (queue, claims, flags, projects, dispatches, user/role admin)
+src/auth.tsx             OnlyUtils OAuth Authorization Code + PKCE sign-in, token storage, useGoogleAuth hook
+src/api.ts               typed fetch client for the Lambda backend (needs/offers/claims/ledger/projects/dispatches/admin)
+src/live.ts              live NDRRMA/OPMCM fetching + React context and LiveStatusBadge
+src/geo.ts               place-name → coordinate lookup, district shapes
+src/i18n.ts              en/ne string dictionaries — every string has both
+src/helplines.ts         verified emergency numbers (sources in comments)
+src/edition.ts           edition line helpers (response day, lead headline, fillTemplate)
+src/chat-widget.ts       branding glue for the embedded OnlyUtils chat widget
+src/lib/sw-rules.ts      service-worker cache classifier (hasAuthHeader, cache helpers)
+src/components/ui/*      shadcn-style primitives (button, card, dialog, input, label, select, separator, table, textarea, badge)
+src/*.test.ts            frontend unit tests (edition, sw-rules, projects, phase2) — run via pnpm test
+server/                  Lambda API (Node 22, ESM) — see server/README.md
+docs/GOVERNANCE.md       portal governance, roles, district scoping, audit-log policy
+docs/MODERATION-GUIDELINES.md  moderator handbook (verification, masking, rejection reasons)
+scripts/sync.mjs         snapshot generator (NDRRMA API → public/data/)
+scripts/build-geo.py     geometry builder for relief map (Overpass/OSM → public/data/geo/)
+infra/deploy.sh          Cloudflare Pages deploy (dev/prod, maintainer credentials required)
+.github/workflows/ci.yml         CI — typecheck, frontend + backend tests, build
+.github/workflows/deploy-dev.yml auto-deploy to dev on push to main
+.github/workflows/deploy-prod.yml manual prod deploy (owner-only)
 ```
 
 ## Privacy posture
@@ -82,10 +116,6 @@ page for the full policy.
 See [CONTRIBUTING.md](CONTRIBUTING.md). Corrections to data, translations,
 and accessibility fixes are especially welcome. Please never add unverified
 emergency numbers or unofficial donation channels — see the hard rules there.
-
-## Auth
-
-Role bootstrap for `GET /me` requires an email claim (`email ?? primary_email ?? emails[0]`); tokens without an email claim are created as `helper`.
 
 ## License
 
