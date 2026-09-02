@@ -7,3 +7,7 @@ dist/
 
 # local env — dev values live in GitHub repo variables
 .env
+
+# local working dirs — not part of the project
+docs/superpowers/
+.impeccable/
