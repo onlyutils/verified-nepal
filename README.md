@@ -95,6 +95,7 @@ src/*.test.ts            frontend unit tests (edition, sw-rules, projects, phase
 server/                  Lambda API (Node 22, ESM) — see server/README.md
 docs/GOVERNANCE.md       portal governance, roles, district scoping, audit-log policy
 docs/MODERATION-GUIDELINES.md  moderator handbook (verification, masking, rejection reasons)
+docs/DESIGN-BRIEF.md      UI/UX redesign brief — every page, flow, state and constraint for the designer
 scripts/sync.mjs         snapshot generator (NDRRMA API → public/data/)
 scripts/build-geo.py     geometry builder for relief map (Overpass/OSM → public/data/geo/)
 infra/deploy.sh          Cloudflare Pages deploy (dev/prod, maintainer credentials required)
