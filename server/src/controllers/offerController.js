@@ -1,5 +1,5 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
-import { validateString, validatePhone, validateOptionalEmail } from "../lib/validate.js";
+import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
 import { requireAuth } from "../lib/auth.js";
 import { CATEGORIES } from "../constants.js";
 import { createOffer, listPublicOffers } from "../models/offer.js";
@@ -11,9 +11,12 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { org, categories, districts, description, phone, email } = body;
   if (!Array.isArray(categories) || categories.length === 0) throw err(400, "categories must be non-empty array");
+  if (categories.length > 20) throw err(400, "categories must be at most 20");
   for (const c of categories) if (!CATEGORIES.includes(c)) throw err(400, `invalid category ${c}`);
+  const cleanCategories = Array.from(new Set(categories));
   if (!Array.isArray(districts) || districts.length === 0) throw err(400, "districts must be non-empty array");
-  const cleanDistricts = districts.map((d) => validateString(d, "districts[]", 1, 100));
+  if (districts.length > 20) throw err(400, "districts must be at most 20");
+  const cleanDistricts = Array.from(new Set(districts.map((d) => validateDistrict(d, "districts[]"))));
   const desc = validateString(description, "description", 10, 2000);
   const cleanPhone = validatePhone(phone, "phone");
   const cleanEmail = validateOptionalEmail(email, "email");
@@ -27,7 +30,7 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   const helperSub = auth.payload.sub;
   const helperName = auth.user?.name || auth.payload.name || "Helper";
   const { id } = await createOffer(auth.ddb, auth.tableName, {
-    helperSub, helperName, org: cleanOrg, categories, districts: cleanDistricts,
+    helperSub, helperName, org: cleanOrg, categories: cleanCategories, districts: cleanDistricts,
     description: desc, phone: cleanPhone, email: cleanEmail,
   });
   return json(201, { id });

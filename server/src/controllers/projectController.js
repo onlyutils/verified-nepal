@@ -1,5 +1,5 @@
-import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
-import { validateString, validatePhone, validateOptionalEmail, validateTitle, validateDescription } from "../lib/validate.js";
+import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, stripInternal } from "../lib/http.js";
+import { validateString, validatePhone, validateOptionalEmail, validateTitle, validateDescription, validateDistrict } from "../lib/validate.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireModAuth, ensureGuidelinesAck, isOutOfScope, verifyCommitteeAuth, authorizeProjectWrite } from "../lib/auth.js";
 import { PROJECT_TYPES, ALLOWED_PHOTO_TYPES, MAX_PHOTO_SIZE } from "../constants.js";
@@ -20,7 +20,7 @@ export async function handlePostProject(event, { getDdb, env }) {
   const titleObj = validateTitle(title, "title");
   const descObj = validateDescription(description, "description");
   if (!PROJECT_TYPES.includes(type)) throw err(400, `type must be one of ${PROJECT_TYPES.join(",")}`);
-  const districtClean = validateString(district, "district", 1, 100);
+  const districtClean = validateDistrict(district, "district");
   if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
   const locationTextClean = validateString(locationText, "locationText", 1, 500);
   if (typeof costEstimateNpr !== "number" || !Number.isFinite(costEstimateNpr) || costEstimateNpr <= 0 || costEstimateNpr > 1e12) throw err(400, "costEstimateNpr must be positive number");
@@ -105,7 +105,8 @@ export async function handlePostPresign(event, opts, projectId) {
   if (!clientIdEarly || !clientSecretEarly) {
     return json(503, { error: "media_not_configured" });
   }
-  await authorizeProjectWrite(event, opts, projectId);
+  const authzPre = await authorizeProjectWrite(event, opts, projectId);
+  if (authzPre.isMod && authzPre.auth && isOutOfScope(authzPre.auth.user, proj)) throw err(403, "out_of_scope");
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { filename, contentType, size } = body;
@@ -135,6 +136,7 @@ export async function handlePostPhoto(event, opts, projectId) {
   if (!proj) throw err(404, "not found");
   const authz = await authorizeProjectWrite(event, opts, projectId);
   const isMod = authz.isMod;
+  if (isMod && authz.auth && isOutOfScope(authz.auth.user, proj)) throw err(403, "out_of_scope");
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { fileId, url, caption } = body;
@@ -166,14 +168,15 @@ export async function handlePostUpdate(event, opts, projectId) {
   let fileIds = [];
   if (photoFileIds !== undefined && photoFileIds !== null) {
     if (!Array.isArray(photoFileIds)) throw err(400, "photoFileIds must be array");
+    if (photoFileIds.length > 20) throw err(400, "photoFileIds must be at most 20");
     for (const f of photoFileIds) {
-      if (typeof f !== "string" || !f.trim()) throw err(400, "photoFileIds entries must be strings");
+      if (typeof f !== "string" || !f.trim() || f.trim().length > 200) throw err(400, "photoFileIds entries must be strings up to 200 chars");
       fileIds.push(f.trim());
     }
   }
   let spent;
   if (spentNpr !== undefined && spentNpr !== null) {
-    if (typeof spentNpr !== "number" || !Number.isFinite(spentNpr) || spentNpr < 0) throw err(400, "spentNpr must be non-negative number");
+    if (typeof spentNpr !== "number" || !Number.isFinite(spentNpr) || spentNpr < 0 || spentNpr > 1e12) throw err(400, "spentNpr must be a non-negative number ≤ 1e12");
     spent = Math.floor(spentNpr);
   }
   let photos = [];
@@ -199,7 +202,7 @@ export async function handleGetModerationProjects(event, opts) {
   const items = [];
   for (const proj of all) {
     const updates = await listProjectUpdates(auth.ddb, auth.tableName, proj.id, { scanForward: true });
-    const clone = JSON.parse(JSON.stringify(proj));
+    const clone = stripInternal(JSON.parse(JSON.stringify(proj)));
     clone.updates = updates;
     items.push(clone);
   }

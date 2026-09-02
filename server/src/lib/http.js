@@ -1,7 +1,11 @@
 export function json(status, body) {
   return {
     statusCode: status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+    },
     body: JSON.stringify(body),
   };
 }
@@ -76,9 +80,21 @@ export function decodeCursor(cur) {
 }
 
 export function csvEscape(val) {
-  const s = String(val ?? "");
+  let s = String(val ?? "");
+  // Neutralize spreadsheet formula injection: a cell beginning with one of these
+  // is treated as a formula by Excel/Sheets. Prefixing with a single quote forces text.
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = "'" + s;
+  }
   if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
   return s;
+}
+
+export function stripInternal(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  const clone = { ...obj };
+  for (const k of ["updateCodeHash", "PK", "SK", "gsi1pk", "gsi1sk", "gsi2pk", "gsi2sk"]) delete clone[k];
+  return clone;
 }

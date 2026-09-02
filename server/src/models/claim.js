@@ -41,7 +41,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
   await ddb.send(new PutCommand({ TableName: tableName, Item: item1 }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: item2 }));
   const targetLabel = getTargetLabelForAudit("NEED", need);
-  await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: needId, targetLabel, reason: ledgerBase.note });
+  await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: needId, targetLabel, reason: "redeem" });
   return { status: "redeemed", needId, redeemedAt };
 }
 

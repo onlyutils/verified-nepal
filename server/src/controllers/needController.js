@@ -1,5 +1,5 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
-import { validateString, validatePhone, validateOptionalEmail } from "../lib/validate.js";
+import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
@@ -36,7 +36,7 @@ export async function handlePostNeeds(event, { getDdb, env }) {
     benPhone = validatePhone(beneficiary.phone, "beneficiary.phone");
   }
   const benEmail = validateOptionalEmail(beneficiary.email, "beneficiary.email");
-  const district = validateString(beneficiary.district, "beneficiary.district", 1, 100);
+  const district = validateDistrict(beneficiary.district, "beneficiary.district");
   const ward = beneficiary.ward;
   if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "beneficiary.ward must be integer 1-33");
   let householdSize;
@@ -117,6 +117,9 @@ export async function handlePostNeedStatus(event, opts, needId) {
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { status, offerId } = body;
   if (!MOD_STATUS.includes(status)) throw err(400, `status must be one of ${MOD_STATUS.join(",")}`);
+  if (offerId !== undefined && offerId !== null) {
+    if (typeof offerId !== "string" || !offerId.trim() || offerId.trim().length > 200) throw err(400, "offerId must be a string up to 200 chars");
+  }
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const need = await getNeedById(ddb, tableName, needId);

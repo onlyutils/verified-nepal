@@ -1,4 +1,4 @@
-import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
+import { json, err, getQuery, parseBody, encodeCursor, decodeCursor , stripInternal } from "../lib/http.js";
 import { validateString, validateDispatchTitle, validateDispatchBody } from "../lib/validate.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireModAuth, ensureGuidelinesAck } from "../lib/auth.js";
@@ -86,7 +86,7 @@ export async function handleGetDispatch(event, { getDdb, env }, id) {
 export async function handleGetModerationDispatches(event, opts) {
   const auth = await requireModAuth(event, opts);
   ensureGuidelinesAck(auth);
-  const items = await listPendingDispatches(auth.ddb, auth.tableName);
+  const items = (await listPendingDispatches(auth.ddb, auth.tableName)).map(stripInternal);
   return json(200, { items });
 }
 

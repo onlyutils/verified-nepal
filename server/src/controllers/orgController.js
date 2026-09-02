@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { json, err, getQuery, parseBody } from "../lib/http.js";
-import { requireAuth, requireModAuth } from "../lib/auth.js";
-import { validateString, validateOptionalString, validatePhone, validateOptionalEmail } from "../lib/validate.js";
+import { requireAuth, requireModAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { validateString, validateOptionalString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
+import { maskEmail } from "../lib/format.js";
 import { isGoodsCategory } from "../lib/goods-taxonomy.js";
 import { createOrg, getOrg, saveOrg, listOrgsByStatus, putMembership, getMembership, listUserMemberships, listOrgMembers, countOwnedOrgs, deleteMembership, putInvite, getInviteForEmail, getInviteForOrg, listInvitesForEmail, listInvitesForOrg, deleteInvite } from "../models/org.js";
 import { createCenter, getCenter, saveCenter, listOrgCenterPointers, centerVisibility, refreshCentersForOrg, listFlaggedCenterPointers, listCenterFlags } from "../models/center.js";
@@ -47,7 +48,7 @@ function validateOrgBody(body, isUpdate = false) {
     const d = body.districts;
     if (!Array.isArray(d)) throw err(400, "districts must be array");
     if (d.length < 1 || d.length > 10) throw err(400, "districts must be 1-10 items");
-    out.districts = d.map((s) => validateString(s, "districts[]", 1, 100));
+    out.districts = d.map((s) => validateDistrict(s, "districts[]"));
   }
   if (!isUpdate || body.description !== undefined) {
     out.description = validateString(body.description, "description", 10, 2000);
@@ -69,7 +70,7 @@ function validateCenterBody(body, isUpdate = false) {
     out.name = validateString(body.name, "name", 1, 100);
   }
   if (!isUpdate || body.district !== undefined) {
-    out.district = validateString(body.district, "district", 1, 100);
+    out.district = validateDistrict(body.district, "district");
   }
   if (body.ward !== undefined) {
     const w = body.ward;
@@ -318,12 +319,14 @@ export async function handleListOrgCenters(event, opts, orgId) {
 
 export async function handleModerationOrgs(event, opts) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const q = getQuery(event);
   const statusRaw = q.status ? String(q.status).trim() : "pending";
   if (!["pending", "verified", "rejected", "suspended"].includes(statusRaw)) throw err(400, "invalid status");
   const orgs = await listOrgsByStatus(auth.ddb, auth.tableName, statusRaw);
   const items = [];
   for (const org of orgs) {
+    if (isOutOfScope(auth.user, Array.isArray(org.districts) ? org.districts : [])) continue;
     const pointers = await listOrgCenterPointers(auth.ddb, auth.tableName, org.id);
     const view = toModerationOrgView(org, pointers.length);
     items.push(view);
@@ -333,12 +336,14 @@ export async function handleModerationOrgs(event, opts) {
 
 export async function handleModerateOrg(event, opts, orgId) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const action = body.action ? String(body.action).trim() : "";
   if (!["verify", "reject", "suspend", "reinstate"].includes(action)) throw err(400, "invalid action");
   const org = await getOrg(auth.ddb, auth.tableName, orgId);
   if (!org) throw err(404, "not found");
+  if (isOutOfScope(auth.user, Array.isArray(org.districts) ? org.districts : [])) throw err(403, "out_of_scope");
   const now = new Date().toISOString();
   const actorSub = auth.payload.sub;
   const actorName = auth.user?.name || auth.payload.name || "";
@@ -361,7 +366,7 @@ export async function handleModerateOrg(event, opts, orgId) {
     delete org.suspensionReason;
     await saveOrg(auth.ddb, auth.tableName, org);
     await refreshCentersForOrg(auth.ddb, auth.tableName, org);
-    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "verify", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: note });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "verify", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: `verify:${tier}` });
     return json(200, { status: "verified" });
   }
   if (action === "reject") {
@@ -378,7 +383,7 @@ export async function handleModerateOrg(event, opts, orgId) {
     delete org.verificationNote;
     await saveOrg(auth.ddb, auth.tableName, org);
     await refreshCentersForOrg(auth.ddb, auth.tableName, org);
-    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "reject", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "reject", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: "reject" });
     return json(200, { status: "rejected" });
   }
   if (action === "suspend") {
@@ -392,7 +397,7 @@ export async function handleModerateOrg(event, opts, orgId) {
     org.gsi2pk = "ORG#suspended";
     await saveOrg(auth.ddb, auth.tableName, org);
     await refreshCentersForOrg(auth.ddb, auth.tableName, org);
-    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "suspend", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "suspend", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: "suspend" });
     return json(200, { status: "suspended" });
   }
   if (action === "reinstate") {
@@ -484,14 +489,14 @@ export async function handleInviteMember(event, opts, orgId) {
     const now = new Date().toISOString();
     await putMembership(auth.ddb, auth.tableName, { sub, orgId, role: "staff", orgName: org.name, email, name, createdAt: now });
     const actorName = auth.user?.name || auth.payload.name || "";
-    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: email });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: maskEmail(email) });
     return json(201, { status: "member" });
   } else {
     const now = new Date().toISOString();
     const invitedBy = auth.payload.sub;
     await putInvite(auth.ddb, auth.tableName, { orgId, orgName: org.name, email: lower, invitedBy, createdAt: now });
     const actorName = auth.user?.name || auth.payload.name || "";
-    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: lower });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: maskEmail(lower) });
     return json(201, { status: "invited" });
   }
 }
@@ -521,7 +526,7 @@ export async function handleListMembers(event, opts, orgId) {
 export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
   const auth = await requireAuth(event, opts);
   await requireMember(auth, orgId, { ownerOnly: true });
-  const param = decodeURIComponent(subOrEmail);
+  const param = subOrEmail;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const isEmail = param.includes("@");
@@ -538,7 +543,7 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
         }
         await deleteMembership(ddb, tableName, pointer.sub, orgId);
         const actorName = auth.user?.name || auth.payload.name || "";
-        await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param });
+        await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param.includes("@") ? maskEmail(param) : "member" });
         return json(200, { ok: true });
       }
     }
@@ -547,7 +552,7 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
     if (inv || inv2) {
       await deleteInvite(ddb, tableName, lower, orgId);
       const actorName = auth.user?.name || auth.payload.name || "";
-      await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param });
+      await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param.includes("@") ? maskEmail(param) : "member" });
       return json(200, { ok: true });
     }
     const members = await listOrgMembers(ddb, tableName, orgId);
@@ -559,7 +564,7 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
       }
       await deleteMembership(ddb, tableName, found.sub, orgId);
       const actorName = auth.user?.name || auth.payload.name || "";
-      await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param });
+      await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: param.includes("@") ? maskEmail(param) : "member" });
       return json(200, { ok: true });
     }
     throw err(404, "not found");
@@ -574,13 +579,14 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
     }
     await deleteMembership(ddb, tableName, sub, orgId);
     const actorName = auth.user?.name || auth.payload.name || "";
-    await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: sub });
+    await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.remove", targetType: "ORG", targetId: orgId, targetLabel: "member" });
     return json(200, { ok: true });
   }
 }
 
 export async function handleCenterFlags(event, opts) {
   const auth = await requireModAuth(event, opts);
+  ensureGuidelinesAck(auth);
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const pointers = await listFlaggedCenterPointers(ddb, tableName);

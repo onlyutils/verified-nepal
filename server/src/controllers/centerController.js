@@ -226,6 +226,7 @@ export async function handleCreateEntry(event, opts, centerId) {
     if (!isGoodsCategory(category)) throw err(400, "invalid category");
     const qtyRaw = body.qty;
     if (qtyRaw === undefined || qtyRaw === null) throw err(400, "qty required");
+    if (typeof qtyRaw !== "number") throw err(400, "qty must be a number");
     const qty = Number(qtyRaw);
     if (!Number.isFinite(qty) || qty <= 0 || qty > 1000000) throw err(400, "qty must be >0 and <=1000000");
     const rounded = Math.round(qty * 100) / 100;
@@ -275,6 +276,7 @@ export async function handleCreateEntry(event, opts, centerId) {
     if (!isGoodsCategory(category)) throw err(400, "invalid category");
     const qtyRaw = body.qty;
     if (qtyRaw === undefined || qtyRaw === null) throw err(400, "qty required");
+    if (typeof qtyRaw !== "number") throw err(400, "qty must be a number");
     const qty = Number(qtyRaw);
     if (!Number.isFinite(qty) || qty <= 0 || qty > 1000000) throw err(400, "qty must be >0 and <=1000000");
     const rounded = Math.round(qty * 100) / 100;
@@ -428,6 +430,7 @@ export async function handleGoodsLedger(event, opts) {
   if (!district) throw err(400, "district required");
   const cursorRaw = q.cursor ? String(q.cursor).trim() : "";
   const cursorKey = decodeCursor(cursorRaw);
+  // SECURITY TODO: filter out entries whose center is not currently publicly visible (rejected/suspended org, closed center).
   const res = await listDistrictEntries(opts.getDdb(), opts.env.TABLE_NAME, district, cursorKey);
   const items = (res.Items || []).map(toPublicEntryView);
   const body = { items };
@@ -474,6 +477,7 @@ export async function handleReceive(event, opts, transferId) {
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const qtyReceivedRaw = body.qtyReceived;
   if (qtyReceivedRaw === undefined || qtyReceivedRaw === null) throw err(400, "qtyReceived required");
+  if (typeof qtyReceivedRaw !== "number") throw err(400, "qtyReceived must be a number");
   const qtyReceived = Number(qtyReceivedRaw);
   if (!Number.isFinite(qtyReceived) || qtyReceived < 0 || qtyReceived > 1000000) throw err(400, "qtyReceived must be >=0 and <=1000000");
   const rounded = Math.round(qtyReceived * 100) / 100;
@@ -489,6 +493,7 @@ export async function handleReceive(event, opts, transferId) {
   if (sourceEntry.transferStatus === "received") throw err(400, "already received");
   const now = new Date().toISOString();
   const id = randomUUID();
+  if (qtyReceived > meta.qty) throw err(400, "qty_exceeds_sent");
   const discrepancy = Math.round((meta.qty - qtyReceived) * 100) / 100;
   const entry = {
     PK: `GOODS#${toCenterId}`,
@@ -746,10 +751,12 @@ export async function handleConfirmDonation(event, opts, ref) {
   let qty = donation.qty;
   if (body && typeof body === "object" && body.qty !== undefined && body.qty !== null) {
     const qtyRaw = body.qty;
+    if (typeof qtyRaw !== "number") throw err(400, "qty must be a number");
     const q = Number(qtyRaw);
     if (!Number.isFinite(q) || q <= 0 || q > 1000000) throw err(400, "qty must be >0 and <=1000000");
     const rounded = Math.round(q * 100) / 100;
     if (rounded !== q) throw err(400, "qty must have at most 2 decimals");
+    if (q > donation.qty) throw err(400, "qty_exceeds_declared");
     qty = q;
   }
   const category = donation.category;

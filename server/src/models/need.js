@@ -174,7 +174,9 @@ export async function listFlaggedPointers(ddb, tableName) {
     if (res.Items) pointers.push(...res.Items);
     ExclusiveStartKey = res.LastEvaluatedKey;
   } while (ExclusiveStartKey);
-  return pointers;
+  // The FLAGGED partition also holds center-flag pointers (SK begins with "CENTER#"),
+  // which lack need fields (maskedName) and crash the need-flags sort. Exclude them here.
+  return pointers.filter((p) => !(typeof p.SK === "string" && p.SK.startsWith("CENTER#")));
 }
 
 export async function listFlagsForNeed(ddb, tableName, needId) {

@@ -13,6 +13,12 @@ export function validateOptionalString(v, name, min, max) {
   return validateString(v, name, min, max);
 }
 
+export function validateDistrict(v, name = "district") {
+  const t = validateString(v, name, 1, 100);
+  if (t.includes("#")) throw err(400, `${name} contains an invalid character`);
+  return t;
+}
+
 export function validatePhone(v, name = "phone") {
   if (typeof v !== "string") throw err(400, `${name} must be a string`);
   const t = v.trim();
