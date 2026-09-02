@@ -1,4 +1,4 @@
-import { json, err, parseBody } from "../lib/http.js";
+import { json, err, parseBody, stripInternal } from "../lib/http.js";
 import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import {
@@ -19,7 +19,7 @@ export async function handleGetModerationQueue(event, opts) {
     needsAll = pending.filter((it) => it.PK.startsWith("NEED#"));
   }
   const enriched = enrichWithDupCandidates(pending, needsAll);
-  return json(200, { items: enriched });
+  return json(200, { items: enriched.map(stripInternal) });
 }
 
 export async function handlePostModeration(event, opts, id) {

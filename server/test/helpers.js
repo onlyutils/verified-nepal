@@ -138,6 +138,11 @@ export class FakeDdb {
     }
     if (name === "DeleteCommand") {
       const k = this.key(input.Key.PK, input.Key.SK);
+      if (input.ConditionExpression && input.ConditionExpression.includes("attribute_exists") && !this.store.has(k)) {
+        const e = new Error("ConditionalCheckFailed");
+        e.name = "ConditionalCheckFailedException";
+        throw e;
+      }
       this.store.delete(k);
       return {};
     }

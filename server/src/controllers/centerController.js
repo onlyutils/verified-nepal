@@ -430,9 +430,23 @@ export async function handleGoodsLedger(event, opts) {
   if (!district) throw err(400, "district required");
   const cursorRaw = q.cursor ? String(q.cursor).trim() : "";
   const cursorKey = decodeCursor(cursorRaw);
-  // SECURITY TODO: filter out entries whose center is not currently publicly visible (rejected/suspended org, closed center).
-  const res = await listDistrictEntries(opts.getDdb(), opts.env.TABLE_NAME, district, cursorKey);
-  const items = (res.Items || []).map(toPublicEntryView);
+  const ddb = opts.getDdb();
+  const tableName = opts.env.TABLE_NAME;
+  const res = await listDistrictEntries(ddb, tableName, district, cursorKey);
+  // Only surface entries whose center is currently publicly visible: a rejected/
+  // suspended org (or closed center) is hidden everywhere else, so its activity
+  // must not remain public here. visibility is a stored, status-refreshed field.
+  const visCache = new Map();
+  const items = [];
+  for (const e of (res.Items || [])) {
+    let vis = visCache.get(e.centerId);
+    if (vis === undefined) {
+      const c = await getCenter(ddb, tableName, e.centerId);
+      vis = c && c.visibility ? c.visibility : "hidden";
+      visCache.set(e.centerId, vis);
+    }
+    if (vis === "public") items.push(toPublicEntryView(e));
+  }
   const body = { items };
   if (res.LastEvaluatedKey) body.cursor = encodeCursor(res.LastEvaluatedKey);
   return json(200, body);
@@ -486,8 +500,15 @@ export async function handleReceive(event, opts, transferId) {
   if (body.note !== undefined && body.note !== null && String(body.note).trim() !== "") {
     note = validateString(body.note, "note", 1, 500);
   }
-  const inbound = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CENTER#${toCenterId}`, SK: `INBOUND#${transferId}` } }));
-  if (!inbound.Item && meta.status !== "in_transit") throw err(400, "already received");
+  // Atomic mutex: delete the inbound pointer conditionally. Two concurrent receives
+  // race here; only one delete succeeds, the other gets ConditionalCheckFailed and is
+  // rejected — preventing a double credit. Also serves as the existence check.
+  try {
+    await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: `CENTER#${toCenterId}`, SK: `INBOUND#${transferId}` }, ConditionExpression: "attribute_exists(PK)" }));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(400, "already received");
+    throw e;
+  }
   const sourceEntry = await getEntryById(ddb, tableName, meta.entryId);
   if (!sourceEntry) throw err(404, "not found");
   if (sourceEntry.transferStatus === "received") throw err(400, "already received");
@@ -534,7 +555,6 @@ export async function handleReceive(event, opts, transferId) {
   meta.qtyReceived = qtyReceived;
   if (discrepancy !== 0) meta.discrepancy = discrepancy;
   await putTransferMeta(ddb, tableName, meta);
-  await deleteInbound(ddb, tableName, toCenterId, transferId);
   const actorName = auth.user?.name || auth.payload.name || "";
   await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "transfer.receive", targetType: "GOODS", targetId: id, targetLabel: `transfer_in ${meta.category} ${qtyReceived}` });
   return json(201, { id });
