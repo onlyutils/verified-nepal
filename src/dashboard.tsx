@@ -128,6 +128,14 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
           <SquareButton onClick={() => navigate("registerOrg")} className="w-full">
             {orgStrings[language].registerOrgCta}
           </SquareButton>
+          <a
+            href="/guides/VerifiedNepal-Organization-Guide.pdf"
+            target="_blank"
+            rel="noopener"
+            className="text-center font-sans text-xs text-muted underline decoration-rule underline-offset-4 hover:decoration-ink"
+          >
+            {orgStrings[language].orgGuideLink}
+          </a>
         </div>
       </div>
     </section>
