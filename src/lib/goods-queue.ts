@@ -57,10 +57,7 @@ export function save(list: QueuedEntry[]): void {
   }
 }
 
-export async function flush(
-  list: QueuedEntry[],
-  send: (item: QueuedEntry) => Promise<unknown>,
-): Promise<QueuedEntry[]> {
+export async function flush(list: QueuedEntry[], send: (item: QueuedEntry) => Promise<unknown>): Promise<QueuedEntry[]> {
   const remaining: QueuedEntry[] = [];
   for (const item of list) {
     try {

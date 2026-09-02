@@ -80,16 +80,10 @@ export function classifyApiRequest(input: {
   return null;
 }
 
-export function shouldUseNetworkOnly(
-  url: URL | string,
-  request?: { method?: string; headers?: unknown } | Request,
-): boolean {
+export function shouldUseNetworkOnly(url: URL | string, request?: { method?: string; headers?: unknown } | Request): boolean {
   return classifyApiRequest({ url, request }) === "NetworkOnly";
 }
 
-export function shouldUseStaleWhileRevalidate(
-  url: URL | string,
-  request?: { method?: string; headers?: unknown } | Request,
-): boolean {
+export function shouldUseStaleWhileRevalidate(url: URL | string, request?: { method?: string; headers?: unknown } | Request): boolean {
   return classifyApiRequest({ url, request }) === "StaleWhileRevalidate";
 }

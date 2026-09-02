@@ -1,4 +1,5 @@
-export const API_BASE = ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
+export const API_BASE =
+  ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
 
 export type Category = "goods" | "shelter" | "transport" | "medical" | "skilled-labor" | "funds-guidance";
 export const CATEGORIES: Category[] = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
@@ -138,7 +139,10 @@ export function createNeed(body: CreateNeedBody): Promise<CreateNeedResponse> {
   return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body) });
 }
 
-export function listNeeds(params: { district?: string; category?: string; cursor?: string } = {}, token?: string): Promise<NeedsListResponse> {
+export function listNeeds(
+  params: { district?: string; category?: string; cursor?: string } = {},
+  token?: string,
+): Promise<NeedsListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.category) q.set("category", params.category);
@@ -265,8 +269,16 @@ export function lookupAdminUser(token: string, email: string): Promise<AdminUser
   return request<AdminUser>(`/admin/users/lookup?${q.toString()}`, { token });
 }
 
-export function setAdminUserRole(token: string, sub: string, body: { role: string; districts?: string[] }): Promise<{ role: string; districts: string[] }> {
-  return request<{ role: string; districts: string[] }>(`/admin/users/${encodeURIComponent(sub)}/role`, { method: "POST", token, body: JSON.stringify(body) });
+export function setAdminUserRole(
+  token: string,
+  sub: string,
+  body: { role: string; districts?: string[] },
+): Promise<{ role: string; districts: string[] }> {
+  return request<{ role: string; districts: string[] }>(`/admin/users/${encodeURIComponent(sub)}/role`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }
 
 export function getAdminStats(token: string): Promise<AdminStatsResponse> {
@@ -339,11 +351,18 @@ export function getClaimsPrint(token: string, params: { district: string; ward: 
   return request<ClaimsPrintResponse>(`/claims/print?${q.toString()}`, { token });
 }
 
-export function redeemClaim(token: string, code: string, body?: { note?: string }): Promise<{ status: string; needId: string; redeemedAt: string }> {
+export function redeemClaim(
+  token: string,
+  code: string,
+  body?: { note?: string },
+): Promise<{ status: string; needId: string; redeemedAt: string }> {
   return request(`/claims/${encodeURIComponent(code)}/redeem`, { method: "POST", token, body: JSON.stringify(body || {}) });
 }
 
-export function syncClaims(token: string, body: { redemptions: Array<{ code: string; redeemedAt: string; note?: string }> }): Promise<{ results: SyncResult[] }> {
+export function syncClaims(
+  token: string,
+  body: { redemptions: Array<{ code: string; redeemedAt: string; note?: string }> },
+): Promise<{ results: SyncResult[] }> {
   return request<{ results: SyncResult[] }>("/claims/sync", { method: "POST", token, body: JSON.stringify(body) });
 }
 
@@ -369,11 +388,10 @@ export function getModerationFlags(token: string): Promise<FlagsInboxResponse> {
   return request<FlagsInboxResponse>("/moderation/flags", { token });
 }
 
-
 export type ProjectType = "tuin" | "bridge" | "trail" | "water" | "school" | "other";
-export const PROJECT_TYPES: ProjectType[] = ["tuin","bridge","trail","water","school","other"];
+export const PROJECT_TYPES: ProjectType[] = ["tuin", "bridge", "trail", "water", "school", "other"];
 export type ProjectStatus = "pending" | "published" | "in-progress" | "completed" | "rejected" | "archived";
-export const PROJECT_STATUSES_PUBLIC: ProjectStatus[] = ["published","in-progress","completed"];
+export const PROJECT_STATUSES_PUBLIC: ProjectStatus[] = ["published", "in-progress", "completed"];
 
 export interface ProjectCommitteePublic {
   name: string;
@@ -443,9 +461,17 @@ export interface CreateProjectBody {
   };
   turnstileToken?: string;
 }
-export interface CreateProjectResponse { id: string; updateCode: string; }
+export interface CreateProjectResponse {
+  id: string;
+  updateCode: string;
+}
 
-export interface PresignResponse { uploadUrl: string; fileId: string; publicUrl: string; headers?: Record<string,string>; }
+export interface PresignResponse {
+  uploadUrl: string;
+  fileId: string;
+  publicUrl: string;
+  headers?: Record<string, string>;
+}
 
 export interface ModerationProjectItem extends ProjectPublic {
   committee: ProjectCommitteePrivate & { verified: boolean };
@@ -454,7 +480,9 @@ export interface ModerationProjectItem extends ProjectPublic {
   createdAt: string;
   updateCodeHash?: string;
 }
-export interface ModerationProjectsResponse { items: ModerationProjectItem[]; }
+export interface ModerationProjectsResponse {
+  items: ModerationProjectItem[];
+}
 
 export function listProjects(params: { district?: string; status?: string; cursor?: string } = {}): Promise<ProjectListResponse> {
   const q = new URLSearchParams();
@@ -470,38 +498,78 @@ export function getProject(id: string): Promise<ProjectDetailResponse> {
 export function createProject(body: CreateProjectBody): Promise<CreateProjectResponse> {
   return request<CreateProjectResponse>("/projects", { method: "POST", body: JSON.stringify(body) });
 }
-export function presignProjectPhoto(id: string, body: { filename: string; contentType: string; size: number }, opts: { token?: string; updateCode?: string } = {}): Promise<PresignResponse> {
-  const headers: Record<string,string> = {};
+export function presignProjectPhoto(
+  id: string,
+  body: { filename: string; contentType: string; size: number },
+  opts: { token?: string; updateCode?: string } = {},
+): Promise<PresignResponse> {
+  const headers: Record<string, string> = {};
   if (opts.updateCode) headers["X-Update-Code"] = opts.updateCode;
   const req: RequestInit & { token?: string } = { method: "POST", body: JSON.stringify(body), headers };
   if (opts.token) req.token = opts.token;
   return request<PresignResponse>(`/projects/${encodeURIComponent(id)}/photos/presign`, req);
 }
-export function attachProjectPhoto(id: string, body: { fileId: string; url: string; caption?: string }, opts: { token?: string; updateCode?: string } = {}): Promise<{ ok: boolean }> {
-  const headers: Record<string,string> = {};
+export function attachProjectPhoto(
+  id: string,
+  body: { fileId: string; url: string; caption?: string },
+  opts: { token?: string; updateCode?: string } = {},
+): Promise<{ ok: boolean }> {
+  const headers: Record<string, string> = {};
   if (opts.updateCode) headers["X-Update-Code"] = opts.updateCode;
   const req: RequestInit & { token?: string } = { method: "POST", body: JSON.stringify(body), headers };
   if (opts.token) req.token = opts.token;
   return request<{ ok: boolean }>(`/projects/${encodeURIComponent(id)}/photos`, req);
 }
-export function createProjectUpdate(id: string, body: { text: string; photoFileIds: string[]; spentNpr?: number }, updateCode: string): Promise<{ updateId: string }> {
-  return request<{ updateId: string }>(`/projects/${encodeURIComponent(id)}/updates`, { method: "POST", body: JSON.stringify(body), headers: { "X-Update-Code": updateCode } });
+export function createProjectUpdate(
+  id: string,
+  body: { text: string; photoFileIds: string[]; spentNpr?: number },
+  updateCode: string,
+): Promise<{ updateId: string }> {
+  return request<{ updateId: string }>(`/projects/${encodeURIComponent(id)}/updates`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "X-Update-Code": updateCode },
+  });
 }
 export function getModerationProjects(token: string): Promise<ModerationProjectsResponse> {
   return request<ModerationProjectsResponse>("/moderation/projects", { token });
 }
-export function moderateProject(token: string, id: string, body: { action: "verify-committee"|"publish"|"reject"|"set-status"|"publish-photo"|"reject-photo"; reason?: string; status?: ProjectStatus; fileId?: string }): Promise<{ status: string }> {
-  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+export function moderateProject(
+  token: string,
+  id: string,
+  body: {
+    action: "verify-committee" | "publish" | "reject" | "set-status" | "publish-photo" | "reject-photo";
+    reason?: string;
+    status?: ProjectStatus;
+    fileId?: string;
+  },
+): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }
-export function moderateProjectUpdate(token: string, id: string, updateId: string, body: { action: "publish"|"reject"; reason?: string }): Promise<{ status: string }> {
-  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}/updates/${encodeURIComponent(updateId)}`, { method: "POST", token, body: JSON.stringify(body) });
+export function moderateProjectUpdate(
+  token: string,
+  id: string,
+  updateId: string,
+  body: { action: "publish" | "reject"; reason?: string },
+): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}/updates/${encodeURIComponent(updateId)}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }
-
 
 export type DispatchTag = "climate" | "mountains" | "floods" | "landslides" | "glaciers" | "community" | "story";
-export const DISPATCH_TAGS: DispatchTag[] = ["climate","mountains","floods","landslides","glaciers","community","story"];
+export const DISPATCH_TAGS: DispatchTag[] = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
 
-export interface DispatchAuthorPublic { displayName: string; place?: string; }
+export interface DispatchAuthorPublic {
+  displayName: string;
+  place?: string;
+}
 export interface DispatchPublicItem {
   id: string;
   title: string | { en: string; ne?: string };
@@ -511,7 +579,10 @@ export interface DispatchPublicItem {
   publishedAt: string;
   createdAt?: string;
 }
-export interface DispatchListResponse { items: DispatchPublicItem[]; cursor?: string; }
+export interface DispatchListResponse {
+  items: DispatchPublicItem[];
+  cursor?: string;
+}
 
 export interface DispatchDetailResponse {
   id: string;
@@ -531,7 +602,9 @@ export interface CreateDispatchBody {
   language: "en" | "ne";
   turnstileToken?: string;
 }
-export interface CreateDispatchResponse { id: string; }
+export interface CreateDispatchResponse {
+  id: string;
+}
 
 export interface ModerationDispatchItem {
   id: string;
@@ -543,7 +616,9 @@ export interface ModerationDispatchItem {
   createdAt: string;
   publishedAt?: string;
 }
-export interface ModerationDispatchResponse { items: ModerationDispatchItem[]; }
+export interface ModerationDispatchResponse {
+  items: ModerationDispatchItem[];
+}
 
 export function createDispatch(body: CreateDispatchBody): Promise<CreateDispatchResponse> {
   return request<CreateDispatchResponse>("/dispatches", { method: "POST", body: JSON.stringify(body) });
@@ -561,8 +636,16 @@ export function getDispatch(id: string): Promise<DispatchDetailResponse> {
 export function getModerationDispatches(token: string): Promise<ModerationDispatchResponse> {
   return request<ModerationDispatchResponse>("/moderation/dispatches", { token });
 }
-export function moderateDispatch(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: string }> {
-  return request<{ status: string }>(`/moderation/dispatches/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+export function moderateDispatch(
+  token: string,
+  id: string,
+  body: { action: "publish" | "reject"; reason?: string },
+): Promise<{ status: string }> {
+  return request<{ status: string }>(`/moderation/dispatches/${encodeURIComponent(id)}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }
 
 export function assertNoDispatchEmail(obj: Record<string, unknown>): boolean {
@@ -571,7 +654,7 @@ export function assertNoDispatchEmail(obj: Record<string, unknown>): boolean {
 }
 
 export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): string[] {
-  const forbidden = ["phone","email","contactName","updateCodeHash","contactname","updatecode"];
+  const forbidden = ["phone", "email", "contactName", "updateCodeHash", "contactname", "updatecode"];
   const found: string[] = [];
   for (const k of Object.keys(obj)) {
     const lk = k.toLowerCase();
@@ -580,7 +663,7 @@ export function assertNoProjectSensitiveKeys(obj: Record<string, unknown>): stri
     }
   }
   if ("committee" in obj && obj.committee && typeof obj.committee === "object") {
-    const c = obj.committee as Record<string,unknown>;
+    const c = obj.committee as Record<string, unknown>;
     for (const k of Object.keys(c)) {
       const lk = k.toLowerCase();
       if (lk === "phone" || lk === "email" || lk === "contactname") found.push(`committee.${k}`);
@@ -601,7 +684,6 @@ export function assertNoSensitiveKeys(obj: Record<string, unknown>): string[] {
   return found;
 }
 
-
 // ---------------------------------------------------------------------------
 // Organizations, drop centers and the goods ledger
 // (spec: docs/superpowers/specs/2026-09-01-drop-centers-design.md)
@@ -620,7 +702,11 @@ export type EntryType = "intake" | "distribution" | "transfer_out" | "transfer_i
 export type TransferStatus = "in_transit" | "received" | "sent";
 export type CenterFlagReason = "not_real" | "closed" | "misuse" | "other";
 
-export interface OrgVouch { orgId: string; orgName: string; at: string }
+export interface OrgVouch {
+  orgId: string;
+  orgName: string;
+  at: string;
+}
 
 export interface OrgPrivate {
   id: string;
@@ -644,7 +730,9 @@ export interface OrgPrivate {
   suspensionReason?: string;
   vouches?: OrgVouch[];
 }
-export interface MyOrg extends OrgPrivate { role: OrgRole }
+export interface MyOrg extends OrgPrivate {
+  role: OrgRole;
+}
 export interface CreateOrgBody {
   name: string;
   orgType: OrgType;
@@ -656,7 +744,12 @@ export interface CreateOrgBody {
   description: string;
   website?: string;
 }
-export interface CenterOrgRef { id: string; name: string; status: OrgStatus; tier?: OrgTier }
+export interface CenterOrgRef {
+  id: string;
+  name: string;
+  status: OrgStatus;
+  tier?: OrgTier;
+}
 export interface CenterPublic {
   id: string;
   name: string;
@@ -674,7 +767,10 @@ export interface CenterPublic {
   updatedAt: string;
   flagCount?: number;
 }
-export interface CenterPrivate extends CenterPublic { orgId: string; notes?: string }
+export interface CenterPrivate extends CenterPublic {
+  orgId: string;
+  notes?: string;
+}
 export interface CreateCenterBody {
   name: string;
   district: string;
@@ -687,7 +783,11 @@ export interface CreateCenterBody {
   accepts: string[];
   notes?: string;
 }
-export interface StockItem { category: string; unit: GoodsUnit; qty: number }
+export interface StockItem {
+  category: string;
+  unit: GoodsUnit;
+  qty: number;
+}
 export interface GoodsEntry {
   id: string;
   centerId: string;
@@ -723,8 +823,14 @@ export interface CreateEntryBody {
   destinationLabel?: string;
   correctsEntryId?: string;
 }
-export interface CenterDetailResponse extends CenterPublic { stock: StockItem[]; recent: GoodsEntry[] }
-export interface ModerationOrgItem extends OrgPrivate { centersCount: number; ownerSub?: string }
+export interface CenterDetailResponse extends CenterPublic {
+  stock: StockItem[];
+  recent: GoodsEntry[];
+}
+export interface ModerationOrgItem extends OrgPrivate {
+  centersCount: number;
+  ownerSub?: string;
+}
 export interface InboundTransfer {
   transferId: string;
   fromCenterId: string;
@@ -766,7 +872,10 @@ function qs(params: Record<string, string | number | undefined>): string {
 export function createOrg(token: string, body: CreateOrgBody): Promise<{ id: string; status: OrgStatus }> {
   return request("/orgs", { method: "POST", body: JSON.stringify(body), token });
 }
-export interface OrgInvite { orgId: string; orgName: string }
+export interface OrgInvite {
+  orgId: string;
+  orgName: string;
+}
 export function listMyOrgs(token: string): Promise<{ items: MyOrg[]; invites?: OrgInvite[] }> {
   return request("/orgs/mine", { token });
 }
@@ -788,7 +897,11 @@ export function createCenter(token: string, orgId: string, body: CreateCenterBod
 export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { token });
 }
-export function updateCenter(token: string, id: string, body: Partial<CreateCenterBody> & { status?: CenterStatus }): Promise<{ ok: boolean }> {
+export function updateCenter(
+  token: string,
+  id: string,
+  body: Partial<CreateCenterBody> & { status?: CenterStatus },
+): Promise<{ ok: boolean }> {
   return request(`/centers/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
 }
 export function listCenters(params: { district?: string; cursor?: string } = {}): Promise<{ items: CenterPublic[]; cursor?: string }> {
@@ -800,7 +913,11 @@ export function getCenter(id: string, token?: string): Promise<CenterDetailRespo
 export function getCenterStock(id: string): Promise<{ items: StockItem[] }> {
   return request(`/centers/${encodeURIComponent(id)}/stock`);
 }
-export function listCenterEntries(id: string, params: { cursor?: string } = {}, token?: string): Promise<{ items: GoodsEntry[]; cursor?: string }> {
+export function listCenterEntries(
+  id: string,
+  params: { cursor?: string } = {},
+  token?: string,
+): Promise<{ items: GoodsEntry[]; cursor?: string }> {
   return request(`/centers/${encodeURIComponent(id)}/entries${qs(params)}`, token ? { token } : {});
 }
 export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string }> {
@@ -813,9 +930,7 @@ export function getModerationOrgs(token: string, status: OrgStatus = "pending"):
   return request(`/moderation/orgs${qs({ status })}`, { token });
 }
 export type ModerateOrgBody =
-  | { action: "verify"; tier: OrgTier; note: string }
-  | { action: "reject" | "suspend"; reason: string }
-  | { action: "reinstate" };
+  { action: "verify"; tier: OrgTier; note: string } | { action: "reject" | "suspend"; reason: string } | { action: "reinstate" };
 export function moderateOrg(token: string, id: string, body: ModerateOrgBody): Promise<{ status: OrgStatus }> {
   return request(`/moderation/orgs/${encodeURIComponent(id)}`, { method: "POST", body: JSON.stringify(body), token });
 }
@@ -827,7 +942,10 @@ export function listInbound(token: string, centerId: string): Promise<{ items: I
 export function receiveTransfer(token: string, transferId: string, body: { qtyReceived: number; note?: string }): Promise<{ id: string }> {
   return request(`/transfers/${encodeURIComponent(transferId)}/receive`, { method: "POST", body: JSON.stringify(body), token });
 }
-export function flagCenter(id: string, body: { reason: CenterFlagReason; details?: string; turnstileToken?: string }): Promise<{ ok: boolean }> {
+export function flagCenter(
+  id: string,
+  body: { reason: CenterFlagReason; details?: string; turnstileToken?: string },
+): Promise<{ ok: boolean }> {
   return request(`/centers/${encodeURIComponent(id)}/flag`, { method: "POST", body: JSON.stringify(body) });
 }
 export function vouchOrg(token: string, targetOrgId: string, voucherOrgId: string): Promise<{ ok: boolean }> {
@@ -855,15 +973,26 @@ export function inviteOrgMember(token: string, orgId: string, body: { email: str
 export function removeOrgMember(token: string, orgId: string, subOrEmail: string): Promise<{ ok: boolean }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/members/${encodeURIComponent(subOrEmail)}`, { method: "DELETE", token });
 }
-export function declareDonation(centerId: string, body: { category: string; qty: number; note?: string; turnstileToken?: string }): Promise<{ ref: string }> {
+export function declareDonation(
+  centerId: string,
+  body: { category: string; qty: number; note?: string; turnstileToken?: string },
+): Promise<{ ref: string }> {
   return request(`/centers/${encodeURIComponent(centerId)}/donations`, { method: "POST", body: JSON.stringify(body) });
 }
 export function getDonation(ref: string): Promise<DonationStatus> {
   return request(`/donations/${encodeURIComponent(ref)}`);
 }
-export function listCenterDonations(token: string, centerId: string, status: "declared" | "received" | "not_received" = "declared"): Promise<{ items: DonationStatus[] }> {
+export function listCenterDonations(
+  token: string,
+  centerId: string,
+  status: "declared" | "received" | "not_received" = "declared",
+): Promise<{ items: DonationStatus[] }> {
   return request(`/centers/${encodeURIComponent(centerId)}/donations${qs({ status })}`, { token });
 }
-export function confirmDonation(token: string, ref: string, body: { qty?: number } | { action: "not_received" }): Promise<{ entryId?: string; ok?: boolean }> {
+export function confirmDonation(
+  token: string,
+  ref: string,
+  body: { qty?: number } | { action: "not_received" },
+): Promise<{ entryId?: string; ok?: boolean }> {
   return request(`/donations/${encodeURIComponent(ref)}/confirm`, { method: "POST", body: JSON.stringify(body), token });
 }

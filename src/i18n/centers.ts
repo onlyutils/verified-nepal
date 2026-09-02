@@ -37,8 +37,7 @@ export const centerStrings = {
     backToCenters: "Back to all centers",
     stockTitle: "Stock on hand",
     stockEmpty: "No stock recorded yet.",
-    stockNote:
-      "Figures are logged by the organization\u2019s staff. Stock on hand = received \u2212 distributed \u2212 sent out.",
+    stockNote: "Figures are logged by the organization\u2019s staff. Stock on hand = received \u2212 distributed \u2212 sent out.",
     activityTitle: "Recent activity",
     activityEmpty: "No recent activity.",
     activityIntake: "Received",
@@ -138,8 +137,7 @@ export const centerStrings = {
     backToCenters: "सबै केन्द्रहरूमा फर्कनुहोस्",
     stockTitle: "मौज्दात",
     stockEmpty: "अहिलेसम्म कुनै मौज्दात विवरण छैन।",
-    stockNote:
-      "तथ्याङ्क संस्थाकै कर्मचारीले प्रविष्ट गरेका हुन्। मौज्दात = प्राप्त \u2212 वितरण \u2212 पठाइएको।",
+    stockNote: "तथ्याङ्क संस्थाकै कर्मचारीले प्रविष्ट गरेका हुन्। मौज्दात = प्राप्त \u2212 वितरण \u2212 पठाइएको।",
     activityTitle: "हालको गतिविधि",
     activityEmpty: "हाल कुनै गतिविधि छैन।",
     activityIntake: "प्राप्त",
@@ -183,7 +181,8 @@ export const centerStrings = {
     dropCopyButton: "कोड कपी गर्नुहोस्",
     dropCopied: "कपी गरियो",
     dropLinkLabel: "जुनसुकै बेला स्थिति जाँच्नुहोस्:",
-    dropKeepCode: "यो कोड सुरक्षित राख्नुहोस्। कर्मचारीले तपाईंको ड्रप लग गरेपछि पुष्टि गर्नेछन्; कोडले कसले सामान प्राप्त गर्यो भन्ने कहिल्यै देखाउँदैन।",
+    dropKeepCode:
+      "यो कोड सुरक्षित राख्नुहोस्। कर्मचारीले तपाईंको ड्रप लग गरेपछि पुष्टि गर्नेछन्; कोडले कसले सामान प्राप्त गर्यो भन्ने कहिल्यै देखाउँदैन।",
     dropValidationCategory: "श्रेणी छान्नुहोस्।",
     dropValidationQty: "परिमाण ० भन्दा ठूलो र १० लाखसम्म, बढीमा २ दशमलव हुनुपर्छ।",
     dropValidationNote: "नोट बढीमा ५०० अक्षर हुनुपर्छ।",

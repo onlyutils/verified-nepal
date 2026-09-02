@@ -1,149 +1,202 @@
 import { useEffect, useState } from "react";
-import { ApiError, listProjects, PROJECT_TYPES, type ProjectPublic } from "@/lib/api";
+import { ApiError, listProjects, type ProjectPublic, type ProjectStatus, type ProjectType } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { communityStrings } from "@/i18n/community";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { formatNumber } from "@/lib/format";
+import { fillTemplate } from "@/lib/edition";
+import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { districtLabels, districtNames } from "@/lib/geo";
-import { labels } from "@/i18n";
-import { uiStrings } from "@/i18n/ui";
-import { ProjectStatusMark } from "@/components/legacy";
-import type { Language } from "@/lib/types";
-import { formatNumber } from "@/lib/format";
-import { apiErrorMessage } from "@/lib/api-error";
-import { fillTemplate } from "@/lib/edition";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge, toneForStatus } from "@/components/status-badge";
+import { EmptyState, LoadingState } from "@/components/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link2, RefreshCw } from "lucide-react";
 
-function typeLabel(type: string, language: import("@/lib/types").Language){
-  const u = uiStrings[language];
-  const map: Record<string,string> = {
-    tuin: u.projectTypeTuin,
-    bridge: u.projectTypeBridge,
-    trail: u.projectTypeTrail,
-    water: u.projectTypeWater,
-    school: u.projectTypeSchool,
-    other: u.projectTypeOther,
+function typeLabel(type: ProjectType, language: Language) {
+  const t = communityStrings[language];
+  const values: Record<ProjectType, string> = {
+    tuin: t.projectTypeTuin,
+    bridge: t.projectTypeBridge,
+    trail: t.projectTypeTrail,
+    water: t.projectTypeWater,
+    school: t.projectTypeSchool,
+    other: t.projectTypeOther,
   };
-  return map[type] ?? type;
+  return values[type] ?? t.projectTypeOther;
 }
 
-function coverUrl(p: ProjectPublic): string | null {
-  if (!p.photos || p.photos.length===0) {
-    if (typeof p.coverPhoto === 'string') return p.coverPhoto;
-    if (p.coverPhoto && typeof p.coverPhoto === 'object' && 'url' in p.coverPhoto) return (p.coverPhoto as {url:string}).url;
-    return null;
-  }
-  const published = p.photos.find(ph=>ph.status==='published');
-  if (published) return published.url;
-  const any = p.photos[0];
-  return any?.url ?? null;
+function statusLabel(status: ProjectStatus, language: Language) {
+  const t = communityStrings[language];
+  const values: Record<ProjectStatus, string> = {
+    pending: t.statusPending,
+    published: t.statusPublished,
+    "in-progress": t.statusInProgress,
+    completed: t.statusCompleted,
+    rejected: t.statusRejected,
+    archived: t.statusArchived,
+  };
+  return values[status] ?? t.statusPending;
+}
+
+function coverUrl(project: ProjectPublic): string | null {
+  if (project.photos.length) return project.photos.find((photo) => photo.status === "published")?.url ?? project.photos[0]?.url ?? null;
+  return typeof project.coverPhoto === "string" ? project.coverPhoto : (project.coverPhoto?.url ?? null);
 }
 
 export function ProjectsList({ language }: { language: Language }) {
-  const t = labels[language] as Record<string,string>;
+  const t = communityStrings[language];
   const [district, setDistrict] = useState("");
   const [status, setStatus] = useState("");
   const [items, setItems] = useState<ProjectPublic[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [nextCursor, setNextCursor] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const fetchList = async (cur?: string, append=false) => {
+  const fetchList = async (cursor?: string, append = false) => {
     setLoading(true);
     setError(null);
     setOffline(false);
     try {
-      const res = await listProjects({ district: district||undefined, status: status||undefined, cursor: cur });
-      setItems(prev => append ? [...prev, ...res.items] : res.items);
-      setNextCursor(res.cursor);
-      setCursor(cur);
-    } catch (e) {
-      if ((e as ApiError).status===0 || !navigator.onLine) {
-        setOffline(true);
-        setError(t.projectsOffline);
-      } else {
-        setError(apiErrorMessage(e, language));
-      }
+      const result = await listProjects({ district: district || undefined, status: status || undefined, cursor });
+      setItems((previous) => (append ? [...previous, ...result.items] : result.items));
+      setNextCursor(result.cursor);
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
+      setOffline((cause as ApiError).status === 0 || !navigator.onLine);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(()=>{ fetchList(undefined,false); /* eslint-disable-next-line */ }, [district, status]);
+  useEffect(() => {
+    void fetchList(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [district, status]);
 
-  const shareUrlFor = (id: string) => `${window.location.origin}/projects/${encodeURIComponent(id)}`;
-
-  const handleCopy = async (url: string) => {
-    try { await navigator.clipboard.writeText(url); } catch {}
+  const copyLink = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/projects/${encodeURIComponent(id)}`);
+      setCopied(id);
+      window.setTimeout(() => setCopied(null), 2000);
+    } catch {
+      /* link remains available */
+    }
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header className="border-b border-rule pb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">{t.projectsTitle}</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.projectsLead}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <a href="/projects/register" className="inline-flex h-9 items-center border border-ink bg-ink px-4 font-sans text-xs font-semibold uppercase tracking-wide text-paper hover:bg-ink/90">{t.projectsRegisterCta}</a>
-          <a href="/projects/update" className="inline-flex h-9 items-center border border-rule bg-paper px-4 font-sans text-xs font-semibold uppercase tracking-wide text-ink hover:border-ink">{t.projectsUpdateCta}</a>
-        </div>
-      </header>
-
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHeader
+        eyebrow={t.communityEyebrow}
+        title={t.projectsTitle}
+        description={t.projectsLead}
+        actions={
+          <>
+            <Button asChild>
+              <a href="/projects/register">{t.projectsRegister}</a>
+            </Button>
+            <Button asChild variant="secondary">
+              <a href="/projects/update">{t.projectsUpdate}</a>
+            </Button>
+          </>
+        }
+      />
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">{t.projectsFilters}</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-          <div className="min-w-[12rem]">
-            <Label>{t.projectsDistrict}</Label>
-            <NativeSelect value={district} onChange={e=>setDistrict(e.target.value)}>
+        <CardHeader>
+          <CardTitle className="text-base">{t.projectsFilters}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="project-district">{t.districtLabel}</Label>
+            <NativeSelect id="project-district" value={district} onChange={(event) => setDistrict(event.target.value)}>
               <NativeSelectOption value="">{t.projectsAllDistricts}</NativeSelectOption>
-              {districtNames.map(d=> <NativeSelectOption key={d} value={d}>{districtLabels[d as keyof typeof districtLabels][language]}</NativeSelectOption>)}
+              {districtNames.map((name) => (
+                <NativeSelectOption key={name} value={name}>
+                  {districtLabels[name][language]}
+                </NativeSelectOption>
+              ))}
             </NativeSelect>
           </div>
-          <div className="min-w-[12rem]">
-            <Label>{t.projectsStatus}</Label>
-            <NativeSelect value={status} onChange={e=>setStatus(e.target.value)}>
+          <div className="space-y-2">
+            <Label htmlFor="project-status">{t.statusLabel}</Label>
+            <NativeSelect id="project-status" value={status} onChange={(event) => setStatus(event.target.value)}>
               <NativeSelectOption value="">{t.projectsAllStatuses}</NativeSelectOption>
-              <NativeSelectOption value="published">published</NativeSelectOption>
-              <NativeSelectOption value="in-progress">in-progress</NativeSelectOption>
-              <NativeSelectOption value="completed">completed</NativeSelectOption>
+              {(["published", "in-progress", "completed"] as ProjectStatus[]).map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {statusLabel(value, language)}
+                </NativeSelectOption>
+              ))}
             </NativeSelect>
           </div>
-          <div className="ml-auto flex items-end">
-            <Button variant="outline" size="sm" onClick={()=>fetchList(undefined,false)}>{t.projectsTryAgain}</Button>
+          <div className="flex items-end">
+            <Button type="button" variant="outline" onClick={() => void fetchList()} disabled={loading} className="w-full sm:w-auto">
+              <RefreshCw aria-hidden="true" />
+              {t.retry}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {loading && items.length===0 ? <p className="font-sans text-sm text-muted-foreground-foreground">{t.projectsLoading}</p> : null}
-      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectsOffline}</p> : null}</div> : null}
-      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.projectsEmpty}</p> : null}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map(p=>{
-          const title = language==='ne' ? (p.title.ne || p.title.en) : p.title.en;
-          const url = shareUrlFor(p.id);
-          const cover = coverUrl(p);
+      {loading && items.length === 0 ? <LoadingState label={t.projectsLoading} /> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            {offline ? ` ${t.offline}` : ""}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {!loading && !error && items.length === 0 ? <EmptyState title={t.projectsEmpty} description={t.offline} /> : null}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {items.map((project) => {
+          const cover = coverUrl(project);
+          const districtName = districtLabels[project.district as keyof typeof districtLabels]?.[language] ?? project.district;
           return (
-            <Card key={p.id} className="flex flex-col overflow-hidden">
-              {cover ? <img src={cover} alt={t.projectsCoverAlt} className="h-44 w-full object-cover" loading="lazy" /> : <div className="flex h-44 w-full items-center justify-center bg-secondary font-sans text-xs uppercase tracking-wide text-secondary-foreground">{t.projectsNoCover}</div>}
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="uppercase">{typeLabel(p.type, language)}</Badge>
-                  <ProjectStatusMark status={p.status} language={language} />
+            <Card key={project.id} className="flex min-w-0 flex-col overflow-hidden">
+              {cover ? (
+                <img src={cover} alt={t.noPhoto} className="aspect-[16/9] w-full object-cover" loading="lazy" />
+              ) : (
+                <div className="flex aspect-[16/9] items-center justify-center bg-secondary px-4 text-center text-sm text-muted-foreground">
+                  {t.noPhoto}
                 </div>
-                <CardTitle className="line-clamp-2 text-base leading-6">{title}</CardTitle>
-                <p className="font-sans text-xs text-muted-foreground-foreground">{districtLabels[p.district as keyof typeof districtLabels]?.[language] ?? p.district} · W{p.ward} · {fillTemplate(t.projectsCostNpr,{amount: formatNumber(p.costEstimateNpr, language)})}</p>
+              )}
+              <CardHeader className="gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{typeLabel(project.type, language)}</Badge>
+                  <StatusBadge tone={toneForStatus(project.status)}>{statusLabel(project.status, language)}</StatusBadge>
+                </div>
+                <CardTitle className="line-clamp-2 text-lg">
+                  {language === "ne" ? project.title.ne || project.title.en : project.title.en}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {fillTemplate(t.districtWard, { district: districtName, ward: String(project.ward) })} ·{" "}
+                  {fillTemplate(t.costNpr, { amount: formatNumber(project.costEstimateNpr, language) })}
+                </p>
               </CardHeader>
-              <CardContent className="mt-auto flex flex-wrap gap-2 pt-2">
-                <a href={`/projects/${encodeURIComponent(p.id)}`} className="inline-flex h-8 items-center border border-ink bg-ink px-3 font-sans text-xs font-semibold uppercase tracking-wide text-paper hover:bg-ink/90">{t.projectsLearnMore}</a>
-                <Button variant="outline" size="sm" onClick={()=>handleCopy(url)}>{t.projectsShareCopy}</Button>
+              <CardContent className="mt-auto flex flex-wrap gap-2">
+                <Button asChild>
+                  <a href={`/projects/${encodeURIComponent(project.id)}`}>{t.projectsDetails}</a>
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => void copyLink(project.id)}>
+                  <Link2 aria-hidden="true" />
+                  {copied === project.id ? t.projectsCopied : t.projectsCopyLink}
+                </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
-      {nextCursor ? <div className="flex justify-center"><Button variant="outline" onClick={()=>fetchList(nextCursor,true)} disabled={loading}>{loading ? t.projectsLoading : t.projectsLoadMore}</Button></div> : null}
+      {nextCursor ? (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={() => void fetchList(nextCursor, true)} disabled={loading}>
+            {t.projectsLoadMore}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

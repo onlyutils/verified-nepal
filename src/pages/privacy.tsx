@@ -1,5 +1,7 @@
 import { labels } from "@/i18n";
-import { Headline, Rule, SectionLabel } from "@/components/legacy";
+import { formStrings } from "@/i18n/forms";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageHeader, SectionHeader } from "@/components/page-header";
 import type { Language } from "@/lib/types";
 
 const effectiveDate = "30 August 2026";
@@ -13,13 +15,13 @@ const enSections: Section[] = [
   {
     title: "1. Who operates this site",
     body: [
-      "verifiedNepal is a non-commercial, volunteer project maintained by a single private individual (the \"Maintainer\"). It is not a government website and is not affiliated with, endorsed by, or operated on behalf of the Government of Nepal, the National Disaster Risk Reduction and Management Authority (NDRRMA), or any other authority. It exists to make verified disaster-response and community-recovery information easier to read during the 2026 Rasuwa flash flood response, for a Nepal audience. The governing law is the law of Nepal, including the Individual Privacy Act, 2075 (2018).",
+      'verifiedNepal is a non-commercial, volunteer project maintained by a single private individual (the "Maintainer"). It is not a government website and is not affiliated with, endorsed by, or operated on behalf of the Government of Nepal, the National Disaster Risk Reduction and Management Authority (NDRRMA), or any other authority. It exists to make verified disaster-response and community-recovery information easier to read during the 2026 Rasuwa flash flood response, for a Nepal audience. The governing law is the law of Nepal, including the Individual Privacy Act, 2075 (2018).',
     ],
   },
   {
     title: "2. Acceptance of these Terms",
     body: [
-      "This page is both the site's Terms of Service and its Privacy Policy (together, the \"Terms\"). By accessing or using this site you accept these Terms in full. If you do not agree with any part of them, do not use the site.",
+      'This page is both the site\'s Terms of Service and its Privacy Policy (together, the "Terms"). By accessing or using this site you accept these Terms in full. If you do not agree with any part of them, do not use the site.',
     ],
   },
   {
@@ -129,7 +131,7 @@ const enSections: Section[] = [
   {
     title: "17. No warranty; verify with official sources",
     body: [
-      "This site and its content are provided \"as is\" and \"as available\", without warranty of any kind, express or implied, including warranties of accuracy, completeness, timeliness, merchantability, or fitness for a particular purpose. Disaster data changes rapidly; mirrored data may be delayed, incomplete, or wrong. The absence of a person from any list is not evidence of their safety or of harm.",
+      'This site and its content are provided "as is" and "as available", without warranty of any kind, express or implied, including warranties of accuracy, completeness, timeliness, merchantability, or fitness for a particular purpose. Disaster data changes rapidly; mirrored data may be delayed, incomplete, or wrong. The absence of a person from any list is not evidence of their safety or of harm.',
       "This site must not be relied upon for emergency decisions. For rescue, medical, or safety needs, always contact the official authorities first: NEOC disaster hotline 1234, Nepal Police 100, Ambulance 102, and verify records on the official NDRRMA pages linked throughout the site.",
     ],
   },
@@ -346,60 +348,54 @@ const nepaliSummaryHonest = [
 
 export function PrivacyPolicy({ language }: { language: Language }) {
   const t = labels[language];
+  const ts = formStrings[language];
   const sections = language === "ne" ? neSections : enSections;
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_18rem] lg:gap-16">
-      <article>
-        <div
-          role="note"
-          aria-label={language === "ne" ? draftNe : draftEn}
-          className="mb-6 border-2 border-dashed border-amber-600 bg-amber-50 px-4 py-3 dark:border-amber-500 dark:bg-amber-950/30"
-        >
-          <p className="font-sans text-xs font-bold uppercase tracking-[0.14em] text-amber-900 dark:text-amber-200">
+    <div className="mx-auto max-w-3xl space-y-8">
+      <Alert role="note" className="border-warning bg-warning-soft text-warning">
+        <AlertDescription>
+          <span className="font-semibold">
             {draftEn} · <span lang="ne">{draftNe}</span>
-          </p>
-          <p className="mt-1 font-sans text-xs leading-5 text-amber-900/80 dark:text-amber-200/80">
-            {language === "ne"
-              ? "यो नीति अझै मस्यौदा हो र सञ्चालकको अन्तिम समीक्षा बाँकी छ — अन्तिम मान्नु अघि पुष्टि गर्नुहोस्।"
-              : "This policy is a draft pending the owner's final review — do not treat it as the final published version."}
-          </p>
-        </div>
-        <Headline level={2} as="h1">
-          {t.privacyTitle}
-        </Headline>
-        <p className="mt-2 font-sans text-[0.72rem] uppercase tracking-[0.14em] text-muted-foreground">
-          {t.effectiveDate}: {effectiveDate}
-        </p>
-        <p className="mt-3 max-w-[44rem] border-l-2 border-ink pl-4 font-serif text-sm leading-6 text-muted-foreground-foreground">
+          </span>
+          <br />
+          {language === "ne"
+            ? "यो नीति अझै मस्यौदा हो र सञ्चालकको अन्तिम समीक्षा बाँकी छ — अन्तिम मान्नु अघि पुष्टि गर्नुहोस्।"
+            : "This policy is a draft pending the owner's final review — do not treat it as the final published version."}
+        </AlertDescription>
+      </Alert>
+      <PageHeader eyebrow={ts.privacyEyebrow} title={t.privacyTitle} description={`${t.effectiveDate}: ${effectiveDate}`} />
+      <article className="space-y-8 text-base leading-relaxed text-foreground">
+        <p className="border-l-2 border-primary pl-4 text-muted-foreground">
           {language === "ne"
             ? "सञ्चालक: एक निजी स्वयंसेवी (Maintainer)। लागू कानून: नेपालको व्यक्तिगत गोपनीयता ऐन, २०७५। सम्पर्क: verifiednepal01@gmail.com।"
             : "Maintainer: a single private volunteer. Governing law: Nepal, Individual Privacy Act, 2075. Contact: verifiednepal01@gmail.com."}
         </p>
-        <Rule className="mt-6" />
-        <div className="mt-8 max-w-[44rem] space-y-8">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <Headline level={3} as="h2">
-                {section.title}
-              </Headline>
-              {section.body.map((paragraph) => (
-                <p key={paragraph} className="mt-2 font-serif leading-7 text-ink">
-                  {paragraph}
-                </p>
-              ))}
-            </section>
-          ))}
-        </div>
+        {sections.map((section) => (
+          <section key={section.title} className="space-y-3">
+            <SectionHeader title={section.title} />
+            {section.body.map((paragraph) =>
+              paragraph.startsWith("• ") ? (
+                <ul key={paragraph} className="list-disc space-y-2 pl-5">
+                  <li>{paragraph.slice(2)}</li>
+                </ul>
+              ) : (
+                <p key={paragraph}>{paragraph}</p>
+              ),
+            )}
+          </section>
+        ))}
       </article>
-      <aside lang="ne" className="lg:sticky lg:top-6 lg:self-start">
-        <SectionLabel>{t.neSummaryTitle}</SectionLabel>
-        <div className="mt-3 space-y-3 border-l border-ink pl-4 font-serif text-sm leading-6 text-ink">
+      <aside lang="ne" className="border-t pt-8">
+        <SectionHeader title={t.neSummaryTitle} />
+        <div className="mt-4 space-y-3 text-base leading-relaxed text-muted-foreground">
           {nepaliSummaryHonest.map((line) => (
             <p key={line}>{line}</p>
           ))}
         </div>
-        <p className="mt-4 font-sans text-xs text-muted-foreground-foreground">{draftNe} — {draftEn}</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {draftNe} — {draftEn}
+        </p>
       </aside>
     </div>
   );

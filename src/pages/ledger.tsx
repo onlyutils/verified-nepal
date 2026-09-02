@@ -1,148 +1,157 @@
-import { apiErrorMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getLedger, getLedgerCsvUrl, type LedgerItem } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { communityStrings } from "@/i18n/community";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { goodsLabel } from "@/lib/goods";
+import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState, LoadingState } from "@/components/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TurnstileWidget } from "@/components/turnstile";
-import { districtLabels, districtNames } from "@/lib/geo";
-import { labels } from "@/i18n";
-import type { Language } from "@/lib/types";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+function dateLabel(value: string, language: Language) {
+  return new Date(value).toLocaleDateString(language === "ne" ? "ne-NP" : "en-GB", { dateStyle: "medium" });
+}
 
 export function Ledger({ language }: { language: Language }) {
-  const t = labels[language];
+  const t = communityStrings[language];
   const [district, setDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
-  const [ward, setWard] = useState<string>("");
+  const [ward, setWard] = useState("");
   const [items, setItems] = useState<LedgerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
-
-  const fetchLedger = async () => {
-    if (!district) return;
+  const load = async () => {
     setLoading(true);
     setError(null);
+    setOffline(false);
     try {
-      const res = await getLedger({ district, ward: ward ? Number(ward) : undefined });
-      setItems(res.items);
-    } catch (e) {
-      const err = e as ApiError;
-      if (err.status === 0) {
-        setError(t.ledgerOffline);
-      } else {
-        setError(apiErrorMessage(err, language));
-      }
-      setItems([]);
+      setItems((await getLedger({ district, ward: ward ? Number(ward) : undefined })).items);
+    } catch (cause) {
+      const api = cause as ApiError;
+      setError(apiErrorMessage(cause, language));
+      setOffline(api.status === 0 || !navigator.onLine);
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    fetchLedger();
+    void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [district, ward]);
-
-  const csvUrl = district ? getLedgerCsvUrl(district, ward ? Number(ward) : undefined, turnstileToken || undefined) : "";
-
+  const districtLabel = districtLabels[district as keyof typeof districtLabels]?.[language] ?? district;
+  const csvUrl = getLedgerCsvUrl(district, ward ? Number(ward) : undefined, turnstileToken);
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-1 sm:px-4">
-      <header className="border-b border-rule pb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">{t.ledgerTitle}</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.ledgerLead}</p>
-      </header>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t.ledgerTitle}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="min-w-[14rem]">
-              <Label>{t.ledgerDistrict}</Label>
-              <NativeSelect value={district} onChange={(e) => setDistrict(e.target.value)}>
-                {districtNames.map((d) => (
-                  <NativeSelectOption key={d} value={d}>
-                    {districtLabels[d][language]}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="min-w-[10rem]">
-              <Label>{t.ledgerWard}</Label>
-              <NativeSelect value={ward} onChange={(e) => setWard(e.target.value)}>
-                <option value="">{t.ledgerAllWards}</option>
-                {Array.from({ length: 33 }, (_, i) => i + 1).map((w) => (
-                  <NativeSelectOption key={w} value={String(w)}>
-                    W{w}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="ml-auto flex items-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => window.print()}>
-                {t.ledgerPrintAction}
-              </Button>
-              {csvUrl ? (
-                <a
-                  href={csvUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 items-center border border-ink bg-ink px-3 font-sans text-xs font-semibold uppercase tracking-wide text-paper hover:bg-ink/90"
-                >
-                  {t.ledgerDownloadCsv}
-                </a>
-              ) : null}
-            </div>
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHeader eyebrow={t.accountabilityEyebrow} title={t.ledgerTitle} description={t.ledgerLead} />
+      <Card className="print:hidden">
+        <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="space-y-2">
+            <Label htmlFor="ledger-district">{t.ledgerDistrict}</Label>
+            <NativeSelect id="ledger-district" value={district} onChange={(e) => setDistrict(e.target.value)}>
+              {districtNames.map((name) => (
+                <NativeSelectOption key={name} value={name}>
+                  {districtLabels[name][language]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
           </div>
-          <p className="font-sans text-xs text-muted-foreground-foreground">{t.ledgerDownloadHint}</p>
-          {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground-foreground">{t.ledgerTurnstileHint}</p>}
+          <div className="space-y-2">
+            <Label htmlFor="ledger-ward">{t.ledgerWard}</Label>
+            <NativeSelect id="ledger-ward" value={ward} onChange={(e) => setWard(e.target.value)}>
+              <NativeSelectOption value="">{t.ledgerAllWards}</NativeSelectOption>
+              {Array.from({ length: 33 }, (_, index) => String(index + 1)).map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {t.ledgerWard} {value}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </div>
+          {TURNSTILE_KEY ? (
+            <div className="sm:col-span-2 lg:col-span-2">
+              <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-end gap-2 lg:col-span-5">
+            <Button variant="outline" onClick={() => window.print()}>
+              {t.ledgerPrint}
+            </Button>
+            {csvUrl ? (
+              <Button asChild variant="secondary">
+                <a href={csvUrl} download>
+                  {t.ledgerCsv}
+                </a>
+              </Button>
+            ) : null}
+            <span className="text-sm text-muted-foreground">{t.ledgerCsvHint}</span>
+          </div>
         </CardContent>
       </Card>
-
-      {loading ? (
-        <p className="font-sans text-sm text-muted-foreground-foreground">{t.ledgerLoading}</p>
-      ) : error ? (
-        <div className="border border-rule bg-card px-4 py-6" role="alert">
-          <p className="font-sans text-sm text-destructive">{error}</p>
-        </div>
-      ) : items.length === 0 ? (
-        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.ledgerEmpty}</p>
-      ) : (
-        <div className="overflow-x-auto border border-rule bg-paper print:border-black print:bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow className="print:border-black">
-                <TableHead>{t.ledgerMaskedName}</TableHead>
-                <TableHead>{t.ledgerCategory}</TableHead>
-                <TableHead>{t.ledgerWard}</TableHead>
-                <TableHead>{t.ledgerDate}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it, idx) => (
-                <TableRow key={`${it.maskedName}-${it.redeemedAt}-${idx}`} className="print:break-inside-avoid">
-                  <TableCell className="font-medium">{it.maskedName}</TableCell>
-                  <TableCell className="capitalize">{it.category}</TableCell>
-                  <TableCell>W{it.ward}</TableCell>
-                  <TableCell className="text-xs">{new Date(it.redeemedAt).toLocaleDateString()}</TableCell>
+      <p className="hidden text-sm print:block">
+        {districtLabel}
+        {ward ? ` · ${t.ledgerWard} ${ward}` : ""}
+      </p>
+      {loading && !items.length ? <LoadingState label={t.ledgerLoading} /> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            {offline ? ` ${t.offline}` : ""}
+            <span className="mt-2 block">
+              <Button variant="secondary" size="sm" onClick={() => void load()}>
+                {t.retry}
+              </Button>
+            </span>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {!loading && !error && !items.length ? <EmptyState title={t.ledgerEmpty} /> : null}
+      {items.length ? (
+        <>
+          <div className="divide-y rounded-xl border md:hidden print:hidden">
+            {items.map((item, index) => (
+              <div key={`${item.maskedName}-${item.redeemedAt}-mobile-${index}`} className="space-y-1 px-4 py-4">
+                <p className="font-semibold">{item.maskedName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {goodsLabel(item.category, language)} · {t.ledgerWard} {item.ward}
+                </p>
+                <p className="text-sm text-muted-foreground">{dateLabel(item.redeemedAt, language)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="hidden rounded-xl border md:block print:block print:border-black">
+            <Table className="print:min-w-0">
+              <TableHeader>
+                <TableRow className="bg-secondary print:border-black print:bg-background">
+                  <TableHead>{t.ledgerName}</TableHead>
+                  <TableHead>{t.ledgerCategory}</TableHead>
+                  <TableHead>{t.ledgerWard}</TableHead>
+                  <TableHead>{t.ledgerDate}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      <style>{`@media print {
-        header, nav, footer, .no-print { display: none !important; }
-        body { background: white !important; color: black !important; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid black; color: black; background: white; }
-        tr { page-break-inside: avoid; }
-      }`}</style>
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={`${item.maskedName}-${item.redeemedAt}-${index}`} className="print:break-inside-avoid print:border-black">
+                    <TableCell className="font-medium">{item.maskedName}</TableCell>
+                    <TableCell>{goodsLabel(item.category, language)}</TableCell>
+                    <TableCell>
+                      {t.ledgerWard} {item.ward}
+                    </TableCell>
+                    <TableCell>{dateLabel(item.redeemedAt, language)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

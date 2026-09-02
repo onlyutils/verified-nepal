@@ -28,8 +28,8 @@ export class ComponentErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const t = labels[this.props.language];
       return (
-        <div className="border border-rule bg-card px-4 py-6" role="alert">
-          <p className="font-sans text-sm text-destructive">{t.errGeneric}</p>
+        <div className="rounded-xl border bg-card px-4 py-6" role="alert">
+          <p className="text-sm text-destructive">{t.errGeneric}</p>
           <div className="mt-4">
             <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false })}>
               {t.errBoundaryRetry}

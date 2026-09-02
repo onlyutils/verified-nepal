@@ -3,7 +3,10 @@ import { useEffect, useRef } from "react";
 declare global {
   interface Window {
     turnstile?: {
-      render: (el: HTMLElement, opts: { sitekey: string; callback: (t: string) => void; "expired-callback"?: () => void; "error-callback"?: () => void }) => string;
+      render: (
+        el: HTMLElement,
+        opts: { sitekey: string; callback: (t: string) => void; "expired-callback"?: () => void; "error-callback"?: () => void },
+      ) => string;
       reset: (id: string) => void;
       remove?: (id: string) => void;
     };

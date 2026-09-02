@@ -1,251 +1,291 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, createDispatch, DISPATCH_TAGS, listDispatches, type DispatchPublicItem, type DispatchTag } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { communityStrings } from "@/i18n/community";
+import { formatDateTime, localizedText } from "@/lib/format";
+import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { labels } from "@/i18n";
-import { apiErrorMessage } from "@/lib/api-error";
-import type { Language } from "@/lib/types";
-import { Headline, Rule, SectionLabel } from "@/components/legacy";
-import { formatDateTime, localizedText } from "@/lib/format";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState, LoadingState } from "@/components/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { TurnstileWidget } from "@/components/turnstile";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-
-function tagLabel(tag: DispatchTag, t: Record<string,string>): string {
-  const map: Record<string,string> = {
-    climate: t.dispatchesTagClimate,
-    mountains: t.dispatchesTagMountains,
-    floods: t.dispatchesTagFloods,
-    landslides: t.dispatchesTagLandslides,
-    glaciers: t.dispatchesTagGlaciers,
-    community: t.dispatchesTagCommunity,
-    story: t.dispatchesTagStory,
-  };
-  return map[tag] ?? tag;
+function tagLabel(tag: DispatchTag, language: Language) {
+  const t = communityStrings[language];
+  return {
+    climate: t.tagClimate,
+    mountains: t.tagMountains,
+    floods: t.tagFloods,
+    landslides: t.tagLandslides,
+    glaciers: t.tagGlaciers,
+    community: t.tagCommunity,
+    story: t.tagStory,
+  }[tag];
 }
 
 export function DispatchesPage({ language }: { language: Language }) {
-  const t = labels[language] as Record<string,string>;
-  const [activeTag, setActiveTag] = useState<string>("");
+  const t = communityStrings[language];
+  const formRef = useRef<HTMLDivElement>(null);
+  const [activeTag, setActiveTag] = useState("");
   const [items, setItems] = useState<DispatchPublicItem[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [cursor, setCursor] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
-
-  const formRef = useRef<HTMLDivElement>(null);
-
-  const fetchList = async (tag: string, cur?: string, append=false) => {
-    if (append) setLoadingMore(true); else setLoading(true);
-    setError(null);
-    setOffline(false);
-    try {
-      const res = await listDispatches({ tag: tag || undefined, cursor: cur });
-      setItems(prev => append ? [...prev, ...res.items] : res.items);
-      setCursor(res.cursor);
-    } catch (e) {
-      if ((e as ApiError).status===0 || !navigator.onLine) {
-        setOffline(true);
-        setError(t.dispatchesOffline ?? t.dispatchesError);
-      } else setError(apiErrorMessage(e, language));
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  useEffect(()=>{ fetchList(activeTag, undefined, false); }, [activeTag]);
-
-  const handleTag = (tag: string) => setActiveTag(tag);
-
-  // form state
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [place, setPlace] = useState("");
   const [email, setEmail] = useState("");
   const [tags, setTags] = useState<DispatchTag[]>([]);
-  const [formLang, setFormLang] = useState<"en"|"ne">(language);
+  const [formLanguage, setFormLanguage] = useState<"en" | "ne">(language);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string|null>(null);
-  const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  useEffect(()=>{ setFormLang(language); }, [language]);
-
-  const toggleTag = (tag: DispatchTag) => {
-    setTags(prev => prev.includes(tag) ? prev.filter(x=>x!==tag) : prev.length >=3 ? prev : [...prev, tag]);
+  const fetchList = async (next?: string, append = false) => {
+    setLoading(true);
+    setError(null);
+    setOffline(false);
+    try {
+      const response = await listDispatches({ tag: activeTag || undefined, cursor: next });
+      setItems((current) => (append ? [...current, ...response.items] : response.items));
+      setCursor(response.cursor);
+    } catch (cause) {
+      const api = cause as ApiError;
+      setError(apiErrorMessage(cause, language));
+      setOffline(api.status === 0 || !navigator.onLine);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    void fetchList(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [activeTag]);
+  useEffect(() => setFormLanguage(language), [language]);
+  const toggleTag = (tag: DispatchTag) =>
+    setTags((current) =>
+      current.includes(tag) ? current.filter((value) => value !== tag) : current.length < 3 ? [...current, tag] : current,
+    );
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setFormError(null);
-    if (!title.trim() || !body.trim() || !displayName.trim() || !email.trim() || tags.length===0) {
-      setFormError(t.dispatchWriteValidation);
+    if (
+      !title.trim() ||
+      !body.trim() ||
+      !displayName.trim() ||
+      !email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      !tags.length ||
+      body.length > 6000 ||
+      (TURNSTILE_KEY && !turnstileToken)
+    ) {
+      setFormError(t.dispatchValidation);
       return;
     }
-    if (tags.length>3) { setFormError(t.dispatchWriteValidation); return; }
-    if (body.length>6000) { setFormError(t.dispatchWriteValidation); return; }
-    // basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setFormError(t.dispatchWriteValidation); return; }
-    if (TURNSTILE_KEY && !turnstileToken) { setFormError(t.dispatchTurnstileHint); return; }
     setSubmitting(true);
     try {
-      await createDispatch({ title: title.trim(), body: body.trim(), author: { displayName: displayName.trim(), place: place.trim() || undefined, email: email.trim() }, tags, language: formLang, turnstileToken: turnstileToken || undefined });
-      setFormSuccess(true);
-      setTitle(""); setBody(""); setDisplayName(""); setPlace(""); setEmail(""); setTags([]); setTurnstileToken("");
-    } catch (err) {
-      if ((err as ApiError).status===0) setFormError(t.dispatchWriteOffline);
-      else setFormError(apiErrorMessage(err, language));
-    } finally { setSubmitting(false); }
+      await createDispatch({
+        title: title.trim(),
+        body: body.trim(),
+        author: { displayName: displayName.trim(), place: place.trim() || undefined, email: email.trim() },
+        tags,
+        language: formLanguage,
+        turnstileToken: turnstileToken || undefined,
+      });
+      setSuccess(true);
+      setTitle("");
+      setBody("");
+      setDisplayName("");
+      setPlace("");
+      setEmail("");
+      setTags([]);
+      setTurnstileToken("");
+    } catch (cause) {
+      setFormError((cause as ApiError).status === 0 ? t.dispatchOffline : apiErrorMessage(cause, language));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <header className="border-b border-ink pb-6">
-        <Headline level={2} as="h1">{t.dispatchesTitle}</Headline>
-        <p className="mt-3 max-w-3xl font-serif text-base italic leading-7 text-muted-foreground-foreground">{t.dispatchesLead}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" onClick={scrollToForm}>{t.dispatchesWriteCta}</Button>
-          <span className="inline-flex items-center font-sans text-xs text-muted-foreground-foreground">— {language==="ne" ? "हिमाल र जलवायुबारे सम्पादकीय लेखन" : "No comments, no threads, by design."}</span>
-        </div>
-      </header>
-
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground-foreground">{t.dispatchesFilters}:</span>
-          <button
-            type="button"
-            onClick={()=>handleTag("")}
-            aria-pressed={activeTag===""}
-            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag==="" ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
-          >
-            {t.dispatchesAllTags}
-          </button>
-          {DISPATCH_TAGS.map(tag=>(
-            <button
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHeader
+        eyebrow={t.communityEyebrow}
+        title={t.dispatchesTitle}
+        description={t.dispatchesLead}
+        actions={<Button onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{t.writeDispatch}</Button>}
+      />
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-2 pt-6">
+          <span className="mr-2 text-sm font-semibold">{t.dispatchFilter}</span>
+          <Button type="button" size="sm" variant={activeTag === "" ? "default" : "secondary"} onClick={() => setActiveTag("")}>
+            {t.dispatchAll}
+          </Button>
+          {DISPATCH_TAGS.map((tag) => (
+            <Button
               key={tag}
               type="button"
-              onClick={()=>handleTag(tag)}
-              aria-pressed={activeTag===tag}
-              className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide transition-colors ${activeTag===tag ? "border-ink bg-ink text-paper" : "border-rule bg-paper text-ink hover:border-ink"}`}
+              size="sm"
+              variant={activeTag === tag ? "default" : "secondary"}
+              onClick={() => setActiveTag(tag)}
             >
-              {tagLabel(tag, t)}
-            </button>
+              {tagLabel(tag, language)}
+            </Button>
           ))}
-        </div>
-        <Rule />
-      </div>
-
-      {loading ? <p className="font-sans text-sm text-muted-foreground-foreground">{t.dispatchesLoading}</p> : null}
-      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.dispatchesOffline}</p> : null}<div className="mt-3"><Button variant="outline" size="sm" onClick={()=>fetchList(activeTag)}>{t.dispatchesTryAgain}</Button></div></div> : null}
-      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.dispatchesEmpty}</p> : null}
-
-      <div className="divide-y divide-rule border-y border-rule">
-        {items.map(item => {
+        </CardContent>
+      </Card>
+      {loading && items.length === 0 ? <LoadingState label={t.dispatchLoading} /> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            {offline ? ` ${t.offline}` : ""}
+            <span className="mt-2 block">
+              <Button variant="secondary" size="sm" onClick={() => void fetchList()}>
+                {t.retry}
+              </Button>
+            </span>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {!loading && !error && !items.length ? <EmptyState title={t.dispatchEmpty} description={t.offline} /> : null}
+      <div className="divide-y border-y">
+        {items.map((item) => {
           const url = `/dispatches/${encodeURIComponent(item.id)}`;
           return (
-            <article key={item.id} className="grid gap-2 py-6 sm:py-7">
-              <div className="flex flex-wrap gap-1">
-                {item.tags.map(tag=> <Badge key={tag} variant="secondary" className="text-[10px] uppercase tracking-wide">{tagLabel(tag as DispatchTag, t)}</Badge>)}
+            <article key={item.id} className="space-y-3 py-6">
+              <div className="flex flex-wrap gap-2">
+                {item.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    {tagLabel(tag, language)}
+                  </Badge>
+                ))}
               </div>
-              <a href={url} className="group block">
-                <h2 className="font-display text-xl font-bold leading-tight text-ink group-hover:underline sm:text-2xl">{localizedText(item.title, language)}</h2>
-                <p className="mt-2 line-clamp-3 font-serif text-[15px] leading-7 text-ink/90">{localizedText(item.excerpt, language)}</p>
+              <a href={url} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <h2 className="line-clamp-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {localizedText(item.title, language)}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-base leading-7 text-muted-foreground">{localizedText(item.excerpt, language)}</p>
               </a>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground-foreground">
-                <span>{t.dispatchMetaBy} <span className="font-semibold text-ink">{item.author.displayName}</span>{item.author.place ? <> · {item.author.place}</> : null}</span>
-                <span aria-hidden="true">·</span>
+              <p className="text-sm text-muted-foreground">
+                {t.dispatchBy} {item.author.displayName}
+                {item.author.place ? ` · ${item.author.place}` : ""} ·{" "}
                 <time dateTime={item.publishedAt}>{formatDateTime(item.publishedAt, language)}</time>
-              </div>
-              <div><a href={url} className="inline-flex items-center font-sans text-xs font-semibold uppercase tracking-wide text-ink underline decoration-rule underline-offset-4 hover:decoration-ink">{t.dispatchesReadMore} <span aria-hidden="true" className="ml-1">→</span></a></div>
+              </p>
+              <Button asChild variant="link" className="h-auto px-0">
+                <a href={url}>{t.dispatchRead} →</a>
+              </Button>
             </article>
           );
         })}
       </div>
-      {cursor ? <div className="flex justify-center"><Button variant="outline" onClick={()=>fetchList(activeTag, cursor, true)} disabled={loadingMore}>{loadingMore ? t.dispatchesLoading : t.dispatchesLoadMore}</Button></div> : null}
-
-      <div ref={formRef} className="scroll-mt-8 pt-2">
-        <SectionLabel>{t.dispatchWriteTitle}</SectionLabel>
-        <p className="mt-2 max-w-3xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.dispatchWriteLead}</p>
-        <Card className="mt-4">
-          <CardHeader><CardTitle className="text-base">{t.dispatchWriteTitle}</CardTitle></CardHeader>
+      {cursor ? (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={() => void fetchList(cursor, true)} disabled={loading}>
+            {t.dispatchLoadMore}
+          </Button>
+        </div>
+      ) : null}
+      <div ref={formRef} className="scroll-mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{t.dispatchTitle}</CardTitle>
+          </CardHeader>
           <CardContent>
-            {formSuccess ? (
-              <div className="space-y-4 border border-ink bg-secondary px-4 py-6 text-center text-secondary-foreground">
-                <h3 className="font-display text-lg font-bold">{t.dispatchWriteSuccessTitle}</h3>
-                <p className="mx-auto max-w-xl font-serif text-sm leading-6">{t.dispatchWriteSuccessBody}</p>
-                <Button variant="outline" onClick={()=>setFormSuccess(false)}>{t.commonAgain ?? "Again"}</Button>
+            {success ? (
+              <div className="space-y-4 rounded-lg border bg-secondary p-6 text-center">
+                <p className="text-lg font-semibold">{t.dispatchReceived}</p>
+                <p className="text-sm text-muted-foreground">{t.dispatchReceivedBody}</p>
+                <Button variant="secondary" onClick={() => setSuccess(false)}>
+                  {t.writeDispatch}
+                </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2 space-y-1">
-                    <Label htmlFor="d-title">{t.dispatchWriteTitleLabel} *</Label>
-                    <Input id="d-title" value={title} onChange={e=>setTitle(e.target.value)} placeholder={t.dispatchWriteTitlePlaceholder} maxLength={200} required />
+              <form onSubmit={submit} className="space-y-5">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="dispatch-title">{t.dispatchTitleField} *</Label>
+                    <Input id="dispatch-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
                   </div>
-                  <div className="sm:col-span-2 space-y-1">
-                    <Label htmlFor="d-body">{t.dispatchWriteBodyLabel} *</Label>
-                    <Textarea id="d-body" value={body} onChange={e=>setBody(e.target.value)} placeholder={t.dispatchWriteBodyPlaceholder} rows={10} maxLength={6000} required className="min-h-[180px]" />
-                    <div className="flex justify-between">
-                      <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteBodyHint}</p>
-                      <p className={`font-sans text-xs ${body.length>5900 ? "text-red" : body.length>5500 ? "text-ink" : "text-muted-foreground-foreground"}`}>{body.length} / 6,000</p>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="dispatch-body">{t.dispatchBody} *</Label>
+                    <Textarea
+                      id="dispatch-body"
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      maxLength={6000}
+                      rows={10}
+                      required
+                    />
+                    <div className="flex justify-between gap-3 text-sm text-muted-foreground">
+                      <span>{t.dispatchBodyHint}</span>
+                      <span className={body.length > 5900 ? "text-destructive" : ""}>{body.length} / 6,000</span>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="d-name">{t.dispatchWriteDisplayNameLabel} *</Label>
-                    <Input id="d-name" value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder={t.dispatchWriteDisplayNamePlaceholder} required />
+                  <div className="space-y-2">
+                    <Label htmlFor="dispatch-name">{t.dispatchDisplayName} *</Label>
+                    <Input id="dispatch-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="d-place">{t.dispatchWritePlaceLabel}</Label>
-                    <Input id="d-place" value={place} onChange={e=>setPlace(e.target.value)} placeholder={t.dispatchWritePlacePlaceholder} />
+                  <div className="space-y-2">
+                    <Label htmlFor="dispatch-place">{t.dispatchPlace}</Label>
+                    <Input id="dispatch-place" value={place} onChange={(e) => setPlace(e.target.value)} />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="d-email">{t.dispatchWriteEmailLabel} *</Label>
-                    <Input id="d-email" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={t.dispatchWriteEmailPlaceholder} required />
-                    <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteEmailHint}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="dispatch-email">{t.dispatchEmail} *</Label>
+                    <Input id="dispatch-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <p className="text-sm text-muted-foreground">{t.dispatchEmailHint}</p>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="d-lang">{t.dispatchWriteLanguageLabel}</Label>
-                    <NativeSelect value={formLang} onChange={e=>setFormLang(e.target.value as "en"|"ne")}>
-                      <NativeSelectOption value="en">{t.dispatchWriteLanguageEn}</NativeSelectOption>
-                      <NativeSelectOption value="ne">{t.dispatchWriteLanguageNe}</NativeSelectOption>
+                  <div className="space-y-2">
+                    <Label htmlFor="dispatch-language">{t.dispatchLanguage}</Label>
+                    <NativeSelect
+                      id="dispatch-language"
+                      value={formLanguage}
+                      onChange={(e) => setFormLanguage(e.target.value as "en" | "ne")}
+                    >
+                      <NativeSelectOption value="en">{t.dispatchEnglish}</NativeSelectOption>
+                      <NativeSelectOption value="ne">{t.dispatchNepali}</NativeSelectOption>
                     </NativeSelect>
                   </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <Label>{t.dispatchWriteTagsLabel} *</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {DISPATCH_TAGS.map(tag=> {
-                        const selected = tags.includes(tag);
-                        const disabled = !selected && tags.length>=3;
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={()=>toggleTag(tag)}
-                            disabled={disabled}
-                            aria-pressed={selected}
-                            className={` border px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide ${selected ? "border-ink bg-ink text-paper" : disabled ? "border-rule bg-secondary text-secondary-foreground opacity-50" : "border-rule bg-paper text-ink hover:border-ink"}`}
-                          >
-                            {tagLabel(tag, t)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteTagsHint} · {tags.length}/3</p>
-                  </div>
                 </div>
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-medium">{t.dispatchTags} *</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {DISPATCH_TAGS.map((tag) => (
+                      <Button
+                        key={tag}
+                        type="button"
+                        size="sm"
+                        variant={tags.includes(tag) ? "default" : "secondary"}
+                        disabled={!tags.includes(tag) && tags.length >= 3}
+                        onClick={() => toggleTag(tag)}
+                        aria-pressed={tags.includes(tag)}
+                      >
+                        {tagLabel(tag, language)}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t.dispatchTagsHint} · {tags.length}/3
+                  </p>
+                </fieldset>
                 {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : null}
-                {formError ? <p className="font-sans text-sm text-destructive" role="alert">{formError}</p> : null}
-                <Button type="submit" disabled={submitting}>{submitting ? t.dispatchWriteSubmitting : t.dispatchWriteSubmit}</Button>
+                {formError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{formError}</AlertDescription>
+                  </Alert>
+                ) : null}
+                <Button type="submit" size="lg" disabled={submitting} className="w-full">
+                  {submitting ? t.dispatchSubmitting : t.dispatchSubmit}
+                </Button>
               </form>
             )}
           </CardContent>

@@ -45,7 +45,13 @@ export function toneForStatus(status: string): StatusTone {
 }
 
 const variantByTone = { success: "success", info: "info", warning: "warning", danger: "danger", neutral: "secondary" } as const;
-const dotByTone = { success: "bg-success", info: "bg-primary", warning: "bg-warning", danger: "bg-destructive", neutral: "bg-subtle" } as const;
+const dotByTone = {
+  success: "bg-success",
+  info: "bg-primary",
+  warning: "bg-warning",
+  danger: "bg-destructive",
+  neutral: "bg-subtle",
+} as const;
 
 export function StatusBadge({ tone, children, className = "" }: { tone: StatusTone; children: ReactNode; className?: string }) {
   return (

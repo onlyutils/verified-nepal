@@ -1,6 +1,28 @@
 export type Language = "en" | "ne";
 
-export type Page = "dashboard" | "search" | "missing" | "info" | "privacy" | "desk" | "getHelp" | "giveHelp" | "ledger" | "audit" | "projects" | "projectDetail" | "projectRegister" | "projectUpdate" | "dispatches" | "dispatchDetail" | "dispatchWrite" | "registerOrg" | "org" | "dropCenters" | "dropCenterDetail" | "donationStatus";
+export type Page =
+  | "dashboard"
+  | "search"
+  | "missing"
+  | "info"
+  | "privacy"
+  | "desk"
+  | "getHelp"
+  | "giveHelp"
+  | "ledger"
+  | "audit"
+  | "projects"
+  | "projectDetail"
+  | "projectRegister"
+  | "projectUpdate"
+  | "dispatches"
+  | "dispatchDetail"
+  | "dispatchWrite"
+  | "registerOrg"
+  | "org"
+  | "dropCenters"
+  | "dropCenterDetail"
+  | "donationStatus";
 
 export interface RescueStatus {
   id: number;

@@ -19,35 +19,35 @@ export interface PlacedLocation {
  */
 const placeIndex: Record<string, { lat: number; lng: number; district: DistrictName; approximate?: true }> = {
   // Rasuwa — the Bhote Koshi corridor
-  "रसुवागढी": { lat: 28.2778, lng: 85.3778, district: "Rasuwa" },
-  "टिमुरे": { lat: 28.2528, lng: 85.3667, district: "Rasuwa" },
-  "चिलिमे": { lat: 28.1836, lng: 85.3022, district: "Rasuwa" },
-  "स्याफ्रुबेसी": { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
-  "स्याफ्रुबेशी": { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
-  "स्याफ्रुवेशी": { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
-  "हाफुबेसी": { lat: 28.1165, lng: 85.2791, district: "Rasuwa" }, // हाकु बेसी / Haku Besi
-  "धुन्चे": { lat: 28.1128, lng: 85.2961, district: "Rasuwa" },
-  "मैलुङ": { lat: 28.0718, lng: 85.207, district: "Rasuwa" },
+  रसुवागढी: { lat: 28.2778, lng: 85.3778, district: "Rasuwa" },
+  टिमुरे: { lat: 28.2528, lng: 85.3667, district: "Rasuwa" },
+  चिलिमे: { lat: 28.1836, lng: 85.3022, district: "Rasuwa" },
+  स्याफ्रुबेसी: { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
+  स्याफ्रुबेशी: { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
+  स्याफ्रुवेशी: { lat: 28.1637, lng: 85.3373, district: "Rasuwa" },
+  हाफुबेसी: { lat: 28.1165, lng: 85.2791, district: "Rasuwa" }, // हाकु बेसी / Haku Besi
+  धुन्चे: { lat: 28.1128, lng: 85.2961, district: "Rasuwa" },
+  मैलुङ: { lat: 28.0718, lng: 85.207, district: "Rasuwa" },
   // Approximate corridor stand-ins: confirmed Uttargaya RM settlements near Mailung, no published point found.
-  "कोलनी": { lat: 28.0718, lng: 85.207, district: "Rasuwa", approximate: true },
-  "सलिटार": { lat: 28.0718, lng: 85.207, district: "Rasuwa", approximate: true },
+  कोलनी: { lat: 28.0718, lng: 85.207, district: "Rasuwa", approximate: true },
+  सलिटार: { lat: 28.0718, lng: 85.207, district: "Rasuwa", approximate: true },
   "शान्ति बजार": { lat: 28.0173, lng: 85.1814, district: "Rasuwa" },
-  "बेत्रावती": { lat: 27.9731, lng: 85.186, district: "Rasuwa" },
-  "वेत्रवती": { lat: 27.9731, lng: 85.186, district: "Rasuwa" },
+  बेत्रावती: { lat: 27.9731, lng: 85.186, district: "Rasuwa" },
+  वेत्रवती: { lat: 27.9731, lng: 85.186, district: "Rasuwa" },
   // Nuwakot — downstream on the Trishuli
-  "बट्टार": { lat: 27.8983, lng: 85.1463, district: "Nuwakot" },
-  "त्रिशुली": { lat: 27.8953, lng: 85.1464, district: "Nuwakot" },
+  बट्टार: { lat: 27.8983, lng: 85.1463, district: "Nuwakot" },
+  त्रिशुली: { lat: 27.8953, lng: 85.1464, district: "Nuwakot" },
 };
 
 // मानेढुङ्गा intentionally remains unresolved: researched 2026-08-30, no corroborating source found.
 
 /** District-level entries in the feed, in either script. */
 const districtIndex: Record<string, DistrictName> = {
-  "रसुवा": "Rasuwa",
+  रसुवा: "Rasuwa",
   Rasuwa: "Rasuwa",
-  "नुवाकोट": "Nuwakot",
+  नुवाकोट: "Nuwakot",
   Nuwakot: "Nuwakot",
-  "सिन्धुपाल्चोक": "Sindhupalchok",
+  सिन्धुपाल्चोक: "Sindhupalchok",
   Sindhupalchok: "Sindhupalchok",
   Sindhupalchowk: "Sindhupalchok",
 };
@@ -93,7 +93,7 @@ export function locationDistrict(location: NamedLocation): DistrictName | null {
   const placed = placeLocation(location);
   if (placed) return placed.district;
   const suffix = (location.title_ne || location.title || "").split(",")[1]?.trim();
-  return suffix ? districtIndex[suffix] ?? null : null;
+  return suffix ? (districtIndex[suffix] ?? null) : null;
 }
 
 type Ring = Array<[number, number]>;
@@ -110,15 +110,12 @@ export const districtShapes: Record<DistrictName, Array<Array<[number, number]>>
   districtsGeo as unknown as { features: DistrictFeature[] }
 ).features.reduce(
   (acc, feature) => {
-    acc[feature.properties.name as DistrictName] = feature.geometry.coordinates.map((polygon) =>
-      flip(polygon[0]),
-    );
+    acc[feature.properties.name as DistrictName] = feature.geometry.coordinates.map((polygon) => flip(polygon[0]));
     return acc;
   },
   {} as Record<DistrictName, Array<Array<[number, number]>>>,
 );
 
 export const riverPath: Array<[number, number]> = flip(
-  (riverGeo as unknown as { features: Array<{ geometry: { coordinates: Ring } }> }).features[0]
-    .geometry.coordinates,
+  (riverGeo as unknown as { features: Array<{ geometry: { coordinates: Ring } }> }).features[0].geometry.coordinates,
 );

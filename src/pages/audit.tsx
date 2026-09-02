@@ -1,154 +1,183 @@
-import { apiErrorMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
 import { ApiError, getAudit, type AuditItem } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { communityStrings } from "@/i18n/community";
+import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { labels } from "@/i18n";
-import type { Language } from "@/lib/types";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState, LoadingState } from "@/components/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-function last12Months(): string[] {
-  const out: string[] = [];
+function months() {
+  const result: string[] = [];
   const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
-    const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-    out.push(`${y}-${m}`);
+  for (let index = 0; index < 12; index += 1) {
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - index, 1));
+    result.push(`${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`);
   }
-  return out;
+  return result;
+}
+function monthLabel(value: string, language: Language) {
+  const [year, month] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+function actionLabel(action: string, language: Language) {
+  const t = communityStrings[language];
+  return (
+    (
+      {
+        publish: t.actionPublish,
+        reject: t.actionReject,
+        match: t.actionMatch,
+        fulfill: t.actionFulfill,
+        redeem: t.actionRedeem,
+        verify: t.actionVerify,
+        suspend: t.actionSuspend,
+        reinstate: t.actionReinstate,
+        update: t.actionUpdate,
+        create: t.actionCreate,
+        archive: t.actionArchive,
+        "set-status": t.actionSetStatus,
+      } as Record<string, string>
+    )[action] ?? t.actionUpdate
+  );
+}
+function targetLabel(type: string, language: Language) {
+  const t = communityStrings[language];
+  return (
+    (
+      {
+        need: t.targetNeed,
+        project: t.targetProject,
+        dispatch: t.targetDispatch,
+        organization: t.targetOrganization,
+        center: t.targetCenter,
+        user: t.targetUser,
+      } as Record<string, string>
+    )[type] ?? t.targetUser
+  );
 }
 
 export function AuditPage({ language }: { language: Language }) {
-  const t = labels[language];
-  const months = last12Months();
-  const [month, setMonth] = useState<string>(months[0] ?? "");
+  const t = communityStrings[language];
+  const options = months();
+  const [month, setMonth] = useState(options[0] ?? "");
   const [items, setItems] = useState<AuditItem[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [nextCursor, setNextCursor] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchPage = async (m: string, cur?: string, append = false) => {
+  const load = async (cursor?: string, append = false) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getAudit({ month: m, cursor: cur });
-      if (append) setItems((prev) => [...prev, ...res.items]);
-      else setItems(res.items);
-      setNextCursor(res.cursor);
-      setCursor(res.cursor);
-    } catch (e) {
-      const err = e as ApiError;
-      setError(apiErrorMessage(err, language));
+      const response = await getAudit({ month, cursor });
+      setItems((current) => (append ? [...current, ...response.items] : response.items));
+      setNextCursor(response.cursor);
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
       if (!append) setItems([]);
       setNextCursor(undefined);
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    if (month) {
-      setCursor(undefined);
-      setNextCursor(undefined);
-      fetchPage(month, undefined, false);
-    }
-  }, [month]);
-
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setMonth(e.target.value);
-  };
-
+    void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [month, language]);
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-1 sm:px-4">
-      <header className="border-b border-rule pb-6 print:border-black">
-        <h1 className="font-display text-2xl font-bold tracking-tight print:text-black">{(t as Record<string, string>).auditTitle}</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm font-medium leading-6 text-ink print:text-black">
-          {(t as Record<string, string>).auditLead}
-        </p>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground print:text-black">
-          {(t as Record<string, string>).auditIntro}
-        </p>
-      </header>
-
-      <Card className="no-print print:hidden">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{(t as Record<string, string>).auditMonthLabel}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[14rem]">
-            <Label htmlFor="audit-month">{(t as Record<string, string>).auditMonthLabel}</Label>
-            <NativeSelect id="audit-month" value={month} onChange={handleMonthChange}>
-              {months.map((m) => (
-                <NativeSelectOption key={m} value={m}>
-                  {m}
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHeader eyebrow={t.accountabilityEyebrow} title={t.auditTitle} description={`${t.auditLead} ${t.auditIntro}`} />
+      <Card className="print:hidden">
+        <CardContent className="flex flex-wrap items-end gap-4 pt-6">
+          <div className="min-w-56 space-y-2">
+            <Label htmlFor="audit-month">{t.auditMonth}</Label>
+            <NativeSelect id="audit-month" value={month} onChange={(e) => setMonth(e.target.value)}>
+              {options.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {monthLabel(value, language)}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
           </div>
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="ml-auto">
-            {(t as Record<string, string>).auditPrint}
+          <Button variant="outline" onClick={() => void load()}>
+            {t.ledgerPrint}
           </Button>
         </CardContent>
       </Card>
-
-      {loading && items.length === 0 ? (
-        <p className="font-sans text-sm text-muted-foreground-foreground">{(t as Record<string, string>).auditLoading}</p>
-      ) : error ? (
-        <p className="font-sans text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : items.length === 0 ? (
-        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground print:border-black print:bg-white">
-          {(t as Record<string, string>).auditEmpty}
-        </p>
-      ) : (
-        <div className="overflow-x-auto border border-rule bg-paper print:border-black print:bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow className="print:border-black">
-                <TableHead>{(t as Record<string, string>).auditTime}</TableHead>
-                <TableHead>{(t as Record<string, string>).auditActor}</TableHead>
-                <TableHead>{(t as Record<string, string>).auditAction}</TableHead>
-                <TableHead>{(t as Record<string, string>).auditTarget}</TableHead>
-                <TableHead>{(t as Record<string, string>).auditReason}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it, idx) => (
-                <TableRow key={`${it.ts}-${idx}`} className="print:break-inside-avoid">
-                  <TableCell className="whitespace-nowrap font-mono text-xs">{new Date(it.ts).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}</TableCell>
-                  <TableCell className="font-sans text-sm">{it.actorName}</TableCell>
-                  <TableCell className="font-mono text-xs">{it.action}</TableCell>
-                  <TableCell className="font-sans text-sm">
-                    <span className="font-medium">{it.targetType}</span> <span className="text-muted-foreground-foreground">· {it.targetLabel}</span>
-                  </TableCell>
-                  <TableCell className="font-sans text-sm">{it.reason ?? "—"}</TableCell>
+      {loading && !items.length ? <LoadingState label={t.auditLoading} /> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            <span className="mt-2 block">
+              <Button variant="secondary" size="sm" onClick={() => void load()}>
+                {t.retry}
+              </Button>
+            </span>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {!loading && !error && !items.length ? <EmptyState title={t.auditEmpty} /> : null}
+      {items.length ? (
+        <>
+          <div className="divide-y rounded-xl border md:hidden print:hidden">
+            {items.map((item, index) => (
+              <div key={`${item.ts}-${index}-mobile`} className="space-y-1 px-4 py-4">
+                <p className="font-semibold">
+                  {actionLabel(item.action, language)} · {targetLabel(item.targetType, language)}
+                </p>
+                <p className="text-sm">{item.targetLabel}</p>
+                <p className="text-sm text-muted-foreground">
+                  {item.actorName} · {new Date(item.ts).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
+                </p>
+                {item.reason ? <p className="text-sm text-muted-foreground">{item.reason}</p> : null}
+              </div>
+            ))}
+          </div>
+          <div className="hidden rounded-xl border md:block print:block print:border-black">
+            <Table className="print:min-w-0">
+              <TableHeader>
+                <TableRow className="bg-secondary print:border-black print:bg-background">
+                  <TableHead>{t.auditTime}</TableHead>
+                  <TableHead>{t.auditActor}</TableHead>
+                  <TableHead>{t.auditAction}</TableHead>
+                  <TableHead>{t.auditTarget}</TableHead>
+                  <TableHead>{t.auditReason}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={`${item.ts}-${index}`} className="print:break-inside-avoid print:border-black">
+                    <TableCell className="whitespace-nowrap">
+                      {new Date(item.ts).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
+                    </TableCell>
+                    <TableCell>{item.actorName}</TableCell>
+                    <TableCell>{actionLabel(item.action, language)}</TableCell>
+                    <TableCell>
+                      {targetLabel(item.targetType, language)} · {item.targetLabel}
+                    </TableCell>
+                    <TableCell>{item.reason || t.dash}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      ) : null}
       {nextCursor ? (
-        <div className="flex justify-center no-print print:hidden">
-          <Button variant="outline" onClick={() => fetchPage(month, nextCursor, true)} disabled={loading}>
-            {loading ? (t as Record<string, string>).auditLoading : (t as Record<string, string>).auditLoadMore}
+        <div className="flex justify-center print:hidden">
+          <Button variant="outline" onClick={() => void load(nextCursor, true)} disabled={loading}>
+            {t.auditLoadMore}
           </Button>
         </div>
       ) : null}
-
-      <style>{`@media print {
-        header, nav, footer, .no-print { display: none !important; }
-        body { background: white !important; color: black !important; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid black; color: black; background: white; }
-        tr { page-break-inside: avoid; }
-      }`}</style>
     </div>
   );
 }

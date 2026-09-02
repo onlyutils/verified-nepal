@@ -100,7 +100,14 @@ html[data-contrast="high"] a {
     min-width: 320px;
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
-    font-family: "Noto Sans", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family:
+      "Noto Sans",
+      "Noto Sans Devanagari",
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
     line-height: 1.5;
   }
   button,

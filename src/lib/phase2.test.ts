@@ -20,8 +20,16 @@ test("ledger and print outputs must not expose sensitive keys", () => {
   const badLedger = { ...ledgerSample, householdSize: 5, phone: "98xxxxxxxx", registrant: "x", description: "household with alone woman" };
   const badPrint = { ...printSample, householdSize: 3, registrant: "teacher" };
 
-  assert.deepEqual(assertNoSensitiveKeys(ledgerSample as unknown as Record<string, unknown>), [], "clean ledger should have no sensitive keys");
-  assert.deepEqual(assertNoSensitiveKeys(printSample as unknown as Record<string, unknown>), [], "clean print should have no sensitive keys");
+  assert.deepEqual(
+    assertNoSensitiveKeys(ledgerSample as unknown as Record<string, unknown>),
+    [],
+    "clean ledger should have no sensitive keys",
+  );
+  assert.deepEqual(
+    assertNoSensitiveKeys(printSample as unknown as Record<string, unknown>),
+    [],
+    "clean print should have no sensitive keys",
+  );
   assert.ok(assertNoSensitiveKeys(badLedger as unknown as Record<string, unknown>).length > 0, "bad ledger should be flagged");
   assert.ok(assertNoSensitiveKeys(badPrint as unknown as Record<string, unknown>).length > 0, "bad print should be flagged");
 

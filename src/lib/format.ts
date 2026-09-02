@@ -22,11 +22,7 @@ export function localizedText(value: string | { en: string; ne?: string }, langu
 }
 
 export function normalizeSearch(value: string) {
-  return value
-    .normalize("NFC")
-    .toLocaleLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+  return value.normalize("NFC").toLocaleLowerCase().replace(/\s+/g, " ").trim();
 }
 
 interface SearchablePerson {
@@ -47,9 +43,7 @@ export function matchesPerson(person: SearchablePerson, query: string) {
   if (normalizedQuery.length < 2) return false;
 
   const tokens = normalizedQuery.split(" ").filter(Boolean);
-  const directHaystack = normalizeSearch(
-    [person.name, person.name_ne, person.display_name].filter(Boolean).join(" "),
-  );
+  const directHaystack = normalizeSearch([person.name, person.name_ne, person.display_name].filter(Boolean).join(" "));
   const latinHaystack = normalizeLatinSearch(directHaystack);
 
   return tokens.every((token) => {
@@ -72,7 +66,7 @@ export function sentenceCase(value: string | null | undefined) {
 }
 
 export function extractMessages(raw: MessageItem[] | { results?: MessageItem[] }) {
-  return Array.isArray(raw) ? raw : raw.results ?? [];
+  return Array.isArray(raw) ? raw : (raw.results ?? []);
 }
 
 export function messageText(message: MessageItem, language: Language) {

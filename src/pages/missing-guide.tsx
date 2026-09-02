@@ -1,7 +1,10 @@
-import { EmergencyContacts } from "@/pages/home";
 import { labels } from "@/i18n";
 import type { Language, Page } from "@/lib/types";
-import { Headline, Rule, SectionLabel, SquareButton, Standfirst } from "@/components/legacy";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink, Phone } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { helplines } from "@/lib/helplines";
 import { opmcmMissingPersonUrl, opmcmUnidentifiedUrl } from "@/lib/urls";
 
 type Step = { title: string; body: string[]; cta?: "search" | "report" | "unidentified" };
@@ -137,54 +140,72 @@ export function MissingGuide({ language, navigate }: { language: Language; navig
   const c = copy[language];
 
   return (
-    <div className="mx-auto max-w-[52rem] space-y-10">
-      <section>
-        <SectionLabel as="p">{t.missingPersonsLabel}</SectionLabel>
-        <Headline level={2} as="h1" className="mt-4">
-          {t.missingGuideTitle}
-        </Headline>
-        <Standfirst className="mt-3">{c.intro}</Standfirst>
-      </section>
-      <Rule />
-      <ol className="space-y-10">
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow={t.missingPersonsLabel} title={t.missingGuideTitle} description={c.intro} />
+      <ol className="space-y-4">
         {c.steps.map((step, index) => (
-          <li key={step.title} className="grid gap-3 sm:grid-cols-[3rem_1fr]">
-            <span aria-hidden="true" className="font-display text-3xl font-black leading-none text-red">
-              {index + 1}
-            </span>
-            <div>
-              <Headline level={3} as="h2">
-                {step.title}
-              </Headline>
-              {step.body.map((paragraph) => (
-                <p key={paragraph} className="mt-3 max-w-[40rem] font-serif leading-7 text-ink">
-                  {paragraph}
-                </p>
-              ))}
-              {step.cta === "search" ? (
-                <SquareButton onClick={() => navigate("search")} tone="primary" className="mt-4">
-                  {c.search}
-                </SquareButton>
-              ) : null}
-              {step.cta === "report" ? (
-                <SquareButton href={opmcmMissingPersonUrl} external className="mt-4">
-                  {c.report}
-                </SquareButton>
-              ) : null}
-              {step.cta === "unidentified" ? (
-                <SquareButton href={opmcmUnidentifiedUrl} external className="mt-4">
-                  {c.unidentified}
-                </SquareButton>
-              ) : null}
-            </div>
+          <li key={step.title}>
+            <Card>
+              <CardHeader className="flex-row items-start gap-4 space-y-0">
+                <span
+                  aria-hidden="true"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary"
+                >
+                  {index + 1}
+                </span>
+                <CardTitle className="pt-1 text-lg">{step.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pl-[4.5rem] text-base leading-relaxed">
+                {step.body.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+                {step.cta === "search" ? (
+                  <Button type="button" onClick={() => navigate("search")} className="mt-2">
+                    {c.search}
+                  </Button>
+                ) : null}
+                {step.cta === "report" ? (
+                  <Button asChild className="mt-2">
+                    <a href={opmcmMissingPersonUrl} target="_blank" rel="noopener noreferrer">
+                      {c.report}
+                      <ExternalLink aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : null}
+                {step.cta === "unidentified" ? (
+                  <Button asChild className="mt-2">
+                    <a href={opmcmUnidentifiedUrl} target="_blank" rel="noopener noreferrer">
+                      {c.unidentified}
+                      <ExternalLink aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : null}
+              </CardContent>
+            </Card>
           </li>
         ))}
       </ol>
-      <Rule />
-      <section aria-label={c.hotlines}>
-        <EmergencyContacts language={language} />
-      </section>
-      <p className="max-w-[40rem] font-serif leading-7 text-muted-foreground">{c.closing}</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>{c.hotlines}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          {helplines.map((helpline) => (
+            <a
+              key={helpline.key}
+              href={`tel:${helpline.number}`}
+              className="flex min-h-11 items-center justify-between gap-3 rounded-lg border p-4 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <Phone aria-hidden="true" className="size-5 shrink-0 text-destructive" />
+                <span className="text-sm font-medium">{language === "ne" ? helpline.labelNe : helpline.labelEn}</span>
+              </span>
+              <span className="shrink-0 text-lg font-bold tabular-nums text-destructive">{helpline.number}</span>
+            </a>
+          ))}
+        </CardContent>
+      </Card>
+      <p className="text-base leading-relaxed text-muted-foreground">{c.closing}</p>
     </div>
   );
 }

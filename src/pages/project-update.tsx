@@ -1,97 +1,104 @@
 import { useState } from "react";
 import { ApiError, attachProjectPhoto, createProjectUpdate, presignProjectPhoto } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { communityStrings } from "@/i18n/community";
+import { downscaleImage } from "@/lib/image";
+import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { labels } from "@/i18n";
-import { apiErrorMessage } from "@/lib/api-error";
-import type { Language } from "@/lib/types";
-import { downscaleImage } from "@/lib/image";
+import { PageHeader } from "@/components/page-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { fillTemplate } from "@/lib/edition";
 
-function extractProjectId(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return "";
+function extractProjectId(input: string) {
+  const value = input.trim();
+  if (!value) return "";
   try {
-    if (trimmed.includes("://")) {
-      const u = new URL(trimmed);
-      const parts = u.pathname.split("/").filter(Boolean);
-      const idx = parts.indexOf("projects");
-      if (idx !== -1 && parts[idx+1]) return parts[idx+1];
-      if (parts.length>0) return parts[parts.length-1];
+    if (value.includes("://")) {
+      const parts = new URL(value).pathname.split("/").filter(Boolean);
+      const index = parts.indexOf("projects");
+      if (index >= 0 && parts[index + 1]) return parts[index + 1];
+      if (parts.length) return parts[parts.length - 1];
     }
-  } catch {}
-  // handles "proj_xxx" or with query
-  return trimmed.split("?")[0].split("#")[0].split("/").filter(Boolean).pop() || trimmed;
+  } catch {
+    /* use plain id */
+  }
+  return value.split("?")[0].split("#")[0].split("/").filter(Boolean).pop() || value;
 }
 
 export function ProjectUpdate({ language }: { language: Language }) {
-  const t = labels[language] as Record<string,string>;
+  const t = communityStrings[language];
   const [projectInput, setProjectInput] = useState("");
   const [updateCode, setUpdateCode] = useState("");
   const [text, setText] = useState("");
   const [spent, setSpent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState<string|null>(null);
-  const [progress, setProgress] = useState<{done:number; total:number; phase: string}|null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [offline, setOffline] = useState(false);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
-    const list = e.target.files;
-    if (!list) return;
-    const arr = Array.from(list).slice(0,5);
-    setFiles(arr);
-  };
-
-  const handleSubmit = async (e: React.FormEvent)=>{
-    e.preventDefault();
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
     setOffline(false);
-    const pid = extractProjectId(projectInput);
-    if (!pid || !updateCode.trim() || !text.trim()) { setError(t.projectUpdateError); return; }
-    if (!navigator.onLine) { setOffline(true); setError(t.projectUpdateOffline); return; }
+    const projectId = extractProjectId(projectInput);
+    if (!projectId || !updateCode.trim() || !text.trim()) {
+      setError(t.updateError);
+      return;
+    }
+    if (!navigator.onLine) {
+      setOffline(true);
+      setError(t.updateOffline);
+      return;
+    }
+    const spentNumber = spent.trim() ? Number(spent) : undefined;
+    if (spent.trim() && (!Number.isFinite(spentNumber) || spentNumber! < 0)) {
+      setError(t.validationRequired);
+      return;
+    }
     setSubmitting(true);
     setSuccess(false);
-    try{
+    try {
       const photoFileIds: string[] = [];
-      if (files.length>0) {
-        setProgress({done:0, total: files.length, phase: t.projectUpdateUploading});
-        for (let i=0;i<files.length;i++) {
-          const orig = files[i];
-          // validate type and size before downscale (spec: <=8MB after? but check original)
-          const allowed = ["image/jpeg","image/png","image/webp"];
-          if (!allowed.includes(orig.type)) throw new Error("Invalid image type");
-          if (orig.size > 8*1024*1024) throw new Error("Image too large (max 8MB)");
-          const downscaled = await downscaleImage(orig, 1600);
-          if (downscaled.size > 8*1024*1024) throw new Error("Image still too large after downscale");
-          // presign
-          const presign = await presignProjectPhoto(pid, { filename: downscaled.name, contentType: downscaled.type, size: downscaled.size }, { updateCode: updateCode.trim() });
-          // PUT to uploadUrl with headers
-          const putHeaders: Record<string,string> = { ...(presign.headers || {}) };
-          // Ensure content-type
-          if (!putHeaders["Content-Type"] && !putHeaders["content-type"]) putHeaders["Content-Type"] = downscaled.type;
-          const putRes = await fetch(presign.uploadUrl, { method: "PUT", body: downscaled, headers: putHeaders });
-          if (!putRes.ok) throw new Error(t.projectUpdatePresignError);
-          // attach
-          await attachProjectPhoto(pid, { fileId: presign.fileId, url: presign.publicUrl }, { updateCode: updateCode.trim() });
+      if (files.length) {
+        setProgress({ done: 0, total: files.length });
+        for (let index = 0; index < files.length; index += 1) {
+          const original = files[index];
+          if (!["image/jpeg", "image/png", "image/webp"].includes(original.type) || original.size > 8 * 1024 * 1024)
+            throw new Error(t.updateError);
+          const resized = await downscaleImage(original, 1600);
+          if (resized.size > 8 * 1024 * 1024) throw new Error(t.updateError);
+          const presign = await presignProjectPhoto(
+            projectId,
+            { filename: resized.name, contentType: resized.type, size: resized.size },
+            { updateCode: updateCode.trim() },
+          );
+          const headers = {
+            ...(presign.headers || {}),
+            ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": resized.type }),
+          };
+          const upload = await fetch(presign.uploadUrl, { method: "PUT", body: resized, headers });
+          if (!upload.ok) throw new Error(t.updateError);
+          await attachProjectPhoto(projectId, { fileId: presign.fileId, url: presign.publicUrl }, { updateCode: updateCode.trim() });
           photoFileIds.push(presign.fileId);
-          setProgress({done: i+1, total: files.length, phase: t.projectUpdateUploading});
+          setProgress({ done: index + 1, total: files.length });
         }
       }
-      const spentNum = spent.trim() ? Number(spent) : undefined;
-      if (spent.trim() && (spentNum==null || Number.isNaN(spentNum) || spentNum<0)) { throw new Error("Invalid spent amount"); }
-      await createProjectUpdate(pid, { text: text.trim(), photoFileIds, spentNpr: spentNum }, updateCode.trim());
+      await createProjectUpdate(projectId, { text: text.trim(), photoFileIds, spentNpr: spentNumber }, updateCode.trim());
       setSuccess(true);
-      setProgress(null);
       setFiles([]);
       setText("");
       setSpent("");
-    } catch(e){
-      if ((e as ApiError).status===0 || !navigator.onLine) { setOffline(true); setError(t.projectUpdateOffline); }
-      else setError(apiErrorMessage(e, language));
+      setProgress(null);
+    } catch (cause) {
+      const api = cause as ApiError;
+      setOffline(api.status === 0 || !navigator.onLine);
+      setError(api.status === 0 || !navigator.onLine ? t.updateOffline : apiErrorMessage(cause, language));
       setProgress(null);
     } finally {
       setSubmitting(false);
@@ -99,55 +106,95 @@ export function ProjectUpdate({ language }: { language: Language }) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <header className="border-b border-rule pb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">{t.projectUpdateTitle}</h1>
-        <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{t.projectUpdateLead}</p>
-      </header>
-
-      {success ? <div className="border border-ink bg-paper px-4 py-4"><p className="font-sans text-sm text-ink">{t.projectUpdateSuccess}</p><div className="mt-3"><a href={`/projects/${encodeURIComponent(extractProjectId(projectInput))}`} className="font-sans text-sm underline">{t.projectsViewProject}</a></div></div> : null}
-
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow={t.communityEyebrow} title={t.projectUpdateTitle} description={t.projectUpdateLead} />
+      {success ? (
+        <Alert>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>{t.updateSuccess}</span>
+            <Button asChild variant="link" className="h-auto p-0">
+              <a href={`/projects/${encodeURIComponent(extractProjectId(projectInput))}`}>{t.viewProject}</a>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <Card>
-        <CardHeader><CardTitle className="text-base">{t.projectUpdateTitle}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-lg">{t.projectUpdateTitle}</CardTitle>
+        </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="pid">{t.projectUpdateProjectId} *</Label>
-              <Input id="pid" value={projectInput} onChange={e=>setProjectInput(e.target.value)} placeholder={t.projectUpdateProjectIdHint} required />
-              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdateProjectIdHint}</p>
+          <form onSubmit={submit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="update-project">{t.projectId} *</Label>
+              <Input
+                id="update-project"
+                value={projectInput}
+                onChange={(e) => setProjectInput(e.target.value)}
+                placeholder={t.projectIdHint}
+                required
+              />
+              <p className="text-sm text-muted-foreground">{t.projectIdHint}</p>
             </div>
-            <div>
-              <Label htmlFor="code">{t.projectUpdateCodeLabel} *</Label>
-              <Input id="code" value={updateCode} onChange={e=>setUpdateCode(e.target.value)} required placeholder="e.g. AB2D4FGH..." />
+            <div className="space-y-2">
+              <Label htmlFor="update-code">{t.updateCodeField} *</Label>
+              <Input id="update-code" value={updateCode} onChange={(e) => setUpdateCode(e.target.value)} className="font-mono" required />
             </div>
-            <div>
-              <Label htmlFor="utext">{t.projectUpdateTextLabel} *</Label>
-              <Textarea id="utext" value={text} onChange={e=>setText(e.target.value)} required rows={4} maxLength={2000} />
+            <div className="space-y-2">
+              <Label htmlFor="update-text">{t.updateText} *</Label>
+              <Textarea id="update-text" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} rows={7} required />
             </div>
-            <div>
-              <Label htmlFor="spent">{t.projectUpdateSpentLabel}</Label>
-              <Input id="spent" type="number" min={0} value={spent} onChange={e=>setSpent(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="update-spent">{t.spentAmount}</Label>
+              <Input id="update-spent" type="number" inputMode="decimal" min={0} value={spent} onChange={(e) => setSpent(e.target.value)} />
             </div>
-            <div>
-              <Label>{t.projectUpdatePhotosLabel}</Label>
-              <Input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onFileChange} />
-              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdatePhotosHint}</p>
-              {files.length>0 ? (
-                <ul className="mt-2 space-y-2">
-                  {files.map((f,idx)=>(
-                    <li key={idx} className="flex items-center justify-between border border-rule px-3 py-2">
-                      <span className="font-sans text-xs truncate">{f.name} · {(f.size/1024).toFixed(0)}KB · {f.type}</span>
-                      <Button variant="ghost" size="sm" type="button" onClick={()=> setFiles(prev=> prev.filter((_,i)=>i!==idx))}>{t.projectUpdateRemove}</Button>
+            <div className="space-y-2">
+              <Label htmlFor="update-photos">{t.updatePhotos}</Label>
+              <Input
+                id="update-photos"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 5))}
+              />
+              <p className="text-sm text-muted-foreground">{t.updatePhotosHint}</p>
+              {files.length ? (
+                <ul className="divide-y rounded-lg border">
+                  {files.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className="flex min-h-11 items-center justify-between gap-3 px-3 py-2 text-sm">
+                      <span className="min-w-0 break-all">
+                        {file.name} · {fillTemplate(t.fileSize, { size: (file.size / 1024).toFixed(0) })}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                      >
+                        {t.remove}
+                      </Button>
                     </li>
                   ))}
                 </ul>
-              ) : <p className="mt-2 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdateNoPhotos}</p>}
+              ) : (
+                <p className="text-sm text-muted-foreground">{t.noPhotosSelected}</p>
+              )}
             </div>
-
-            {progress ? <p className="font-sans text-sm text-muted-foreground-foreground" aria-live="polite">{progress.phase}: {progress.done}/{progress.total}</p> : null}
-            {error ? <p className="font-sans text-sm text-destructive" role="alert">{error}{offline ? ` · ${t.projectsOffline}` : ""}</p> : null}
-
-            <Button type="submit" disabled={submitting} className="w-full">{submitting ? t.projectUpdateSubmitting : t.projectUpdateSubmit}</Button>
+            {progress ? (
+              <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+                {fillTemplate(t.uploading, { done: String(progress.done), total: String(progress.total) })}
+              </p>
+            ) : null}
+            {error ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {error}
+                  {offline ? ` ${t.offline}` : ""}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <Button type="submit" size="lg" disabled={submitting} className="w-full">
+              {submitting ? t.updateSubmitting : t.updateSubmit}
+            </Button>
           </form>
         </CardContent>
       </Card>

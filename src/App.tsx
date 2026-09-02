@@ -1,7 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Dashboard } from "@/pages/home";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
-import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "@/components/layout";
+import { BackToTop } from "@/components/back-to-top";
+import { EmergencyBar } from "@/components/emergency-bar";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { SiteStatusBar } from "@/components/site-status-bar";
 import { LiveDataProvider } from "@/lib/live";
 import { labels } from "@/i18n";
 import { shellStrings } from "@/i18n/shell";
@@ -159,14 +163,17 @@ export function App() {
     }
   }, [page]);
 
-  const navigate = useCallback((nextPage: Page) => {
-    window.history.pushState({}, "", pagePaths[nextPage]);
-    setPage(nextPage);
-    document.title = `${pageTitle(nextPage, language)} · verifiedNepal`;
-    requestAnimationFrame(() => {
-      focusMainAndScroll();
-    });
-  }, [language]);
+  const navigate = useCallback(
+    (nextPage: Page) => {
+      window.history.pushState({}, "", pagePaths[nextPage]);
+      setPage(nextPage);
+      document.title = `${pageTitle(nextPage, language)} · verifiedNepal`;
+      requestAnimationFrame(() => {
+        focusMainAndScroll();
+      });
+    },
+    [language],
+  );
 
   const skipLink = (
     <a
@@ -200,34 +207,104 @@ export function App() {
     <LiveDataProvider>
       <div className="flex min-h-dvh flex-col bg-background text-foreground">
         {skipLink}
-        <AccessibilityBar language={language} setLanguage={setLanguage} />
-        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
-        <EmergencyLine language={language} />
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-8 outline-none sm:px-6 lg:px-8">
-          {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : (
+        <SiteHeader language={language} setLanguage={setLanguage} navigate={navigate} />
+        <SiteStatusBar language={language} navigate={navigate} />
+        <EmergencyBar language={language} />
+        <main
+          id="main"
+          tabIndex={-1}
+          className={`${page === "dashboard" ? "w-full" : "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8"} flex-1 pb-16 pt-8 outline-none`}
+        >
+          {page === "dashboard" ? (
+            <Dashboard language={language} navigate={navigate} />
+          ) : (
             <Suspense fallback={loading}>
               {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "info" ? <InfoHelp language={language} /> : null}
               {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
-              {page === "getHelp" ? <ComponentErrorBoundary language={language}><GetHelp language={language} /></ComponentErrorBoundary> : null}
-              {page === "giveHelp" ? <ComponentErrorBoundary language={language}><GiveHelp language={language} /></ComponentErrorBoundary> : null}
-              {page === "ledger" ? <ComponentErrorBoundary language={language}><Ledger language={language} /></ComponentErrorBoundary> : null}
-              {page === "audit" ? <ComponentErrorBoundary language={language}><AuditPage language={language} /></ComponentErrorBoundary> : null}
-              {page === "projects" ? <ComponentErrorBoundary language={language}><ProjectsList language={language} /></ComponentErrorBoundary> : null}
-              {page === "projectRegister" ? <ComponentErrorBoundary language={language}><ProjectRegister language={language} /></ComponentErrorBoundary> : null}
-              {page === "projectUpdate" ? <ComponentErrorBoundary language={language}><ProjectUpdate language={language} /></ComponentErrorBoundary> : null}
-              {page === "dispatches" ? <ComponentErrorBoundary language={language}><DispatchesPage language={language} /></ComponentErrorBoundary> : null}
-              {page === "dispatchDetail" ? <ComponentErrorBoundary language={language}><DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
-              {page === "projectDetail" ? <ComponentErrorBoundary language={language}><ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
-              {page === "registerOrg" ? <ComponentErrorBoundary language={language}><RegisterOrganization language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
-              {page === "dropCenters" ? <ComponentErrorBoundary language={language}><DropCenters language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
-              {page === "dropCenterDetail" ? <ComponentErrorBoundary language={language}><DropCenterDetail language={language} navigate={navigate} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
-              {page === "donationStatus" ? <ComponentErrorBoundary language={language}><DonationStatusPage language={language} navigate={navigate} refCode={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
+              {page === "getHelp" ? (
+                <ComponentErrorBoundary language={language}>
+                  <GetHelp language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "giveHelp" ? (
+                <ComponentErrorBoundary language={language}>
+                  <GiveHelp language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "ledger" ? (
+                <ComponentErrorBoundary language={language}>
+                  <Ledger language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "audit" ? (
+                <ComponentErrorBoundary language={language}>
+                  <AuditPage language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "projects" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ProjectsList language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "projectRegister" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ProjectRegister language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "projectUpdate" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ProjectUpdate language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "dispatches" ? (
+                <ComponentErrorBoundary language={language}>
+                  <DispatchesPage language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "dispatchDetail" ? (
+                <ComponentErrorBoundary language={language}>
+                  <DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "projectDetail" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "registerOrg" ? (
+                <ComponentErrorBoundary language={language}>
+                  <RegisterOrganization language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "dropCenters" ? (
+                <ComponentErrorBoundary language={language}>
+                  <DropCenters language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "dropCenterDetail" ? (
+                <ComponentErrorBoundary language={language}>
+                  <DropCenterDetail
+                    language={language}
+                    navigate={navigate}
+                    id={decodeURIComponent(window.location.pathname.split("/")[2] || "")}
+                  />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "donationStatus" ? (
+                <ComponentErrorBoundary language={language}>
+                  <DonationStatusPage
+                    language={language}
+                    navigate={navigate}
+                    refCode={decodeURIComponent(window.location.pathname.split("/")[2] || "")}
+                  />
+                </ComponentErrorBoundary>
+              ) : null}
             </Suspense>
           )}
         </main>
-        <Footer language={language} navigate={navigate} />
+        <SiteFooter language={language} navigate={navigate} />
         <BackToTop language={language} />
       </div>
     </LiveDataProvider>

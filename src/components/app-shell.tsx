@@ -2,7 +2,14 @@ import type { ReactNode } from "react";
 import { LogOut, Phone } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Language } from "@/lib/types";
 
 export interface AppShellNavItem<K extends string = string> {
@@ -51,7 +58,11 @@ export function AppShell<K extends string>({
     <div className="flex min-h-screen flex-col bg-secondary">
       <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-14 max-w-[90rem] items-center gap-3 px-4 sm:px-6">
-          <button type="button" onClick={onHome} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <button
+            type="button"
+            onClick={onHome}
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <Logo language={language} />
           </button>
           <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
@@ -63,14 +74,22 @@ export function AppShell<K extends string>({
                 1234
               </a>
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "en" ? "ne" : "en")} aria-label={language === "en" ? "नेपालीमा हेर्नुहोस्" : "Switch to English"}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(language === "en" ? "ne" : "en")}
+              aria-label={language === "en" ? "नेपालीमा हेर्नुहोस्" : "Switch to English"}
+            >
               <span lang={language === "en" ? "ne" : "en"}>{language === "en" ? "नेपाली" : "EN"}</span>
             </Button>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="max-w-[10rem]">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground" aria-hidden="true">
+                    <span
+                      className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
+                      aria-hidden="true"
+                    >
                       {(user.name || user.email || "?").slice(0, 1)}
                     </span>
                     <span className="hidden truncate sm:inline">{user.name || user.email}</span>
@@ -94,7 +113,10 @@ export function AppShell<K extends string>({
       </header>
 
       <div className="mx-auto flex w-full max-w-[90rem] flex-1 flex-col lg:flex-row">
-        <nav aria-label={title} className="border-b bg-background lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r">
+        <nav
+          aria-label={title}
+          className="border-b bg-background lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r"
+        >
           <div className="hidden px-5 pb-1 pt-5 lg:block">
             <p className="text-base font-bold text-foreground">{title}</p>
             {aside ? <div className="mt-2">{aside}</div> : null}
@@ -112,10 +134,16 @@ export function AppShell<K extends string>({
                       isActive ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     }`}
                   >
-                    {item.icon ? <span className="[&_svg]:size-4" aria-hidden="true">{item.icon}</span> : null}
+                    {item.icon ? (
+                      <span className="[&_svg]:size-4" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                    ) : null}
                     <span>{item.label}</span>
                     {item.count ? (
-                      <span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${isActive ? "bg-primary text-primary-foreground" : "bg-accent text-foreground"}`}>
+                      <span
+                        className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${isActive ? "bg-primary text-primary-foreground" : "bg-accent text-foreground"}`}
+                      >
                         {item.count}
                       </span>
                     ) : null}

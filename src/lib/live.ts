@@ -1,12 +1,4 @@
-import {
-  createContext,
-  createElement,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, createElement, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { data } from "@/lib/data";
 import { labels } from "@/i18n";
 import type {
@@ -20,6 +12,7 @@ import type {
 } from "@/lib/types";
 import { opmcmApiBase } from "@/lib/urls";
 import { extractMessages } from "@/lib/format";
+import { shellStrings } from "@/i18n/shell";
 
 export const rescueApiBase = "https://ndrrma.gov.np/api/v1/rescues/";
 
@@ -136,19 +129,20 @@ export function useLiveData() {
 
 export function LiveStatusBadge({ language, className = "" }: { language: Language; className?: string }) {
   const t = labels[language];
+  const ts = shellStrings[language];
   const liveData = useLiveData();
   const label = liveData.isLive
-    ? `${t.liveData} · ${t.updated} ${formatShortTime(liveData.updatedAt, language)}`
-    : `${t.snapshotData} · ${formatDateOnly(data.meta.synced_at, language)}`;
+    ? `${ts.liveLabel} · ${t.updated} ${formatShortTime(liveData.updatedAt, language)}`
+    : `${ts.snapshotLabel} · ${ts.updatedAtPrefix} ${formatShortTime(data.meta.synced_at, language)} NPT, ${formatStatusDate(data.meta.synced_at, language)}`;
 
   return createElement(
     "span",
     {
-      className: `inline-flex items-center gap-2 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink ${className}`,
+      className: `inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-primary ${className}`,
       title: liveData.isLive ? undefined : t.snapshotTooltip,
     },
     createElement("span", {
-      className: `h-2 w-2 rounded-full ${liveData.isLive ? "bg-blue" : "border border-ink bg-transparent"}`,
+      className: `h-2 w-2 shrink-0 rounded-full ${liveData.isLive ? "bg-primary" : "border border-primary bg-transparent"}`,
       "aria-hidden": "true",
     }),
     label,
@@ -156,14 +150,7 @@ export function LiveStatusBadge({ language, className = "" }: { language: Langua
 }
 
 async function fetchLivePayload(signal: AbortSignal): Promise<Partial<LivePayload>> {
-  const [
-    rescuedStatistics,
-    statusCounts,
-    messages,
-    missingPersons,
-    officialUpdates,
-    opmcmStats,
-  ] = await Promise.allSettled([
+  const [rescuedStatistics, statusCounts, messages, missingPersons, officialUpdates, opmcmStats] = await Promise.allSettled([
     fetchJson<RescueStatisticsData>(`${rescueApiBase}rescued-statistics/`, signal),
     fetchJson<StatusCountsData>(`${rescueApiBase}status-counts/`, signal),
     fetchJson<MessageItem[] | { results?: MessageItem[] }>(`${rescueApiBase}messages/`, signal),
@@ -244,15 +231,17 @@ function warnRejected(name: string, result: PromiseSettledResult<unknown>) {
 
 function formatShortTime(value: string | null, language: Language) {
   if (!value) return "";
-  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-US", {
+  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   }).format(new Date(value));
 }
 
-function formatDateOnly(value: string, language: Language) {
-  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-US", {
-    dateStyle: "medium",
+function formatStatusDate(value: string, language: Language) {
+  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   }).format(new Date(value));
 }

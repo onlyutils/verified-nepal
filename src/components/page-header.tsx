@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 
 /** Tracked uppercase label above a title or section, e.g. "RASUWA / BHOTE KOSHI FLASH FLOOD · 2026". */
-export function Eyebrow({ children, tone = "primary", className = "" }: { children: ReactNode; tone?: "primary" | "muted"; className?: string }) {
+export function Eyebrow({
+  children,
+  tone = "primary",
+  className = "",
+}: {
+  children: ReactNode;
+  tone?: "primary" | "muted";
+  className?: string;
+}) {
   return (
     <p className={`text-xs font-semibold uppercase tracking-[0.1em] ${tone === "primary" ? "text-primary" : "text-subtle"} ${className}`}>
       {children}
@@ -42,7 +50,17 @@ export function PageHeader({
 }
 
 /** Section heading inside a page (h2) with an optional right-aligned link or meta line. */
-export function SectionHeader({ title, aside, id, className = "" }: { title: ReactNode; aside?: ReactNode; id?: string; className?: string }) {
+export function SectionHeader({
+  title,
+  aside,
+  id,
+  className = "",
+}: {
+  title: ReactNode;
+  aside?: ReactNode;
+  id?: string;
+  className?: string;
+}) {
   return (
     <div className={`flex flex-wrap items-end justify-between gap-2 ${className}`}>
       <h2 id={id} className="text-2xl font-bold leading-tight tracking-tight text-foreground">

@@ -58,8 +58,14 @@ test("flush keeps network failures and drops 4xx and successes", async () => {
   const remaining = await flush(list, send);
   assert.equal(call, 4);
   assert.equal(remaining.length, 2);
-  assert.ok(remaining.some((x) => x.id === c.id), "should keep status 0");
-  assert.ok(remaining.some((x) => x.id === d.id), "should keep TypeError");
+  assert.ok(
+    remaining.some((x) => x.id === c.id),
+    "should keep status 0",
+  );
+  assert.ok(
+    remaining.some((x) => x.id === d.id),
+    "should keep TypeError",
+  );
   assert.ok(!remaining.some((x) => x.id === a.id));
   assert.ok(!remaining.some((x) => x.id === b.id));
 });

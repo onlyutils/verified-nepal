@@ -150,7 +150,9 @@ export function ensureChatWidget(): Promise<void> {
       let tries = 0;
       const timer = window.setInterval(() => {
         const host = document.getElementById(HOST_ID);
-        const ready = Boolean(host?.shadowRoot?.querySelector(".ouc-panel") || (window as unknown as { OnyutilsChat?: unknown }).OnyutilsChat);
+        const ready = Boolean(
+          host?.shadowRoot?.querySelector(".ouc-panel") || (window as unknown as { OnyutilsChat?: unknown }).OnyutilsChat,
+        );
         if (ready) {
           window.clearInterval(timer);
           chatWidgetLoaded = true;
@@ -174,7 +176,14 @@ export function ensureChatWidget(): Promise<void> {
       if ((existing as unknown as { _vnLoaded?: boolean })._vnLoaded) {
         startPolling();
       } else {
-        existing.addEventListener("load", () => { (existing as unknown as { _vnLoaded?: boolean })._vnLoaded = true; startPolling(); }, { once: true });
+        existing.addEventListener(
+          "load",
+          () => {
+            (existing as unknown as { _vnLoaded?: boolean })._vnLoaded = true;
+            startPolling();
+          },
+          { once: true },
+        );
         existing.addEventListener("error", () => resolve(), { once: true });
         startPolling();
       }
@@ -187,7 +196,14 @@ export function ensureChatWidget(): Promise<void> {
     if (dataApi) script.setAttribute("data-api", dataApi);
     script.setAttribute("data-greeting", "I'm here to help. Ask about rescued or missing people, relief locations, or how to get help.");
     script.defer = true;
-    script.addEventListener("load", () => { (script as unknown as { _vnLoaded?: boolean })._vnLoaded = true; startPolling(); }, { once: true });
+    script.addEventListener(
+      "load",
+      () => {
+        (script as unknown as { _vnLoaded?: boolean })._vnLoaded = true;
+        startPolling();
+      },
+      { once: true },
+    );
     script.addEventListener("error", () => resolve(), { once: true });
     document.body.appendChild(script);
     startPolling();
@@ -234,7 +250,9 @@ function shouldPreload(): boolean {
 
 function scheduleIdlePreload() {
   if (!shouldPreload()) return;
-  const run = () => { void ensureChatWidget(); };
+  const run = () => {
+    void ensureChatWidget();
+  };
   const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
   if (typeof ric === "function") ric(run, { timeout: 4000 });
   else window.setTimeout(run, 4000);

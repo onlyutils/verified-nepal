@@ -31,7 +31,11 @@ export function EmptyState({
 /** Loading placeholder with the same footprint as EmptyState, announced to screen readers. */
 export function LoadingState({ label, className = "" }: { label: string; className?: string }) {
   return (
-    <p role="status" aria-live="polite" className={`rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground ${className}`}>
+    <p
+      role="status"
+      aria-live="polite"
+      className={`rounded-xl border border-dashed px-6 py-12 text-center text-sm text-muted-foreground ${className}`}
+    >
       {label}
     </p>
   );

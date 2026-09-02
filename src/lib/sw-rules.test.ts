@@ -36,7 +36,18 @@ test("claims is NOT public and is private", () => {
 });
 
 test("private paths are NetworkOnly", () => {
-  const privates = ["/me", "/auth/exchange", "/auth/refresh", "/moderation/queue", "/moderation/projects", "/moderation/dispatches", "/admin/users", "/admin/stats", "/claims/sync", "/claims/ABC/redeem"];
+  const privates = [
+    "/me",
+    "/auth/exchange",
+    "/auth/refresh",
+    "/moderation/queue",
+    "/moderation/projects",
+    "/moderation/dispatches",
+    "/admin/users",
+    "/admin/stats",
+    "/claims/sync",
+    "/claims/ABC/redeem",
+  ];
   for (const p of privates) {
     assert.equal(isPrivateApiPath(p), true, `${p} private`);
     assert.equal(classifyApiRequest({ url: url(p) }), "NetworkOnly", `${p} NetworkOnly`);

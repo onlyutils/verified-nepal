@@ -1,43 +1,134 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { ArrowUpCircle, ExternalLink, Flame, HandHelping, Phone, Plus, Search, Shield, ShieldCheck, UserX } from "lucide-react";
 import { openChatWidget } from "@/lib/chat-widget";
 import { data } from "@/lib/data";
-import { leadHeadline } from "@/lib/edition";
 import { helplines } from "@/lib/helplines";
-import { labels, textForLanguage } from "@/i18n";
+import { labels } from "@/i18n";
 import { useLiveData } from "@/lib/live";
-
-import type { Language, OpmcmGovernmentEffort, OpmcmStats, Page } from "@/lib/types";
-import { Byline, Headline, officialLink, Rule, RuledTable, SectionLabel, SquareButton, Standfirst } from "@/components/legacy";
+import { formatDateTime, formatNumber, messageText } from "@/lib/format";
+import { officialRescueUrl } from "@/lib/format";
+import { opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "@/lib/urls";
+import { regionOptions } from "@/lib/region";
+import { districtLabels } from "@/lib/geo";
+import type { Language, OpmcmGovernmentEffort, Page } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Eyebrow, PageHeader, SectionHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
-import { orgStrings } from "@/i18n/orgs";
-import { opmcmAskHelpUrl, opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "@/lib/urls";
-import { formatDateTime, formatNumber, messageText, sentenceCase } from "@/lib/format";
 
-const ReliefMap = lazy(() => import("@/components/relief-map").then((m) => ({ default: m.ReliefMap })));
-const AffectedLocations = lazy(() => import("@/components/relief-map").then((m) => ({ default: m.AffectedLocations })));
+const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
+const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
+const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
 
 export function Dashboard({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const [region, setRegion] = useRegion();
   const [selected, setSelected] = useState<number | null>(null);
-
+  const [locationQuery, setLocationQuery] = useState("");
   const ts = shellStrings[language];
+
   return (
-    <div className="space-y-10">
-      <Lead language={language} navigate={navigate} />
-      <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted-foreground">{ts.loading}</p>}>
-        <div>
-          <ReliefMap language={language} selected={selected} onSelect={setSelected} region={region} onRegionChange={setRegion} />
-          <AffectedLocations language={language} selected={selected} onSelect={setSelected} region={region} />
+    <div>
+      <section className="bg-background">
+        <div className={`${container} grid gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
+          <PageHeader
+            eyebrow={ts.landingFloodName}
+            title={ts.landingTitle}
+            description={labels[language].aboutBody}
+            className="gap-5 [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:uppercase [&_h1]:leading-[1.1] [&_h1]:tracking-tight lg:[&_h1]:text-5xl [&_p:last-child]:text-lg"
+          />
+          <div className="grid gap-5">
+            <ActionCard language={language} kind="find" navigate={navigate} />
+            <ActionCard language={language} kind="missing" navigate={navigate} />
+            <ActionCard language={language} kind="need" navigate={navigate} />
+            <ActionCard language={language} kind="want" navigate={navigate} />
+          </div>
         </div>
-      </Suspense>
-      <Rule />
-      <ThreeColumns language={language} navigate={navigate} />
-      <Rule />
-      <EmergencyContacts language={language} />
-      <PublicNotice language={language} />
-      <TablesRow language={language} />
-      <Rule />
-      <AskTheDesk language={language} />
+      </section>
+
+      <SituationBand language={language} />
+
+      <section className="bg-background">
+        <div className={`${container} grid gap-8 py-12 lg:grid-cols-2 lg:gap-12 lg:py-16`}>
+          <div className="min-w-0">
+            <SectionHeader title={ts.findReliefTitle} />
+            <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,11rem)_1fr]">
+              <div>
+                <Label htmlFor="home-district" className="sr-only">
+                  {ts.allDistricts}
+                </Label>
+                <NativeSelect
+                  id="home-district"
+                  value={region}
+                  onChange={(event) => setRegion(event.target.value)}
+                  aria-label={ts.allDistricts}
+                >
+                  <NativeSelectOption value="">{ts.allDistricts}</NativeSelectOption>
+                  {regionOptions.map((district) => (
+                    <NativeSelectOption key={district} value={district}>
+                      {districtLabels[district][language]}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="relative">
+                <Label htmlFor="location-search" className="sr-only">
+                  {ts.searchPlacePlaceholder}
+                </Label>
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="location-search"
+                  value={locationQuery}
+                  onChange={(event) => setLocationQuery(event.target.value)}
+                  placeholder={ts.searchPlacePlaceholder}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <Suspense
+              fallback={
+                <p role="status" className="mt-5 rounded-xl border px-4 py-12 text-center text-sm text-muted-foreground">
+                  {shellStrings[language].loading}
+                </p>
+              }
+            >
+              <div className="mt-5">
+                <AffectedLocations language={language} selected={selected} onSelect={setSelected} region={region} query={locationQuery} />
+                <Button type="button" variant="link" className="mt-3 px-0" onClick={() => navigate("dropCenters")}>
+                  {ts.viewAllLocations}
+                </Button>
+              </div>
+            </Suspense>
+          </div>
+          <Suspense
+            fallback={
+              <p role="status" className="min-h-[20rem] rounded-xl border bg-secondary p-6 text-sm text-muted-foreground">
+                {shellStrings[language].loading}
+              </p>
+            }
+          >
+            <ReliefMap language={language} selected={selected} onSelect={setSelected} region={region} />
+          </Suspense>
+        </div>
+      </section>
+
+      <OfficialUpdates language={language} />
+
+      <section className="bg-background">
+        <div className={`${container} py-12 lg:py-16`}>
+          <EmergencyContacts language={language} />
+          <PublicNotice language={language} />
+          <AskTheDesk language={language} />
+        </div>
+      </section>
     </div>
   );
 }
@@ -45,378 +136,365 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
 function useRegion() {
   const [region, setRegionState] = useState(() => localStorage.getItem("vn:region") || "");
   const setRegion = useCallback((nextRegion: string) => setRegionState(nextRegion), []);
-
   useEffect(() => {
-    if (region) {
-      localStorage.setItem("vn:region", region);
-    } else {
-      localStorage.removeItem("vn:region");
-    }
+    if (region) localStorage.setItem("vn:region", region);
+    else localStorage.removeItem("vn:region");
     window.__vnRegion = region;
     window.dispatchEvent(new CustomEvent("vn:region-change", { detail: { region } }));
   }, [region]);
-
   return [region, setRegion] as const;
 }
 
-function Lead({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+type ActionKind = "find" | "missing" | "need" | "want";
+function ActionCard({ language, kind, navigate }: { language: Language; kind: ActionKind; navigate: (page: Page) => void }) {
+  const ts = shellStrings[language];
+  const config = {
+    find: {
+      title: ts.findSomeone,
+      description: ts.findSomeoneDescription,
+      cta: ts.findSomeoneCta,
+      icon: Search,
+      chip: "bg-white/20",
+      card: "bg-primary text-primary-foreground",
+      action: () => navigate("search"),
+      variant: "outline" as const,
+    },
+    missing: {
+      title: labels[language].reportMissingPerson,
+      description: ts.reportMissingDescription,
+      cta: ts.reportMissingCta,
+      icon: UserX,
+      chip: "bg-destructive-soft text-destructive",
+      card: "border-2 bg-background",
+      action: undefined,
+      variant: "secondary" as const,
+    },
+    need: {
+      title: labels[language].getHelp,
+      description: ts.needHelpDescription,
+      cta: ts.needHelpCta,
+      icon: ArrowUpCircle,
+      chip: "bg-accent text-primary",
+      card: "border-2 bg-background",
+      action: () => navigate("getHelp"),
+      variant: "secondary" as const,
+    },
+    want: {
+      title: labels[language].giveHelp,
+      description: ts.wantHelpDescription,
+      cta: ts.wantHelpCta,
+      icon: HandHelping,
+      chip: "bg-accent text-primary",
+      card: "border-2 bg-background",
+      action: () => navigate("giveHelp"),
+      variant: "secondary" as const,
+    },
+  }[kind];
+  const Icon = config.icon;
+  return (
+    <Card className={`flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:gap-6 ${config.card}`}>
+      <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${config.chip}`}>
+        <Icon className="size-5" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-xl font-bold">{config.title}</h3>
+        <p className={`mt-1 text-sm ${kind === "find" ? "text-primary-foreground/75" : "text-muted-foreground"}`}>{config.description}</p>
+      </div>
+      {kind === "missing" ? (
+        <Button asChild type="button" variant={config.variant} className="w-full sm:ml-auto sm:w-[212px]">
+          <a href={opmcmMissingPersonUrl} target="_blank" rel="noopener noreferrer">
+            {config.cta} <ExternalLink aria-hidden="true" />
+          </a>
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant={kind === "find" ? "outline" : config.variant}
+          className={`w-full sm:ml-auto sm:w-[212px] ${kind === "find" ? "border-0 bg-background text-primary hover:bg-background/90" : ""}`}
+          onClick={config.action}
+        >
+          {config.cta}
+        </Button>
+      )}
+    </Card>
+  );
+}
+
+function SituationBand({ language }: { language: Language }) {
   const t = labels[language];
   const ts = shellStrings[language];
   const liveData = useLiveData();
-  const rescued = formatNumber(liveData.rescuedStatistics.rescued_count, language);
-  const verified = formatNumber(liveData.statusCounts.total_count, language);
-  const missing = liveData.missingCount === null ? null : formatNumber(liveData.missingCount, language);
-  const messages = liveData.messages.map((message) => messageText(message, language)).filter(Boolean);
-  const number = (value: number | null | undefined) =>
-    value === null || value === undefined ? t.unavailable : formatNumber(value, language);
-
+  const updated = liveData.updatedAt || data.meta.synced_at;
+  const missing = liveData.missingCount === null ? t.unavailable : formatNumber(liveData.missingCount, language);
+  const camps = data.stationedLocations.results.length || data.rescuedLocations.results.length;
   return (
-    <section className="grid gap-8 lg:grid-cols-[7fr_5fr] lg:gap-0" aria-labelledby="lead-heading">
-      <div className="lg:border-r lg:border-rule lg:pr-10">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <SquareButton href="tel:1234" tone="red" className="w-full">
-            {ts.call1234}
-          </SquareButton>
-          <SquareButton onClick={() => navigate("search")} tone="primary" className="w-full">
-            {t.search}
-          </SquareButton>
-          <SquareButton onClick={() => navigate("getHelp")} className="w-full">
-            {t.getHelp}
-          </SquareButton>
-        </div>
-        <SectionLabel as="p" dot="blue" className="mt-6">
-          {t.officialFigures}
-        </SectionLabel>
-        <Headline level={1} id="lead-heading" className="mt-5">
-          {leadHeadline(t, rescued, missing)}
-        </Headline>
-        <Byline language={language} className="mt-4" />
-        <Standfirst className="mt-4 max-w-2xl">
-          {t.rescuedVerifiedCopy.replace("{rescued}", rescued).replace("{verified}", verified)}
-        </Standfirst>
-        {messages.length ? (
-          <div className="mt-6 border-l border-ink pl-4 font-serif text-[0.95rem] leading-7 text-ink">
-            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {t.officialMessages}
-            </p>
-            {messages.map((message, index) => (
-              <p key={`${message}-${index}`} className="mt-1">
-                {message}
-              </p>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      <div className="lg:pl-10">
-        <SectionLabel as="p">{t.byTheNumbers}</SectionLabel>
-        <RuledTable
-          caption={t.byTheNumbers}
-          className="mt-1"
-          rows={[
-            { key: "rescued", label: t.rescuedStatus, value: rescued },
-            { key: "missing", label: t.missing, value: missing ?? t.unavailable, red: true },
-            { key: "reach", label: t.outOfReach, value: number(liveData.rescuedStatistics.out_of_reach) },
-            { key: "force", label: t.forceDeployed, value: number(liveData.rescuedStatistics.force_deployed) },
-            { key: "verified", label: t.verifiedRecords, value: verified },
-          ]}
+    <section className="bg-secondary">
+      <div className={`${container} py-12 lg:py-16`}>
+        <SectionHeader
+          title={ts.currentSituation}
+          aside={
+            <span className="block text-right text-xs leading-5 text-subtle">
+              {ts.sourcePrefix} <strong className="text-foreground">{t.sourceName}</strong>
+              <br />
+              {ts.updatedPrefix} {formatDateTime(updated, language)}
+            </span>
+          }
         />
-        <p className="mt-2 font-sans text-[0.68rem] text-muted-foreground">{t.floodDate}</p>
-        <div className="mt-6 grid gap-3">
-          <SquareButton onClick={() => navigate("search")} className="w-full">
-            {t.search}
-          </SquareButton>
-          <SquareButton onClick={() => navigate("registerOrg")} className="w-full">
-            {orgStrings[language].registerOrgCta}
-          </SquareButton>
-          <div className="grid gap-1 text-center">
-            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{shellStrings[language].guidesTitle}</p>
-            {(
-              [
-                ["VerifiedNepal-Seeking-Help-Guide.pdf", shellStrings[language].guideSeekingHelp],
-                ["VerifiedNepal-Providing-Help-Guide.pdf", shellStrings[language].guideProvidingHelp],
-                ["VerifiedNepal-Organization-Guide.pdf", shellStrings[language].guideOrganization],
-                ["VerifiedNepal-Writing-a-Dispatch-Guide.pdf", shellStrings[language].guideDispatch],
-                ["VerifiedNepal-Moderator-Guide.pdf", shellStrings[language].guideModerator],
-              ] as const
-            ).map(([file, label]) => (
-              <a
-                key={file}
-                href={`/guides/${file}`}
-                target="_blank"
-                rel="noopener"
-                className="font-sans text-xs text-muted-foreground underline decoration-rule underline-offset-4 hover:decoration-ink"
-              >
-                {label}
-              </a>
-            ))}
-          </div>
+        <div className="mt-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
+          <StatCard value={formatNumber(liveData.rescuedStatistics.rescued_count, language)} label={ts.peopleRescued} />
+          <StatCard value={missing} label={ts.peopleMissing} tone="danger" />
+          <StatCard value={formatNumber(liveData.statusCounts.total_count, language)} label={ts.verifiedRecords} />
+          <StatCard value={formatNumber(camps, language)} label={ts.activeReliefLocations} />
         </div>
+        <div className="mt-5 flex flex-col gap-1">
+          <Button asChild type="button" variant="link" className="w-fit px-0">
+            <a href={officialRescueUrl} target="_blank" rel="noopener noreferrer">
+              {ts.completeSituationReport} <ExternalLink aria-hidden="true" />
+            </a>
+          </Button>
+          <p className="text-xs text-subtle">{ts.currentSituationDisclaimer}</p>
+        </div>
+        <OfficialMessages language={language} />
       </div>
     </section>
   );
 }
 
-function ThreeColumns({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
-  const { officialUpdates, opmcmStats, opmcmUpdatedAt } = useLiveData();
-  const showHelp = opmcmStats !== null;
-  const showUpdates = officialUpdates !== null && officialUpdates.length > 0;
-  const columns = 1 + (showHelp ? 1 : 0) + (showUpdates ? 1 : 0);
-  const grid = columns === 3 ? "lg:grid-cols-3" : columns === 2 ? "lg:grid-cols-2" : "";
-
+function OfficialMessages({ language }: { language: Language }) {
+  const messages = useLiveData()
+    .messages.map((message) => messageText(message, language))
+    .filter(Boolean);
+  if (!messages.length) return null;
   return (
-    <div className={`grid gap-10 lg:gap-0 ${grid} lg:divide-x lg:divide-rule`}>
-      <div className="lg:pr-8">
-        <MissingPersonsColumn language={language} />
-      </div>
-      {showHelp ? (
-        <div className="lg:px-8">
-          <HelpRequestsColumn language={language} stats={opmcmStats} updatedAt={opmcmUpdatedAt} />
-        </div>
-      ) : null}
-      {showUpdates ? (
-        <div className="lg:pl-8">
-          <UpdatesColumn language={language} updates={officialUpdates} updatedAt={opmcmUpdatedAt} />
-        </div>
-      ) : null}
+    <div className="mt-6 rounded-lg border border-primary-soft-border bg-background p-4">
+      <Eyebrow>{labels[language].officialMessages}</Eyebrow>
+      {messages.map((message, index) => (
+        <p key={`${message}-${index}`} className="mt-2 text-sm text-foreground">
+          {message}
+        </p>
+      ))}
     </div>
   );
 }
 
-function MissingPersonsColumn({ language }: { language: Language }) {
-  const t = labels[language];
-
+function OfficialUpdates({ language }: { language: Language }) {
+  const ts = shellStrings[language];
+  const updates = useLiveData().officialUpdates;
+  if (!updates?.length) return null;
   return (
-    <section aria-labelledby="missing-heading">
-      <SectionLabel id="missing-heading">{t.missingPersonsLabel}</SectionLabel>
-      <Headline level={3} as="p" className="mt-4">
-        {t.searchLead}
-      </Headline>
-      <p className="mt-3 font-serif text-sm italic text-muted-foreground">{t.absenceNote}</p>
-      <SquareButton href={opmcmMissingPersonUrl} external tone="primary" className="mt-4">
-        {t.searchByNameCta}
-      </SquareButton>
-      <SquareButton href={opmcmMissingPersonUrl} external className="mt-3">
-        {t.reportMissingPerson}
-      </SquareButton>
+    <section className="bg-secondary">
+      <div className={`${container} py-12 lg:py-16`}>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <Eyebrow>{ts.latestOfficialUpdate}</Eyebrow>
+          <Button asChild type="button" variant="link" className="px-0">
+            <a href={opmcmUpdatesUrl} target="_blank" rel="noopener noreferrer">
+              {ts.readAllOfficialUpdates} <ExternalLink aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+        <Card className="mt-5 overflow-hidden">
+          <ul className="divide-y">
+            {updates.slice(0, 3).map((item) => (
+              <OfficialUpdateRow key={item._id} item={item} language={language} />
+            ))}
+          </ul>
+        </Card>
+      </div>
     </section>
   );
 }
 
-function HelpRequestsColumn({
-  language,
-  stats,
-  updatedAt,
-}: {
-  language: Language;
-  stats: OpmcmStats;
-  updatedAt: string | null;
-}) {
-  const t = labels[language];
+function OfficialUpdateRow({ item, language }: { item: OpmcmGovernmentEffort; language: Language }) {
+  const ts = shellStrings[language];
+  const title =
+    language === "ne"
+      ? textField(item, ["title_ne", "title", "titleEn", "englishTitle", "titleEnglish"])
+      : textField(item, ["title_en", "titleEn", "englishTitle", "titleEnglish", "title"]);
+  const summary =
+    language === "ne"
+      ? textField(item, ["summary_ne", "summary", "description_ne", "description", "content_ne", "content"])
+      : textField(item, ["summary_en", "summary", "description_en", "description", "content_en", "content"]);
+  const category =
+    textField(item, language === "ne" ? ["category_ne", "category", "type"] : ["category_en", "category", "type"]) ||
+    ts.officialUpdateFallbackCategory;
+  const date = item.updatedAt || item.createdAt;
   return (
-    <section aria-labelledby="help-heading">
-      <SectionLabel id="help-heading">{t.helpRequestsOpmcm}</SectionLabel>
-      <RuledTable
-        caption={t.helpRequests}
-        className="mt-1"
-        rows={[
-          { key: "open", label: sentenceCase(t.open), value: formatNumber(stats.requests.open, language) },
-          { key: "critical", label: sentenceCase(t.critical), value: formatNumber(stats.requests.critical, language), red: true },
-          { key: "progress", label: sentenceCase(t.inProgress), value: formatNumber(stats.requests.inProgress, language) },
-          { key: "resolved", label: sentenceCase(t.resolved), value: formatNumber(stats.requests.resolved, language) },
-          { key: "offers", label: t.helpOffersAvailable, value: formatNumber(stats.offers.available, language) },
-        ]}
-      />
-      <Byline language={language} source="OPMCM" updatedAt={updatedAt} className="mt-2" />
-      <SquareButton href={opmcmAskHelpUrl} external className="mt-4">
-        {t.askForHelp}
-      </SquareButton>
-    </section>
+    <li className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <Badge variant="info">{category}</Badge>
+        <h3 className="mt-2 font-semibold">{title || ts.officialUpdateFallbackCategory}</h3>
+        {summary ? <p className="mt-1 text-sm text-muted-foreground">{summary}</p> : null}
+        <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-subtle">
+          <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
+          {ts.officialSource}
+          {date ? ` · ${formatDateTime(date, language)}` : ""}
+          <StatusBadge tone="success">{ts.verified}</StatusBadge>
+        </p>
+      </div>
+      <Button asChild type="button" variant="link" size="sm" className="h-auto min-h-11 shrink-0 self-start px-0">
+        <a href={opmcmUpdatesUrl} target="_blank" rel="noopener noreferrer">
+          {ts.readUpdate} <ExternalLink aria-hidden="true" />
+        </a>
+      </Button>
+    </li>
   );
 }
 
-function UpdatesColumn({
-  language,
-  updates,
-  updatedAt,
-}: {
-  language: Language;
-  updates: OpmcmGovernmentEffort[];
-  updatedAt: string | null;
-}) {
-  const t = labels[language];
-  return (
-    <section aria-labelledby="updates-heading">
-      <SectionLabel id="updates-heading" dot="blue">
-        {t.officialUpdatesPanel}
-      </SectionLabel>
-      <ul className="divide-y divide-rule">
-        {updates.slice(0, 3).map((item) => {
-          const date = officialUpdateDate(item, language);
-          return (
-            <li key={item._id}>
-              <a
-                href={opmcmUpdatesUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red"
-              >
-                <Headline level={3} as="p" className="hover:text-red">
-                  {officialUpdateTitle(item, language)}
-                </Headline>
-                {date ? <p className="mt-1 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-muted-foreground">{date}</p> : null}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-      <Byline language={language} source="OPMCM" updatedAt={updatedAt} className="mt-2" />
-      <a
-        href={opmcmUpdatesUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`mt-3 inline-flex min-h-11 items-center font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] ${officialLink} focus:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-paper`}
-      >
-        OPMCM <span aria-hidden="true">↗</span>
-      </a>
-    </section>
-  );
+function textField(item: OpmcmGovernmentEffort, keys: string[]) {
+  for (const key of keys) {
+    const value = item[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return "";
 }
 
 export function EmergencyContacts({ language }: { language: Language }) {
   const t = labels[language];
+  const ts = shellStrings[language];
+  const primary = helplines.find((line) => line.number === "1234");
+  const large = [
+    helplines.find((line) => line.number === "100"),
+    helplines.find((line) => line.number === "102"),
+    helplines.find((line) => line.number === "101"),
+  ].filter(Boolean);
+  const remaining = helplines.filter((line) => !["1234", "100", "102", "101"].includes(line.number));
   return (
-    <section aria-labelledby="emergency-heading">
-      <SectionLabel id="emergency-heading" dot>
+    <Card className="p-5 sm:p-8">
+      <Eyebrow className="flex items-center gap-2">
+        <span className="size-2 rounded-full bg-destructive" aria-hidden="true" />
         {t.emergencyContactsTitle}
-      </SectionLabel>
-      <p className="mt-3 font-serif text-sm italic text-muted-foreground">{t.emergencyContactsBody}</p>
-      <ul className="mt-3 grid gap-x-10 sm:grid-cols-2">
-        {helplines.map((helpline) => (
-          <li key={helpline.key} className="border-b border-rule">
+      </Eyebrow>
+      <p className="mt-3 text-base text-muted-foreground">{ts.emergencyIntro}</p>
+      {primary ? (
+        <a
+          href={`tel:${primary.number}`}
+          className="mt-6 flex min-h-32 items-center justify-between gap-4 rounded-xl bg-foreground p-6 text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <span>
+            <span className="block text-xs text-faint">{ts.disasterHotlineLabel}</span>
+            <span className="mt-1 block text-5xl font-bold leading-none tabular-nums">{primary.number}</span>
+            <span className="mt-2 block text-xs text-faint">{ts.emergencyHours}</span>
+          </span>
+          <span className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-destructive">
+            <Phone className="size-6" aria-hidden="true" />
+          </span>
+        </a>
+      ) : null}
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        {large.map((line) => {
+          if (!line) return null;
+          const icon = line.number === "100" ? Shield : line.number === "102" ? Plus : Flame;
+          const Icon = icon;
+          return (
             <a
-              href={`tel:${helpline.number}`}
-              className="flex min-h-12 items-center justify-between gap-4 py-2 font-sans text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red"
+              key={line.key}
+              href={`tel:${line.number}`}
+              className="flex min-h-24 flex-col items-center justify-center rounded-lg border-2 p-4 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <span>{language === "ne" ? helpline.labelNe : helpline.labelEn}</span>
-              <span className="text-lg font-semibold tabular-nums text-red">{helpline.number}</span>
+              <span className="flex size-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <span className="mt-2 text-2xl font-bold tabular-nums text-primary">{line.number}</span>
+              <span className="text-xs text-muted-foreground">{language === "ne" ? line.labelNe : line.labelEn}</span>
             </a>
-          </li>
+          );
+        })}
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        {remaining.map((line) => (
+          <a
+            key={line.key}
+            href={`tel:${line.number}`}
+            className="min-w-0 rounded-lg bg-secondary p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <span className="block break-all font-bold tabular-nums text-destructive">{line.number}</span>
+            <span className="mt-1 block text-xs font-semibold text-foreground">{language === "ne" ? line.labelNe : line.labelEn}</span>
+            <span className="mt-1 block text-xs text-subtle">{hotlineNote(line.key, ts)}</span>
+          </a>
         ))}
-      </ul>
-    </section>
+      </div>
+    </Card>
   );
+}
+
+function hotlineNote(
+  key: string,
+  ts: {
+    hotlineNoteMohaTollFree: string;
+    hotlineNoteRedCross: string;
+    hotlineNoteChild: string;
+    hotlineNoteTourist: string;
+    hotlineNoteMoha: string;
+    hotlineNoteMofa: string;
+    footerOfficialLinks: string;
+  },
+) {
+  const notes: Record<string, string> = {
+    "moha-flood-control": ts.hotlineNoteMohaTollFree,
+    "red-cross": ts.hotlineNoteRedCross,
+    "child-helpline": ts.hotlineNoteChild,
+    "tourist-police": ts.hotlineNoteTourist,
+    "moha-control-landline": ts.hotlineNoteMoha,
+    "mofa-foreigners": ts.hotlineNoteMofa,
+  };
+  return notes[key] || ts.footerOfficialLinks;
 }
 
 export function PublicNotice({ language }: { language: Language }) {
   const t = labels[language];
+  const ts = shellStrings[language];
   return (
-    <section aria-labelledby="notice-heading" className="border border-ink bg-white p-1">
-      <div className="grid gap-6 border border-ink p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-10">
+    <Card className="mt-8 p-5 sm:p-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-          <SectionLabel id="notice-heading" as="p">
-            {t.publicNotice}
-          </SectionLabel>
-          <Headline level={2} className="mt-4">
-            {t.donateTitle}
-          </Headline>
-          <p className="mt-3 max-w-2xl font-serif leading-7 text-ink">{t.donateBody}</p>
+          <Eyebrow>{t.publicNotice}</Eyebrow>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">{t.donateTitle}</h2>
+          <p className="mt-3 max-w-2xl text-base text-muted-foreground">{t.donateBody}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <SquareButton href={pmdrfUrl} tone="red" external>
-              {t.donateCta}
-            </SquareButton>
-            <SquareButton href={pmoAppealUrl} external>
-              {t.donateVerify}
-            </SquareButton>
+            <Button asChild type="button" variant="destructive">
+              <a href={pmdrfUrl} target="_blank" rel="noopener noreferrer">
+                {t.donateCta} <ExternalLink aria-hidden="true" />
+              </a>
+            </Button>
+            <Button asChild type="button" variant="outline">
+              <a href={pmoAppealUrl} target="_blank" rel="noopener noreferrer">
+                {t.donateVerify} <ExternalLink aria-hidden="true" />
+              </a>
+            </Button>
           </div>
-          <p className="mt-5 max-w-2xl font-serif text-sm italic leading-6 text-muted-foreground">{t.donateWarning}</p>
+          <p className="mt-5 text-sm text-subtle">{t.donateWarning}</p>
         </div>
-        <figure className="mx-auto m-0 w-fit text-center">
-          <img src="/brand/pmdrf-qr.svg" alt={`QR code linking to ${pmdrfUrl}`} className="h-40 w-40" width={160} height={160} />
-          <figcaption className="mt-2 max-w-[10rem] font-sans text-[0.68rem] leading-5 text-muted-foreground">
+        <figure className="m-0 text-center">
+          <img
+            src="/brand/pmdrf-qr.svg"
+            alt={`${t.donateScan} · ${ts.donateDomain}`}
+            width={144}
+            height={144}
+            className="mx-auto size-36"
+          />
+          <figcaption className="mt-2 max-w-36 text-xs text-subtle">
             {t.donateScan}
-            <span className="mt-1 block font-mono text-[0.65rem] text-ink">pmdrf.nchl.com.np</span>
+            <span className="mt-1 block font-mono text-xs text-foreground">{ts.donateDomain}</span>
           </figcaption>
         </figure>
       </div>
-    </section>
-  );
-}
-
-function TablesRow({ language }: { language: Language }) {
-  const t = labels[language];
-  const { statusCounts } = useLiveData();
-  const total = Math.max(statusCounts.total_count, 1);
-  const countryCounts = useMemo(
-    () => data.countryCounts.map((entry) => [sentenceCase(entry.country) || t.unavailable, entry.count] as const),
-    [t.unavailable],
-  );
-  const maxCountry = Math.max(...countryCounts.map(([, count]) => count), 1);
-
-  return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-rule">
-      <section aria-labelledby="status-heading" className="lg:pr-8">
-        <SectionLabel id="status-heading">{t.statusOfRecords}</SectionLabel>
-        <RuledTable
-          caption={t.statusOfRecords}
-          className="mt-1"
-          rows={statusCounts.status_counts.map((status) => ({
-            key: String(status.id),
-            label: textForLanguage(status, language),
-            value: (
-              <>
-                {formatNumber(status.count, language)}
-                <span className="ml-2 font-normal text-muted-foreground">{((status.count / total) * 100).toFixed(1)}%</span>
-              </>
-            ),
-            bar: status.count / total,
-          }))}
-        />
-        <Byline language={language} className="mt-2" />
-      </section>
-      <section aria-labelledby="nationality-heading" className="lg:pl-8">
-        <SectionLabel id="nationality-heading">{t.byNationality}</SectionLabel>
-        <p className="mt-3 font-serif text-sm italic text-muted-foreground">{t.nationalityHelp}</p>
-        <div className="mt-1 max-h-[18rem] overflow-auto pr-2">
-          <RuledTable
-            caption={t.byNationality}
-            rows={countryCounts.map(([country, count]) => ({
-              key: country,
-              label: country,
-              value: formatNumber(count, language),
-              bar: count / maxCountry,
-              }))}
-          />
-        </div>
-        <Byline language={language} className="mt-2" />
-      </section>
-    </div>
+    </Card>
   );
 }
 
 function AskTheDesk({ language }: { language: Language }) {
   const t = labels[language];
   return (
-    <section aria-labelledby="desk-heading" className="grid gap-4 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-      <SectionLabel id="desk-heading" as="p" className="border-b-0 pb-0">
-        {t.askTheDesk}
-      </SectionLabel>
-      <p className="font-serif text-sm text-muted-foreground">
-        <span className="font-semibold text-ink">{t.agentTitle}</span> {t.agentBody}
-      </p>
-      <SquareButton onClick={openChatWidget}>{t.agentCta}</SquareButton>
+    <section className="mt-8 flex flex-col gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <Eyebrow>{t.askTheDesk}</Eyebrow>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <strong className="text-foreground">{t.agentTitle}</strong> {t.agentBody}
+        </p>
+      </div>
+      <Button type="button" variant="outline" onClick={openChatWidget}>
+        {t.agentCta}
+      </Button>
     </section>
   );
-}
-
-function officialUpdateTitle(item: OpmcmGovernmentEffort, language: Language) {
-  if (language === "ne") {
-    return item.title || item.title_en || item.titleEn || item.englishTitle || item.titleEnglish || "";
-  }
-  return item.title_en || item.titleEn || item.englishTitle || item.titleEnglish || item.title || "";
-}
-
-function officialUpdateDate(item: OpmcmGovernmentEffort, language: Language) {
-  const value = item.updatedAt || item.createdAt;
-  if (!value) return "";
-  return formatDateTime(value, language);
 }
