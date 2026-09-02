@@ -13,6 +13,21 @@ Read this before you moderate anything. You must acknowledge it in the Desk befo
 
 The phone call is not optional. It is the only check that the need is real and consented to. Explain who you are, why you are calling, and that the public listing will be masked. If the beneficiary did not consent, reject with `not_consented` and explain why.
 
+**Before you dial:** the person on the other end may be mid-crisis — displaced, grieving, or exhausted from repeating their story to every agency that's called. Speak slowly and gently, use their name, and let them know the call will be short. You are not interrogating them; you are helping their need get published safely.
+
+**What to ask:**
+- Their name and relationship to the beneficiary (are they the beneficiary, a family member, a neighbour?).
+- The beneficiary's full name, ward, and what is actually needed — in their own words, not just confirming what was written.
+- Whether anyone else has already helped with this need (avoids double-publishing).
+- Whether they consent to a masked public listing (initial + surname, ward, category only).
+
+**What to verify:**
+- The household exists in the stated ward — cross-check with the ward/local contact if anything feels off.
+- The need matches the category and description submitted (correct the listing if it doesn't).
+- No other open need in the queue already covers this household (check the duplicate panel while you talk).
+
+**Keep it short.** Two or three questions is usually enough — this is a confirmation call, not an interview. Thank them, tell them what happens next, and let them go.
+
 ## 3. Masking rules (what the public sees vs. what you see)
 
 Public boards, project pages, the ledger and the audit log show **only**:
@@ -70,7 +85,9 @@ Assume the community will read the audit. Moderate as if you are on the public r
 
 ## 9. Useful scripts
 
-- Opening line on a call: "Namaste, I am [name] from VerifiedNepal. You registered a need for [beneficiary initial] in Ward [n] — can I confirm a few details so we can publish it safely?"
+- Opening line: "Namaste, I am [name] from VerifiedNepal. I just need two minutes to confirm a few details for [beneficiary initial]'s listing in Ward [n] — is now an okay time?"
+- Reassurance, if they sound anxious or rushed: "Take your time, there's no rush — I just want to make sure this is published correctly and safely."
+- Closing line: "Thank you, that's everything I need. Your listing will be published shortly, showing only [masked name] in Ward [n]. Take care."
 - If you must reject: give the reason in one sentence and offer the path back: "We could not verify / we found a duplicate — here is what to do next …"
 
 ## 10. Escalation
