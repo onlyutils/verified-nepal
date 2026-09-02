@@ -67,6 +67,10 @@ All of these run in CI on every PR.
 
 `src/App.tsx` is a routing shell; pages live in `src/pages/`, shared primitives in `src/ui.tsx` and `src/components/ui/`, and all backend calls go through `src/api.ts`. The backend is a single Lambda handler `server/src/index.js` with `node --test` tests in `server/test/`. Use Tailwind utility classes with no CSS-in-JS, keep TypeScript strict, and write comments that explain constraints rather than restating code.
 
+## Bigger contributions
+
+Want to sink your teeth into something substantial? See [docs/CONTRIBUTOR-TODO.md](docs/CONTRIBUTOR-TODO.md) for open design decisions (beneficiary deduplication, romanized-Nepali storage) written up from scratch — open an issue with your approach first.
+
 ## Reporting issues
 
 Data wrong or stale? Open an issue with the official source showing the
