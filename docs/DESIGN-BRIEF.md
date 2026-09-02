@@ -287,7 +287,7 @@ One long scrolling page, no tabs. Order: header, org switcher, identity card, vo
 - **Stock on hand** ruled table with footnote "Stock on hand = received − distributed − sent out".
 - **Recent activity** ruled list: Received / Distributed / Sent to X / Received from X / Correction, with category and quantity, corrected entries struck through, red discrepancy, timestamp, note.
 - **Report a problem**: collapsed button; expands to reason select (does not exist, closed and should be hidden, misuse of goods or funds, other), optional details (500 chars), Turnstile, Submit report / Cancel, green thank-you on success.
-- **Donor flow "I dropped something here"** (design it; the strings and logic exist but the button and dialog are not rendered today, so donors arriving from the printed QR currently see nothing): opens from a button or automatically from the QR link; dialog "Declare your drop" with category, quantity, optional note, Turnstile, **Get drop code**; success shows the drop code with Copy, the status link, and "Keep this code. Staff will confirm when they log your drop; the code never shows who received the goods."
+- **Donor flow "I dropped something here"**: a primary button under the header (only while the center is Open) or automatically from the printed QR link; dialog "Declare your drop" with category (limited to what the center accepts), quantity, optional note, Turnstile, Cancel / **Get drop code**; success shows the drop code in large monospace with Copy, the status link, "Keep this code. Staff will confirm when they log your drop; the code never shows who received the goods." and Done.
 - States: loading, not found card with Back to all centers, other error.
 
 ### 8.5 Donation status `/donation/:ref`
@@ -434,7 +434,6 @@ From the 2026-09-01 review and later testing, still open:
 - Long forms need progress, section grouping and inline validation designed, not just implemented.
 - Print layouts are unstyled.
 - Empty, loading, error and offline states are inconsistent across pages.
-- The donor "I dropped something here" dialog on the drop-center page is not rendered, so the printed QR flow dead-ends (see §8.4). Design it as if it works; engineering will wire it.
 - Raw machine values (statuses, entry types, action codes, months) appear in several lists.
 
 ## 14. Deliverables expected from the designer

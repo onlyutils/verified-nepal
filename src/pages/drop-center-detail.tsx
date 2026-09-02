@@ -291,7 +291,84 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
             </div>
           </div>
         ) : null}
+        {data.status === "open" ? (
+          <div className="mt-5">
+            <SquareButton tone="primary" onClick={() => setDropOpen(true)}>
+              {s.dropButton}
+            </SquareButton>
+          </div>
+        ) : null}
       </header>
+
+      <Dialog open={dropOpen} onOpenChange={(o) => { if (!o) { setDropOpen(false); setDropFieldError(null); setDropError(null); } }}>
+        <DialogContent>
+          {dropRef ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{s.dropSuccessTitle}</DialogTitle>
+              </DialogHeader>
+              <p className="break-all font-mono text-3xl font-semibold tracking-[0.12em] text-ink">{dropRef}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button type="button" variant="outline" className="min-h-11" onClick={handleCopyRef}>
+                  {dropCopied ? s.dropCopied : s.dropCopyButton}
+                </Button>
+                <span className="font-sans text-sm text-muted">
+                  {s.dropLinkLabel}{" "}
+                  <a href={`/donation/${encodeURIComponent(dropRef)}`} className="font-semibold text-ink underline underline-offset-4">
+                    /donation/{dropRef}
+                  </a>
+                </span>
+              </div>
+              <p className="mt-4 font-sans text-sm italic text-muted">{s.dropKeepCode}</p>
+              <DialogFooter>
+                <Button type="button" className="min-h-11" onClick={() => setDropOpen(false)}>
+                  {s.dropDone}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <form onSubmit={handleDeclare} className="space-y-4" noValidate>
+              <DialogHeader>
+                <DialogTitle>{s.dropDialogTitle}</DialogTitle>
+                <DialogDescription>{s.dropDialogDescription}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="dropCategory">{s.dropCategoryLabel}</Label>
+                <Select id="dropCategory" value={dropCategory} onChange={(e) => setDropCategory(e.target.value)} className="min-h-11" required>
+                  <option value="">{s.dropCategorySelect}</option>
+                  {(data.accepts.length ? data.accepts : GOODS_CATEGORIES.map((c) => c.id)).map((cat) => (
+                    <SelectItem key={cat} value={cat}>{goodsLabel(cat, language)}</SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dropQty">{s.dropQtyLabel}</Label>
+                <Input id="dropQty" type="number" inputMode="decimal" min="0.01" step="0.01" value={dropQty} onChange={(e) => setDropQty(e.target.value)} className="min-h-11" required />
+                <p className="font-sans text-xs text-muted-foreground">{s.dropQtyHint}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dropNote">{s.dropNoteLabel}</Label>
+                <Textarea id="dropNote" value={dropNote} onChange={(e) => setDropNote(e.target.value)} placeholder={s.dropNotePlaceholder} rows={3} maxLength={500} />
+              </div>
+              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setDropTurnstileToken} /> : null}
+              {dropFieldError ? <p className="font-sans text-sm text-destructive" role="alert">{dropFieldError}</p> : null}
+              {dropError ? (
+                <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
+                  {dropError}
+                </p>
+              ) : null}
+              <DialogFooter>
+                <Button type="button" variant="outline" className="min-h-11" onClick={() => setDropOpen(false)}>
+                  {s.dropCancel}
+                </Button>
+                <Button type="submit" disabled={dropSubmitting} className="min-h-11">
+                  {dropSubmitting ? s.dropSubmitting : s.dropSubmit}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
