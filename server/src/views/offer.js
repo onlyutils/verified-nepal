@@ -10,6 +10,6 @@ export function toPublicOfferListItem(it) {
     status: it.status,
     createdAt: it.createdAt,
   };
-  if (it.org) o.org = it.org;
+  if (it.org) o.org = { name: it.org.name };
   return o;
 }

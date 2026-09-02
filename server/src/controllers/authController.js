@@ -92,10 +92,9 @@ export async function handleAckGuidelines(event, opts) {
   const pk = `USER#${auth.payload.sub}`;
   const sk = "PROFILE";
   let user = auth.user;
-  if (!user) {
-    const nowIso = new Date().toISOString();
-    user = { PK: pk, SK: sk, type: "USER", sub: auth.payload.sub, role: auth.role || "helper", districts: [], createdAt: nowIso, gsi2pk: `USER#${auth.role || "helper"}`, gsi2sk: nowIso, email: auth.payload.email || "", name: auth.payload.name || "" };
-  }
+  // Do not create a bare helper profile here: that would pre-empt the email-based
+  // admin/moderator bootstrap that GET /me performs on first sign-in (a lockout).
+  if (!user) throw err(409, "profile not initialized; call GET /me first");
   const nowIso = new Date().toISOString();
   user.guidelinesAckAt = nowIso;
   if (!Array.isArray(user.districts)) user.districts = [];

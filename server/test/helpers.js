@@ -142,7 +142,19 @@ export class FakeDdb {
       return {};
     }
     if (name === "UpdateCommand") {
-      throw new Error(`unknown command ${name} - use Put/Get for tests`);
+      const k = this.key(input.Key.PK, input.Key.SK);
+      const item = this.store.get(k) ? JSON.parse(JSON.stringify(this.store.get(k))) : { PK: input.Key.PK, SK: input.Key.SK };
+      const expr = input.UpdateExpression || "";
+      const vals = input.ExpressionAttributeValues || {};
+      const names = input.ExpressionAttributeNames || {};
+      const resolve = (t) => (t.startsWith("#") ? names[t] : t);
+      const addM = expr.match(/ADD\s+(.+?)(?:\s+SET\s+|$)/i);
+      const setM = expr.match(/SET\s+(.+?)(?:\s+ADD\s+|$)/i);
+      if (addM) for (const part of addM[1].split(",")) { const [a, v] = part.trim().split(/\s+/); const nm = resolve(a); item[nm] = (item[nm] || 0) + (vals[v] || 0); }
+      if (setM) for (const part of setM[1].split(",")) { const [lhs, rhs] = part.split("=").map((x) => x.trim()); item[resolve(lhs)] = vals[rhs]; }
+      this.store.set(k, item);
+      if (input.ReturnValues === "ALL_NEW" || input.ReturnValues === "UPDATED_NEW") return { Attributes: JSON.parse(JSON.stringify(item)) };
+      return {};
     }
     throw new Error(`unknown command ${name}`);
   }

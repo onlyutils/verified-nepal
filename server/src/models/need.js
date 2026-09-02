@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { GetCommand, PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, DeleteCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { err } from "../lib/http.js";
 import { ttlSeconds, toExpiresAt, generateRefCode } from "../lib/format.js";
 import { PUBLIC_NEED_STATUSES } from "../constants.js";
@@ -139,9 +139,18 @@ export async function addFlag(ddb, tableName, { needId, reason, details }) {
 }
 
 export async function bumpFlagCount(ddb, tableName, need) {
-  need.flagCount = (need.flagCount || 0) + 1;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
-  return need.flagCount;
+  // Atomic increment so a concurrent moderator write (e.g. publish) is not
+  // clobbered by a whole-item Put racing the flag bump.
+  const res = await ddb.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { PK: need.PK, SK: need.SK },
+    UpdateExpression: "ADD flagCount :one",
+    ExpressionAttributeValues: { ":one": 1 },
+    ReturnValues: "ALL_NEW",
+  }));
+  const count = res.Attributes?.flagCount ?? ((need.flagCount || 0) + 1);
+  need.flagCount = count;
+  return count;
 }
 
 export async function upsertFlaggedPointer(ddb, tableName, { needId, flagCount, maskedName, district, ward }) {

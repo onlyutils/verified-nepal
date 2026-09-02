@@ -13,7 +13,7 @@ import { toPublicEntryView, toPrivateEntryView } from "../views/goods.js";
 import { toPublicDonationView } from "../views/donation.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { generateRefCode } from "../lib/format.js";
-import { GetCommand, PutCommand, QueryCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 function validateCenterUpdateBody(body) {
   const out = {};
@@ -821,8 +821,12 @@ export async function handleFlagCenter(event, opts, centerId) {
     updatedAt: now,
   };
   await ddb.send(new PutCommand({ TableName: tableName, Item: pointer }));
-  center.flagCount = (center.flagCount || 0) + 1;
-  await saveCenter(ddb, tableName, center);
+  await ddb.send(new UpdateCommand({
+    TableName: tableName,
+    Key: { PK: center.PK, SK: center.SK },
+    UpdateExpression: "ADD flagCount :one",
+    ExpressionAttributeValues: { ":one": 1 },
+  }));
   return json(201, { ok: true });
 }
 

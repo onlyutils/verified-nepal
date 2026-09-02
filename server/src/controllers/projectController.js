@@ -143,6 +143,10 @@ export async function handlePostPhoto(event, opts, projectId) {
   const fid = validateString(fileId, "fileId", 1, 200);
   const urlClean = validateString(url, "url", 1, 2000);
   try { const u = new URL(urlClean); if (!["http:", "https:"].includes(u.protocol)) throw new Error(); } catch { throw err(400, "url must be http(s)"); }
+  // Bind the photo URL to the configured media host so a caller cannot attach an
+  // arbitrary external URL (tracking pixel / offensive image). Derived from server config.
+  const mediaBase = env.MEDIA_PUBLIC_BASE ? String(env.MEDIA_PUBLIC_BASE).replace(/\/+$/, "") : "";
+  if (mediaBase && !urlClean.startsWith(mediaBase + "/")) throw err(400, "url must be under the media host");
   let captionClean;
   if (caption !== undefined && caption !== null && String(caption).trim() !== "") {
     captionClean = validateString(caption, "caption", 1, 500);

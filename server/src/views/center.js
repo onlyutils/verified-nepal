@@ -21,13 +21,13 @@ export function toPublicCenterView(center) {
   if (center.lat !== undefined) out.lat = center.lat;
   if (center.lng !== undefined) out.lng = center.lng;
   if (center.hours !== undefined) out.hours = center.hours;
-  if (center.flagCount !== undefined) out.flagCount = center.flagCount;
   return out;
 }
 
 export function toPrivateCenterView(center) {
   const pub = toPublicCenterView(center);
   pub.orgId = center.orgId;
+  if (center.flagCount !== undefined) pub.flagCount = center.flagCount;
   if (center.notes !== undefined) pub.notes = center.notes;
   if (center.createdBy !== undefined) pub.createdBy = center.createdBy;
   if (center.createdByName !== undefined) pub.createdByName = center.createdByName;
