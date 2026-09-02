@@ -613,7 +613,7 @@ export async function handleCreateDonation(event, opts, centerId) {
   if (body.note !== undefined && body.note !== null && String(body.note).trim() !== "") {
     note = validateString(body.note, "note", 1, 500);
   }
-  await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET);
+  await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET, { required: opts.env.REQUIRE_TURNSTILE === "1" });
   let ref = generateRefCode();
   let tries = 0;
   while (tries < 3) {
@@ -821,7 +821,7 @@ export async function handleFlagCenter(event, opts, centerId) {
     if (typeof body.details !== "string") throw err(400, "details must be string");
     if (String(body.details).length > 500) throw err(400, "details too long");
   }
-  await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET);
+  await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET, { required: opts.env.REQUIRE_TURNSTILE === "1" });
   const now = new Date().toISOString();
   const flag = {
     PK: `CENTER#${centerId}`,

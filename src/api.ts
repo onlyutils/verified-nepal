@@ -766,8 +766,15 @@ function qs(params: Record<string, string | number | undefined>): string {
 export function createOrg(token: string, body: CreateOrgBody): Promise<{ id: string; status: OrgStatus }> {
   return request("/orgs", { method: "POST", body: JSON.stringify(body), token });
 }
-export function listMyOrgs(token: string): Promise<{ items: MyOrg[] }> {
+export interface OrgInvite { orgId: string; orgName: string }
+export function listMyOrgs(token: string): Promise<{ items: MyOrg[]; invites?: OrgInvite[] }> {
   return request("/orgs/mine", { token });
+}
+export function acceptOrgInvite(token: string, orgId: string): Promise<{ ok: boolean }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/accept-invite`, { method: "POST", token });
+}
+export function declineOrgInvite(token: string, orgId: string): Promise<{ ok: boolean }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/decline-invite`, { method: "POST", token });
 }
 export function getOrg(token: string, id: string): Promise<OrgPrivate> {
   return request(`/orgs/${encodeURIComponent(id)}`, { token });

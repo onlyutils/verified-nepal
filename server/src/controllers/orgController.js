@@ -191,23 +191,17 @@ export async function handleListMyOrgs(event, opts) {
   const auth = await requireAuth(event, opts);
   const emailRaw = auth.user?.email || auth.payload.email || "";
   const lower = String(emailRaw).toLowerCase().trim();
+  // Surface pending invitations for the user to accept/decline explicitly — do NOT
+  // auto-join them (that would attach a person to an org without their consent).
+  const invitesOut = [];
   if (lower) {
     const invites = await listInvitesForEmail(auth.ddb, auth.tableName, lower);
     for (const inv of invites) {
       const existing = await getMembership(auth.ddb, auth.tableName, auth.payload.sub, inv.orgId);
-      if (existing) {
-        await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId);
-        continue;
-      }
+      if (existing) { await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId); continue; }
       const org = await getOrg(auth.ddb, auth.tableName, inv.orgId);
-      if (!org) {
-        await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId);
-        continue;
-      }
-      const now = new Date().toISOString();
-      const name = auth.user?.name || auth.payload.name || "";
-      await putMembership(auth.ddb, auth.tableName, { sub: auth.payload.sub, orgId: inv.orgId, role: "staff", orgName: org.name, email: lower, name, createdAt: now });
-      await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId);
+      if (!org) { await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId); continue; }
+      invitesOut.push({ orgId: inv.orgId, orgName: org.name });
     }
   }
   const memberships = await listUserMemberships(auth.ddb, auth.tableName, auth.payload.sub);
@@ -217,7 +211,7 @@ export async function handleListMyOrgs(event, opts) {
     if (!org) continue;
     items.push(toMyOrgView(org, m.role));
   }
-  return json(200, { items });
+  return json(200, { items, invites: invitesOut });
 }
 
 export async function handleGetOrg(event, opts, orgId) {
@@ -477,28 +471,43 @@ export async function handleInviteMember(event, opts, orgId) {
   if (existingInvite) throw err(400, "already invited");
   const existingInvite2 = await getInviteForOrg(auth.ddb, auth.tableName, orgId, lower);
   if (existingInvite2) throw err(400, "already invited");
-  if (emailPointer && emailPointer.sub) {
-    const sub = emailPointer.sub;
-    let userItem = null;
-    try {
-      const res = await auth.ddb.send(new GetCommand({ TableName: auth.tableName, Key: { PK: `USER#${sub}`, SK: "PROFILE" } }));
-      userItem = res.Item;
-    } catch {}
-    const email = userItem?.email || lower;
-    const name = userItem?.name || "";
+  // Always create an invite — never an instant membership. The invitee must
+  // explicitly accept (POST /orgs/:id/accept-invite), so nobody is attached to an
+  // org without consent. The response is identical whether or not the email is
+  // registered, so it cannot be used to probe which emails have accounts.
+  const now = new Date().toISOString();
+  await putInvite(auth.ddb, auth.tableName, { orgId, orgName: org.name, email: lower, invitedBy: auth.payload.sub, createdAt: now });
+  const actorName = auth.user?.name || auth.payload.name || "";
+  await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: maskEmail(lower) });
+  return json(201, { status: "invited" });
+}
+
+export async function handleAcceptInvite(event, opts, orgId) {
+  const auth = await requireAuth(event, opts);
+  const lower = String(auth.user?.email || auth.payload.email || "").toLowerCase().trim();
+  if (!lower) throw err(400, "no email on account");
+  const invite = (await getInviteForEmail(auth.ddb, auth.tableName, lower, orgId)) || (await getInviteForOrg(auth.ddb, auth.tableName, orgId, lower));
+  if (!invite) throw err(404, "no pending invitation");
+  const org = await getOrg(auth.ddb, auth.tableName, orgId);
+  if (!org) { await deleteInvite(auth.ddb, auth.tableName, lower, orgId); throw err(404, "not found"); }
+  const existing = await getMembership(auth.ddb, auth.tableName, auth.payload.sub, orgId);
+  if (!existing) {
     const now = new Date().toISOString();
-    await putMembership(auth.ddb, auth.tableName, { sub, orgId, role: "staff", orgName: org.name, email, name, createdAt: now });
-    const actorName = auth.user?.name || auth.payload.name || "";
-    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: maskEmail(email) });
-    return json(201, { status: "member" });
-  } else {
-    const now = new Date().toISOString();
-    const invitedBy = auth.payload.sub;
-    await putInvite(auth.ddb, auth.tableName, { orgId, orgName: org.name, email: lower, invitedBy, createdAt: now });
-    const actorName = auth.user?.name || auth.payload.name || "";
-    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.invite", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: maskEmail(lower) });
-    return json(201, { status: "invited" });
+    const name = auth.user?.name || auth.payload.name || "";
+    await putMembership(auth.ddb, auth.tableName, { sub: auth.payload.sub, orgId, role: "staff", orgName: org.name, email: lower, name, createdAt: now });
+    const actorName = name;
+    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "org.member.accept", targetType: "ORG", targetId: orgId, targetLabel: org.name });
   }
+  await deleteInvite(auth.ddb, auth.tableName, lower, orgId);
+  return json(200, { ok: true });
+}
+
+export async function handleDeclineInvite(event, opts, orgId) {
+  const auth = await requireAuth(event, opts);
+  const lower = String(auth.user?.email || auth.payload.email || "").toLowerCase().trim();
+  if (!lower) throw err(400, "no email on account");
+  await deleteInvite(auth.ddb, auth.tableName, lower, orgId);
+  return json(200, { ok: true });
 }
 
 export async function handleListMembers(event, opts, orgId) {

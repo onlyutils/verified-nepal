@@ -13,7 +13,7 @@ export async function handlePostDispatch(event, { getDdb, env }) {
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { title, body: bodyContent, author, tags, language, turnstileToken } = body;
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   let titleObj = validateDispatchTitle(title);
   if (titleObj.__single) {
     const val = titleObj.__single;

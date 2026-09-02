@@ -11,6 +11,8 @@ import {
   handleVouch,
   handleCenterFlags,
   handleInviteMember,
+  handleAcceptInvite,
+  handleDeclineInvite,
   handleListMembers,
   handleRemoveMember,
 } from "../controllers/orgController.js";
@@ -37,6 +39,8 @@ const routes = [
   ["POST", /^\/orgs\/([^\/]+)\/members$/, (e, o, m) => handleInviteMember(e, o, decodeURIComponent(m[1]))],
   ["GET", /^\/orgs\/([^\/]+)\/members$/, (e, o, m) => handleListMembers(e, o, decodeURIComponent(m[1]))],
   ["DELETE", /^\/orgs\/([^\/]+)\/members\/([^\/]+)$/, (e, o, m) => handleRemoveMember(e, o, decodeURIComponent(m[1]), decodeURIComponent(m[2]))],
+  ["POST", /^\/orgs\/([^\/]+)\/accept-invite$/, (e, o, m) => handleAcceptInvite(e, o, decodeURIComponent(m[1]))],
+  ["POST", /^\/orgs\/([^\/]+)\/decline-invite$/, (e, o, m) => handleDeclineInvite(e, o, decodeURIComponent(m[1]))],
   ["POST", /^\/orgs\/([^\/]+)\/vouch$/, (e, o, m) => handleVouch(e, o, decodeURIComponent(m[1]))],
   ["GET", /^\/orgs\/([^\/]+)$/, (e, o, m) => handleGetOrg(e, o, decodeURIComponent(m[1]))],
   ["POST", /^\/orgs\/([^\/]+)$/, (e, o, m) => handleUpdateOrg(e, o, decodeURIComponent(m[1]))],

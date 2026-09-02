@@ -11,6 +11,8 @@ import {
   listCenterEntries,
   listInbound,
   listMyOrgs,
+  acceptOrgInvite,
+  declineOrgInvite,
   listOrgCenters,
   listOrgMembers,
   receiveTransfer,
@@ -136,6 +138,8 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
   const [orgs, setOrgs] = useState<MyOrg[] | null>(null);
   const [loadingOrgs, setLoadingOrgs] = useState(false);
   const [orgsError, setOrgsError] = useState<string | null>(null);
+  const [invites, setInvites] = useState<{ orgId: string; orgName: string }[]>([]);
+  const [inviteActing, setInviteActing] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [centers, setCenters] = useState<CenterPrivate[]>([]);
@@ -266,6 +270,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
     try {
       const res = await listMyOrgs(auth.idToken);
       setOrgs(res.items);
+      setInvites(res.invites || []);
       if (res.items.length > 0 && !selectedId) {
         setSelectedId(res.items[0].id);
       } else if (res.items.length === 0) {
@@ -460,6 +465,20 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
       cancelled = true;
     };
   }, [qrCenter]);
+
+  const respondInvite = async (orgId: string, accept: boolean) => {
+    if (!auth.idToken) return;
+    setInviteActing(orgId);
+    try {
+      if (accept) await acceptOrgInvite(auth.idToken, orgId);
+      else await declineOrgInvite(auth.idToken, orgId);
+      await fetchOrgs();
+    } catch {
+      // fetchOrgs surfaces any load error; ignore transient action error
+    } finally {
+      setInviteActing(null);
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -886,6 +905,29 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
     );
   }
 
+  const invitesBlock = invites.length > 0 ? (
+    <Card className="border-ink">
+      <CardHeader>
+        <CardTitle className="font-serif text-base">{t.invitesTitle}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {invites.map((iv) => (
+          <div key={iv.orgId} className="flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-3 last:border-0 last:pb-0">
+            <p className="font-sans text-sm text-ink">{t.invitesFrom.replace("{org}", iv.orgName)}</p>
+            <div className="flex gap-2">
+              <Button className="min-h-11" disabled={inviteActing === iv.orgId} onClick={() => respondInvite(iv.orgId, true)}>
+                {inviteActing === iv.orgId ? t.invitesAccepting : t.invitesAccept}
+              </Button>
+              <Button variant="outline" className="min-h-11" disabled={inviteActing === iv.orgId} onClick={() => respondInvite(iv.orgId, false)}>
+                {inviteActing === iv.orgId ? t.invitesDeclining : t.invitesDecline}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  ) : null;
+
   if (orgs.length === 0) {
     return (
       <div className="mx-auto max-w-3xl space-y-8">
@@ -893,6 +935,7 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
           <SectionLabel>{t.orgDashboardTitle}</SectionLabel>
           <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">{t.orgDashboardTitle}</h1>
         </header>
+        {invitesBlock}
         <Card>
           <CardHeader>
             <CardTitle className="font-serif text-base">{t.orgDashboardEmptyTitle}</CardTitle>
@@ -915,6 +958,8 @@ export function OrgDashboard({ language, navigate }: { language: Language; navig
         <SectionLabel>{t.orgDashboardTitle}</SectionLabel>
         <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">{t.orgDashboardTitle}</h1>
       </header>
+
+      {invitesBlock}
 
       {orgs.length > 1 ? (
         <div className="space-y-2">

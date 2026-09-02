@@ -47,7 +47,7 @@ export async function handlePostNeeds(event, { getDdb, env }) {
   if (!CATEGORIES.includes(category)) throw err(400, `category must be one of ${CATEGORIES.join(",")}`);
   const desc = validateString(description, "description", 10, 2000);
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
@@ -161,7 +161,7 @@ export async function handlePostFlag(event, { getDdb, env }, needId) {
     if (details.length > 500) throw err(400, "details too long");
     cleanDetails = details;
   }
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();

@@ -121,8 +121,12 @@ describe("orgs Phase3", () => {
 
     res = await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "staff@example.com" }, token: ownerToken }, opts);
     assert.equal(res.status, 201);
-    assert.equal(res.body.status, "member");
-    // memberships exist both ways
+    assert.equal(res.body.status, "invited");
+    // no membership until the invitee accepts (consent)
+    assert.equal(fake.store.get(`USER#${staffSub}|ORG#${orgId}`), undefined);
+    const staffToken = createToken(basePayload({ sub: staffSub, email: "staff@example.com", name: "Staff" }), kp.privateKey);
+    let acc = await call(routeOrgs, "POST", `/orgs/${orgId}/accept-invite`, { token: staffToken }, opts);
+    assert.equal(acc.status, 200);
     const memUser = fake.store.get(`USER#${staffSub}|ORG#${orgId}`);
     assert.ok(memUser);
     assert.equal(memUser.role, "staff");
@@ -130,8 +134,6 @@ describe("orgs Phase3", () => {
     assert.ok(memOrg);
     assert.equal(memOrg.role, "staff");
 
-    // staff calling POST members -> 403
-    const staffToken = createToken(basePayload({ sub: staffSub, email: "staff@example.com", name: "Staff" }), kp.privateKey);
     res = await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "another@example.com" }, token: staffToken }, opts);
     assert.equal(res.status, 403);
 
@@ -141,7 +143,7 @@ describe("orgs Phase3", () => {
     assert.match(res.body.error, /cannot remove the last owner/);
   });
 
-  it("2. GET /orgs/mine materializes invite", async () => {
+  it("2. invite is listed on /orgs/mine and accepted explicitly", async () => {
     const kp = makeKeyPair();
     const fake = new FakeDdb();
     const ownerSub = "owner-1";
@@ -154,25 +156,23 @@ describe("orgs Phase3", () => {
     const volSub = "vol-sub";
     seedUser(fake, volSub, "helper", "vol@example.com");
     const volToken = createToken(basePayload({ sub: volSub, email: "vol@example.com" }), kp.privateKey);
-    // first mine materializes
+    // mine lists the pending invite but does NOT auto-join
     let mine = await call(routeOrgs, "GET", "/orgs/mine", { token: volToken }, opts);
     assert.equal(mine.status, 200);
-    const found = mine.body.items.find((it) => it.id === orgId);
-    assert.ok(found);
-    assert.equal(found.role, "staff");
-    // invite items deleted
-    const inv1 = fake.store.get(`EMAIL#vol@example.com|ORGINVITE#${orgId}`);
-    assert.equal(inv1, undefined);
-    const inv2 = fake.store.get(`ORG#${orgId}|INVITE#vol@example.com`);
-    assert.equal(inv2, undefined);
-    // membership exists
+    assert.equal(mine.body.items.find((it) => it.id === orgId), undefined);
+    assert.ok((mine.body.invites || []).some((iv) => iv.orgId === orgId));
+    assert.equal(fake.store.get(`USER#${volSub}|ORG#${orgId}`), undefined);
+    // explicit accept -> becomes a member, invite cleared
+    const acc = await call(routeOrgs, "POST", `/orgs/${orgId}/accept-invite`, { token: volToken }, opts);
+    assert.equal(acc.status, 200);
     const mem = fake.store.get(`USER#${volSub}|ORG#${orgId}`);
     assert.ok(mem);
-    // second call still lists once
+    assert.equal(fake.store.get(`ORG#${orgId}|INVITE#vol@example.com`), undefined);
+    // now mine lists the org once, no lingering invite
     mine = await call(routeOrgs, "GET", "/orgs/mine", { token: volToken }, opts);
     assert.equal(mine.status, 200);
-    const count = mine.body.items.filter((it) => it.id === orgId).length;
-    assert.equal(count, 1);
+    assert.equal(mine.body.items.filter((it) => it.id === orgId).length, 1);
+    assert.equal((mine.body.invites || []).some((iv) => iv.orgId === orgId), false);
   });
 
   it("3. staff permissions: can create entries, cannot update org/create center/vouch", async () => {
@@ -190,6 +190,7 @@ describe("orgs Phase3", () => {
     let res = await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "staff@example.com" }, token: ownerToken }, opts);
     assert.equal(res.status, 201);
     const staffToken = createToken(basePayload({ sub: staffSub, email: "staff@example.com" }), kp.privateKey);
+    await call(routeOrgs, "POST", `/orgs/${orgId}/accept-invite`, { token: staffToken }, opts);
     // staff can POST entries intake -> 201
     res = await call(routeOrgs, "POST", `/centers/${centerId}/entries`, { body: { entryType: "intake", category: "rice", qty: 10 }, token: staffToken }, opts);
     assert.equal(res.status, 201);
@@ -224,6 +225,7 @@ describe("orgs Phase3", () => {
     fake.store.set(fake.key("EMAIL#staff@example.com", "META"), { PK: "EMAIL#staff@example.com", SK: "META", type: "EMAIL", sub: staffSub, email: "staff@example.com", createdAt: new Date().toISOString() });
     await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "staff@example.com" }, token: ownerToken }, opts);
     const staffToken = createToken(basePayload({ sub: staffSub, email: "staff@example.com" }), kp.privateKey);
+    await call(routeOrgs, "POST", `/orgs/${orgId}/accept-invite`, { token: staffToken }, opts);
     // also invite vol
     await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "vol@example.com" }, token: ownerToken }, opts);
     // owner deletes staff-sub

@@ -16,7 +16,7 @@ export async function handlePostProject(event, { getDdb, env }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { title, description, type, district, ward, locationText, costEstimateNpr, committee, turnstileToken } = body;
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET);
+  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const titleObj = validateTitle(title, "title");
   const descObj = validateDescription(description, "description");
   if (!PROJECT_TYPES.includes(type)) throw err(400, `type must be one of ${PROJECT_TYPES.join(",")}`);

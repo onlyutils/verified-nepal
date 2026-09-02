@@ -1,7 +1,12 @@
 import { err } from "./http.js";
 
-export async function verifyTurnstile(token, secret) {
-  if (!secret) return;
+export async function verifyTurnstile(token, secret, { required = false } = {}) {
+  if (!secret) {
+    // Fail closed where the platform expects a secret (deployed envs set REQUIRE_TURNSTILE),
+    // so a misdeploy that drops the secret rejects anonymous writes instead of silently allowing them.
+    if (required) throw err(500, "turnstile misconfigured");
+    return;
+  }
   if (!token || typeof token !== "string" || !token.trim()) throw err(400, "turnstile token required");
   const params = new URLSearchParams();
   params.set("secret", secret);
