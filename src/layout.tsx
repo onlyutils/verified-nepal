@@ -9,6 +9,7 @@ import type { Language, Page } from "./types";
 import { focusRing, Rule, SquareButton } from "./ui";
 import { shellStrings } from "./i18n-shell";
 import { centerStrings } from "./i18n-centers";
+import { orgStrings } from "./i18n-orgs";
 import { githubUrl, onlyUtilsUrl, pmoAppealUrl } from "./urls";
 import { formatDateTime, formatNumber } from "./utils";
 
@@ -289,6 +290,9 @@ export function Footer({ language, navigate }: { language: Language; navigate: (
           <a className={`block ${link}`} href="mailto:verifiednepal01@gmail.com">
             {t.contactUs}: <span className="normal-case tracking-normal">verifiednepal01@gmail.com</span>
           </a>
+          <button type="button" onClick={() => navigate("org")} className={`block ${link}`}>
+            {orgStrings[language].navMyOrg}
+          </button>
           <button type="button" onClick={() => navigate("audit")} className={`block ${link}`}>
             {(t as Record<string,string>).footerAuditLink ?? "Audit log"}
           </button>

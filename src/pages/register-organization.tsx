@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createOrg, ORG_TYPES, type OrgType } from "../api";
+import { createOrg, listMyOrgs, ORG_TYPES, type OrgType } from "../api";
 import { apiErrorMessage } from "../api-error";
 import { useGoogleAuth } from "../auth";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,15 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [draftTime, setDraftTime] = useState<string | null>(null);
+  const [hasOrgs, setHasOrgs] = useState(false);
+
+  useEffect(() => {
+    if (!auth.idToken) return;
+    // ponytail: banner only — a fetch failure just hides it, registration still works
+    listMyOrgs(auth.idToken)
+      .then((res) => setHasOrgs(res.items.length > 0))
+      .catch(() => {});
+  }, [auth.idToken]);
 
   useEffect(() => {
     try {
@@ -221,6 +230,13 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
         <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">{t.registerOrgTitle}</h1>
         <p className="mt-3 font-serif leading-7 text-muted-foreground">{t.registerOrgLead}</p>
       </header>
+
+      {hasOrgs ? (
+        <div className="flex flex-wrap items-center gap-3 border border-rule bg-card px-3 py-2 font-sans text-sm" role="status">
+          <span>{t.registerOrgExistingNotice}</span>
+          <SquareButton onClick={() => navigate("org")}>{t.navMyOrg}</SquareButton>
+        </div>
+      ) : null}
 
       {draftTime ? (
         <div className="flex flex-wrap items-center gap-2 border border-rule bg-card px-3 py-2 font-sans text-sm">
