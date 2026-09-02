@@ -128,14 +128,28 @@ function Lead({ language, navigate }: { language: Language; navigate: (page: Pag
           <SquareButton onClick={() => navigate("registerOrg")} className="w-full">
             {orgStrings[language].registerOrgCta}
           </SquareButton>
-          <a
-            href="/guides/VerifiedNepal-Organization-Guide.pdf"
-            target="_blank"
-            rel="noopener"
-            className="text-center font-sans text-xs text-muted underline decoration-rule underline-offset-4 hover:decoration-ink"
-          >
-            {orgStrings[language].orgGuideLink}
-          </a>
+          <div className="grid gap-1 text-center">
+            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted">{shellStrings[language].guidesTitle}</p>
+            {(
+              [
+                ["VerifiedNepal-Seeking-Help-Guide.pdf", shellStrings[language].guideSeekingHelp],
+                ["VerifiedNepal-Providing-Help-Guide.pdf", shellStrings[language].guideProvidingHelp],
+                ["VerifiedNepal-Organization-Guide.pdf", shellStrings[language].guideOrganization],
+                ["VerifiedNepal-Writing-a-Dispatch-Guide.pdf", shellStrings[language].guideDispatch],
+                ["VerifiedNepal-Moderator-Guide.pdf", shellStrings[language].guideModerator],
+              ] as const
+            ).map(([file, label]) => (
+              <a
+                key={file}
+                href={`/guides/${file}`}
+                target="_blank"
+                rel="noopener"
+                className="font-sans text-xs text-muted underline decoration-rule underline-offset-4 hover:decoration-ink"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </section>
