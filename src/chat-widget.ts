@@ -100,6 +100,7 @@ const shadowCss = `
 `;
 
 function decorate(root: ShadowRoot) {
+  if (root.querySelector(".vn-chat-credit")) return; // already decorated
   const style = document.createElement("style");
   style.textContent = shadowCss;
   root.appendChild(style);
