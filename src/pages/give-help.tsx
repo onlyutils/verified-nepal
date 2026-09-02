@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
-import { ApiError, CATEGORIES, type Category, createOffer, flagNeed, listNeeds, listOffers, type NeedPublic, type OfferPublic } from "../api";
-import { apiErrorMessage } from "../api-error";
-import { useGoogleAuth } from "../auth";
+import { ApiError, CATEGORIES, type Category, createOffer, flagNeed, listNeeds, listOffers, type NeedPublic, type OfferPublic } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { useGoogleAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TurnstileWidget } from "../components/turnstile";
-import { districtLabels, districtNames } from "../geo";
-import { labels } from "../i18n";
-import { formStrings } from "../i18n-forms";
-import type { Language } from "../types";
+import { TurnstileWidget } from "@/components/turnstile";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { labels } from "@/i18n";
+import { formStrings } from "@/i18n/forms";
+import type { Language } from "@/lib/types";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -106,9 +106,9 @@ function FlagDialog({ language, needId, open, onClose }: { language: Language; n
               <div className="space-y-2">
                 <Label htmlFor="flagDetails">{t.flagDetailsLabel}</Label>
                 <Textarea id="flagDetails" value={details} onChange={(e) => setDetails(e.target.value)} rows={3} placeholder={t.flagDetailsPlaceholder} maxLength={500} />
-                <p className="font-sans text-xs text-muted-foreground">{details.length}/500</p>
+                <p className="font-sans text-xs text-muted-foreground-foreground">{details.length}/500</p>
               </div>
-              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground">{t.flagTurnstileHint}</p>}
+              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground-foreground">{t.flagTurnstileHint}</p>}
               {error ? <p className="font-sans text-sm text-destructive" role="alert">{error}</p> : null}
             </div>
             <DialogFooter>
@@ -241,7 +241,7 @@ export function GiveHelp({ language }: { language: Language }) {
     <div className="mx-auto max-w-6xl space-y-10">
       <header>
         <h1 className="font-display text-3xl font-bold tracking-tight">{t.giveHelpTitle}</h1>
-        <p className="mt-3 max-w-2xl font-serif leading-7 text-muted-foreground">{t.giveHelpLead}</p>
+        <p className="mt-3 max-w-2xl font-serif leading-7 text-muted-foreground-foreground">{t.giveHelpLead}</p>
       </header>
 
       <section className="space-y-4">
@@ -250,37 +250,37 @@ export function GiveHelp({ language }: { language: Language }) {
           <div className="flex flex-wrap gap-3">
             <div className="min-w-[12rem]">
               <Label htmlFor="needsDistrict">{t.giveHelpFilterDistrict}</Label>
-              <Select id="needsDistrict" value={needsDistrict} onChange={(e) => setNeedsDistrict(e.target.value)}>
+              <NativeSelect id="needsDistrict" value={needsDistrict} onChange={(e) => setNeedsDistrict(e.target.value)}>
                 <option value="">{t.giveHelpAllDistricts}</option>
                 {districtNames.map((d) => (
-                  <SelectItem key={d} value={d}>
+                  <NativeSelectOption key={d} value={d}>
                     {districtLabels[d][language]}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
             <div className="min-w-[12rem]">
               <Label htmlFor="needsCategory">{t.giveHelpFilterCategory}</Label>
-              <Select id="needsCategory" value={needsCategory} onChange={(e) => setNeedsCategory(e.target.value)}>
+              <NativeSelect id="needsCategory" value={needsCategory} onChange={(e) => setNeedsCategory(e.target.value)}>
                 <option value="">{t.giveHelpAllCategories}</option>
                 {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
+                  <NativeSelectOption key={c} value={c}>
                     {categoryLabel(c, language)}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
           </div>
         </div>
 
         {needsLoading ? (
-          <p className="font-sans text-sm text-muted-foreground">{t.giveHelpLoading}</p>
+          <p className="font-sans text-sm text-muted-foreground-foreground">{t.giveHelpLoading}</p>
         ) : needsError ? (
           <p className="border border-destructive bg-destructive/10 px-3 py-2 font-sans text-sm text-destructive" role="alert">
             {needsError}
           </p>
         ) : needs.length === 0 ? (
-          <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground">{t.giveHelpEmpty}</p>
+          <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground-foreground">{t.giveHelpEmpty}</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {needs.map((need) => (
@@ -288,7 +288,7 @@ export function GiveHelp({ language }: { language: Language }) {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
                     <Badge variant="secondary">{categoryLabel(need.category, language)}</Badge>
-                    <span className="font-sans text-xs text-muted-foreground">{need.district} · W{need.ward}</span>
+                    <span className="font-sans text-xs text-muted-foreground-foreground">{need.district} · W{need.ward}</span>
                   </div>
                   <CardTitle className="text-base">{need.maskedName}</CardTitle>
                   <CardDescription className="font-sans text-xs">{new Date(need.createdAt).toLocaleDateString()}</CardDescription>
@@ -330,7 +330,7 @@ export function GiveHelp({ language }: { language: Language }) {
 
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold">{t.giveHelpOfferTitle}</h2>
-        <p className="font-sans text-sm text-muted-foreground">{t.giveHelpOfferLead}</p>
+        <p className="font-sans text-sm text-muted-foreground-foreground">{t.giveHelpOfferLead}</p>
 
         {!auth.idToken ? (
           <Card>
@@ -343,7 +343,7 @@ export function GiveHelp({ language }: { language: Language }) {
                   {t.deskContinueWithGoogle}
                 </Button>
               ) : (
-                <p className="font-sans text-sm text-muted-foreground">{t.deskNotConfigured}</p>
+                <p className="font-sans text-sm text-muted-foreground-foreground">{t.deskNotConfigured}</p>
               )}
               {auth.error ? (
                 <p className="font-sans text-sm text-destructive" role="alert">
@@ -360,12 +360,12 @@ export function GiveHelp({ language }: { language: Language }) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border border-ink bg-paper p-3 text-center" role="status">
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{ts.offerReferenceLabel}</p>
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{ts.offerReferenceLabel}</p>
                 <p className="mt-2 break-all font-mono text-lg font-bold tracking-widest text-ink">{offerSuccess}</p>
               </div>
               <div>
                 <h3 className="font-display text-base font-semibold">{ts.offerWhatNextTitle}</h3>
-                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{ts.offerWhatNextBody}</p>
+                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{ts.offerWhatNextBody}</p>
               </div>
             </CardContent>
           </Card>
@@ -417,13 +417,13 @@ export function GiveHelp({ language }: { language: Language }) {
                 <div className="space-y-2">
                   <Label htmlFor="offerDesc">{t.giveHelpDescriptionLabel} *</Label>
                   <Textarea id="offerDesc" value={offerDesc} onChange={(e) => setOfferDesc(e.target.value)} rows={3} placeholder={t.giveHelpDescriptionHint} required />
-                  <p className="font-sans text-xs text-muted-foreground">{t.giveHelpDescriptionHint}</p>
+                  <p className="font-sans text-xs text-muted-foreground-foreground">{t.giveHelpDescriptionHint}</p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="offerPhone">{t.giveHelpPhone} *</Label>
                   <Input id="offerPhone" value={offerPhone} onChange={(e) => setOfferPhone(e.target.value)} inputMode="tel" required />
-                  <p className="font-sans text-xs text-muted-foreground">{t.giveHelpPhoneHint}</p>
+                  <p className="font-sans text-xs text-muted-foreground-foreground">{t.giveHelpPhoneHint}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -455,32 +455,32 @@ export function GiveHelp({ language }: { language: Language }) {
           <div className="flex flex-wrap gap-3">
             <div className="min-w-[11rem]">
               <Label htmlFor="offersDistrict">{t.giveHelpFilterDistrict}</Label>
-              <Select id="offersDistrict" value={offersDistrict} onChange={(e) => setOffersDistrict(e.target.value)}>
+              <NativeSelect id="offersDistrict" value={offersDistrict} onChange={(e) => setOffersDistrict(e.target.value)}>
                 <option value="">{t.giveHelpAllDistricts}</option>
                 {districtNames.map((d) => (
-                  <SelectItem key={d} value={d}>
+                  <NativeSelectOption key={d} value={d}>
                     {districtLabels[d][language]}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
             <div className="min-w-[11rem]">
               <Label htmlFor="offersCategory">{t.giveHelpFilterCategory}</Label>
-              <Select id="offersCategory" value={offersCategory} onChange={(e) => setOffersCategory(e.target.value)}>
+              <NativeSelect id="offersCategory" value={offersCategory} onChange={(e) => setOffersCategory(e.target.value)}>
                 <option value="">{t.giveHelpAllCategories}</option>
                 {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
+                  <NativeSelectOption key={c} value={c}>
                     {categoryLabel(c, language)}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
           </div>
         </div>
         {offersLoading ? (
-          <p className="font-sans text-sm text-muted-foreground">{t.giveHelpLoading}</p>
+          <p className="font-sans text-sm text-muted-foreground-foreground">{t.giveHelpLoading}</p>
         ) : offers.length === 0 ? (
-          <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground">{t.giveHelpOffersEmpty}</p>
+          <p className="border border-rule bg-card px-4 py-6 text-center font-sans text-sm text-muted-foreground-foreground">{t.giveHelpOffersEmpty}</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {offers.map((o) => (
@@ -498,7 +498,7 @@ export function GiveHelp({ language }: { language: Language }) {
                       </Badge>
                     ))}
                   </div>
-                  <p className="font-sans text-xs text-muted-foreground">
+                  <p className="font-sans text-xs text-muted-foreground-foreground">
                     {o.districts.join(" · ")} · {new Date(o.createdAt).toLocaleDateString()}
                   </p>
                 </CardContent>

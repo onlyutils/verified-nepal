@@ -1,34 +1,34 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
-import { Dashboard } from "./dashboard";
-import { ComponentErrorBoundary } from "./error-boundary";
-import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "./layout";
-import { LiveDataProvider } from "./live";
-import { labels } from "./i18n";
-import { shellStrings } from "./i18n-shell";
-import { orgStrings } from "./i18n-orgs";
-import { centerStrings } from "./i18n-centers";
-import type { Language, Page } from "./types";
+import { Dashboard } from "@/pages/home";
+import { ComponentErrorBoundary } from "@/components/error-boundary";
+import { AccessibilityBar, BackToTop, EmergencyLine, Footer, Masthead } from "@/components/layout";
+import { LiveDataProvider } from "@/lib/live";
+import { labels } from "@/i18n";
+import { shellStrings } from "@/i18n/shell";
+import { orgStrings } from "@/i18n/orgs";
+import { centerStrings } from "@/i18n/centers";
+import type { Language, Page } from "@/lib/types";
 
-const Desk = lazy(() => import("./desk").then((m) => ({ default: m.Desk })));
-const GetHelp = lazy(() => import("./pages/get-help").then((m) => ({ default: m.GetHelp })));
-const GiveHelp = lazy(() => import("./pages/give-help").then((m) => ({ default: m.GiveHelp })));
-const Ledger = lazy(() => import("./pages/ledger").then((m) => ({ default: m.Ledger })));
-const AuditPage = lazy(() => import("./pages/audit").then((m) => ({ default: m.AuditPage })));
-const FindPerson = lazy(() => import("./find-person").then((m) => ({ default: m.FindPerson })));
-const MissingGuide = lazy(() => import("./missing-guide").then((m) => ({ default: m.MissingGuide })));
-const InfoHelp = lazy(() => import("./info-help").then((m) => ({ default: m.InfoHelp })));
-const ProjectsList = lazy(() => import("./pages/projects").then((m) => ({ default: m.ProjectsList })));
-const DispatchesPage = lazy(() => import("./pages/dispatches").then((m) => ({ default: m.DispatchesPage })));
-const DispatchDetail = lazy(() => import("./pages/dispatch-detail").then((m) => ({ default: m.DispatchDetail })));
-const ProjectDetail = lazy(() => import("./pages/project-detail").then((m) => ({ default: m.ProjectDetail })));
-const ProjectRegister = lazy(() => import("./pages/project-register").then((m) => ({ default: m.ProjectRegister })));
-const ProjectUpdate = lazy(() => import("./pages/project-update").then((m) => ({ default: m.ProjectUpdate })));
-const PrivacyPolicy = lazy(() => import("./privacy").then((m) => ({ default: m.PrivacyPolicy })));
-const RegisterOrganization = lazy(() => import("./pages/register-organization").then((m) => ({ default: m.RegisterOrganization })));
-const OrgDashboard = lazy(() => import("./pages/org-dashboard").then((m) => ({ default: m.OrgDashboard })));
-const DropCenters = lazy(() => import("./pages/drop-centers").then((m) => ({ default: m.DropCenters })));
-const DropCenterDetail = lazy(() => import("./pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
-const DonationStatusPage = lazy(() => import("./pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
+const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
+const GetHelp = lazy(() => import("@/pages/get-help").then((m) => ({ default: m.GetHelp })));
+const GiveHelp = lazy(() => import("@/pages/give-help").then((m) => ({ default: m.GiveHelp })));
+const Ledger = lazy(() => import("@/pages/ledger").then((m) => ({ default: m.Ledger })));
+const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.AuditPage })));
+const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
+const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
+const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
+const ProjectsList = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsList })));
+const DispatchesPage = lazy(() => import("@/pages/dispatches").then((m) => ({ default: m.DispatchesPage })));
+const DispatchDetail = lazy(() => import("@/pages/dispatch-detail").then((m) => ({ default: m.DispatchDetail })));
+const ProjectDetail = lazy(() => import("@/pages/project-detail").then((m) => ({ default: m.ProjectDetail })));
+const ProjectRegister = lazy(() => import("@/pages/project-register").then((m) => ({ default: m.ProjectRegister })));
+const ProjectUpdate = lazy(() => import("@/pages/project-update").then((m) => ({ default: m.ProjectUpdate })));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy").then((m) => ({ default: m.PrivacyPolicy })));
+const RegisterOrganization = lazy(() => import("@/pages/register-organization").then((m) => ({ default: m.RegisterOrganization })));
+const OrgDashboard = lazy(() => import("@/org/org-dashboard").then((m) => ({ default: m.OrgDashboard })));
+const DropCenters = lazy(() => import("@/pages/drop-centers").then((m) => ({ default: m.DropCenters })));
+const DropCenterDetail = lazy(() => import("@/pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
+const DonationStatusPage = lazy(() => import("@/pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
 
 const pagePaths: Record<Page, string> = {
   dashboard: "/",
@@ -186,7 +186,7 @@ export function App() {
           className={`mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8 outline-none ${page === "desk" ? "pb-8 pt-4" : "pb-16 pt-8"}`}
         >
           {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : (
-            <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted">{shellStrings[language].loading}</p>}>
+            <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted-foreground">{shellStrings[language].loading}</p>}>
               {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "info" ? <InfoHelp language={language} /> : null}

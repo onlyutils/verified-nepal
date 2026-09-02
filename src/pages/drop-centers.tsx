@@ -1,17 +1,17 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { listCenters, type CenterPublic } from "../api";
-import { apiErrorMessage } from "../api-error";
-import { centerStrings } from "../i18n-centers";
-import { districtCenters, districtLabels, districtNames } from "../geo";
-import { goodsLabel } from "../goods";
+import { listCenters, type CenterPublic } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { centerStrings } from "@/i18n/centers";
+import { districtCenters, districtLabels, districtNames } from "@/lib/geo";
+import { goodsLabel } from "@/lib/goods";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectItem } from "@/components/ui/select";
-import { Headline, SectionLabel, Standfirst, SquareButton, StatusMark } from "../ui";
-import type { Language, Page } from "../types";
-import { fillTemplate } from "../edition";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Headline, SectionLabel, Standfirst, SquareButton, StatusMark } from "@/components/legacy";
+import type { Language, Page } from "@/lib/types";
+import { fillTemplate } from "@/lib/edition";
 
 function tierLabel(tier: string | undefined, language: Language): string {
   const s = centerStrings[language];
@@ -125,14 +125,14 @@ export function DropCenters({ language, navigate }: { language: Language; naviga
         <CardContent className="flex flex-wrap gap-4 pt-6">
           <div className="min-w-[16rem]">
             <Label htmlFor="center-district">{s.districtLabel}</Label>
-            <Select id="center-district" value={district} onChange={(e) => setDistrict(e.target.value)} className="min-h-11">
-              <SelectItem value="">{s.allDistricts}</SelectItem>
+            <NativeSelect id="center-district" value={district} onChange={(e) => setDistrict(e.target.value)} className="min-h-11">
+              <NativeSelectOption value="">{s.allDistricts}</NativeSelectOption>
               {districtNames.map((d) => (
-                <SelectItem key={d} value={d}>
+                <NativeSelectOption key={d} value={d}>
                   {districtLabels[d][language]}
-                </SelectItem>
+                </NativeSelectOption>
               ))}
-            </Select>
+            </NativeSelect>
           </div>
           {canShowMap ? (
             <div className="ml-auto flex items-end">
@@ -143,15 +143,15 @@ export function DropCenters({ language, navigate }: { language: Language; naviga
       </Card>
 
       {showMap && canShowMap ? (
-        <Suspense fallback={<p className="font-sans text-sm text-muted">{s.loading}</p>}>
+        <Suspense fallback={<p className="font-sans text-sm text-muted-foreground">{s.loading}</p>}>
           <div className="overflow-hidden border border-rule">
             <CentersMap centers={items} district={district} />
-            <p className="border-t border-rule bg-card px-3 py-2 font-sans text-xs text-muted">{s.mapHelp}</p>
+            <p className="border-t border-rule bg-card px-3 py-2 font-sans text-xs text-muted-foreground">{s.mapHelp}</p>
           </div>
         </Suspense>
       ) : null}
 
-      {loading && items.length === 0 ? <p className="font-sans text-sm text-muted">{s.loading}</p> : null}
+      {loading && items.length === 0 ? <p className="font-sans text-sm text-muted-foreground">{s.loading}</p> : null}
       {error ? (
         <div className="border border-rule bg-card px-4 py-4" role="alert">
           <p className="font-sans text-sm text-destructive">{error}</p>
@@ -161,7 +161,7 @@ export function DropCenters({ language, navigate }: { language: Language; naviga
         </div>
       ) : null}
       {!loading && !error && items.length === 0 ? (
-        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted">{district ? s.emptyForDistrict : s.emptyAll}</p>
+        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{district ? s.emptyForDistrict : s.emptyAll}</p>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,13 +170,13 @@ export function DropCenters({ language, navigate }: { language: Language; naviga
             <CardHeader className="pb-2">
               <CardTitle className="font-serif text-base leading-6">{c.name}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-sans text-xs text-muted">{c.org.name}</span>
+                <span className="font-sans text-xs text-muted-foreground">{c.org.name}</span>
                 {c.org.status === "verified" ? (
                   <Badge variant="default" className="text-[0.62rem] uppercase">
                     {tierLabel(c.org.tier, language)}
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="border-rule text-[0.62rem] uppercase text-muted">
+                  <Badge variant="outline" className="border-rule text-[0.62rem] uppercase text-muted-foreground">
                     {s.unverifiedOrg}
                   </Badge>
                 )}
@@ -184,13 +184,13 @@ export function DropCenters({ language, navigate }: { language: Language; naviga
               <CardDescription className="font-sans text-xs">
                 {c.ward ? fillTemplate(s.districtWard, { district: districtLabels[c.district as keyof typeof districtLabels]?.[language] ?? c.district, ward: String(c.ward) }) : districtLabels[c.district as keyof typeof districtLabels]?.[language] ?? c.district}
               </CardDescription>
-              <p className="font-sans text-xs text-muted">{c.address}</p>
-              {c.hours ? <p className="font-sans text-xs text-muted">{s.hoursLabel}: {c.hours}</p> : null}
+              <p className="font-sans text-xs text-muted-foreground">{c.address}</p>
+              {c.hours ? <p className="font-sans text-xs text-muted-foreground">{s.hoursLabel}: {c.hours}</p> : null}
             </CardHeader>
             <CardContent className="mt-auto space-y-3 pt-2">
               {c.accepts.length ? (
                 <div>
-                  <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-wide text-muted">{s.acceptsLabel}</p>
+                  <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">{s.acceptsLabel}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {c.accepts.map((a) => (
                       <Badge key={a} variant="secondary" className="text-[0.68rem]">

@@ -1,12 +1,12 @@
-import { apiErrorMessage } from "../api-error";
+import { apiErrorMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
-import { ApiError, getDispatch, type DispatchDetailResponse } from "../api";
+import { ApiError, getDispatch, type DispatchDetailResponse } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { labels } from "../i18n";
-import type { Language } from "../types";
-import { Headline, Rule } from "../ui";
-import { formatDateTime, localizedText } from "../utils";
+import { labels } from "@/i18n";
+import type { Language } from "@/lib/types";
+import { Headline, Rule } from "@/components/legacy";
+import { formatDateTime, localizedText } from "@/lib/format";
 
 function tagLabel(tag: string, t: Record<string,string>): string {
   const map: Record<string,string> = {
@@ -47,9 +47,9 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
     return ()=>{ cancelled=true };
   }, [id, t.dispatchDetailError, t.dispatchDetailNotFound, t.dispatchDetailOffline]);
 
-  if (loading) return <p className="font-sans text-sm text-muted-foreground">{t.dispatchDetailLoading}</p>;
-  if (error) return <div className="mx-auto max-w-3xl border border-rule bg-card px-4 py-6" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground">{t.dispatchDetailOffline}</p> : null}<div className="mt-4"><a href="/dispatches" className="font-sans text-sm underline">{t.dispatchDetailBack}</a></div></div>;
-  if (!item) return <p className="font-sans text-sm text-muted-foreground">{t.dispatchDetailNotFound}</p>;
+  if (loading) return <p className="font-sans text-sm text-muted-foreground-foreground">{t.dispatchDetailLoading}</p>;
+  if (error) return <div className="mx-auto max-w-3xl border border-rule bg-card px-4 py-6" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.dispatchDetailOffline}</p> : null}<div className="mt-4"><a href="/dispatches" className="font-sans text-sm underline">{t.dispatchDetailBack}</a></div></div>;
+  if (!item) return <p className="font-sans text-sm text-muted-foreground-foreground">{t.dispatchDetailNotFound}</p>;
 
   const url = `${window.location.origin}/dispatches/${encodeURIComponent(item.id)}`;
   const waUrl = `https://wa.me/?text=${encodeURIComponent(url)}`;
@@ -68,7 +68,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
           {item.tags.map(tag=> <Badge key={tag} variant="secondary" className="text-[10px] uppercase tracking-wide">{tagLabel(tag, t)}</Badge>)}
         </div>
         <Headline level={2} as="h1" className="mt-3 !text-3xl sm:!text-[2.1rem]">{localizedText(item.title, language)}</Headline>
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground-foreground">
           <span>{t.dispatchMetaBy} <span className="font-semibold text-ink">{item.author.displayName}</span>{item.author.place ? <> · {item.author.place}</> : null}</span>
           <span aria-hidden="true">·</span>
           <time dateTime={item.publishedAt}>{formatDateTime(item.publishedAt, language)}</time>

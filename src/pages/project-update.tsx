@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { ApiError, attachProjectPhoto, createProjectUpdate, presignProjectPhoto } from "../api";
+import { ApiError, attachProjectPhoto, createProjectUpdate, presignProjectPhoto } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { labels } from "../i18n";
-import { apiErrorMessage } from "../api-error";
-import type { Language } from "../types";
-import { downscaleImage } from "../lib/image";
+import { labels } from "@/i18n";
+import { apiErrorMessage } from "@/lib/api-error";
+import type { Language } from "@/lib/types";
+import { downscaleImage } from "@/lib/image";
 
 function extractProjectId(input: string): string {
   const trimmed = input.trim();
@@ -102,7 +102,7 @@ export function ProjectUpdate({ language }: { language: Language }) {
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="border-b border-rule pb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">{t.projectUpdateTitle}</h1>
-        <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.projectUpdateLead}</p>
+        <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{t.projectUpdateLead}</p>
       </header>
 
       {success ? <div className="border border-ink bg-paper px-4 py-4"><p className="font-sans text-sm text-ink">{t.projectUpdateSuccess}</p><div className="mt-3"><a href={`/projects/${encodeURIComponent(extractProjectId(projectInput))}`} className="font-sans text-sm underline">{t.projectsViewProject}</a></div></div> : null}
@@ -114,7 +114,7 @@ export function ProjectUpdate({ language }: { language: Language }) {
             <div>
               <Label htmlFor="pid">{t.projectUpdateProjectId} *</Label>
               <Input id="pid" value={projectInput} onChange={e=>setProjectInput(e.target.value)} placeholder={t.projectUpdateProjectIdHint} required />
-              <p className="mt-1 font-sans text-xs text-muted-foreground">{t.projectUpdateProjectIdHint}</p>
+              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdateProjectIdHint}</p>
             </div>
             <div>
               <Label htmlFor="code">{t.projectUpdateCodeLabel} *</Label>
@@ -131,7 +131,7 @@ export function ProjectUpdate({ language }: { language: Language }) {
             <div>
               <Label>{t.projectUpdatePhotosLabel}</Label>
               <Input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onFileChange} />
-              <p className="mt-1 font-sans text-xs text-muted-foreground">{t.projectUpdatePhotosHint}</p>
+              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdatePhotosHint}</p>
               {files.length>0 ? (
                 <ul className="mt-2 space-y-2">
                   {files.map((f,idx)=>(
@@ -141,10 +141,10 @@ export function ProjectUpdate({ language }: { language: Language }) {
                     </li>
                   ))}
                 </ul>
-              ) : <p className="mt-2 font-sans text-xs text-muted-foreground">{t.projectUpdateNoPhotos}</p>}
+              ) : <p className="mt-2 font-sans text-xs text-muted-foreground-foreground">{t.projectUpdateNoPhotos}</p>}
             </div>
 
-            {progress ? <p className="font-sans text-sm text-muted-foreground" aria-live="polite">{progress.phase}: {progress.done}/{progress.total}</p> : null}
+            {progress ? <p className="font-sans text-sm text-muted-foreground-foreground" aria-live="polite">{progress.phase}: {progress.done}/{progress.total}</p> : null}
             {error ? <p className="font-sans text-sm text-destructive" role="alert">{error}{offline ? ` · ${t.projectsOffline}` : ""}</p> : null}
 
             <Button type="submit" disabled={submitting} className="w-full">{submitting ? t.projectUpdateSubmitting : t.projectUpdateSubmit}</Button>

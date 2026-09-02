@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { ApiError, declareDonation, flagCenter, getCenter, type CenterDetailResponse } from "../api";
-import { apiErrorMessage } from "../api-error";
-import { centerStrings } from "../i18n-centers";
-import { districtLabels } from "../geo";
-import { goodsLabel, unitLabel } from "../goods";
+import { ApiError, declareDonation, flagCenter, getCenter, type CenterDetailResponse } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { centerStrings } from "@/i18n/centers";
+import { districtLabels } from "@/lib/geo";
+import { goodsLabel, unitLabel } from "@/lib/goods";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
-import { Headline, SectionLabel, RuledTable, Rule, SquareButton, StatusMark } from "../ui";
-import type { Language, Page } from "../types";
-import { fillTemplate } from "../edition";
-import { TurnstileWidget } from "../components/turnstile";
-import { GOODS_CATEGORIES } from "../goods";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Headline, SectionLabel, RuledTable, Rule, SquareButton, StatusMark } from "@/components/legacy";
+import type { Language, Page } from "@/lib/types";
+import { fillTemplate } from "@/lib/edition";
+import { TurnstileWidget } from "@/components/turnstile";
+import { GOODS_CATEGORIES } from "@/lib/goods";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const TURNSTILE_KEY = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -197,7 +197,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <p className="font-sans text-sm text-muted">{s.loading}</p>
+        <p className="font-sans text-sm text-muted-foreground">{s.loading}</p>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
             <CardTitle className="font-serif text-xl">{s.centerNotFoundTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="font-sans text-sm text-muted">{s.centerNotFoundBody}</p>
+            <p className="font-sans text-sm text-muted-foreground">{s.centerNotFoundBody}</p>
             <Button className="min-h-11" onClick={() => navigate("dropCenters")}>
               {s.backToCenters}
             </Button>
@@ -256,17 +256,17 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
               {tierLabel(data.org.tier, language)}
             </Badge>
           ) : (
-            <Badge variant="outline" className="border-rule text-[0.62rem] uppercase text-muted">
+            <Badge variant="outline" className="border-rule text-[0.62rem] uppercase text-muted-foreground">
               {s.unverifiedOrg}
             </Badge>
           )}
-          <span className="font-sans text-xs text-muted">{data.org.name}</span>
+          <span className="font-sans text-xs text-muted-foreground">{data.org.name}</span>
           <StatusMark tone={statusTone(data.status)}>{statusLabel(data.status, language)}</StatusMark>
         </div>
         <Headline level={1} className="mt-3 text-3xl">
           {data.name}
         </Headline>
-        <div className="mt-3 space-y-1 font-sans text-sm text-muted">
+        <div className="mt-3 space-y-1 font-sans text-sm text-muted-foreground">
           <p>
             {s.addressLabel}: {data.address}
           </p>
@@ -281,7 +281,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
         </div>
         {data.accepts.length ? (
           <div className="mt-4">
-            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-wide text-muted">{s.acceptsLabel}</p>
+            <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">{s.acceptsLabel}</p>
             <div className="mt-1 flex flex-wrap gap-1">
               {data.accepts.map((a) => (
                 <Badge key={a} variant="secondary" className="text-[0.68rem]">
@@ -312,14 +312,14 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                 <Button type="button" variant="outline" className="min-h-11" onClick={handleCopyRef}>
                   {dropCopied ? s.dropCopied : s.dropCopyButton}
                 </Button>
-                <span className="font-sans text-sm text-muted">
+                <span className="font-sans text-sm text-muted-foreground">
                   {s.dropLinkLabel}{" "}
                   <a href={`/donation/${encodeURIComponent(dropRef)}`} className="font-semibold text-ink underline underline-offset-4">
                     /donation/{dropRef}
                   </a>
                 </span>
               </div>
-              <p className="mt-4 font-sans text-sm italic text-muted">{s.dropKeepCode}</p>
+              <p className="mt-4 font-sans text-sm italic text-muted-foreground">{s.dropKeepCode}</p>
               <DialogFooter>
                 <Button type="button" className="min-h-11" onClick={() => setDropOpen(false)}>
                   {s.dropDone}
@@ -334,17 +334,17 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
               </DialogHeader>
               <div className="space-y-2">
                 <Label htmlFor="dropCategory">{s.dropCategoryLabel}</Label>
-                <Select id="dropCategory" value={dropCategory} onChange={(e) => setDropCategory(e.target.value)} className="min-h-11" required>
+                <NativeSelect id="dropCategory" value={dropCategory} onChange={(e) => setDropCategory(e.target.value)} className="min-h-11" required>
                   <option value="">{s.dropCategorySelect}</option>
                   {(data.accepts.length ? data.accepts : GOODS_CATEGORIES.map((c) => c.id)).map((cat) => (
-                    <SelectItem key={cat} value={cat}>{goodsLabel(cat, language)}</SelectItem>
+                    <NativeSelectOption key={cat} value={cat}>{goodsLabel(cat, language)}</NativeSelectOption>
                   ))}
-                </Select>
+                </NativeSelect>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dropQty">{s.dropQtyLabel}</Label>
                 <Input id="dropQty" type="number" inputMode="decimal" min="0.01" step="0.01" value={dropQty} onChange={(e) => setDropQty(e.target.value)} className="min-h-11" required />
-                <p className="font-sans text-xs text-muted-foreground">{s.dropQtyHint}</p>
+                <p className="font-sans text-xs text-muted-foreground-foreground">{s.dropQtyHint}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dropNote">{s.dropNoteLabel}</Label>
@@ -376,7 +376,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
         </CardHeader>
         <CardContent>
           {data.stock.length === 0 ? (
-            <p className="font-sans text-sm text-muted">{s.stockEmpty}</p>
+            <p className="font-sans text-sm text-muted-foreground">{s.stockEmpty}</p>
           ) : (
             <RuledTable
               caption={s.stockTitle}
@@ -387,7 +387,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
               }))}
             />
           )}
-          <p className="mt-4 border-t border-rule pt-3 font-sans text-xs italic text-muted">{s.stockNote}</p>
+          <p className="mt-4 border-t border-rule pt-3 font-sans text-xs italic text-muted-foreground">{s.stockNote}</p>
         </CardContent>
       </Card>
 
@@ -397,17 +397,17 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
         </CardHeader>
         <CardContent>
           {data.recent.length === 0 ? (
-            <p className="font-sans text-sm text-muted">{s.activityEmpty}</p>
+            <p className="font-sans text-sm text-muted-foreground">{s.activityEmpty}</p>
           ) : (
             <ul className="divide-y divide-rule border-y border-rule">
               {data.recent.map((entry) => {
                 const corrected = !!entry.correctedByEntryId;
                 const isCorrection = entry.entryType === "correction";
                 return (
-                  <li key={entry.id} className={`flex flex-col gap-1 px-2 py-3 font-sans text-sm ${corrected ? "line-through text-muted" : "text-ink"}`}>
+                  <li key={entry.id} className={`flex flex-col gap-1 px-2 py-3 font-sans text-sm ${corrected ? "line-through text-muted-foreground" : "text-ink"}`}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{entryLabel(entry, language)}</span>
-                      <span className="text-xs text-muted">
+                      <span className="text-xs text-muted-foreground">
                         {goodsLabel(entry.category, language)} · {entry.qty} {unitLabel(entry.unit, language)}
                       </span>
                       {corrected ? <Badge variant="outline" className="text-[0.62rem]">{s.activityCorrected}</Badge> : null}
@@ -417,12 +417,12 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                       ) : null}
                     </div>
                     {entry.transferStatus ? (
-                      <span className="font-sans text-xs text-muted">
+                      <span className="font-sans text-xs text-muted-foreground">
                         {entry.transferStatus === "in_transit" ? "in transit" : entry.transferStatus === "received" ? `received${entry.qtyReceived !== undefined ? ` (${entry.qtyReceived} ${unitLabel(entry.unit, language)})` : ""}` : entry.transferStatus}
                       </span>
                     ) : null}
-                    <span className="font-sans text-xs text-muted">{new Date(entry.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}</span>
-                    {entry.note ? <span className="font-sans text-xs italic text-muted">{entry.note}</span> : null}
+                    <span className="font-sans text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}</span>
+                    {entry.note ? <span className="font-sans text-xs italic text-muted-foreground">{entry.note}</span> : null}
                   </li>
                 );
               })}
@@ -444,19 +444,19 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
             <form onSubmit={handleFlag} className="space-y-4" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="flagReason">{s.reportReasonLabel}</Label>
-                <Select id="flagReason" value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="min-h-11" required>
+                <NativeSelect id="flagReason" value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="min-h-11" required>
                   <option value="">{s.reportReasonSelect}</option>
-                  <SelectItem value="not_real">{s.reportReasonNotReal}</SelectItem>
-                  <SelectItem value="closed">{s.reportReasonClosed}</SelectItem>
-                  <SelectItem value="misuse">{s.reportReasonMisuse}</SelectItem>
-                  <SelectItem value="other">{s.reportReasonOther}</SelectItem>
-                </Select>
+                  <NativeSelectOption value="not_real">{s.reportReasonNotReal}</NativeSelectOption>
+                  <NativeSelectOption value="closed">{s.reportReasonClosed}</NativeSelectOption>
+                  <NativeSelectOption value="misuse">{s.reportReasonMisuse}</NativeSelectOption>
+                  <NativeSelectOption value="other">{s.reportReasonOther}</NativeSelectOption>
+                </NativeSelect>
                 {flagFieldError && !flagReason ? <p className="font-sans text-sm text-destructive" role="alert">{flagFieldError}</p> : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="flagDetails">{s.reportDetailsLabel}</Label>
                 <Textarea id="flagDetails" value={flagDetails} onChange={(e) => setFlagDetails(e.target.value)} placeholder={s.reportDetailsPlaceholder} rows={3} maxLength={500} />
-                <p className="font-sans text-xs text-muted-foreground">{s.reportDetailsHint}</p>
+                <p className="font-sans text-xs text-muted-foreground-foreground">{s.reportDetailsHint}</p>
                 {flagFieldError && flagDetails.trim().length > 500 ? <p className="font-sans text-sm text-destructive" role="alert">{flagFieldError}</p> : null}
               </div>
               {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setFlagTurnstileToken} /> : null}

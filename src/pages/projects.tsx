@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { ApiError, listProjects, PROJECT_TYPES, type ProjectPublic } from "../api";
+import { ApiError, listProjects, PROJECT_TYPES, type ProjectPublic } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectItem } from "@/components/ui/select";
-import { districtLabels, districtNames } from "../geo";
-import { labels } from "../i18n";
-import { uiStrings } from "../i18n-ui";
-import { ProjectStatusMark } from "../ui";
-import type { Language } from "../types";
-import { formatNumber } from "../utils";
-import { apiErrorMessage } from "../api-error";
-import { fillTemplate } from "../edition";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { labels } from "@/i18n";
+import { uiStrings } from "@/i18n/ui";
+import { ProjectStatusMark } from "@/components/legacy";
+import type { Language } from "@/lib/types";
+import { formatNumber } from "@/lib/format";
+import { apiErrorMessage } from "@/lib/api-error";
+import { fillTemplate } from "@/lib/edition";
 
-function typeLabel(type: string, language: import("../types").Language){
+function typeLabel(type: string, language: import("@/lib/types").Language){
   const u = uiStrings[language];
   const map: Record<string,string> = {
     tuin: u.projectTypeTuin,
@@ -84,7 +84,7 @@ export function ProjectsList({ language }: { language: Language }) {
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="border-b border-rule pb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">{t.projectsTitle}</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground">{t.projectsLead}</p>
+        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.projectsLead}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a href="/projects/register" className="inline-flex h-9 items-center border border-ink bg-ink px-4 font-sans text-xs font-semibold uppercase tracking-wide text-paper hover:bg-ink/90">{t.projectsRegisterCta}</a>
           <a href="/projects/update" className="inline-flex h-9 items-center border border-rule bg-paper px-4 font-sans text-xs font-semibold uppercase tracking-wide text-ink hover:border-ink">{t.projectsUpdateCta}</a>
@@ -96,19 +96,19 @@ export function ProjectsList({ language }: { language: Language }) {
         <CardContent className="flex flex-wrap gap-4">
           <div className="min-w-[12rem]">
             <Label>{t.projectsDistrict}</Label>
-            <Select value={district} onChange={e=>setDistrict(e.target.value)}>
-              <SelectItem value="">{t.projectsAllDistricts}</SelectItem>
-              {districtNames.map(d=> <SelectItem key={d} value={d}>{districtLabels[d as keyof typeof districtLabels][language]}</SelectItem>)}
-            </Select>
+            <NativeSelect value={district} onChange={e=>setDistrict(e.target.value)}>
+              <NativeSelectOption value="">{t.projectsAllDistricts}</NativeSelectOption>
+              {districtNames.map(d=> <NativeSelectOption key={d} value={d}>{districtLabels[d as keyof typeof districtLabels][language]}</NativeSelectOption>)}
+            </NativeSelect>
           </div>
           <div className="min-w-[12rem]">
             <Label>{t.projectsStatus}</Label>
-            <Select value={status} onChange={e=>setStatus(e.target.value)}>
-              <SelectItem value="">{t.projectsAllStatuses}</SelectItem>
-              <SelectItem value="published">published</SelectItem>
-              <SelectItem value="in-progress">in-progress</SelectItem>
-              <SelectItem value="completed">completed</SelectItem>
-            </Select>
+            <NativeSelect value={status} onChange={e=>setStatus(e.target.value)}>
+              <NativeSelectOption value="">{t.projectsAllStatuses}</NativeSelectOption>
+              <NativeSelectOption value="published">published</NativeSelectOption>
+              <NativeSelectOption value="in-progress">in-progress</NativeSelectOption>
+              <NativeSelectOption value="completed">completed</NativeSelectOption>
+            </NativeSelect>
           </div>
           <div className="ml-auto flex items-end">
             <Button variant="outline" size="sm" onClick={()=>fetchList(undefined,false)}>{t.projectsTryAgain}</Button>
@@ -116,9 +116,9 @@ export function ProjectsList({ language }: { language: Language }) {
         </CardContent>
       </Card>
 
-      {loading && items.length===0 ? <p className="font-sans text-sm text-muted-foreground">{t.projectsLoading}</p> : null}
-      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground">{t.projectsOffline}</p> : null}</div> : null}
-      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.projectsEmpty}</p> : null}
+      {loading && items.length===0 ? <p className="font-sans text-sm text-muted-foreground-foreground">{t.projectsLoading}</p> : null}
+      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectsOffline}</p> : null}</div> : null}
+      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.projectsEmpty}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map(p=>{
           const title = language==='ne' ? (p.title.ne || p.title.en) : p.title.en;
@@ -133,7 +133,7 @@ export function ProjectsList({ language }: { language: Language }) {
                   <ProjectStatusMark status={p.status} language={language} />
                 </div>
                 <CardTitle className="line-clamp-2 text-base leading-6">{title}</CardTitle>
-                <p className="font-sans text-xs text-muted-foreground">{districtLabels[p.district as keyof typeof districtLabels]?.[language] ?? p.district} · W{p.ward} · {fillTemplate(t.projectsCostNpr,{amount: formatNumber(p.costEstimateNpr, language)})}</p>
+                <p className="font-sans text-xs text-muted-foreground-foreground">{districtLabels[p.district as keyof typeof districtLabels]?.[language] ?? p.district} · W{p.ward} · {fillTemplate(t.projectsCostNpr,{amount: formatNumber(p.costEstimateNpr, language)})}</p>
               </CardHeader>
               <CardContent className="mt-auto flex flex-wrap gap-2 pt-2">
                 <a href={`/projects/${encodeURIComponent(p.id)}`} className="inline-flex h-8 items-center border border-ink bg-ink px-3 font-sans text-xs font-semibold uppercase tracking-wide text-paper hover:bg-ink/90">{t.projectsLearnMore}</a>

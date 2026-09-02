@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { ApiError, getDonation, type DonationStatus } from "../api";
-import { apiErrorMessage } from "../api-error";
+import { ApiError, getDonation, type DonationStatus } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { fillTemplate } from "../edition";
-import { districtLabels } from "../geo";
-import { goodsLabel, unitLabel } from "../goods";
-import { centerStrings } from "../i18n-centers";
-import type { Language, Page } from "../types";
-import { Headline, RuledTable, SectionLabel, StatusMark } from "../ui";
+import { fillTemplate } from "@/lib/edition";
+import { districtLabels } from "@/lib/geo";
+import { goodsLabel, unitLabel } from "@/lib/goods";
+import { centerStrings } from "@/i18n/centers";
+import type { Language, Page } from "@/lib/types";
+import { Headline, RuledTable, SectionLabel, StatusMark } from "@/components/legacy";
 
 function formatDate(iso: string, language: Language): string {
   try {
@@ -78,7 +78,7 @@ export function DonationStatusPage({ language, navigate, refCode }: { language: 
 
   let body: React.ReactNode;
   if (loading) {
-    body = <p className="font-sans text-sm text-muted">{s.loading}</p>;
+    body = <p className="font-sans text-sm text-muted-foreground">{s.loading}</p>;
   } else if (notFound) {
     body = (
       <Card className="border-ink">
@@ -86,7 +86,7 @@ export function DonationStatusPage({ language, navigate, refCode }: { language: 
           <CardTitle className="font-serif text-xl">{s.donationNotFoundTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="font-sans text-sm text-muted">{s.donationNotFoundBody}</p>
+          <p className="font-sans text-sm text-muted-foreground">{s.donationNotFoundBody}</p>
           <Button variant="outline" className="min-h-11" onClick={() => navigate("dropCenters")}>
             {s.backToCenters}
           </Button>
@@ -132,7 +132,7 @@ export function DonationStatusPage({ language, navigate, refCode }: { language: 
             })}
           </p>
         ) : null}
-        <p className="font-sans text-xs italic text-muted">{s.dropKeepCode}</p>
+        <p className="font-sans text-xs italic text-muted-foreground">{s.dropKeepCode}</p>
         <a
           href={`/drop-centers/${encodeURIComponent(data.center.id)}`}
           className="inline-flex min-h-11 items-center font-sans text-sm font-semibold text-ink underline-offset-4 hover:underline"

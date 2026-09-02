@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import { CATEGORIES, type Category, createNeed, getStatus, renewNeed } from "../api";
-import { apiErrorMessage } from "../api-error";
-import { TurnstileWidget } from "../components/turnstile";
+import { CATEGORIES, type Category, createNeed, getStatus, renewNeed } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { TurnstileWidget } from "@/components/turnstile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
-import { districtLabels, districtNames } from "../geo";
-import { labels } from "../i18n";
-import { formStrings } from "../i18n-forms";
-import type { Language } from "../types";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { labels } from "@/i18n";
+import { formStrings } from "@/i18n/forms";
+import type { Language } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -260,7 +260,7 @@ export function GetHelp({ language }: { language: Language }) {
   if (success) {
     return (
       <div className="mx-auto max-w-3xl space-y-8 px-1">
-        <Dialog open onOpenChange={() => {}} dismissible={false}>
+        <Dialog open onOpenChange={() => {}}>
           <DialogContent className="border-ink">
             <DialogHeader className="text-center">
               <DialogTitle className="font-display text-2xl">{t.getHelpSuccessTitle}</DialogTitle>
@@ -268,7 +268,7 @@ export function GetHelp({ language }: { language: Language }) {
             </DialogHeader>
             <div className="space-y-6">
               <div className="text-center" role="status">
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpRefCodeLabel}</p>
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t.getHelpRefCodeLabel}</p>
                 <p className="mt-3 break-all font-mono text-3xl font-bold tracking-widest text-ink sm:text-4xl" aria-live="polite">
                   {success.refCode}
                 </p>
@@ -293,7 +293,7 @@ export function GetHelp({ language }: { language: Language }) {
               <Separator />
               <div>
                 <h3 className="font-display text-lg font-semibold">{t.getHelpWhatNextTitle}</h3>
-                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.getHelpWhatNextBody}</p>
+                <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{t.getHelpWhatNextBody}</p>
               </div>
               <Separator />
               <StatusBox
@@ -316,7 +316,7 @@ export function GetHelp({ language }: { language: Language }) {
                 <Button variant="outline" className="min-h-11" onClick={handleRegisterAnother} disabled={!hasCopied}>
                   {ts.registerAnother}
                 </Button>
-                {!hasCopied ? <p className="font-sans text-xs text-muted-foreground">{t.getHelpCloseHint}</p> : null}
+                {!hasCopied ? <p className="font-sans text-xs text-muted-foreground-foreground">{t.getHelpCloseHint}</p> : null}
               </div>
             </div>
           </DialogContent>
@@ -333,7 +333,7 @@ export function GetHelp({ language }: { language: Language }) {
     <div className="mx-auto max-w-3xl space-y-8">
       <header>
         <h1 className="font-display text-3xl font-bold tracking-tight">{t.getHelpTitle}</h1>
-        <p className="mt-3 max-w-2xl font-serif leading-7 text-muted-foreground">{t.getHelpLead}</p>
+        <p className="mt-3 max-w-2xl font-serif leading-7 text-muted-foreground-foreground">{t.getHelpLead}</p>
       </header>
 
       {draftTime ? (
@@ -361,7 +361,7 @@ export function GetHelp({ language }: { language: Language }) {
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <fieldset>
-              <legend className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpForWhom}</legend>
+              <legend className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t.getHelpForWhom}</legend>
               <div className="mt-3 flex gap-3">
                 <Button type="button" variant={onBehalf ? "outline" : "default"} onClick={() => setOnBehalf(false)} className="flex-1 min-h-11">
                   {t.getHelpForMyself}
@@ -440,7 +440,7 @@ export function GetHelp({ language }: { language: Language }) {
                     />
                     <span>
                       {t.getHelpConsentLabel} *
-                      <span className="block text-xs text-muted-foreground">{t.getHelpConsentHint}</span>
+                      <span className="block text-xs text-muted-foreground-foreground">{t.getHelpConsentHint}</span>
                     </span>
                   </label>
                   {errors.consent ? <p id="consent-error" className="font-sans text-sm text-red">{errors.consent}</p> : null}
@@ -500,7 +500,7 @@ export function GetHelp({ language }: { language: Language }) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="district">{t.getHelpDistrict} *</Label>
-                  <Select
+                  <NativeSelect
                     id="district"
                     value={district}
                     onChange={(e) => {
@@ -513,11 +513,11 @@ export function GetHelp({ language }: { language: Language }) {
                   >
                     <option value="">{t.getHelpSelectDistrict}</option>
                     {districtNames.map((d) => (
-                      <SelectItem key={d} value={d}>
+                      <NativeSelectOption key={d} value={d}>
                         {districtLabels[d][language]}
-                      </SelectItem>
+                      </NativeSelectOption>
                     ))}
-                  </Select>
+                  </NativeSelect>
                   {errors.district ? <p id="district-error" className="font-sans text-sm text-red">{errors.district}</p> : null}
                 </div>
                 <div className="space-y-2">
@@ -548,13 +548,13 @@ export function GetHelp({ language }: { language: Language }) {
 
             <div className="space-y-2">
               <Label htmlFor="category">{t.getHelpCategory} *</Label>
-              <Select id="category" value={category} onChange={(e) => setCategory(e.target.value as Category)} className="min-h-11">
+              <NativeSelect id="category" value={category} onChange={(e) => setCategory(e.target.value as Category)} className="min-h-11">
                 {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
+                  <NativeSelectOption key={c} value={c}>
                     {categoryLabel(c, language)}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-2">
@@ -572,12 +572,12 @@ export function GetHelp({ language }: { language: Language }) {
                 aria-describedby={errors.description ? "description-error" : undefined}
                 className="min-h-11"
               />
-              {errors.description ? <p id="description-error" className="font-sans text-sm text-red">{errors.description}</p> : <p className="font-sans text-xs text-muted-foreground">{t.getHelpDescriptionHint}</p>}
+              {errors.description ? <p id="description-error" className="font-sans text-sm text-red">{errors.description}</p> : <p className="font-sans text-xs text-muted-foreground-foreground">{t.getHelpDescriptionHint}</p>}
             </div>
 
             {TURNSTILE_KEY ? (
               <div>
-                <p className="font-sans text-xs text-muted-foreground">{t.getHelpTurnstileHint}</p>
+                <p className="font-sans text-xs text-muted-foreground-foreground">{t.getHelpTurnstileHint}</p>
                 <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
               </div>
             ) : null}
@@ -610,7 +610,7 @@ export function GetHelp({ language }: { language: Language }) {
           <p>• {t.getHelpHowPrioritisedItem1}</p>
           <p>• {t.getHelpHowPrioritisedItem2}</p>
           <p>• {t.getHelpHowPrioritisedItem3}</p>
-          <p className="text-xs text-muted-foreground">{t.getHelpHowPrioritisedFootnote}</p>
+          <p className="text-xs text-muted-foreground-foreground">{t.getHelpHowPrioritisedFootnote}</p>
         </CardContent>
       </Card>
 
@@ -690,7 +690,7 @@ function StatusBox({
   return (
     <div className="border border-rule bg-card p-4">
       <h3 className="font-display text-base font-semibold">{t.getHelpCheckStatusTitle}</h3>
-      <p className="mt-1 font-sans text-xs text-muted-foreground">{t.getHelpCheckStatusHint}</p>
+      <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.getHelpCheckStatusHint}</p>
       <div className="mt-3 flex gap-2">
         <Input
           value={statusCode}
@@ -714,12 +714,12 @@ function StatusBox({
           </p>
           {statusResult.claimCode && (statusResult.status === "published" || statusResult.status === "matched") ? (
             <div className="border border-ink bg-paper p-3 text-center">
-              <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpClaimCodeLabel}</p>
+              <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t.getHelpClaimCodeLabel}</p>
               <p className="mt-2 break-all font-mono text-2xl font-bold tracking-widest text-ink" aria-live="polite">{statusResult.claimCode}</p>
-              <p className="mt-1 font-sans text-xs text-muted-foreground">{t.getHelpClaimCodeHint}</p>
+              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.getHelpClaimCodeHint}</p>
             </div>
           ) : null}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground-foreground">
             {new Date(statusResult.createdAt).toLocaleString()} → {new Date(statusResult.expiresAt).toLocaleString()}
           </p>
           <Button type="button" variant="outline" size="sm" onClick={doRenew} disabled={renewing} className="min-h-11">
@@ -786,12 +786,12 @@ function StandaloneStatus({ language }: { language: Language }) {
             </p>
             {result.claimCode && (result.status === "published" || result.status === "matched") ? (
               <div className="border border-ink bg-paper p-3 text-center">
-                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted">{t.getHelpClaimCodeLabel}</p>
+                <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t.getHelpClaimCodeLabel}</p>
                 <p className="mt-2 break-all font-mono text-2xl font-bold tracking-widest text-ink" aria-live="polite">{result.claimCode}</p>
-                <p className="mt-1 font-sans text-xs text-muted-foreground">{t.getHelpClaimCodeHint}</p>
+                <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.getHelpClaimCodeHint}</p>
               </div>
             ) : null}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground-foreground">
               {new Date(result.createdAt).toLocaleString()} → {new Date(result.expiresAt).toLocaleString()}
             </p>
             <Button

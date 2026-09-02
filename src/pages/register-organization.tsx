@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { createOrg, listMyOrgs, ORG_TYPES, type OrgType } from "../api";
-import { apiErrorMessage } from "../api-error";
-import { useGoogleAuth } from "../auth";
+import { createOrg, listMyOrgs, ORG_TYPES, type OrgType } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { useGoogleAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
-import { districtLabels, districtNames } from "../geo";
-import { orgStrings } from "../i18n-orgs";
-import type { Language, Page } from "../types";
-import { Rule, SectionLabel, SquareButton } from "../ui";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { orgStrings } from "@/i18n/orgs";
+import type { Language, Page } from "@/lib/types";
+import { Rule, SectionLabel, SquareButton } from "@/components/legacy";
 
 const DRAFT_KEY = "vn:org-draft";
 
@@ -176,8 +176,8 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
   const whatNextBox = (
     <div className="border border-rule bg-card p-4">
       <h3 className="font-display text-base font-semibold">{t.registerOrgWhatNextTitle}</h3>
-      <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.registerOrgWhatNextBody}</p>
-      <ul className="mt-3 list-disc space-y-1 pl-5 font-sans text-sm text-muted-foreground">
+      <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{t.registerOrgWhatNextBody}</p>
+      <ul className="mt-3 list-disc space-y-1 pl-5 font-sans text-sm text-muted-foreground-foreground">
         <li>{t.registerOrgWhatNextProvisional}</li>
         <li>{t.registerOrgWhatNextKnown}</li>
         <li>{t.registerOrgWhatNextVouched}</li>
@@ -192,7 +192,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
         <header>
           <SectionLabel>{t.registerOrgTitle}</SectionLabel>
           <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">{t.registerOrgTitle}</h1>
-          <p className="mt-3 font-serif leading-7 text-muted-foreground">{t.registerOrgLead}</p>
+          <p className="mt-3 font-serif leading-7 text-muted-foreground-foreground">{t.registerOrgLead}</p>
         </header>
         <Card>
           <CardHeader>
@@ -205,7 +205,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
                 {t.registerOrgGateSignIn}
               </SquareButton>
             ) : (
-              <p className="font-sans text-sm text-muted-foreground">{t.registerOrgGateBody}</p>
+              <p className="font-sans text-sm text-muted-foreground-foreground">{t.registerOrgGateBody}</p>
             )}
             {auth.error ? (
               <p className="font-sans text-sm text-destructive" role="alert">
@@ -228,7 +228,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
       <header>
         <SectionLabel>{t.registerOrgTitle}</SectionLabel>
         <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight">{t.registerOrgTitle}</h1>
-        <p className="mt-3 font-serif leading-7 text-muted-foreground">{t.registerOrgLead}</p>
+        <p className="mt-3 font-serif leading-7 text-muted-foreground-foreground">{t.registerOrgLead}</p>
       </header>
 
       {hasOrgs ? (
@@ -289,7 +289,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
 
             <div className="space-y-2">
               <Label htmlFor="orgType">{t.registerOrgOrgTypeLabel} *</Label>
-              <Select
+              <NativeSelect
                 id="orgType"
                 value={orgType}
                 onChange={(e) => {
@@ -302,11 +302,11 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
               >
                 <option value="">{t.registerOrgSelectType}</option>
                 {ORG_TYPES.map((ot) => (
-                  <SelectItem key={ot} value={ot}>
+                  <NativeSelectOption key={ot} value={ot}>
                     {t[`orgType_${ot}` as keyof typeof t] ?? ot}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
               {errors.orgType ? (
                 <p className="font-sans text-sm text-destructive" role="alert">
                   {errors.orgType}
@@ -433,7 +433,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
                 placeholder={t.registerOrgDescriptionHint}
                 required
               />
-              <p className="font-sans text-xs text-muted-foreground">{t.registerOrgDescriptionHint}</p>
+              <p className="font-sans text-xs text-muted-foreground-foreground">{t.registerOrgDescriptionHint}</p>
               {errors.description ? (
                 <p id="description-error" className="font-sans text-sm text-destructive" role="alert">
                   {errors.description}

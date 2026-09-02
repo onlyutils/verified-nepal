@@ -1,15 +1,15 @@
-import { apiErrorMessage } from "../api-error";
+import { apiErrorMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
-import { ApiError, getLedger, getLedgerCsvUrl, type LedgerItem } from "../api";
+import { ApiError, getLedger, getLedgerCsvUrl, type LedgerItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectItem } from "@/components/ui/select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TurnstileWidget } from "../components/turnstile";
-import { districtLabels, districtNames } from "../geo";
-import { labels } from "../i18n";
-import type { Language } from "../types";
+import { TurnstileWidget } from "@/components/turnstile";
+import { districtLabels, districtNames } from "@/lib/geo";
+import { labels } from "@/i18n";
+import type { Language } from "@/lib/types";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -52,7 +52,7 @@ export function Ledger({ language }: { language: Language }) {
     <div className="mx-auto max-w-6xl space-y-6 px-1 sm:px-4">
       <header className="border-b border-rule pb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">{t.ledgerTitle}</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground">{t.ledgerLead}</p>
+        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.ledgerLead}</p>
       </header>
 
       <Card>
@@ -63,24 +63,24 @@ export function Ledger({ language }: { language: Language }) {
           <div className="flex flex-wrap gap-4">
             <div className="min-w-[14rem]">
               <Label>{t.ledgerDistrict}</Label>
-              <Select value={district} onChange={(e) => setDistrict(e.target.value)}>
+              <NativeSelect value={district} onChange={(e) => setDistrict(e.target.value)}>
                 {districtNames.map((d) => (
-                  <SelectItem key={d} value={d}>
+                  <NativeSelectOption key={d} value={d}>
                     {districtLabels[d][language]}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
             <div className="min-w-[10rem]">
               <Label>{t.ledgerWard}</Label>
-              <Select value={ward} onChange={(e) => setWard(e.target.value)}>
+              <NativeSelect value={ward} onChange={(e) => setWard(e.target.value)}>
                 <option value="">{t.ledgerAllWards}</option>
                 {Array.from({ length: 33 }, (_, i) => i + 1).map((w) => (
-                  <SelectItem key={w} value={String(w)}>
+                  <NativeSelectOption key={w} value={String(w)}>
                     W{w}
-                  </SelectItem>
+                  </NativeSelectOption>
                 ))}
-              </Select>
+              </NativeSelect>
             </div>
             <div className="ml-auto flex items-end gap-2">
               <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -98,19 +98,19 @@ export function Ledger({ language }: { language: Language }) {
               ) : null}
             </div>
           </div>
-          <p className="font-sans text-xs text-muted-foreground">{t.ledgerDownloadHint}</p>
-          {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground">{t.ledgerTurnstileHint}</p>}
+          <p className="font-sans text-xs text-muted-foreground-foreground">{t.ledgerDownloadHint}</p>
+          {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground-foreground">{t.ledgerTurnstileHint}</p>}
         </CardContent>
       </Card>
 
       {loading ? (
-        <p className="font-sans text-sm text-muted-foreground">{t.ledgerLoading}</p>
+        <p className="font-sans text-sm text-muted-foreground-foreground">{t.ledgerLoading}</p>
       ) : error ? (
         <div className="border border-rule bg-card px-4 py-6" role="alert">
           <p className="font-sans text-sm text-destructive">{error}</p>
         </div>
       ) : items.length === 0 ? (
-        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.ledgerEmpty}</p>
+        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.ledgerEmpty}</p>
       ) : (
         <div className="overflow-x-auto border border-rule bg-paper print:border-black print:bg-white">
           <Table>

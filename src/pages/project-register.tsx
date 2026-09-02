@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { ApiError, createProject, type ProjectType } from "../api";
+import { ApiError, createProject, type ProjectType } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
-import { districtNames, districtLabels } from "../geo";
-import { labels } from "../i18n";
-import { apiErrorMessage } from "../api-error";
-import type { Language } from "../types";
-import { TurnstileWidget } from "../components/turnstile";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { districtNames, districtLabels } from "@/lib/geo";
+import { labels } from "@/i18n";
+import { apiErrorMessage } from "@/lib/api-error";
+import type { Language } from "@/lib/types";
+import { TurnstileWidget } from "@/components/turnstile";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -83,7 +83,7 @@ export function ProjectRegister({ language }: { language: Language }) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <Card className="border-ink">
-          <CardHeader><CardTitle className="text-xl">{t.projectRegisterSuccessTitle}</CardTitle><p className="font-sans text-sm text-muted-foreground">{t.projectRegisterSuccessBody}</p></CardHeader>
+          <CardHeader><CardTitle className="text-xl">{t.projectRegisterSuccessTitle}</CardTitle><p className="font-sans text-sm text-muted-foreground-foreground">{t.projectRegisterSuccessBody}</p></CardHeader>
           <CardContent className="space-y-6">
             <div className="border border-rule bg-secondary px-4 py-6 text-center text-secondary-foreground">
               <p className="font-sans text-xs uppercase tracking-wide">{t.projectRegisterUpdateCodeLabel}</p>
@@ -111,7 +111,7 @@ export function ProjectRegister({ language }: { language: Language }) {
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="border-b border-rule pb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">{t.projectRegisterTitle}</h1>
-        <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">{t.projectRegisterLead}</p>
+        <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground-foreground">{t.projectRegisterLead}</p>
       </header>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
@@ -136,15 +136,15 @@ export function ProjectRegister({ language }: { language: Language }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label>{t.projectRegisterTypeLabel} *</Label>
-                <Select value={type} onChange={e=>setType(e.target.value as ProjectType)}>
-                  { (["tuin","bridge","trail","water","school","other"] as ProjectType[]).map(v=> <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                </Select>
+                <NativeSelect value={type} onChange={e=>setType(e.target.value as ProjectType)}>
+                  { (["tuin","bridge","trail","water","school","other"] as ProjectType[]).map(v=> <NativeSelectOption key={v} value={v}>{v}</NativeSelectOption>)}
+                </NativeSelect>
               </div>
               <div>
                 <Label>{t.projectRegisterDistrictLabel} *</Label>
-                <Select value={district} onChange={e=>setDistrict(e.target.value as string)}>
-                  {districtNames.map(d=> <SelectItem key={d} value={d}>{districtLabels[d as keyof typeof districtLabels][language]}</SelectItem>)}
-                </Select>
+                <NativeSelect value={district} onChange={e=>setDistrict(e.target.value as string)}>
+                  {districtNames.map(d=> <NativeSelectOption key={d} value={d}>{districtLabels[d as keyof typeof districtLabels][language]}</NativeSelectOption>)}
+                </NativeSelect>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -160,7 +160,7 @@ export function ProjectRegister({ language }: { language: Language }) {
             <div>
               <Label htmlFor="loc">{t.projectRegisterLocationLabel} *</Label>
               <Input id="loc" value={locationText} onChange={e=>setLocationText(e.target.value)} required placeholder={t.projectRegisterLocationHint} />
-              <p className="mt-1 font-sans text-xs text-muted-foreground">{t.projectRegisterLocationHint}</p>
+              <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.projectRegisterLocationHint}</p>
             </div>
           </CardContent>
         </Card>
@@ -200,7 +200,7 @@ export function ProjectRegister({ language }: { language: Language }) {
           </CardContent>
         </Card>
 
-        {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground">{t.projectRegisterTurnstileHint}</p>}
+        {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : <p className="font-sans text-xs text-muted-foreground-foreground">{t.projectRegisterTurnstileHint}</p>}
 
         {error ? <p className="font-sans text-sm text-destructive" role="alert">{error}</p> : null}
 

@@ -2,16 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+   Design tokens — the single source of truth for colour, radius and type.
+   Values come from the Figma file "Pitch Deck / Verified Nepal" (node 44:2776).
+   Every value is an RGB triplet so Tailwind can add alpha: rgb(var(--x) / 0.5).
+   Read docs/DESIGN-GUIDELINES.md before changing anything here.
+   --------------------------------------------------------------------------- */
 :root {
-  /* Black-and-white newsprint: white page, near-black ink, grey hairlines.
-     Nepal flag: crimson = urgency / act now, blue = official / verified source. */
-  --paper: 255 255 255;
-  --ink: 10 10 10;
-  --muted: 107 107 107;
-  --rule: 227 227 227;
-  --red: 220 20 60;
-  --blue: 0 56 147;
-  /* "only" opts out of Chrome auto-dark, which would invert the paper. */
+  /* Surfaces */
+  --background: 255 255 255; /* page */
+  --foreground: 28 27 26; /* #1C1B1A ink */
+  --card: 255 255 255;
+  --card-foreground: 28 27 26;
+  --popover: 255 255 255;
+  --popover-foreground: 28 27 26;
+  --secondary: 247 245 240; /* #F7F5F0 warm off-white: section bands, secondary buttons, inputs */
+  --secondary-foreground: 28 27 26;
+  --muted: 247 245 240;
+  --muted-foreground: 90 87 84; /* #5A5754 secondary text */
+  --accent: 240 237 232; /* #F0EDE8 icon chips, hover */
+  --accent-foreground: 28 27 26;
+  --subtle: 147 143 138; /* #938F8A tertiary text: captions, timestamps */
+  --faint: 184 180 173; /* #B8B4AD placeholder, footer text on dark */
+  --border: 229 224 216; /* #E5E0D8 */
+  --input: 229 224 216;
+
+  /* Brand — the two Nepal flag colours, each with ONE job. */
+  --primary: 0 56 147; /* #003893 blue: official, verified, primary action */
+  --primary-foreground: 255 255 255;
+  --primary-soft: 237 241 248; /* #EDF1F8 */
+  --primary-soft-border: 212 220 240; /* #D4DCF0 */
+  --destructive: 184 32 32; /* #B82020 crimson: emergency, danger, errors */
+  --destructive-foreground: 255 255 255;
+  --destructive-soft: 255 240 240; /* #FFF0F0 */
+
+  /* Status */
+  --success: 46 125 50; /* #2E7D32 open, verified, fulfilled */
+  --success-foreground: 255 255 255;
+  --success-soft: 232 245 233; /* #E8F5E9 */
+  --warning: 146 64 14; /* #92400E limited, pending, attention (AA on its soft bg) */
+  --warning-foreground: 255 255 255;
+  --warning-soft: 254 243 199; /* #FEF3C7 */
+
+  --ring: 0 56 147;
+  --radius: 0.5rem; /* 8px: buttons, inputs, badges. Cards use rounded-xl (12px). */
+
+  /* "only" opts out of Chrome auto-dark, which would invert the page. */
   color-scheme: only light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -19,200 +55,138 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-:root {
-  /* shadcn tokens mapped to EXISTING newsprint palette — keep components native to the paper.
-     Values are duplicated from --paper/--ink/--rule so hsl() and rgb() both resolve;
-     --muted is kept as newsprint grey (107) for existing text-muted utility, while
-     shadcn muted surface uses --rule (227). We keep distinct vars to avoid collision. */
-  --background: 255 255 255;
-  --foreground: 10 10 10;
-  --card: 255 255 255;
-  --card-foreground: 10 10 10;
-  --popover: 255 255 255;
-  --popover-foreground: 10 10 10;
-  --primary: 10 10 10;
-  --primary-foreground: 255 255 255;
-  --secondary: 227 227 227;
-  --secondary-foreground: 10 10 10;
-  --muted-surface: 227 227 227;
-  --muted-foreground: 107 107 107;
-  --accent: 227 227 227;
-  --accent-foreground: 10 10 10;
-  --destructive: 220 20 60;
-  --destructive-foreground: 255 255 255;
-  --border: 227 227 227;
-  --input: 143 143 143;
-  --ring: 10 10 10;
-  --radius: 0rem;
-}
-
-
-/* High contrast: pure black ink, no grey text, hairlines become black, deeper accents.
-   Set explicitly from the accessibility bar, or inherited from the OS preference. */
-html[data-contrast="high"] {
-  --ink: 0 0 0;
-  --muted: 40 40 40;
-  --rule: 0 0 0;
-  --red: 168 0 32;
-  --blue: 0 38 110;
-  --background: 255 255 255;
-  --foreground: 0 0 0;
-  --card: 255 255 255;
-  --card-foreground: 0 0 0;
-  --popover: 255 255 255;
-  --popover-foreground: 0 0 0;
-  --primary: 0 0 0;
-  --primary-foreground: 255 255 255;
-  --secondary: 0 0 0;
-  --secondary-foreground: 255 255 255;
-  --muted-surface: 0 0 0;
-  --muted-foreground: 40 40 40;
-  --accent: 0 0 0;
-  --accent-foreground: 255 255 255;
-  --border: 0 0 0;
-  --input: 0 0 0;
-  --ring: 0 0 0;
-}
+/* High contrast: black text, black hairlines, deeper brand colours.
+   Set from the accessibility bar or inherited from the OS preference. */
 @media (prefers-contrast: more) {
   html:not([data-contrast="normal"]) {
-    --ink: 0 0 0;
-    --muted: 40 40 40;
-    --rule: 0 0 0;
-    --red: 168 0 32;
-    --blue: 0 38 110;
-    --background: 255 255 255;
     --foreground: 0 0 0;
-    --card: 255 255 255;
-    --card-foreground: 0 0 0;
-    --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
-    --primary: 0 0 0;
-    --primary-foreground: 255 255 255;
-    --secondary: 0 0 0;
-    --secondary-foreground: 255 255 255;
+    --muted-foreground: 40 40 40;
+    --subtle: 60 60 60;
     --border: 0 0 0;
     --input: 0 0 0;
+    --primary: 0 38 110;
+    --destructive: 150 0 20;
+    --success: 20 90 30;
+    --warning: 110 40 0;
     --ring: 0 0 0;
   }
 }
-html[data-contrast="high"] a,
-html[data-contrast="high"] button {
+html[data-contrast="high"] {
+  --foreground: 0 0 0;
+  --muted-foreground: 40 40 40;
+  --subtle: 60 60 60;
+  --border: 0 0 0;
+  --input: 0 0 0;
+  --primary: 0 38 110;
+  --destructive: 150 0 20;
+  --success: 20 90 30;
+  --warning: 110 40 0;
+  --ring: 0 0 0;
+}
+html[data-contrast="high"] a {
   text-decoration-thickness: 2px;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    border-color: rgb(var(--border));
+  }
+  html {
+    /* Root size 100%; the accessibility bar steps it 100–150%. */
+    font-size: 100%;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: "Noto Sans", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  ::selection {
+    background: rgb(var(--primary));
+    color: rgb(var(--primary-foreground));
+  }
+  /* Tracked uppercase suits Latin, not Devanagari. */
+  html[lang="ne"] .uppercase {
+    text-transform: none;
+    letter-spacing: 0;
+  }
 }
 
-/* Default text scale = 125% (the former "two A+ clicks"); the accessibility bar overrides this inline. */
-html {
-  font-size: 125%;
-}
-
-/* Plain rule, not a Tailwind `backdrop:` utility class: the compiled class selector for that variant escapes
-   both the colon and the slash (`.backdrop\:bg-ink\/60::backdrop`), which some browsers fail to match against
-   `::backdrop` — the color silently never applies and the dialog falls back to the UA default ~10% dim. */
-dialog::backdrop {
-  background-color: rgb(var(--ink) / 0.6);
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  background: rgb(var(--paper));
-  color: rgb(var(--ink));
-  font-family: "Source Serif 4", "Noto Serif Devanagari", Georgia, serif;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-::selection {
-  background: rgb(var(--red));
-  color: rgb(var(--paper));
-}
-
-/* Tracked small caps suit Latin, not Devanagari: relax letter-spacing site-wide in Nepali. */
-html[lang="ne"] [class*="tracking-"] {
-  letter-spacing: 0.02em;
-}
-html[lang="ne"] [class*="uppercase"] {
-  text-transform: none;
-}
-html[lang="ne"] [class*="text-[0.6"], html[lang="ne"] [class*="text-[0.7"] {
-  font-size: 0.8rem;
-}
-
-/* Thin scrollbars for the ruled lists. */
-.overflow-auto {
+/* Thin scrollbars in scrolling lists. */
+.overflow-auto,
+.overflow-y-auto {
   scrollbar-width: thin;
-  scrollbar-color: #e3e3e3 transparent;
+  scrollbar-color: rgb(var(--border)) transparent;
+}
+
+/* --- Print ------------------------------------------------------------- */
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
 }
 
 /* --- Leaflet ------------------------------------------------------------ */
-
 .leaflet-container {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
-  background: #ffffff;
+  font-family: inherit;
+  background: rgb(var(--secondary));
 }
-
-/* The printed-plate look: satellite imagery in black and white. */
 .leaflet-tile-pane {
-  filter: grayscale(1) contrast(1.08);
+  filter: grayscale(1) contrast(1.05);
 }
-
 .leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.85) !important;
-  color: #6b6b6b !important;
+  color: rgb(var(--subtle)) !important;
   font-size: 10px;
 }
-
 .leaflet-control-attribution a {
-  color: #0a0a0a !important;
+  color: rgb(var(--foreground)) !important;
 }
-
 .leaflet-bar {
-  border: 1px solid #0a0a0a !important;
-  border-radius: 0 !important;
+  border: 1px solid rgb(var(--border)) !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
+  overflow: hidden;
 }
-
 .leaflet-bar a {
-  background: #ffffff;
-  color: #0a0a0a;
-  border-bottom-color: #e3e3e3;
-  border-radius: 0 !important;
+  background: #fff;
+  color: rgb(var(--foreground));
+  border-bottom-color: rgb(var(--border));
 }
-
-.leaflet-bar a:hover {
-  background: #ffffff;
-}
-
 .leaflet-tooltip {
-  background: #ffffff;
-  border: 1px solid #0a0a0a;
-  border-radius: 0;
-  color: #0a0a0a;
-  box-shadow: none;
+  background: #fff;
+  border: 1px solid rgb(var(--border));
+  border-radius: 8px;
+  color: rgb(var(--foreground));
+  box-shadow: 0 4px 12px -6px rgba(28, 27, 26, 0.3);
   padding: 6px 9px;
 }
-
 .leaflet-tooltip-top::before {
-  border-top-color: #0a0a0a;
+  border-top-color: rgb(var(--border));
 }
-
 .vn-pin {
   background: none;
   border: 0;
-  filter: drop-shadow(0 1px 2px rgba(10, 10, 10, 0.5));
+  filter: drop-shadow(0 1px 2px rgba(28, 27, 26, 0.5));
 }
-
 .vn-pin--active {
-  filter: drop-shadow(0 0 0 1.5px #ffffff) drop-shadow(0 2px 4px rgba(10, 10, 10, 0.6));
+  filter: drop-shadow(0 0 0 1.5px #fff) drop-shadow(0 2px 4px rgba(28, 27, 26, 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -223,15 +197,5 @@ html[lang="ne"] [class*="text-[0.6"], html[lang="ne"] [class*="text-[0.7"] {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-@layer base {
-  * {
-    border-color: rgb(var(--border));
-  }
-  body {
-    background-color: rgb(var(--paper));
-    color: rgb(var(--ink));
   }
 }

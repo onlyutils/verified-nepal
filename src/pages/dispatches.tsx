@@ -1,18 +1,18 @@
 import { useEffect, useState, useRef } from "react";
-import { ApiError, createDispatch, DISPATCH_TAGS, listDispatches, type DispatchPublicItem, type DispatchTag } from "../api";
+import { ApiError, createDispatch, DISPATCH_TAGS, listDispatches, type DispatchPublicItem, type DispatchTag } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectItem } from "@/components/ui/select";
-import { labels } from "../i18n";
-import { apiErrorMessage } from "../api-error";
-import type { Language } from "../types";
-import { Headline, Rule, SectionLabel } from "../ui";
-import { formatDateTime, localizedText } from "../utils";
-import { TurnstileWidget } from "../components/turnstile";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { labels } from "@/i18n";
+import { apiErrorMessage } from "@/lib/api-error";
+import type { Language } from "@/lib/types";
+import { Headline, Rule, SectionLabel } from "@/components/legacy";
+import { formatDateTime, localizedText } from "@/lib/format";
+import { TurnstileWidget } from "@/components/turnstile";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -112,16 +112,16 @@ export function DispatchesPage({ language }: { language: Language }) {
     <div className="mx-auto max-w-5xl space-y-8">
       <header className="border-b border-ink pb-6">
         <Headline level={2} as="h1">{t.dispatchesTitle}</Headline>
-        <p className="mt-3 max-w-3xl font-serif text-base italic leading-7 text-muted-foreground">{t.dispatchesLead}</p>
+        <p className="mt-3 max-w-3xl font-serif text-base italic leading-7 text-muted-foreground-foreground">{t.dispatchesLead}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="sm" onClick={scrollToForm}>{t.dispatchesWriteCta}</Button>
-          <span className="inline-flex items-center font-sans text-xs text-muted-foreground">— {language==="ne" ? "हिमाल र जलवायुबारे सम्पादकीय लेखन" : "No comments, no threads, by design."}</span>
+          <span className="inline-flex items-center font-sans text-xs text-muted-foreground-foreground">— {language==="ne" ? "हिमाल र जलवायुबारे सम्पादकीय लेखन" : "No comments, no threads, by design."}</span>
         </div>
       </header>
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.dispatchesFilters}:</span>
+          <span className="font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground-foreground">{t.dispatchesFilters}:</span>
           <button
             type="button"
             onClick={()=>handleTag("")}
@@ -145,9 +145,9 @@ export function DispatchesPage({ language }: { language: Language }) {
         <Rule />
       </div>
 
-      {loading ? <p className="font-sans text-sm text-muted-foreground">{t.dispatchesLoading}</p> : null}
-      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground">{t.dispatchesOffline}</p> : null}<div className="mt-3"><Button variant="outline" size="sm" onClick={()=>fetchList(activeTag)}>{t.dispatchesTryAgain}</Button></div></div> : null}
-      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground">{t.dispatchesEmpty}</p> : null}
+      {loading ? <p className="font-sans text-sm text-muted-foreground-foreground">{t.dispatchesLoading}</p> : null}
+      {error ? <div className="border border-rule bg-card px-4 py-4" role="alert"><p className="font-sans text-sm text-destructive">{error}</p>{offline ? <p className="mt-1 font-sans text-xs text-muted-foreground-foreground">{t.dispatchesOffline}</p> : null}<div className="mt-3"><Button variant="outline" size="sm" onClick={()=>fetchList(activeTag)}>{t.dispatchesTryAgain}</Button></div></div> : null}
+      {!loading && !error && items.length===0 ? <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground">{t.dispatchesEmpty}</p> : null}
 
       <div className="divide-y divide-rule border-y border-rule">
         {items.map(item => {
@@ -161,7 +161,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                 <h2 className="font-display text-xl font-bold leading-tight text-ink group-hover:underline sm:text-2xl">{localizedText(item.title, language)}</h2>
                 <p className="mt-2 line-clamp-3 font-serif text-[15px] leading-7 text-ink/90">{localizedText(item.excerpt, language)}</p>
               </a>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs uppercase tracking-wide text-muted-foreground-foreground">
                 <span>{t.dispatchMetaBy} <span className="font-semibold text-ink">{item.author.displayName}</span>{item.author.place ? <> · {item.author.place}</> : null}</span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={item.publishedAt}>{formatDateTime(item.publishedAt, language)}</time>
@@ -175,7 +175,7 @@ export function DispatchesPage({ language }: { language: Language }) {
 
       <div ref={formRef} className="scroll-mt-8 pt-2">
         <SectionLabel>{t.dispatchWriteTitle}</SectionLabel>
-        <p className="mt-2 max-w-3xl font-sans text-sm leading-6 text-muted-foreground">{t.dispatchWriteLead}</p>
+        <p className="mt-2 max-w-3xl font-sans text-sm leading-6 text-muted-foreground-foreground">{t.dispatchWriteLead}</p>
         <Card className="mt-4">
           <CardHeader><CardTitle className="text-base">{t.dispatchWriteTitle}</CardTitle></CardHeader>
           <CardContent>
@@ -196,8 +196,8 @@ export function DispatchesPage({ language }: { language: Language }) {
                     <Label htmlFor="d-body">{t.dispatchWriteBodyLabel} *</Label>
                     <Textarea id="d-body" value={body} onChange={e=>setBody(e.target.value)} placeholder={t.dispatchWriteBodyPlaceholder} rows={10} maxLength={6000} required className="min-h-[180px]" />
                     <div className="flex justify-between">
-                      <p className="font-sans text-xs text-muted-foreground">{t.dispatchWriteBodyHint}</p>
-                      <p className={`font-sans text-xs ${body.length>5900 ? "text-red" : body.length>5500 ? "text-ink" : "text-muted-foreground"}`}>{body.length} / 6,000</p>
+                      <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteBodyHint}</p>
+                      <p className={`font-sans text-xs ${body.length>5900 ? "text-red" : body.length>5500 ? "text-ink" : "text-muted-foreground-foreground"}`}>{body.length} / 6,000</p>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -211,14 +211,14 @@ export function DispatchesPage({ language }: { language: Language }) {
                   <div className="space-y-1">
                     <Label htmlFor="d-email">{t.dispatchWriteEmailLabel} *</Label>
                     <Input id="d-email" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={t.dispatchWriteEmailPlaceholder} required />
-                    <p className="font-sans text-xs text-muted-foreground">{t.dispatchWriteEmailHint}</p>
+                    <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteEmailHint}</p>
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="d-lang">{t.dispatchWriteLanguageLabel}</Label>
-                    <Select value={formLang} onChange={e=>setFormLang(e.target.value as "en"|"ne")}>
-                      <SelectItem value="en">{t.dispatchWriteLanguageEn}</SelectItem>
-                      <SelectItem value="ne">{t.dispatchWriteLanguageNe}</SelectItem>
-                    </Select>
+                    <NativeSelect value={formLang} onChange={e=>setFormLang(e.target.value as "en"|"ne")}>
+                      <NativeSelectOption value="en">{t.dispatchWriteLanguageEn}</NativeSelectOption>
+                      <NativeSelectOption value="ne">{t.dispatchWriteLanguageNe}</NativeSelectOption>
+                    </NativeSelect>
                   </div>
                   <div className="sm:col-span-2 space-y-2">
                     <Label>{t.dispatchWriteTagsLabel} *</Label>
@@ -240,7 +240,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                         );
                       })}
                     </div>
-                    <p className="font-sans text-xs text-muted-foreground">{t.dispatchWriteTagsHint} · {tags.length}/3</p>
+                    <p className="font-sans text-xs text-muted-foreground-foreground">{t.dispatchWriteTagsHint} · {tags.length}/3</p>
                   </div>
                 </div>
                 {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} /> : null}

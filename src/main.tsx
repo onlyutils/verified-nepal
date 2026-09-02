@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./styles.css";
-import { App } from "./App";
-import { brandChatWidget, wireRegionContext } from "./chat-widget";
+import { App } from "@/App";
+import { brandChatWidget, wireRegionContext } from "@/lib/chat-widget";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

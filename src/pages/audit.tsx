@@ -1,13 +1,13 @@
-import { apiErrorMessage } from "../api-error";
+import { apiErrorMessage } from "@/lib/api-error";
 import { useEffect, useState } from "react";
-import { ApiError, getAudit, type AuditItem } from "../api";
+import { ApiError, getAudit, type AuditItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectItem } from "@/components/ui/select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { labels } from "../i18n";
-import type { Language } from "../types";
+import { labels } from "@/i18n";
+import type { Language } from "@/lib/types";
 
 function last12Months(): string[] {
   const out: string[] = [];
@@ -69,7 +69,7 @@ export function AuditPage({ language }: { language: Language }) {
         <p className="mt-2 max-w-2xl font-sans text-sm font-medium leading-6 text-ink print:text-black">
           {(t as Record<string, string>).auditLead}
         </p>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground print:text-black">
+        <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-muted-foreground-foreground print:text-black">
           {(t as Record<string, string>).auditIntro}
         </p>
       </header>
@@ -81,13 +81,13 @@ export function AuditPage({ language }: { language: Language }) {
         <CardContent className="flex flex-wrap items-end gap-4">
           <div className="min-w-[14rem]">
             <Label htmlFor="audit-month">{(t as Record<string, string>).auditMonthLabel}</Label>
-            <Select id="audit-month" value={month} onChange={handleMonthChange}>
+            <NativeSelect id="audit-month" value={month} onChange={handleMonthChange}>
               {months.map((m) => (
-                <SelectItem key={m} value={m}>
+                <NativeSelectOption key={m} value={m}>
                   {m}
-                </SelectItem>
+                </NativeSelectOption>
               ))}
-            </Select>
+            </NativeSelect>
           </div>
           <Button variant="outline" size="sm" onClick={() => window.print()} className="ml-auto">
             {(t as Record<string, string>).auditPrint}
@@ -96,13 +96,13 @@ export function AuditPage({ language }: { language: Language }) {
       </Card>
 
       {loading && items.length === 0 ? (
-        <p className="font-sans text-sm text-muted-foreground">{(t as Record<string, string>).auditLoading}</p>
+        <p className="font-sans text-sm text-muted-foreground-foreground">{(t as Record<string, string>).auditLoading}</p>
       ) : error ? (
         <p className="font-sans text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : items.length === 0 ? (
-        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground print:border-black print:bg-white">
+        <p className="border border-rule bg-card px-4 py-8 text-center font-sans text-sm text-muted-foreground-foreground print:border-black print:bg-white">
           {(t as Record<string, string>).auditEmpty}
         </p>
       ) : (
@@ -124,7 +124,7 @@ export function AuditPage({ language }: { language: Language }) {
                   <TableCell className="font-sans text-sm">{it.actorName}</TableCell>
                   <TableCell className="font-mono text-xs">{it.action}</TableCell>
                   <TableCell className="font-sans text-sm">
-                    <span className="font-medium">{it.targetType}</span> <span className="text-muted-foreground">· {it.targetLabel}</span>
+                    <span className="font-medium">{it.targetType}</span> <span className="text-muted-foreground-foreground">· {it.targetLabel}</span>
                   </TableCell>
                   <TableCell className="font-sans text-sm">{it.reason ?? "—"}</TableCell>
                 </TableRow>

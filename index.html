@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Serif+Devanagari:wght@400;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=optional"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
   <title>verifiedNepal | Flood Rescue Information</title>
@@ -33,7 +33,7 @@
     // Apply saved accessibility settings before first paint (see AccessibilityBar in src/layout.tsx).
     try {
       var s = localStorage.getItem("vn:text-scale");
-      if (s && ["100", "112.5", "125", "137.5", "150"].includes(s)) document.documentElement.style.fontSize = s + "%";
+      if (s && ["112.5", "125", "137.5", "150"].includes(s)) document.documentElement.style.fontSize = s + "%";
       var c = localStorage.getItem("vn:contrast");
       if (c) document.documentElement.setAttribute("data-contrast", c);
     } catch (e) {}
