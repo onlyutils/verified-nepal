@@ -131,7 +131,7 @@ function formatDiscrepancy(en: GoodsEntry, language: Language): string | null {
   return String(en.discrepancy);
 }
 
-export function OrgDashboard({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+export function OrgDashboard({ language, setLanguage, navigate }: { language: Language; setLanguage: (language: Language) => void; navigate: (page: Page) => void }) {
   const t = orgStrings[language] as Record<string, string>;
   const auth = useGoogleAuth();
 

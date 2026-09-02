@@ -56,7 +56,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
-import type { Language } from "@/lib/types";
+import type { Language, Page } from "@/lib/types";
 import { fillTemplate } from "@/lib/edition";
 
 function statusBadgeVariant(status: string) {
@@ -94,7 +94,7 @@ function QrCell({ code }: { code: string }) {
   return <img src={url} alt={`QR ${code}`} width={64} height={64} className="h-16 w-16 object-contain" />;
 }
 
-export function Desk({ language }: { language: Language }) {
+export function Desk({ language, setLanguage, navigate }: { language: Language; setLanguage: (language: Language) => void; navigate: (page: Page) => void }) {
   const t = labels[language];
   const ds = deskStrings[language];
   const dos = deskOrgStrings[language];

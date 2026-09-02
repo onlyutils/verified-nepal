@@ -168,30 +168,48 @@ export function App() {
     });
   }, [language]);
 
+  const skipLink = (
+    <a
+      href="#main"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
+    >
+      Skip to main content
+    </a>
+  );
+  const loading = <p className="min-h-[40vh] p-6 text-sm text-muted-foreground">{shellStrings[language].loading}</p>;
+
+  // Signed-in work surfaces bring their own shell (AppShell); public pages share the site header and footer.
+  if (page === "desk" || page === "org") {
+    return (
+      <LiveDataProvider>
+        {skipLink}
+        <Suspense fallback={loading}>
+          <ComponentErrorBoundary language={language}>
+            {page === "desk" ? (
+              <Desk language={language} setLanguage={setLanguage} navigate={navigate} />
+            ) : (
+              <OrgDashboard language={language} setLanguage={setLanguage} navigate={navigate} />
+            )}
+          </ComponentErrorBoundary>
+        </Suspense>
+      </LiveDataProvider>
+    );
+  }
+
   return (
     <LiveDataProvider>
-      <div className="min-h-dvh bg-paper font-serif text-ink">
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-3 focus:text-paper"
-        >
-          Skip to main content
-        </a>
-        <AccessibilityBar language={language} setLanguage={setLanguage} compact={page === "desk"} />
-        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} compact={page === "desk"} />
-        {page === "desk" ? null : <EmergencyLine language={language} />}
-        <main
-          id="main"
-          tabIndex={-1}
-          className={`mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-8 outline-none ${page === "desk" ? "pb-8 pt-4" : "pb-16 pt-8"}`}
-        >
+      <div className="flex min-h-dvh flex-col bg-background text-foreground">
+        {skipLink}
+        <AccessibilityBar language={language} setLanguage={setLanguage} />
+        <Masthead page={page} language={language} setLanguage={setLanguage} navigate={navigate} />
+        <EmergencyLine language={language} />
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-8 outline-none sm:px-6 lg:px-8">
           {page === "dashboard" ? <Dashboard language={language} navigate={navigate} /> : (
-            <Suspense fallback={<p className="min-h-[40vh] font-sans text-sm text-muted-foreground">{shellStrings[language].loading}</p>}>
+            <Suspense fallback={loading}>
               {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "info" ? <InfoHelp language={language} /> : null}
               {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
-              {page === "desk" ? <ComponentErrorBoundary language={language}><Desk language={language} /></ComponentErrorBoundary> : null}
               {page === "getHelp" ? <ComponentErrorBoundary language={language}><GetHelp language={language} /></ComponentErrorBoundary> : null}
               {page === "giveHelp" ? <ComponentErrorBoundary language={language}><GiveHelp language={language} /></ComponentErrorBoundary> : null}
               {page === "ledger" ? <ComponentErrorBoundary language={language}><Ledger language={language} /></ComponentErrorBoundary> : null}
@@ -203,7 +221,6 @@ export function App() {
               {page === "dispatchDetail" ? <ComponentErrorBoundary language={language}><DispatchDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
               {page === "projectDetail" ? <ComponentErrorBoundary language={language}><ProjectDetail language={language} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
               {page === "registerOrg" ? <ComponentErrorBoundary language={language}><RegisterOrganization language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
-              {page === "org" ? <ComponentErrorBoundary language={language}><OrgDashboard language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
               {page === "dropCenters" ? <ComponentErrorBoundary language={language}><DropCenters language={language} navigate={navigate} /></ComponentErrorBoundary> : null}
               {page === "dropCenterDetail" ? <ComponentErrorBoundary language={language}><DropCenterDetail language={language} navigate={navigate} id={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
               {page === "donationStatus" ? <ComponentErrorBoundary language={language}><DonationStatusPage language={language} navigate={navigate} refCode={decodeURIComponent(window.location.pathname.split("/")[2] || "")} /></ComponentErrorBoundary> : null}
