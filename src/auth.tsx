@@ -131,19 +131,32 @@ export function useGoogleAuth() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const stateParam = params.get("state");
-    if (!code || !stateParam) return;
-
-    const savedState = sessionStorage.getItem(PKCE_STATE_KEY);
-    const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
+    const providerError = params.get("error");
 
     const stripParams = () => {
       const url = new URL(window.location.href);
       url.searchParams.delete("code");
       url.searchParams.delete("state");
+      url.searchParams.delete("error");
+      url.searchParams.delete("error_description");
       const newSearch = url.searchParams.toString();
       const newUrl = url.pathname + (newSearch ? `?${newSearch}` : "") + url.hash;
       window.history.replaceState({}, "", newUrl);
     };
+
+    // The provider redirects back with ?error=... when it refuses the sign-in
+    // (e.g. an email not on a dev client's test audience); without this the
+    // gate renders signed-out with no explanation.
+    if (!code || !stateParam) {
+      if (providerError) {
+        setError(providerError);
+        stripParams();
+      }
+      return;
+    }
+
+    const savedState = sessionStorage.getItem(PKCE_STATE_KEY);
+    const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
 
     if (!savedState || stateParam !== savedState || !verifier) {
       setError("verify-failed");
@@ -212,7 +225,8 @@ export function useGoogleAuth() {
     if (!accessToken) {
       setProfile(null);
       setLoading(false);
-      setError(null);
+      // Keep any error the exchange effect just set (e.g. a provider
+      // ?error= redirect) — signOut clears errors itself.
       return;
     }
     if (!API_BASE) {
