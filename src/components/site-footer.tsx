@@ -25,7 +25,7 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
   return (
     <footer className="bg-foreground text-background">
       <div className={`${container} py-12 lg:py-16`}>
-        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
             <Logo language={language} variant="light" />
             <p className="mt-5 max-w-sm text-sm leading-6 text-faint">{t.aboutBody}</p>
@@ -55,9 +55,10 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
               {ts.footerContact}
             </a>
             {routeLink("privacy", ts.footerIndependentStatus)}
-            {routeLink("org", `${orgStrings[language].navMyOrg} →`)}
+            {routeLink("org", orgStrings[language].navMyOrg)}
             {routeLink("desk", ts.footerTheDesk)}
-            <p className="mt-4 text-xs font-semibold text-faint">{ts.footerGuides}</p>
+          </FooterColumn>
+          <FooterColumn title={ts.footerGuides}>
             {guideLinks(language).map(([href, label]) => (
               <a key={href} className={linkClass} href={href} target="_blank" rel="noopener noreferrer">
                 {label}
@@ -66,7 +67,7 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
           </FooterColumn>
         </div>
         <div className="mt-10 flex flex-col gap-3 border-t border-faint/20 pt-5 text-xs text-faint sm:flex-row sm:items-center sm:justify-between">
-          <LiveStatusBadge language={language} className="text-faint" />
+          <LiveStatusBadge language={language} tone="faint" />
           <p>
             {ts.footerPoweredBy}{" "}
             <a className="underline underline-offset-2 hover:text-background" href={onlyUtilsUrl} target="_blank" rel="noopener noreferrer">

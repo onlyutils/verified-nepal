@@ -127,7 +127,16 @@ export function useLiveData() {
   return useContext(LiveDataContext);
 }
 
-export function LiveStatusBadge({ language, className = "" }: { language: Language; className?: string }) {
+export function LiveStatusBadge({
+  language,
+  className = "",
+  tone = "primary",
+}: {
+  language: Language;
+  className?: string;
+  /** "faint" for the dark footer. */
+  tone?: "primary" | "faint";
+}) {
   const t = labels[language];
   const ts = shellStrings[language];
   const liveData = useLiveData();
@@ -138,11 +147,11 @@ export function LiveStatusBadge({ language, className = "" }: { language: Langua
   return createElement(
     "span",
     {
-      className: `inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-primary ${className}`,
+      className: `inline-flex min-w-0 items-center gap-2 text-xs font-semibold ${tone === "faint" ? "text-faint" : "text-primary"} ${className}`,
       title: liveData.isLive ? undefined : t.snapshotTooltip,
     },
     createElement("span", {
-      className: `h-2 w-2 shrink-0 rounded-full ${liveData.isLive ? "bg-primary" : "border border-primary bg-transparent"}`,
+      className: `h-2 w-2 shrink-0 rounded-full ${liveData.isLive ? "bg-current" : "border border-current bg-transparent"}`,
       "aria-hidden": "true",
     }),
     label,

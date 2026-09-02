@@ -194,7 +194,7 @@ export function MissingGuide({ language, navigate }: { language: Language; navig
             <a
               key={helpline.key}
               href={`tel:${helpline.number}`}
-              className="flex min-h-11 items-center justify-between gap-3 rounded-lg border p-4 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-11 min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border p-4 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <Phone aria-hidden="true" className="size-5 shrink-0 text-destructive" />

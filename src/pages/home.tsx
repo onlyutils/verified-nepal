@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Eyebrow, PageHeader, SectionHeader } from "@/components/page-header";
+import { Eyebrow, SectionHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
@@ -35,13 +35,14 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
   return (
     <div>
       <section className="bg-background">
-        <div className={`${container} grid gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
-          <PageHeader
-            eyebrow={ts.landingFloodName}
-            title={ts.landingTitle}
-            description={labels[language].aboutBody}
-            className="gap-5 [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:uppercase [&_h1]:leading-[1.1] [&_h1]:tracking-tight lg:[&_h1]:text-5xl [&_p:last-child]:text-lg"
-          />
+        <div className={`${container} grid items-start gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
+          <div>
+            <Eyebrow>{ts.landingFloodName}</Eyebrow>
+            <h1 className="mt-3 text-4xl font-bold uppercase leading-[1.1] tracking-tight text-foreground lg:text-5xl">
+              {ts.landingTitle}
+            </h1>
+            <p className="mt-5 text-lg text-muted-foreground">{labels[language].aboutBody}</p>
+          </div>
           <div className="grid gap-5">
             <ActionCard language={language} kind="find" navigate={navigate} />
             <ActionCard language={language} kind="missing" navigate={navigate} />
@@ -323,7 +324,7 @@ function OfficialUpdateRow({ item, language }: { item: OpmcmGovernmentEffort; la
       <div className="min-w-0">
         <Badge variant="info">{category}</Badge>
         <h3 className="mt-2 font-semibold">{title || ts.officialUpdateFallbackCategory}</h3>
-        {summary ? <p className="mt-1 text-sm text-muted-foreground">{summary}</p> : null}
+        {summary ? <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{summary}</p> : null}
         <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-subtle">
           <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
           {ts.officialSource}
@@ -450,13 +451,13 @@ export function PublicNotice({ language }: { language: Language }) {
           <Eyebrow>{t.publicNotice}</Eyebrow>
           <h2 className="mt-3 text-2xl font-bold tracking-tight">{t.donateTitle}</h2>
           <p className="mt-3 max-w-2xl text-base text-muted-foreground">{t.donateBody}</p>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild type="button" variant="destructive">
               <a href={pmdrfUrl} target="_blank" rel="noopener noreferrer">
                 {t.donateCta} <ExternalLink aria-hidden="true" />
               </a>
             </Button>
-            <Button asChild type="button" variant="outline">
+            <Button asChild type="button" variant="outline" className="h-auto min-h-11 whitespace-normal text-center">
               <a href={pmoAppealUrl} target="_blank" rel="noopener noreferrer">
                 {t.donateVerify} <ExternalLink aria-hidden="true" />
               </a>

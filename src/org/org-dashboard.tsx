@@ -55,29 +55,46 @@ function Invites({ controller }: { controller: ReturnType<typeof useOrg> }) {
   );
 }
 
-function Gate({ controller }: { controller: ReturnType<typeof useOrg> }) {
-  const { auth, t } = controller;
+function Gate({
+  controller,
+  navigate,
+  setLanguage,
+}: {
+  controller: ReturnType<typeof useOrg>;
+  navigate: (page: Page) => void;
+  setLanguage: (language: Language) => void;
+}) {
+  const { auth, t, language } = controller;
   return (
-    <div className="flex min-h-[70vh] items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <Logo language={controller.language} />
-          <CardTitle className="pt-3">{t.orgDashboardTitle}</CardTitle>
-          <CardDescription>{t.orgDashboardGateBody}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {auth.clientId ? (
-            <Button className="w-full" onClick={() => void auth.signIn()}>
-              {t.registerOrgGateSignIn}
-            </Button>
-          ) : null}
-          {auth.error ? (
-            <Alert variant="destructive">
-              <AlertDescription>{auth.error}</AlertDescription>
-            </Alert>
-          ) : null}
-        </CardContent>
-      </Card>
+    <div className="min-h-dvh bg-secondary px-4 py-6 sm:px-6">
+      <div className="mx-auto flex max-w-2xl items-center justify-between">
+        <Button variant="ghost" className="h-auto p-1" onClick={() => navigate("dashboard")}>
+          <Logo language={language} />
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setLanguage(language === "en" ? "ne" : "en")}>
+          <span lang={language === "en" ? "ne" : "en"}>{language === "en" ? "नेपाली" : "EN"}</span>
+        </Button>
+      </div>
+      <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center py-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="items-center text-center">
+            <CardTitle>{t.orgDashboardTitle}</CardTitle>
+            <CardDescription>{t.orgDashboardGateBody}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {auth.clientId ? (
+              <Button className="w-full" onClick={() => void auth.signIn()}>
+                {t.registerOrgGateSignIn}
+              </Button>
+            ) : null}
+            {auth.error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{auth.error}</AlertDescription>
+              </Alert>
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -121,7 +138,7 @@ export function OrgDashboard({
     window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${next}`);
   };
 
-  if (!auth.idToken) return <Gate controller={controller} />;
+  if (!auth.idToken) return <Gate controller={controller} navigate={navigate} setLanguage={setLanguage} />;
   if (loadingOrgs || orgs === null) return <LoadingState label={t.orgDashboardLoading} className="mx-auto mt-16 max-w-md" />;
   if (orgsError)
     return (
