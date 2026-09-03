@@ -1,6 +1,24 @@
 import { maskName } from "../lib/format.js";
 import { toExpiresAt } from "../lib/format.js";
 
+export function toPublicGroup(need) {
+  if (!need.group) return undefined;
+  const items = Object.entries(need.groupItems || {})
+    .map(([itemId, item]) => ({
+      itemId,
+      description: item.description,
+      status: item.status,
+      claimedByName: item.claimedByName,
+      createdAt: item.createdAt,
+    }))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return {
+    name: need.group.name,
+    items,
+    memberCount: Object.keys(need.groupMembers || {}).length,
+  };
+}
+
 export function toPublicNeedListItem(it) {
   return {
     id: it.id,
@@ -11,6 +29,7 @@ export function toPublicNeedListItem(it) {
     description: it.description,
     status: it.status,
     createdAt: it.createdAt,
+    group: toPublicGroup(it),
   };
 }
 

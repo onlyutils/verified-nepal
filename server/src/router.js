@@ -14,6 +14,10 @@ import {
 import {
   handleGetModerationQueue, handlePostModeration, handlePostModerationClaim, handlePostModerationRelease,
 } from "./controllers/moderationController.js";
+import {
+  handlePostGroup, handlePostGroupJoin, handlePostGroupItem,
+  handlePostGroupItemClaim, handlePostGroupItemRelease, handlePostGroupItemDone,
+} from "./controllers/groupController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
 import {
   handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
@@ -80,6 +84,30 @@ export async function route(event, ctx) {
   if (method === "POST" && /^\/needs\/[^\/]+\/status$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[2]);
     return await handlePostNeedStatus(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostGroup(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group\/join$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostGroupJoin(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group\/items$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostGroupItem(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group\/items\/[^\/]+\/claim$/.test(path)) {
+    const parts = path.split("/");
+    return await handlePostGroupItemClaim(event, { fetchJwks, getDdb, env }, decodeURIComponent(parts[2]), decodeURIComponent(parts[5]));
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group\/items\/[^\/]+\/release$/.test(path)) {
+    const parts = path.split("/");
+    return await handlePostGroupItemRelease(event, { fetchJwks, getDdb, env }, decodeURIComponent(parts[2]), decodeURIComponent(parts[5]));
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/group\/items\/[^\/]+\/done$/.test(path)) {
+    const parts = path.split("/");
+    return await handlePostGroupItemDone(event, { fetchJwks, getDdb, env }, decodeURIComponent(parts[2]), decodeURIComponent(parts[5]));
   }
   if (method === "POST" && /^\/claims\/[^\/]+\/redeem$/.test(path)) {
     const code = decodeURIComponent(path.split("/")[2]);
