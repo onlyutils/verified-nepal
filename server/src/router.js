@@ -4,7 +4,7 @@ import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines } 
 import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole } from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
-  handlePostNeeds, handleGetNeeds, handleGetStatus, handlePostRenew,
+  handlePostNeeds, handlePostNeedsMediaPresign, handleGetNeeds, handleGetStatus, handlePostRenew,
   handlePostNeedStatus, handlePostFlag, handleGetFlags,
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers } from "./controllers/offerController.js";
@@ -75,6 +75,7 @@ export async function route(event, ctx) {
   if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/climate") return await handleGetAdminClimate(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/audit") return await handleGetAudit(event, { getDdb, env });
+  if (method === "POST" && path === "/needs/media/presign") return await handlePostNeedsMediaPresign(event, { env, fetchImpl });
   if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env, fetchJwks });
   if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });
   if (method === "GET" && path.startsWith("/status/")) {

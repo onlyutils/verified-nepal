@@ -30,7 +30,20 @@ function ReasonFields({
         <Label htmlFor={`${id}-code`}>{model.ds.rejectReasonCodeLabel} *</Label>
         <NativeSelect id={`${id}-code`} value={code} onChange={(event) => setCode(event.target.value)}>
           <NativeSelectOption value="">{model.ds.rejectReasonCodePlaceholder}</NativeSelectOption>
-          {["not_consented", "duplicate", "unreachable", "out_of_scope", "insufficient_detail", "other"].map((reason) => (
+          {[
+            "not_consented",
+            "duplicate",
+            "unreachable",
+            "out_of_scope",
+            "insufficient_detail",
+            "fraud_suspected",
+            "already_assisted",
+            "ineligible_criteria",
+            "unverifiable_identity",
+            "incomplete_beneficiary_info",
+            "spam",
+            "other",
+          ].map((reason) => (
             <NativeSelectOption key={reason} value={reason}>
               {model.ds[`rejectCode_${reason}`]}
             </NativeSelectOption>

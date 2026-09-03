@@ -3,7 +3,11 @@ import { validateString, validatePhone, validateOptionalEmail, validateDistrict 
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth, optionalAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
-import { CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS } from "../constants.js";
+import {
+  CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS,
+  ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE, MAX_NEED_MEDIA_ITEMS,
+} from "../constants.js";
+import { requestPresign } from "../models/media.js";
 import {
   createNeed, listPublicNeeds, getRefPointer, getNeedById, renewNeed,
   setNeedStatus, getOfferById, addFlag, bumpFlagCount, upsertFlaggedPointer,
@@ -13,10 +17,28 @@ import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { putPointer } from "../models/mine.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
+function validateNeedMedia(media) {
+  if (media === undefined || media === null) return undefined;
+  if (!Array.isArray(media)) throw err(400, "media must be an array");
+  if (media.length > MAX_NEED_MEDIA_ITEMS) throw err(400, `media must have at most ${MAX_NEED_MEDIA_ITEMS} items`);
+  return media.map((item, i) => {
+    if (!item || typeof item !== "object") throw err(400, `media[${i}] must be an object`);
+    if (!["photo", "video"].includes(item.type)) throw err(400, `media[${i}].type must be "photo" or "video"`);
+    const fileId = validateString(item.fileId, `media[${i}].fileId`, 1, 300);
+    const originalUrl = validateString(item.originalUrl, `media[${i}].originalUrl`, 1, 2000);
+    const out = { fileId, type: item.type, originalUrl };
+    // Reserved for the OnlyUtils media-variants requirement (docs/onlyutils-media-variants-requirement.md);
+    // no caller populates these yet, but accepting them now avoids a schema migration later.
+    if (item.smallUrl !== undefined) out.smallUrl = validateString(item.smallUrl, `media[${i}].smallUrl`, 1, 2000);
+    if (item.compressedUrl !== undefined) out.compressedUrl = validateString(item.compressedUrl, `media[${i}].compressedUrl`, 1, 2000);
+    return out;
+  });
+}
+
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media } = body;
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
   let regName, regPhone, regEmail;
   if (onBehalf) {
@@ -48,6 +70,7 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   if (!CATEGORIES.includes(category)) throw err(400, `category must be one of ${CATEGORIES.join(",")}`);
   const desc = validateString(description, "description", 10, 2000);
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
+  const cleanMedia = validateNeedMedia(media);
   await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   const tableName = env.TABLE_NAME;
@@ -55,10 +78,36 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const ddb = getDdb();
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
-    district, ward, householdSize, category, description: desc, language,
+    district, ward, householdSize, category, description: desc, language, media: cleanMedia,
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });
+}
+
+export async function handlePostNeedsMediaPresign(event, { env, fetchImpl }) {
+  if (!env.OU_MEDIA_CLIENT_ID || !env.OU_MEDIA_CLIENT_SECRET) {
+    return json(503, { error: "media_not_configured" });
+  }
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const filename = validateString(body.filename, "filename", 1, 255);
+  const photo = ALLOWED_PHOTO_TYPES.includes(body.contentType);
+  const video = ALLOWED_VIDEO_TYPES.includes(body.contentType);
+  if (!photo && !video) {
+    throw err(400, `contentType must be one of ${[...ALLOWED_PHOTO_TYPES, ...ALLOWED_VIDEO_TYPES].join(",")}`);
+  }
+  const maxSize = photo ? MAX_PHOTO_SIZE : MAX_VIDEO_SIZE;
+  if (typeof body.size !== "number" || !Number.isFinite(body.size) || body.size <= 0 || body.size > maxSize) {
+    throw err(400, `size must be 1-${maxSize}`);
+  }
+  await verifyTurnstile(body.turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  try {
+    const presign = await requestPresign(env, fetchImpl, { filename, contentType: body.contentType });
+    return json(200, { ...presign, mediaType: photo ? "photo" : "video" });
+  } catch (e) {
+    if (e.status === 503 || e.code === "media_not_configured") return json(503, { error: "media_not_configured" });
+    return json(502, { error: e.code || "media_upstream", message: e.message || "media upstream error" });
+  }
 }
 
 export async function handleGetNeeds(event, { getDdb, env }) {

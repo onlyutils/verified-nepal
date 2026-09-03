@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { Check, Home, Search } from "lucide-react";
-import { CATEGORIES, claimNeed, createNeed, getStatus, renewNeed, type Category, type StatusResponse } from "@/lib/api";
+import {
+  CATEGORIES,
+  claimNeed,
+  createNeed,
+  getStatus,
+  presignNeedMedia,
+  renewNeed,
+  type Category,
+  type NeedMediaItem,
+  type StatusResponse,
+} from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -24,6 +34,11 @@ import { SignInNudge } from "@/components/sign-in-nudge";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
+const MAX_NEED_MEDIA_ITEMS = 4; // Keep in sync with server MAX_NEED_MEDIA_ITEMS.
+const MAX_NEED_PHOTO_SIZE = 8 * 1024 * 1024; // Keep in sync with server MAX_PHOTO_SIZE.
+const MAX_NEED_VIDEO_SIZE = 50 * 1024 * 1024; // Keep in sync with server MAX_VIDEO_SIZE.
+const NEED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const NEED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 type FieldKey =
   | "beneficiaryName"
   | "district"
@@ -90,6 +105,10 @@ export function GetHelp({ language }: { language: Language }) {
   const [householdSize, setHouseholdSize] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
+  const [mediaItems, setMediaItems] = useState<NeedMediaItem[]>([]);
+  const [mediaNames, setMediaNames] = useState<Record<string, string>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, string>>({});
+  const [mediaError, setMediaError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -209,9 +228,81 @@ export function GetHelp({ language }: { language: Language }) {
     setBeneficiaryEmail("");
     setDescription("");
     setHouseholdSize("");
+    setMediaItems([]);
+    setMediaNames({});
+    setUploadingFiles({});
+    setMediaError(null);
     setError(null);
     setErrors({});
     setSuccess(null);
+  };
+
+  const handleMediaChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (!files.length) return;
+    setMediaError(null);
+
+    const available = Math.max(0, MAX_NEED_MEDIA_ITEMS - mediaItems.length - Object.keys(uploadingFiles).length);
+    const validationErrors: string[] = [];
+    const validFiles = files.filter((file) => {
+      if (![...NEED_PHOTO_TYPES, ...NEED_VIDEO_TYPES].includes(file.type)) {
+        if (!validationErrors.includes(ts.getHelpMediaInvalidType)) validationErrors.push(ts.getHelpMediaInvalidType);
+        return false;
+      }
+      const maxSize = NEED_PHOTO_TYPES.includes(file.type) ? MAX_NEED_PHOTO_SIZE : MAX_NEED_VIDEO_SIZE;
+      if (file.size <= 0 || file.size > maxSize) {
+        if (!validationErrors.includes(ts.getHelpMediaTooLarge)) validationErrors.push(ts.getHelpMediaTooLarge);
+        return false;
+      }
+      return true;
+    });
+    if (validFiles.length > available || (files.length > available && available === 0)) {
+      validationErrors.push(ts.getHelpMediaTooMany);
+    }
+    const filesToUpload = validFiles.slice(0, available);
+    if (validationErrors.length) setMediaError(validationErrors.join(" "));
+
+    await Promise.all(
+      filesToUpload.map(async (file, index) => {
+        const uploadId = `${Date.now()}-${index}-${file.name}`;
+        setUploadingFiles((current) => ({ ...current, [uploadId]: file.name }));
+        try {
+          const presign = await presignNeedMedia({
+            filename: file.name,
+            contentType: file.type,
+            size: file.size,
+            turnstileToken: turnstileToken || undefined,
+          });
+          const headers = {
+            ...(presign.headers || {}),
+            ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
+          };
+          const upload = await fetch(presign.uploadUrl, { method: "PUT", body: file, headers });
+          if (!upload.ok) throw new Error("upload");
+          const item: NeedMediaItem = { fileId: presign.fileId, type: presign.mediaType, originalUrl: presign.publicUrl };
+          setMediaItems((current) => [...current, item]);
+          setMediaNames((current) => ({ ...current, [item.fileId]: file.name }));
+        } catch {
+          setMediaError(ts.getHelpMediaUploadError);
+        } finally {
+          setUploadingFiles((current) => {
+            const next = { ...current };
+            delete next[uploadId];
+            return next;
+          });
+        }
+      }),
+    );
+  };
+
+  const removeMedia = (fileId: string) => {
+    setMediaItems((current) => current.filter((item) => item.fileId !== fileId));
+    setMediaNames((current) => {
+      const next = { ...current };
+      delete next[fileId];
+      return next;
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -271,6 +362,7 @@ export function GetHelp({ language }: { language: Language }) {
           description: description.trim(),
           language,
           turnstileToken: turnstileToken || undefined,
+          media: mediaItems.length ? mediaItems : undefined,
         },
         auth.idToken || undefined,
       );
@@ -433,6 +525,44 @@ export function GetHelp({ language }: { language: Language }) {
               <FieldError id="description-error" error={errors.description} />
               <p className="text-sm text-muted-foreground">{errors.description ? "" : t.getHelpDescriptionHint}</p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="need-media">{ts.getHelpMediaLabel}</Label>
+              <Input
+                id="need-media"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                multiple
+                onChange={handleMediaChange}
+                disabled={submitting}
+                aria-describedby={mediaError ? "need-media-hint need-media-error" : "need-media-hint"}
+                className="h-auto min-h-11 py-2"
+              />
+              <p id="need-media-hint" className="text-sm text-muted-foreground">
+                {ts.getHelpMediaHint}
+              </p>
+              {mediaError ? (
+                <p id="need-media-error" className="text-sm text-destructive" role="alert">
+                  {mediaError}
+                </p>
+              ) : null}
+              {Object.entries(uploadingFiles).map(([uploadId, fileName]) => (
+                <p key={uploadId} className="text-sm text-muted-foreground" aria-live="polite">
+                  {fileName} — {ts.getHelpMediaUploading}
+                </p>
+              ))}
+              {mediaItems.length ? (
+                <ul className="space-y-2" aria-label={ts.getHelpMediaLabel}>
+                  {mediaItems.map((item) => (
+                    <li key={item.fileId} className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm">
+                      <span className="min-w-0 truncate">{mediaNames[item.fileId] || item.fileId}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => removeMedia(item.fileId)}>
+                        {ts.getHelpMediaRemove}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -505,7 +635,7 @@ export function GetHelp({ language }: { language: Language }) {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : null}
-            <Button type="submit" size="lg" disabled={submitting} className="w-full">
+            <Button type="submit" size="lg" disabled={submitting || Object.keys(uploadingFiles).length > 0} className="w-full">
               {submitting ? t.getHelpSubmitting : t.getHelpSubmit}
             </Button>
           </CardContent>

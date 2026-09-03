@@ -7,7 +7,7 @@ import { PUBLIC_NEED_STATUSES } from "../constants.js";
 export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, ward, householdSize,
-  category, description, language,
+  category, description, language, media,
 }) {
   const id = randomUUID();
   let refCode;
@@ -33,6 +33,7 @@ export async function createNeed(ddb, tableName, {
     category,
     description,
     language,
+    media: media && media.length ? media : undefined,
     status,
     createdAt,
     ttl,
@@ -49,6 +50,7 @@ export async function createNeed(ddb, tableName, {
   if (item.beneficiary.householdSize === undefined) delete item.beneficiary.householdSize;
   if (!item.beneficiary.phone) delete item.beneficiary.phone;
   if (!item.beneficiary.email) delete item.beneficiary.email;
+  if (!item.media) delete item.media;
   const refItem = { PK: `REF#${refCode}`, SK: "META", type: "REF", refCode, needId: id, ttl, createdAt };
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: refItem }));

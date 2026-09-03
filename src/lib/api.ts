@@ -51,6 +51,14 @@ export interface StatusResponse {
   claimCode?: string;
 }
 
+export interface NeedMediaItem {
+  fileId: string;
+  type: "photo" | "video";
+  originalUrl: string;
+  smallUrl?: string;
+  compressedUrl?: string;
+}
+
 export interface CreateNeedBody {
   onBehalf: boolean;
   registrant: { name: string; phone: string; email?: string } | null;
@@ -59,6 +67,7 @@ export interface CreateNeedBody {
   description: string;
   language: "en" | "ne";
   turnstileToken?: string;
+  media?: NeedMediaItem[];
 }
 
 export interface CreateNeedResponse {
@@ -115,6 +124,7 @@ export interface ModerationQueueItem {
   claimedBy?: string;
   claimedByName?: string;
   claimExpiresAt?: string;
+  media?: NeedMediaItem[];
   [key: string]: unknown;
 }
 
@@ -169,6 +179,15 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
 
 export function createNeed(body: CreateNeedBody, token?: string): Promise<CreateNeedResponse> {
   return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body), token });
+}
+
+export function presignNeedMedia(body: {
+  filename: string;
+  contentType: string;
+  size: number;
+  turnstileToken?: string;
+}): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
+  return request(`/needs/media/presign`, { method: "POST", body: JSON.stringify(body) });
 }
 
 export interface MyNeed {

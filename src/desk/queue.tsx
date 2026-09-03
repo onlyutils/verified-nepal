@@ -150,6 +150,28 @@ export function Queue({ model }: { model: DeskModel }) {
                       ) : (
                         <p className="mt-3 text-sm text-muted-foreground">{t.deskNoRegistrant}</p>
                       )}
+                      {item.media?.length ? (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-semibold">{t.deskQueueMedia}</p>
+                          <div className="space-y-3">
+                            {item.media.map((media) => {
+                              const displaySrc = media.smallUrl || media.originalUrl;
+                              return media.type === "photo" ? (
+                                <a key={media.fileId} href={media.originalUrl} target="_blank" rel="noreferrer">
+                                  <img src={displaySrc} alt="" className="mt-2 max-h-40 rounded border object-cover" />
+                                </a>
+                              ) : (
+                                <video
+                                  key={media.fileId}
+                                  src={media.compressedUrl || media.originalUrl}
+                                  controls
+                                  className="mt-2 max-h-40 rounded border"
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
                       {item.dupCandidates?.length ? (
                         <Alert className="mt-4 border-warning bg-warning-soft text-warning">
                           <AlertDescription>
