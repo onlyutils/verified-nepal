@@ -1,3 +1,4 @@
+import { ShieldCheck } from "lucide-react";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { shellStrings } from "@/i18n/shell";
@@ -11,6 +12,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
   const t = labels[language] as Record<string, string>;
   const ts = shellStrings[language];
   const links: Array<[Page, string]> = [
+    ["dashboard", t.dashboard],
     ["dropCenters", centerStrings[language].navDropCenters],
     ["projects", t.projects],
     ["dispatches", t.dispatches],
@@ -28,6 +30,11 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
               {label} →
             </Button>
           ))}
+          <span aria-hidden="true" className="h-4 w-px bg-primary-soft-border" />
+          <Button type="button" variant="link" size="sm" className="h-auto min-h-11 px-0" onClick={() => navigate("desk")}>
+            <ShieldCheck aria-hidden="true" />
+            {t.deskTitle}
+          </Button>
         </nav>
       </div>
     </div>

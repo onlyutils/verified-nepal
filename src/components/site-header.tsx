@@ -40,7 +40,14 @@ export function SiteHeader({
   return (
     <header className="border-b bg-background">
       <div className={`${container} flex h-14 items-center justify-between gap-2`}>
-        <Logo language={language} tagline={ts.tagline} className="min-w-0" />
+        <button
+          type="button"
+          onClick={() => navigate("dashboard")}
+          aria-label={t.dashboard}
+          className="min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <Logo language={language} tagline={ts.tagline} className="min-w-0" />
+        </button>
         <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
@@ -65,6 +72,11 @@ export function SiteHeader({
                 <SheetDescription>{ts.primaryNavigation}</SheetDescription>
               </SheetHeader>
               <nav aria-label={ts.primaryNavigation} className="mt-6 grid gap-1">
+                <SheetClose asChild>
+                  <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("dashboard")}>
+                    {t.dashboard}
+                  </Button>
+                </SheetClose>
                 {navPages.map(([page, key]) => (
                   <SheetClose key={page} asChild>
                     <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate(page as Page)}>
