@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Flag, Share2 } from "lucide-react";
-import { CATEGORIES, createOffer, flagNeed, listNeeds, listOffers, type Category, type NeedPublic, type OfferPublic } from "@/lib/api";
+import {
+  CATEGORIES, addGroupItem, claimGroupItem, createOffer, flagNeed, joinGroupApi, listNeeds, listOffers,
+  markGroupItemDone, releaseGroupItem, startGroup,
+  type Category, type GroupPublic, type NeedPublic, type OfferPublic,
+} from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -520,9 +524,157 @@ export function GiveHelp({ language }: { language: Language }) {
   );
 }
 
+function GroupPanel({
+  language,
+  needId,
+  group,
+  onGroupChange,
+}: {
+  language: Language;
+  needId: string;
+  group: GroupPublic;
+  onGroupChange: (group: GroupPublic) => void;
+}) {
+  const ts = formStrings[language];
+  const auth = useGoogleAuth();
+  const [itemText, setItemText] = useState("");
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const run = async (key: string, fn: () => Promise<void>) => {
+    setBusy((b) => ({ ...b, [key]: true }));
+    setError(null);
+    try {
+      await fn();
+    } catch (err) {
+      setError(apiErrorMessage(err, language));
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }));
+    }
+  };
+
+  const submitItem = () =>
+    run("add", async () => {
+      if (!auth.idToken || !itemText.trim()) return;
+      const result = await addGroupItem(auth.idToken, needId, itemText.trim());
+      onGroupChange({
+        ...group,
+        items: [...group.items, { itemId: result.itemId, description: itemText.trim(), status: "open", createdAt: result.createdAt }],
+      });
+      setItemText("");
+    });
+
+  const claim = (itemId: string) =>
+    run(itemId, async () => {
+      if (!auth.idToken) return;
+      const result = await claimGroupItem(auth.idToken, needId, itemId);
+      onGroupChange({
+        ...group,
+        items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "claimed", claimedByName: result.claimedByName } : it)),
+      });
+    });
+
+  const release = (itemId: string) =>
+    run(itemId, async () => {
+      if (!auth.idToken) return;
+      await releaseGroupItem(auth.idToken, needId, itemId);
+      onGroupChange({
+        ...group,
+        items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "open", claimedByName: undefined } : it)),
+      });
+    });
+
+  const markDone = (itemId: string) =>
+    run(itemId, async () => {
+      if (!auth.idToken) return;
+      await markGroupItemDone(auth.idToken, needId, itemId);
+      onGroupChange({ ...group, items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "done" } : it)) });
+    });
+
+  const join = () =>
+    run("join", async () => {
+      if (!auth.idToken) return;
+      await joinGroupApi(auth.idToken, needId);
+      onGroupChange({ ...group, memberCount: group.memberCount + 1 });
+    });
+
+  return (
+    <div className="space-y-3 rounded-lg border bg-secondary p-3">
+      <div>
+        <p className="font-medium">{group.name}</p>
+        <p className="text-xs text-muted-foreground">{ts.groupNotMarketplace}</p>
+      </div>
+      {group.items.length > 0 ? (
+        <ul className="space-y-2">
+          {group.items.map((item) => (
+            <li key={item.itemId} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span>
+                {item.description}
+                {item.status === "claimed" && item.claimedByName ? ` — ${item.claimedByName}` : ""}
+              </span>
+              {item.status === "open" ? (
+                <Button size="sm" variant="outline" disabled={Boolean(busy[item.itemId])} onClick={() => claim(item.itemId)}>
+                  {ts.groupClaim}
+                </Button>
+              ) : item.status === "claimed" ? (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled={Boolean(busy[item.itemId])} onClick={() => markDone(item.itemId)}>
+                    {ts.groupMarkDone}
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={Boolean(busy[item.itemId])} onClick={() => release(item.itemId)}>
+                    {ts.groupRelease}
+                  </Button>
+                </div>
+              ) : (
+                <StatusBadge tone="success">{ts.groupDone}</StatusBadge>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="flex gap-2">
+        <Input value={itemText} onChange={(event) => setItemText(event.target.value)} placeholder={ts.groupItemPlaceholder} maxLength={300} />
+        <Button size="sm" disabled={busy.add || !itemText.trim()} onClick={submitItem}>
+          {ts.groupAddItem}
+        </Button>
+      </div>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>{ts.groupMemberCount.replace("{n}", String(group.memberCount))}</span>
+        <Button size="sm" variant="ghost" disabled={busy.join} onClick={join}>
+          {ts.groupJoin}
+        </Button>
+      </div>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+    </div>
+  );
+}
+
 function NeedCard({ language, need, onFlag }: { language: Language; need: NeedPublic; onFlag: () => void }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const auth = useGoogleAuth();
+  const [group, setGroup] = useState<GroupPublic | undefined>(need.group);
+  const [forming, setForming] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const formGroup = async () => {
+    if (!auth.idToken) return;
+    setForming(true);
+    setFormError(null);
+    try {
+      const result = await startGroup(auth.idToken, need.id);
+      setGroup({ name: result.name, items: [], memberCount: 1 });
+    } catch (err) {
+      setFormError(apiErrorMessage(err, language));
+    } finally {
+      setForming(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -538,6 +690,18 @@ function NeedCard({ language, need, onFlag }: { language: Language; need: NeedPu
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-base leading-relaxed">{need.description}</p>
+        {group ? (
+          <GroupPanel language={language} needId={need.id} group={group} onGroupChange={setGroup} />
+        ) : need.status === "published" && auth.idToken ? (
+          <Button variant="outline" size="sm" disabled={forming} onClick={formGroup}>
+            {ts.groupForm}
+          </Button>
+        ) : null}
+        {formError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
