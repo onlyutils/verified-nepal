@@ -8,7 +8,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { getDashboard, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
 import { EMPTY_POSTER, POSTER_LIMITS, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
-import { drawPoster, loadLogo, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
+import { drawPoster, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
 import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
   const [photoRemote, setPhotoRemote] = useState<{ fileId: string; url: string } | null>(null);
   const [photoError, setPhotoError] = useState(false);
   const [errors, setErrors] = useState<ReturnType<typeof validatePoster>>({});
-  const [assets, setAssets] = useState<PosterAssets>({ photo: null, logo: null });
+  const [assets, setAssets] = useState<PosterAssets>({ photo: null });
   const [downloaded, setDownloaded] = useState(false);
   const [exportError, setExportError] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -113,11 +113,9 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([loadPosterFonts(), loadLogo(), photoUrl ? loadImage(photoUrl).catch(() => null) : Promise.resolve(null)]).then(
-      ([, logo, photo]) => {
-        if (!cancelled) setAssets({ logo, photo });
-      },
-    );
+    Promise.all([loadPosterFonts(), photoUrl ? loadImage(photoUrl).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
+      if (!cancelled) setAssets({ photo });
+    });
     return () => {
       cancelled = true;
     };

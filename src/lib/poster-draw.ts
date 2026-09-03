@@ -13,7 +13,6 @@ import {
 
 export interface PosterAssets {
   photo: ImageBitmap | HTMLImageElement | null;
-  logo: HTMLImageElement | null;
 }
 
 const FAMILY = "'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif";
@@ -71,19 +70,6 @@ export async function loadPosterFonts(): Promise<void> {
       "400 34px 'Noto Sans Devanagari'",
     ].map((f) => document.fonts.load(f)),
   );
-}
-
-let logoPromise: Promise<HTMLImageElement | null> | null = null;
-export function loadLogo(): Promise<HTMLImageElement | null> {
-  if (!logoPromise) {
-    logoPromise = new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = "/brand/logo-mark.svg";
-    });
-  }
-  return logoPromise;
 }
 
 function roundedPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -208,17 +194,14 @@ export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets
   ctx.font = `700 56px ${FAMILY}`;
   ctx.fillText(phones, margin, contactY + 38);
 
-  // Footer brand: small, centred, never larger than 4 % of the height.
+  // Footer brand: the domain only, small, centred, underlined.
   const brandY = height - 72;
   ctx.fillStyle = p.brand;
   ctx.font = `600 26px ${FAMILY}`;
   ctx.textAlign = "center";
   const label = t.brandUrl;
   const labelW = ctx.measureText(label).width;
-  const logoSize = 36;
-  const totalW = labelW + logoSize + 14;
-  const startX = width / 2 - totalW / 2;
-  if (assets.logo) ctx.drawImage(assets.logo, startX, brandY - 6, logoSize, logoSize);
-  ctx.fillText(label, startX + logoSize + 14 + labelW / 2, brandY);
+  ctx.fillText(label, width / 2, brandY);
+  ctx.fillRect(width / 2 - labelW / 2, brandY + 34, labelW, 2);
   ctx.textAlign = "left";
 }
