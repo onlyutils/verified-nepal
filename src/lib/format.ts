@@ -74,3 +74,7 @@ export function messageText(message: MessageItem, language: Language) {
   const en = message.message || message.description || message.content || message.title;
   return String((language === "ne" ? ne || en : en || ne) || "");
 }
+
+export function interpolate(template: string, vars: Record<string, string | number>) {
+  return template.replace(/\{(\w+)\}/g, (m, key) => (key in vars ? String(vars[key]) : m));
+}

@@ -18,7 +18,7 @@ export interface PosterAssets {
 const FAMILY = "'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif";
 
 /** Read a colour token from styles.css ("0 56 147") so the poster follows the design system. */
-function token(name: string, alpha = 1) {
+export function token(name: string, alpha = 1) {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return raw ? `rgb(${raw} / ${alpha})` : `rgb(0 0 0 / ${alpha})`;
 }

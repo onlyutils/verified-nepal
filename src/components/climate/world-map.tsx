@@ -3,19 +3,7 @@ import type { Layer, PathOptions } from "leaflet";
 import { useEffect, useState } from "react";
 import { GeoJSON, MapContainer } from "react-leaflet";
 import { loadWorldGeoJson, type CountryClimate } from "@/lib/climate-data";
-
-const CHOROPLETH_SHADES = ["#dbeafe", "#93c5fd", "#3b82f6", "#1d4ed8", "#1e3a8a", "#172554"];
-
-function quantileThresholds(values: number[], buckets: number) {
-  const sorted = [...values].sort((a, b) => a - b);
-  return Array.from({ length: buckets - 1 }, (_, i) => sorted[Math.floor(((i + 1) / buckets) * (sorted.length - 1))]);
-}
-
-function bucketIndex(value: number, thresholds: number[]) {
-  let i = 0;
-  while (i < thresholds.length && value > thresholds[i]) i += 1;
-  return i;
-}
+import { CHOROPLETH_SHADES, bucketIndex, quantileThresholds } from "@/lib/climate-colors";
 
 function formatPct(value: number) {
   return `${value.toLocaleString(undefined, { maximumSignificantDigits: value < 1 ? 2 : 3 })}%`;
