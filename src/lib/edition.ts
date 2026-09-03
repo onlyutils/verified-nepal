@@ -1,7 +1,7 @@
 import type { Language } from "@/lib/types";
+import { disasterStart } from "./disasters.ts";
 
-/** The Bhote Koshi flood: 26 Aug 2026, Nepal time. */
-const responseStart = Date.parse("2026-08-26T00:00:00+05:45");
+const responseStart = disasterStart();
 const dayMs = 86_400_000;
 
 export function responseDay(now: Date = new Date()) {
