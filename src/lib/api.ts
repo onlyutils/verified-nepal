@@ -8,6 +8,20 @@ export const API_BASE =
 export type Category = "goods" | "shelter" | "transport" | "medical" | "skilled-labor" | "funds-guidance";
 export const CATEGORIES: Category[] = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 
+export interface GroupItemPublic {
+  itemId: string;
+  description: string;
+  status: "open" | "claimed" | "done";
+  claimedByName?: string;
+  createdAt: string;
+}
+
+export interface GroupPublic {
+  name: string;
+  items: GroupItemPublic[];
+  memberCount: number;
+}
+
 export interface NeedPublic {
   id: string;
   maskedName: string;
@@ -19,6 +33,7 @@ export interface NeedPublic {
   createdAt: string;
   claimCode?: string;
   flagCount?: number;
+  group?: GroupPublic;
 }
 
 export interface NeedsListResponse {
@@ -186,10 +201,28 @@ export interface MyMissing {
   [key: string]: unknown;
 }
 
+export interface MyGroupItem {
+  itemId: string;
+  description: string;
+  status: "open" | "claimed" | "done";
+  claimedAt?: string;
+  doneAt?: string;
+}
+
+export interface MyGroup {
+  id: string;
+  groupName?: string;
+  district?: string;
+  category: Category;
+  joinedAt?: string;
+  myItems: MyGroupItem[];
+}
+
 export interface DashboardResponse {
   missing: MyMissing[];
   needs: MyNeed[];
   offers: MyOffer[];
+  groups: MyGroup[];
 }
 
 export type MissingBody = Omit<PosterInput, "phones"> & {
@@ -250,6 +283,30 @@ export function renewNeed(refCode: string): Promise<{ expiresAt: string }> {
 
 export function createOffer(token: string, body: CreateOfferBody): Promise<{ id: string }> {
   return request<{ id: string }>("/offers", { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function startGroup(token: string, needId: string): Promise<{ name: string; createdAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group`, { method: "POST", token });
+}
+
+export function joinGroupApi(token: string, needId: string): Promise<{ ok: boolean }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/join`, { method: "POST", token });
+}
+
+export function addGroupItem(token: string, needId: string, description: string): Promise<{ itemId: string; status: "open"; createdAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/items`, { method: "POST", body: JSON.stringify({ description }), token });
+}
+
+export function claimGroupItem(token: string, needId: string, itemId: string): Promise<{ claimedBy: string; claimedByName: string; claimedAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/claim`, { method: "POST", token });
+}
+
+export function releaseGroupItem(token: string, needId: string, itemId: string): Promise<{ ok: boolean }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/release`, { method: "POST", token });
+}
+
+export function markGroupItemDone(token: string, needId: string, itemId: string): Promise<{ doneAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/done`, { method: "POST", token });
 }
 
 export function listOffers(params: { district?: string; category?: string } = {}, token?: string): Promise<OffersListResponse> {
