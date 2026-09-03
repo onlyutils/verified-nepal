@@ -84,7 +84,10 @@ export function ClimatePage({ language }: { language: Language }) {
     }),
     [facts],
   );
-  const pageStrings = useMemo(() => ({ ...t, nepalHighlightNote: interpolate(t.nepalHighlightNote, factValues) }), [factValues, t]);
+  const pageStrings = useMemo(
+    () => ({ ...t, nepalHighlightNote: interpolate(t.nepalHighlightNote, factValues), nepalPopup: interpolate(t.nepalPopup, factValues) }),
+    [factValues, t],
+  );
   const pageDescription = interpolate(t.description, factValues);
 
   return (
