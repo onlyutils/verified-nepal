@@ -9,6 +9,23 @@ export const PUBLIC_PROJECT_STATUSES = ["published", "in-progress", "completed"]
 export const PROJECT_ALL_STATUSES = ["pending", "published", "in-progress", "completed", "rejected", "archived"];
 export const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
+export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+export const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+export const MAX_NEED_MEDIA_ITEMS = 4;
+export const REJECT_REASON_CODES = [
+  "not_consented",
+  "duplicate",
+  "unreachable",
+  "out_of_scope",
+  "insufficient_detail",
+  "fraud_suspected",
+  "already_assisted",
+  "ineligible_criteria",
+  "unverifiable_identity",
+  "incomplete_beneficiary_info",
+  "spam",
+  "other",
+];
 export const DISPATCH_TAGS = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
 
 // Keep in sync with src/lib/climate-messages.ts (client test checks both lists match).

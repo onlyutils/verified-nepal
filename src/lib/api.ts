@@ -1153,3 +1153,54 @@ export function confirmDonation(
 ): Promise<{ entryId?: string; ok?: boolean }> {
   return request(`/donations/${encodeURIComponent(ref)}/confirm`, { method: "POST", body: JSON.stringify(body), token });
 }
+
+export type ClimateDownloadKind = import("./climate-messages").ClimateDownloadKind;
+
+export interface ClimateMessageCount {
+  iso3: string;
+  messageId: string;
+  count: number;
+}
+
+export interface ClimateMessagesResponse {
+  items: ClimateMessageCount[];
+  total: number;
+}
+
+export function postClimateMessage(body: {
+  iso3: string;
+  messageId: string;
+  turnstileToken: string;
+}): Promise<{ ok: boolean; count: number }> {
+  return request<{ ok: boolean; count: number }>("/climate/messages", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function getClimateMessages(country?: string): Promise<ClimateMessagesResponse> {
+  return request<ClimateMessagesResponse>(`/climate/messages${country ? `?country=${encodeURIComponent(country)}` : ""}`);
+}
+
+export function postClimateDownload(kind: ClimateDownloadKind): Promise<void> {
+  return fetch(`${API_BASE}/climate/downloads`, {
+    method: "POST",
+    keepalive: true,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ kind }),
+  })
+    .then(() => undefined)
+    .catch(() => undefined);
+}
+
+export interface AdminClimateStats {
+  totals: { messages: number; downloads: number };
+  days: { date: string; messages: number; downloads: number }[];
+  downloadsByKind: { kind: string; count: number }[];
+  topCountries: { iso3: string; messages: number }[];
+  topMessages: { messageId: string; count: number }[];
+}
+
+export function getAdminClimate(token: string): Promise<AdminClimateStats> {
+  return request<AdminClimateStats>("/admin/climate", { token });
+}
