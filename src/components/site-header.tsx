@@ -95,6 +95,11 @@ export function SiteHeader({
                     {orgStrings[language].navMyOrg}
                   </Button>
                 </SheetClose>
+                <SheetClose asChild>
+                  <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("registerOrg")}>
+                    {orgStrings[language].registerOrgCta}
+                  </Button>
+                </SheetClose>
                 <p className="mt-5 px-3 text-xs font-semibold text-muted-foreground">{ts.guidesTitle}</p>
                 {guideLinks(language).map(([href, label]) => (
                   <a

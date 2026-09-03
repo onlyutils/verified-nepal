@@ -21,6 +21,7 @@ import { Eyebrow, SectionHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
+import { orgStrings } from "@/i18n/orgs";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
 const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
@@ -48,6 +49,12 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
             <ActionCard language={language} kind="missing" navigate={navigate} />
             <ActionCard language={language} kind="need" navigate={navigate} />
             <ActionCard language={language} kind="want" navigate={navigate} />
+            <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+              {ts.registerOrgPrompt}
+              <Button type="button" variant="link" className="h-auto min-h-0 p-0" onClick={() => navigate("registerOrg")}>
+                {orgStrings[language].registerOrgCta} →
+              </Button>
+            </p>
           </div>
         </div>
       </section>

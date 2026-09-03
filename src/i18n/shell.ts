@@ -1,6 +1,7 @@
 export const shellStrings = {
   en: {
     tagline: "Independent disaster information and mutual aid",
+    registerOrgPrompt: "Running a relief group or a drop center?",
     liveLabel: "Live",
     snapshotLabel: "Official data snapshot",
     emergencyPrompt: "In immediate danger? Call",
@@ -83,6 +84,7 @@ export const shellStrings = {
   },
   ne: {
     tagline: "स्वतन्त्र विपद् सूचना र पारस्परिक सहयोग",
+    registerOrgPrompt: "राहत समूह वा सङ्कलन केन्द्र चलाउँदै हुनुहुन्छ?",
     liveLabel: "प्रत्यक्ष",
     snapshotLabel: "आधिकारिक तथ्याङ्क स्न्यापसट",
     emergencyPrompt: "तत्काल जोखिममा? फोन गर्नुहोस्",

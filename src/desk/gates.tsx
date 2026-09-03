@@ -130,11 +130,13 @@ export function UnauthorizedGate({
   language,
   setLanguage,
   onHome,
+  onOrg,
 }: {
   model: DeskModel;
   language: Language;
   setLanguage: (language: Language) => void;
   onHome: () => void;
+  onOrg: () => void;
 }) {
   return (
     <GateLayout model={model} language={language} setLanguage={setLanguage} onHome={onHome}>
@@ -147,9 +149,12 @@ export function UnauthorizedGate({
           <p className="text-sm text-muted-foreground">
             {model.auth.profile?.email ? model.t.deskWelcome.replace("{name}", model.auth.profile.email) : ""}
           </p>
-          <Button variant="outline" onClick={model.auth.signOut}>
-            {model.t.deskSignOut}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button onClick={onOrg}>{model.ds.deskGoToOrg}</Button>
+            <Button variant="outline" onClick={model.auth.signOut}>
+              {model.t.deskSignOut}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </GateLayout>

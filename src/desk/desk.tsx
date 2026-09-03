@@ -33,7 +33,7 @@ export function Desk({
   if (!auth.idToken) return <SignedOutGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.error || !auth.profile) return <AuthGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.profile.role !== "moderator" && auth.profile.role !== "admin")
-    return <UnauthorizedGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
+    return <UnauthorizedGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} onOrg={() => navigate("org")} />;
   if (auth.profile.role === "moderator" && !model.ackedNow && !auth.profile.guidelinesAckAt)
     return <GuidelinesGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
 
