@@ -37,6 +37,71 @@ export function basePayload(overrides = {}) {
   };
 }
 
+function splitTopLevel(s, sep) {
+  const parts = [];
+  let depth = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === sep && depth === 0) { parts.push(cur); cur = ""; }
+    else cur += ch;
+  }
+  if (cur.trim()) parts.push(cur);
+  return parts.map((x) => x.trim());
+}
+
+function resolvePath(pathStr, names) {
+  return pathStr.split(".").map((seg) => (seg.startsWith("#") ? names[seg] : seg));
+}
+
+function getAtPath(obj, segs) {
+  let cur = obj;
+  for (const s of segs) {
+    if (cur === null || typeof cur !== "object") return undefined;
+    cur = cur[s];
+  }
+  return cur;
+}
+
+function setAtPath(obj, segs, value) {
+  let cur = obj;
+  for (let i = 0; i < segs.length - 1; i++) {
+    if (typeof cur[segs[i]] !== "object" || cur[segs[i]] === null) cur[segs[i]] = {};
+    cur = cur[segs[i]];
+  }
+  cur[segs[segs.length - 1]] = value;
+}
+
+function removeAtPath(obj, segs) {
+  let cur = obj;
+  for (let i = 0; i < segs.length - 1; i++) {
+    if (cur[segs[i]] === null || typeof cur[segs[i]] !== "object") return;
+    cur = cur[segs[i]];
+  }
+  delete cur[segs[segs.length - 1]];
+}
+
+function evalPredicate(p, item, names, vals) {
+  let m = p.match(/^attribute_not_exists\((.+)\)$/);
+  if (m) return getAtPath(item, resolvePath(m[1].trim(), names)) === undefined;
+  m = p.match(/^attribute_exists\((.+)\)$/);
+  if (m) return getAtPath(item, resolvePath(m[1].trim(), names)) !== undefined;
+  m = p.match(/^(.+?)\s*=\s*(:\w+)$/);
+  if (m) return JSON.stringify(getAtPath(item, resolvePath(m[1].trim(), names))) === JSON.stringify(vals[m[2]]);
+  throw new Error(`FakeDdb: unsupported condition predicate "${p}"`);
+}
+
+function evalCondition(expr, item, names, vals) {
+  if (!expr) return true;
+  const trimmed = expr.trim();
+  const hasOr = / OR /.test(trimmed);
+  const hasAnd = / AND /.test(trimmed);
+  if (hasOr && hasAnd) throw new Error("FakeDdb: mixed AND/OR conditions are not supported, keep expressions homogeneous");
+  const parts = hasOr ? trimmed.split(" OR ") : hasAnd ? trimmed.split(" AND ") : [trimmed];
+  const results = parts.map((p) => evalPredicate(p.trim(), item, names, vals));
+  return hasOr ? results.some(Boolean) : results.every(Boolean);
+}
+
 export class FakeDdb {
   constructor() {
     this.store = new Map();
@@ -148,15 +213,46 @@ export class FakeDdb {
     }
     if (name === "UpdateCommand") {
       const k = this.key(input.Key.PK, input.Key.SK);
-      const item = this.store.get(k) ? JSON.parse(JSON.stringify(this.store.get(k))) : { PK: input.Key.PK, SK: input.Key.SK };
-      const expr = input.UpdateExpression || "";
-      const vals = input.ExpressionAttributeValues || {};
+      const stored = this.store.get(k);
+      const item = stored ? JSON.parse(JSON.stringify(stored)) : { PK: input.Key.PK, SK: input.Key.SK };
       const names = input.ExpressionAttributeNames || {};
-      const resolve = (t) => (t.startsWith("#") ? names[t] : t);
-      const addM = expr.match(/ADD\s+(.+?)(?:\s+SET\s+|$)/i);
-      const setM = expr.match(/SET\s+(.+?)(?:\s+ADD\s+|$)/i);
-      if (addM) for (const part of addM[1].split(",")) { const [a, v] = part.trim().split(/\s+/); const nm = resolve(a); item[nm] = (item[nm] || 0) + (vals[v] || 0); }
-      if (setM) for (const part of setM[1].split(",")) { const [lhs, rhs] = part.split("=").map((x) => x.trim()); item[resolve(lhs)] = vals[rhs]; }
+      const vals = input.ExpressionAttributeValues || {};
+      if (input.ConditionExpression && !evalCondition(input.ConditionExpression, item, names, vals)) {
+        const e = new Error("ConditionalCheckFailed");
+        e.name = "ConditionalCheckFailedException";
+        throw e;
+      }
+      const expr = input.UpdateExpression || "";
+      const removeMatch = expr.match(/REMOVE\s+(.+?)(?:\s+SET\s+|\s+ADD\s+|$)/is);
+      const setMatch = expr.match(/SET\s+(.+?)(?:\s+REMOVE\s+|\s+ADD\s+|$)/is);
+      const addMatch = expr.match(/ADD\s+(.+?)(?:\s+SET\s+|\s+REMOVE\s+|$)/is);
+      if (removeMatch) {
+        for (const p of splitTopLevel(removeMatch[1], ",")) removeAtPath(item, resolvePath(p, names));
+      }
+      if (addMatch) {
+        for (const part of splitTopLevel(addMatch[1], ",")) {
+          const [a, v] = part.trim().split(/\s+/);
+          const segs = resolvePath(a, names);
+          setAtPath(item, segs, (getAtPath(item, segs) || 0) + vals[v]);
+        }
+      }
+      if (setMatch) {
+        for (const part of splitTopLevel(setMatch[1], ",")) {
+          const eq = part.indexOf("=");
+          const lhs = part.slice(0, eq).trim();
+          const rhs = part.slice(eq + 1).trim();
+          const segs = resolvePath(lhs, names);
+          const ifm = rhs.match(/^if_not_exists\((.+),\s*(:\w+)\)$/);
+          let value;
+          if (ifm) {
+            const existing = getAtPath(item, resolvePath(ifm[1].trim(), names));
+            value = existing !== undefined ? existing : vals[ifm[2]];
+          } else {
+            value = vals[rhs];
+          }
+          setAtPath(item, segs, value);
+        }
+      }
       this.store.set(k, item);
       if (input.ReturnValues === "ALL_NEW" || input.ReturnValues === "UPDATED_NEW") return { Attributes: JSON.parse(JSON.stringify(item)) };
       return {};
