@@ -8,7 +8,9 @@ import {
   handlePostNeedStatus, handlePostFlag, handleGetFlags,
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers } from "./controllers/offerController.js";
-import { handleGetDashboard, handlePostNeedClaim } from "./controllers/meController.js";
+import {
+  handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleDeleteMissing,
+} from "./controllers/meController.js";
 import { handleGetModerationQueue, handlePostModeration } from "./controllers/moderationController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
 import {
@@ -34,6 +36,15 @@ export async function route(event, ctx) {
   if (method === "POST" && path === "/me/ack-guidelines") return await handleAckGuidelines(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/me/dashboard") return await handleGetDashboard(event, { fetchJwks, getDdb, env });
   if (method === "POST" && path === "/me/needs/claim") return await handlePostNeedClaim(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/me/missing/presign") return await handlePostMissingPresign(event, { fetchJwks, getDdb, env, fetchImpl });
+  if (method === "PUT" && /^\/me\/missing\/[^\/]+$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[3]);
+    return await handlePutMissing(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "DELETE" && /^\/me\/missing\/[^\/]+$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[3]);
+    return await handleDeleteMissing(event, { fetchJwks, getDdb, env }, id);
+  }
   if (method === "GET" && path === "/admin/users/lookup") return await handleAdminUsersLookup(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/users") return await handleAdminUsersList(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });

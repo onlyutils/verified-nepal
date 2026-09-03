@@ -56,6 +56,9 @@ pnpm build
 - `POST /needs` → anonymous (+ Turnstile) create need → `201 {id, refCode}` (pending; the `claimCode` is minted by the moderator on publish); optional `Authorization: Bearer` writes a private ownership pointer when present, while the need itself stays anonymous
 - `GET /me/dashboard` → signed-in; `{missing:[], needs:[{id,refCode,status,category,district,ward,createdAt,expiresAt}], offers:[{id,status,categories,districts,createdAt,expiresAt}]}` from the caller's private `USER#<sub>` pointers. Public need/offer views are unchanged.
 - `POST /me/needs/claim` → signed-in `{refCode}`; attaches an anonymous need to the caller's dashboard → `200 {ok:true,id}` / `404`. Idempotent.
+- `POST /me/missing/presign` → signed-in `{filename,contentType,size}`; proxies an authenticated photo presign to OnlyUtils media → `200 {uploadUrl,fileId,publicUrl,headers?}` / `503 {error:'media_not_configured'}`.
+- `PUT /me/missing/{id}` → signed-in upsert of one private missing-person poster; owner-checked on update → `200 {id,updatedAt}` / `403`.
+- `DELETE /me/missing/{id}` → signed-in delete of an owned private missing-person poster and its dashboard pointer → `204` / `403` / `404`.
 - `GET /needs?district=&ward=&category=&status=&cursor=` → anonymous list needs (masked, status-filtered)
 - `GET /status/{refCode}` → anonymous lookup need by refCode → `{status, category, district, createdAt, expiresAt}` plus `claimCode` once the need is published/matched/fulfilled
 - `POST /needs/{refCode}/renew` → anonymous renew own need by refCode (extends TTL)
