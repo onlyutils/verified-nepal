@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE, getMe } from "@/lib/api";
+import { clearTokens, isTokenExpired, loadTokens, refreshAccessToken, saveTokens, TOKENS_EVENT } from "@/lib/tokens";
 
 export interface DeskProfile {
   sub?: string;
@@ -14,8 +15,6 @@ export interface DeskProfile {
 const AUTH_HOST = "https://auth.onlyutils.com";
 const PKCE_VERIFIER_KEY = "pkce_verifier";
 const PKCE_STATE_KEY = "pkce_state";
-const TOKEN_KEY = "ou_tokens";
-
 type TokenResponse = {
   access_token: string;
   refresh_token: string;
@@ -38,46 +37,6 @@ async function pkcePair(): Promise<{ verifier: string; challenge: string }> {
   return { verifier, challenge };
 }
 
-function loadTokens(): TokenResponse | null {
-  try {
-    const raw = sessionStorage.getItem(TOKEN_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as TokenResponse;
-    if (parsed?.access_token && parsed?.refresh_token) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function saveTokens(tokens: TokenResponse): void {
-  const toStore = {
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    expires_in: tokens.expires_in,
-  };
-  sessionStorage.setItem(TOKEN_KEY, JSON.stringify(toStore));
-}
-
-function clearTokens(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
-}
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return false;
-    let b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const pad = b64.length % 4;
-    if (pad) b64 += "=".repeat(4 - pad);
-    const payload = JSON.parse(atob(b64));
-    if (typeof payload.exp !== "number") return false;
-    return payload.exp * 1000 <= Date.now();
-  } catch {
-    return false;
-  }
-}
-
 export function useGoogleAuth() {
   const clientId = import.meta.env.VITE_OU_CLIENT_ID as string | undefined;
   const [accessToken, setAccessToken] = useState<string | null>(() => {
@@ -92,6 +51,16 @@ export function useGoogleAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sync = () => setAccessToken(loadTokens()?.access_token ?? null);
+    window.addEventListener(TOKENS_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(TOKENS_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   const signIn = useCallback(async () => {
     if (!clientId) return;
@@ -240,43 +209,28 @@ export function useGoogleAuth() {
     setError(null);
 
     const tryRefresh = async (): Promise<boolean> => {
-      const stored = loadTokens();
-      const refreshToken = stored?.refresh_token;
-      if (!refreshToken) return false;
-      try {
-        const res = await fetch(`${API_BASE}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            refresh_token: refreshToken,
-          }),
-        });
-        if (!res.ok) throw new Error("refresh failed");
-        const newTokens = (await res.json()) as TokenResponse;
-        saveTokens(newTokens);
-        if (cancelled) return true;
-        setAccessToken(newTokens.access_token);
-        try {
-          const data2 = await getMe(newTokens.access_token);
-          if (cancelled) return true;
-          const raw2 = data2 as DeskProfile & { user?: DeskProfile };
-          const normalized2 = (raw2.user as DeskProfile) ?? (raw2 as DeskProfile);
-          setProfile(normalized2);
-          setError(null);
-        } catch {
-          if (cancelled) return true;
-          setProfile(null);
-          setError(null);
-        }
-        return true;
-      } catch {
-        if (cancelled) return true;
-        clearTokens();
-        setAccessToken(null);
+      if (!loadTokens()?.refresh_token) return false;
+      const fresh = await refreshAccessToken(API_BASE);
+      if (cancelled) return true;
+      if (!fresh) {
+        setAccessToken(loadTokens()?.access_token ?? null);
         setProfile(null);
         setError(null);
         return true;
       }
+      setAccessToken(fresh);
+      try {
+        const data2 = await getMe(fresh);
+        if (cancelled) return true;
+        const raw2 = data2 as DeskProfile & { user?: DeskProfile };
+        setProfile((raw2.user as DeskProfile) ?? (raw2 as DeskProfile));
+        setError(null);
+      } catch {
+        if (cancelled) return true;
+        setProfile(null);
+        setError(null);
+      }
+      return true;
     };
 
     const fetchProfile = async () => {

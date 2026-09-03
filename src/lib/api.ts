@@ -1,3 +1,6 @@
+// Relative .ts import so the Node test runner (no "@/" alias) can load this module.
+import { refreshAccessToken } from "./tokens.ts";
+
 export const API_BASE =
   ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
 
@@ -117,7 +120,16 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
     ...((opts.headers as Record<string, string>) ?? {}),
   };
   if (opts.token) headers["Authorization"] = `Bearer ${opts.token}`;
-  const res = await fetch(url, { ...opts, headers });
+  let res = await fetch(url, { ...opts, headers });
+  // Expired access token mid-session: refresh once and retry, so an active
+  // user never sees "sign-in expired" while the refresh token is still good.
+  if (res.status === 401 && opts.token) {
+    const fresh = await refreshAccessToken(API_BASE, opts.token);
+    if (fresh && fresh !== opts.token) {
+      headers["Authorization"] = `Bearer ${fresh}`;
+      res = await fetch(url, { ...opts, headers });
+    }
+  }
   const text = await res.text();
   let data: unknown = null;
   try {
