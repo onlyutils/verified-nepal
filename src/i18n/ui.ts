@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/types";
+
 export const uiStrings = {
   en: {
     projectTypeTuin: "Tuin",
@@ -18,6 +20,9 @@ export const uiStrings = {
     searchNoResultsFor: "No results for “{query}”",
     searchNoQuery: "Type a name to search",
     searchUnavailable: "Search unavailable",
+    nudgeContinueWithGoogle: "Continue with Google",
+    nudgeDismiss: "Not now",
+    nudgePrivacy: "Your request stays anonymous. Sign-in only lets you find it again.",
   },
   ne: {
     projectTypeTuin: "टुइन",
@@ -38,5 +43,8 @@ export const uiStrings = {
     searchNoResultsFor: "“{query}” का लागि कुनै नतिजा छैन",
     searchNoQuery: "खोज्न नाम टाइप गर्नुहोस्",
     searchUnavailable: "खोज अनुपलब्ध",
+    nudgeContinueWithGoogle: "Google बाट जारी राख्नुहोस्",
+    nudgeDismiss: "अहिले होइन",
+    nudgePrivacy: "तपाईंको अनुरोध गुमनाम नै रहन्छ। साइन इनले तपाईंलाई यो फेरि भेट्न मात्र मद्दत गर्छ।",
   },
-} as const;
+} satisfies Record<Language, Record<string, string>>;
