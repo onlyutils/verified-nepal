@@ -1,4 +1,6 @@
 import { Newspaper } from "lucide-react";
+import { ArticleBody } from "@/articles/render";
+import { articlesPublicStrings } from "@/i18n/articles-public";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +14,30 @@ function localized(value: string | { en: string; ne?: string }, language: "en" |
 }
 function statusLabel(t: Record<string, string>, status: string) {
   return t[`deskStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`] ?? status;
+}
+
+function ArticlePreview({ dispatch, language }: { dispatch: NonNullable<DeskModel["dispatches"]>[number]; language: "en" | "ne" }) {
+  const t = articlesPublicStrings[language];
+  return (
+    <div className="space-y-5">
+      {dispatch.cover?.url ? (
+        <figure className="space-y-2">
+          <img
+            src={dispatch.cover.url}
+            alt={dispatch.cover.caption || localized(dispatch.title, language)}
+            className="aspect-video w-full rounded-xl object-cover"
+          />
+          <figcaption className="space-y-1 text-sm text-muted-foreground">
+            {dispatch.cover.caption ? <span className="block">{dispatch.cover.caption}</span> : null}
+            <span className="block">
+              {t.source}: {dispatch.cover.source}
+            </span>
+          </figcaption>
+        </figure>
+      ) : null}
+      <ArticleBody blocks={dispatch.blocks} body={dispatch.body} language={language} />
+    </div>
+  );
 }
 
 export function Dispatches({ model }: { model: DeskModel }) {
@@ -90,7 +116,7 @@ export function Dispatches({ model }: { model: DeskModel }) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="rounded-lg border bg-secondary p-4">
-                    <p className="whitespace-pre-wrap text-sm leading-6">{localized(dispatch.body, model.language)}</p>
+                    <ArticlePreview dispatch={dispatch} language={model.language} />
                   </div>
                   <div className="rounded-lg border border-dashed p-4">
                     <p className="text-xs font-semibold text-muted-foreground">{model.ds.dispatchPrivateLabel}</p>

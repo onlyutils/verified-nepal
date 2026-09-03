@@ -38,8 +38,8 @@ const enSections: Section[] = [
       "• Needs (get-help): beneficiary name, optional phone, district, ward, household size, category and description; registrant name and phone when you register on behalf of someone else (with their consent); language. Turnstile token if enabled for abuse prevention.",
       "• Offers (give-help): helper display name, phone, optional organisation name and contact, districts and categories you can help with, and description.",
       "• Projects (community infrastructure): title and description, type, district/ward/location text, cost estimate, committee name, contact person and phone, bank and digital-wallet details. Photos and updates you attach are stored as submitted.",
-      "• Articles: title, body (plain text / markdown-lite, up to 6,000 characters), author display name, place, private email for follow-up, tags (up to 3), and language. Turnstile token when configured.",
-      "• Helper and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role). Sign-in session data lives in your browser's session storage / local storage; no other cookies are set.",
+      "• Articles: title, block content, cover and media sources/captions, author display name, place, tags (up to 3), and language. Writing requires a Google sign-in; the author's email is the email on that Google account and is kept private. Sign-in session data lives in your browser's session storage / local storage; no other cookies are set.",
+      "• Helper, article-author and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role).",
       "We set no analytics trackers, no advertising trackers, and no cookies beyond sign-in session storage. Your language, selected district, and whether you dismissed the emergency banner are stored locally in your browser and never leave your device.",
     ],
   },
@@ -54,8 +54,8 @@ const enSections: Section[] = [
   {
     title: "6. What is public and what is never public — by design",
     body: [
-      "Public on the site: masked name (e.g., R. Gurung), district and ward-level location only, category, description (for needs and projects), and for articles the published title, excerpt/body, display name, place and tags. For projects, committee bank and wallet details become public only after moderator verification of the committee, by design.",
-      "Never public: phone numbers, registrant identity and contact, household size and household details, author email for articles, and any private contact for offers. Phones and registrant/household information are visible only to moderators and are never shown on public boards, ledger, or article pages.",
+      "Public on the site: masked name (e.g., R. Gurung), district and ward-level location only, category, description (for needs and projects), and for articles the published title, excerpt/body, display name, place, cover/media credits and tags. For projects, committee bank and wallet details become public only after moderator verification of the committee, by design.",
+      "Never public: phone numbers, registrant identity and contact, household size and household details, the Google account email used by an article author, and any private contact for offers. Phones, account emails and registrant/household information are visible only to moderators and are never shown on public boards, ledger, or article pages.",
       "Nothing you type into the Find a Person search leaves your browser: searching is performed locally against the mirrored dataset.",
     ],
   },
@@ -70,7 +70,7 @@ const enSections: Section[] = [
   {
     title: "8. Who can see private data",
     body: [
-      "Private details (phones, registrant information, household details, article author email) are visible only to moderators who sign in via OnlyUtils. Moderators are bound by written guidelines: they use private data only to verify, match and fulfil requests, never share it outside the desk, and redact it before any public display.",
+      "Private details (phones, registrant information, household details, and the Google account email attached to an article) are visible only to moderators who sign in via OnlyUtils. Moderators are bound by written guidelines: they use private data only to verify, match and fulfil requests, never share it outside the desk, and redact it before any public display.",
       "Every moderation action — publish, reject, verify, match, fulfil, redeem — creates an AUDIT item that records who acted, when, and why, so the history can be reviewed.",
     ],
   },
@@ -125,7 +125,7 @@ const enSections: Section[] = [
   {
     title: "16. Intellectual property",
     body: [
-      "The mirrored records remain the property of their originating sources. Map imagery, boundary, and river data belong to the providers credited on the map (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap under ODbL). Article and project content remains the author's, licensed to the site for non-commercial publication. The site's own design, text, and code are the work of the Maintainer. You are granted a limited, revocable, non-exclusive licence to view the site and to share its content for lawful, non-commercial purposes with source attribution preserved; no other rights are granted.",
+      "The mirrored records remain the property of their originating sources. Map imagery, boundary, and river data belong to the providers credited on the map (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap under ODbL). Article and project content remains the author's, licensed to the site for non-commercial publication. Article authors sign in with Google, and the email on that account remains private. The site's own design, text, and code are the work of the Maintainer. You are granted a limited, revocable, non-exclusive licence to view the site and to share its content for lawful, non-commercial purposes with source attribution preserved; no other rights are granted.",
     ],
   },
   {
@@ -201,8 +201,8 @@ const neSections: Section[] = [
       "• आवश्यकता (get-help): लाभग्राहीको नाम, वैकल्पिक फोन, जिल्ला/वडा, परिवार संख्या, श्रेणी र विवरण; अरूका लागि दर्ता गर्दा (उनीहरूको सहमतिमा) दर्ता गर्ने व्यक्तिको नाम/फोन र भाषा। दुरुपयोग रोक्न Turnstile टोकन (कन्फिगर भएमा)।",
       "• सहयोग प्रस्ताव (give-help): सहयोगीको नाम, फोन, वैकल्पिक संस्थाको नाम/सम्पर्क, सहयोग गर्न सक्ने जिल्ला/श्रेणी र विवरण।",
       "• परियोजना: शीर्षक/विवरण, प्रकार, जिल्ला/वडा/स्थान, लागत अनुमान, समितिको नाम, सम्पर्क व्यक्ति/फोन, बैंक र वालेट विवरण। जोडिएका तस्बिर/अपडेट पेश गरिएकै रूपमा भण्डारण हुन्छ।",
-      "• डिस्प्याच (लेख): शीर्षक, मूलपाठ (६,००० अक्षरसम्म), लेखकको देखिने नाम, ठाउँ, फलोअपका लागि निजी इमेल, ट्याग (३ सम्म) र भाषा। कन्फिगर भएमा Turnstile टोकन।",
-      "• सहयोगी/सम्पादक साइन-इन: OnlyUtils प्रमाणीकरण सेवा मार्फत Google साइन-इन। साइटले सत्र टोकन र प्राप्त प्रोफाइल (इमेल, नाम, भूमिका) मात्र राख्छ। साइन-इन सत्र डेटा तपाईंको ब्राउजरको session storage / local storage मा रहन्छ; अरू कुनै कुकी छैन।",
+      "• डिस्प्याच (लेख): शीर्षक, ब्लक सामग्री, कभर र मिडियाका स्रोत/क्याप्सन, लेखकको देखिने नाम, ठाउँ, ट्याग (३ सम्म) र भाषा। लेख लेख्न Google साइन-इन आवश्यक हुन्छ; लेखकको इमेल त्यही Google खाताको इमेल हो र निजी राखिन्छ। साइन-इन सत्र डेटा तपाईंको ब्राउजरको session storage / local storage मा रहन्छ; अरू कुनै कुकी छैन।",
+      "• सहयोगी, लेख-लेखक/सम्पादक र मोडरेटर साइन-इन: OnlyUtils प्रमाणीकरण सेवा मार्फत Google साइन-इन। साइटले सत्र टोकन र प्राप्त प्रोफाइल (इमेल, नाम, भूमिका) मात्र राख्छ।",
       "हामी कुनै एनालिटिक्स वा विज्ञापन ट्र्याकर राख्दैनौं, र साइन-इन सत्रभन्दा बाहेक कुनै कुकी छैन। भाषा, रोजेको जिल्ला र आपतकालीन ब्यानर हटाएको अवस्था तपाईंको ब्राउजरमा मात्र रहन्छ, बाहिर जाँदैन।",
     ],
   },
@@ -217,8 +217,8 @@ const neSections: Section[] = [
   {
     title: "६. के सार्वजनिक हुन्छ, के कहिल्यै हुँदैन",
     body: [
-      "सार्वजनिक: मास्क गरिएको नाम (जस्तै R. Gurung), जिल्ला र वडा-स्तरको स्थान मात्र, श्रेणी, विवरण (आवश्यकता/परियोजनाका लागि) र लेख प्रकाशनमा शीर्षक, अंश/मूलपाठ, देखिने नाम, ठाउँ र ट्याग। परियोजनामा समितिको बैंक/वालेट विवरण सम्पादकले समिति प्रमाणित गरेपछि मात्र सार्वजनिक हुन्छ — डिजाइन नै त्यस्तै हो।",
-      "कहिल्यै सार्वजनिक हुँदैन: फोन नम्बर, दर्ता गर्ने व्यक्तिको पहिचान/सम्पर्क, परिवार संख्या/विवरण, लेखका लागि लेखकको इमेल, प्रस्तावको निजी सम्पर्क। फोन र दर्ता/परिवार विवरण केवल सम्पादकले मात्र देख्छन् र कहिल्यै सार्वजनिक बोर्ड, लेजर वा लेख पृष्ठमा देखिँदैन।",
+      "सार्वजनिक: मास्क गरिएको नाम (जस्तै R. Gurung), जिल्ला र वडा-स्तरको स्थान मात्र, श्रेणी, विवरण (आवश्यकता/परियोजनाका लागि) र लेख प्रकाशनमा शीर्षक, अंश/मूलपाठ, देखिने नाम, ठाउँ, कभर/मिडिया स्रोत र ट्याग। परियोजनामा समितिको बैंक/वालेट विवरण सम्पादकले समिति प्रमाणित गरेपछि मात्र सार्वजनिक हुन्छ — डिजाइन नै त्यस्तै हो।",
+      "कहिल्यै सार्वजनिक हुँदैन: फोन नम्बर, दर्ता गर्ने व्यक्तिको पहिचान/सम्पर्क, परिवार संख्या/विवरण, लेख-लेखकले प्रयोग गरेको Google खाताको इमेल, प्रस्तावको निजी सम्पर्क। फोन, खाता इमेल र दर्ता/परिवार विवरण केवल सम्पादकले मात्र देख्छन् र कहिल्यै सार्वजनिक बोर्ड, लेजर वा लेख पृष्ठमा देखिँदैन।",
       "व्यक्ति खोज बक्समा टाइप गरेको कुरा तपाईंको ब्राउजरबाट बाहिर जाँदैन: खोज मिरर डेटासेटमा स्थानीय रूपमा हुन्छ।",
     ],
   },
@@ -233,7 +233,7 @@ const neSections: Section[] = [
   {
     title: "८. निजी डेटा कसले देख्न सक्छ",
     body: [
-      "निजी विवरण (फोन, दर्ता जानकारी, परिवार विवरण, लेखको निजी इमेल) OnlyUtils मार्फत साइन-इन गरेका सम्पादकले मात्र देख्न सक्छन्। सम्पादक लिखित निर्देशिकामा बाँधिएका छन्: प्रमाणीकरण/मिलान/पूरा गर्न मात्र प्रयोग गर्ने, डेस्क बाहिर साझा नगर्ने, र प्रकाशनअघि निजी फिल्ड हटाउने।",
+      "निजी विवरण (फोन, दर्ता जानकारी, परिवार विवरण र लेखसँग जोडिएको Google खाताको इमेल) OnlyUtils मार्फत साइन-इन गरेका सम्पादकले मात्र देख्न सक्छन्। सम्पादक लिखित निर्देशिकामा बाँधिएका छन्: प्रमाणीकरण/मिलान/पूरा गर्न मात्र प्रयोग गर्ने, डेस्क बाहिर साझा नगर्ने, र प्रकाशनअघि निजी फिल्ड हटाउने।",
       "हरेक सम्पादन कार्य — प्रकाशन, अस्वीकार, प्रमाणीकरण, मिलान, पूरा, रिडिम — AUDIT वस्तुका रूपमा कसले, कहिले, किन भन्ने विवरणसहित लेखिन्छ।",
     ],
   },
@@ -288,7 +288,7 @@ const neSections: Section[] = [
   {
     title: "१६. बौद्धिक सम्पत्ति",
     body: [
-      "मिरर रेकर्ड मूल स्रोतकै सम्पत्ति रहन्छ। नक्सा छवि/सीमा/नदी डेटा नक्सामा श्रेय दिइएका प्रदायक (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap ODbL) को हो। लेख/परियोजनाको सामग्री लेखककै हुन्छ, गैर-व्यावसायिक प्रकाशनका लागि साइटलाई इजाजत दिइएको मानिन्छ। साइटको डिजाइन/लेख/कोड सञ्चालकको हो। स्रोत उल्लेखसहित हेर्ने र वैध गैर-व्यावसायिक साझा गर्ने सीमित इजाजत दिइन्छ; अरू अधिकार छैन।",
+      "मिरर रेकर्ड मूल स्रोतकै सम्पत्ति रहन्छ। नक्सा छवि/सीमा/नदी डेटा नक्सामा श्रेय दिइएका प्रदायक (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap ODbL) को हो। लेख/परियोजनाको सामग्री लेखककै हुन्छ, गैर-व्यावसायिक प्रकाशनका लागि साइटलाई इजाजत दिइएको मानिन्छ। लेखका लेखक Google बाट साइन-इन गर्छन् र त्यही खाताको इमेल निजी रहन्छ। साइटको डिजाइन/लेख/कोड सञ्चालकको हो। स्रोत उल्लेखसहित हेर्ने र वैध गैर-व्यावसायिक साझा गर्ने सीमित इजाजत दिइन्छ; अरू अधिकार छैन।",
     ],
   },
   {
@@ -339,7 +339,7 @@ const neSections: Section[] = [
 
 const nepaliSummaryHonest = [
   "यो साइट एक व्यक्तिले स्वयंसेवी रूपमा चलाउनु भएको हो; नेपाल सरकार वा NDRRMA सँग आबद्ध छैन। यहाँको उद्धार/बेपत्ता तथ्यांक NDRRMA बाट जस्ताको तस्तै लिइएको हो र हरेक बिन्दुमा स्रोत खुलाइएको छ।",
-  "हामी आवश्यकता, सहयोग प्रस्ताव, परियोजना र लेखमा तपाईंले दिने विवरण (नाम, जिल्ला/वडा, विवरण, सहमतिमा दर्ता गरिएको फोन) र OnlyUtils मार्फत Google साइन-इन मात्र लिन्छौं। कुनै एनालिटिक्स/विज्ञापन ट्र्याकर छैन, साइन-इन सत्रबाहेक कुनै कुकी छैन।",
+  "हामी आवश्यकता, सहयोग प्रस्ताव, परियोजना र लेखमा तपाईंले दिने विवरण (नाम, जिल्ला/वडा, विवरण, कभर/मिडिया स्रोत र OnlyUtils मार्फत Google साइन-इन) मात्र लिन्छौं। लेख-लेखकको इमेल Google खाताबाट आउँछ र निजी रहन्छ। कुनै एनालिटिक्स/विज्ञापन ट्र्याकर छैन, साइन-इन सत्रबाहेक कुनै कुकी छैन।",
   "सार्वजनिकमा मास्क गरिएको नाम र वडा-स्तरको स्थान मात्र देखिन्छ; फोन, दर्ता गर्नेको विवरण र परिवार जानकारी कहिल्यै सार्वजनिक हुँदैन। परियोजनाको बैंक विवरण समिति फोनबाट प्रमाणित भएपछि मात्र देखिन्छ।",
   "आवश्यकता ३० दिनपछि म्याद सकिन्छ (नवीकरण नगरे हट्छ); लेजर मास्क गरिएको सार्वजनिक अडिट रेकर्डका रूपमा रहन्छ। निजी डेटा सम्पादकले मात्र देख्छन् र हरेक कार्य अडिट-लग हुन्छ।",
   "आफ्नो डेटा सच्याउन/हटाउन verifiednepal01@gmail.com मा सम्पर्क गर्नुहोस् — लक्ष्य ७ दिन। अरूका लागि दर्ता गर्दा उनीहरूको सहमति अनिवार्य छ। यो साइटले कहिल्यै पैसा चलाउँदैन। लागू कानून: व्यक्तिगत गोपनीयता ऐन २०७५।",

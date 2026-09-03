@@ -10,11 +10,14 @@ export interface DispatchLike {
   title: Localized;
   body: Localized;
   author?: { displayName?: string; place?: string };
+  cover?: { url?: string; caption?: string };
 }
 
 export interface ShareMeta {
   title: string;
   description: string;
+  image?: string;
+  imageAlt?: string;
 }
 
 function text(value: Localized | undefined): string {
@@ -27,7 +30,10 @@ export function dispatchMeta(item: DispatchLike): ShareMeta {
   const excerpt = text(item.body).replace(/\s+/g, " ").trim().slice(0, 200);
   const by = [item.author?.displayName, item.author?.place].filter(Boolean).join(", ");
   const description = [excerpt, by ? `By ${by}` : ""].filter(Boolean).join(" — ");
-  return { title: `${title} · verifiedNepal`, description };
+  const image = item.cover?.url?.trim();
+  return image
+    ? { title: `${title} · verifiedNepal`, description, image, imageAlt: item.cover?.caption?.trim() || title }
+    : { title: `${title} · verifiedNepal`, description };
 }
 
 export function climateMeta(): ShareMeta {

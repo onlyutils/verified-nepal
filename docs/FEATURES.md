@@ -202,10 +202,15 @@ It's a lightweight, honest paper trail rather than formal accounting.
 
 ## 8. Articles — news and stories
 
-A **article** is a short update from the ground: a situation report, a personal story, news
+An **article** is a short update from the ground: a situation report, a personal story, news
 about the relief effort, tagged by topic (floods, landslides, community stories, and so on).
-Anyone can submit one, and — like everything else — a moderator has to approve it before it's
-public.
+Writing requires a Google sign-in. Authors can save drafts, add a cover and sourced image or
+video blocks, return later to edit, and submit for moderator review. Published articles show
+the author's display name and place, but never their account email. Readers can view, like and
+share published articles; the page keeps simple counters for each.
+
+Every article still goes through moderation before it is public. Older plain-text articles
+continue to render without a migration.
 
 ---
 
@@ -260,8 +265,8 @@ Alongside this, public names are always shown masked (for example "Ram K." inste
 name), so the system can stay open and transparent without exposing anyone's identity.
 
 And every kind of public submission — needs, offers, organizations, articles, projects,
-project updates — follows the exact same pattern: **anyone can submit it, nothing is public
-until a moderator approves it, and every approval is logged.** Once you understand this
+project updates — follows the exact same pattern: **a contributor can submit it, nothing is
+public until a moderator approves it, and every approval is logged.** Once you understand this
 pattern once, you understand most of the site.
 
 The whole interface is also fully bilingual: every piece of text exists in English and

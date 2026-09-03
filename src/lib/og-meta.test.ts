@@ -19,6 +19,21 @@ test("dispatchMeta tolerates plain strings and missing author", () => {
   assert.deepEqual(meta, { title: "Plain · verifiedNepal", description: "Short" });
 });
 
+test("dispatchMeta includes the cover image and caption for sharing", () => {
+  const meta = dispatchMeta({
+    title: "A clear title",
+    body: "Short",
+    cover: { url: " https://cdn.example/cover.jpg ", caption: "River valley after rain" },
+  });
+  assert.equal(meta.image, "https://cdn.example/cover.jpg");
+  assert.equal(meta.imageAlt, "River valley after rain");
+});
+
+test("dispatchMeta uses the title as image alt text when the cover has no caption", () => {
+  const meta = dispatchMeta({ title: "A clear title", body: "Short", cover: { url: "https://cdn.example/cover.jpg" } });
+  assert.equal(meta.imageAlt, "A clear title");
+});
+
 test("climateMeta includes the computed share and Nepal in the description", () => {
   const meta = climateMeta();
   assert.match(meta.title, /%/);
