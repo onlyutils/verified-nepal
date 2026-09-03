@@ -3,6 +3,7 @@ import {
   ApiError,
   ackGuidelines,
   claimQueueItem,
+  getAdminClimate,
   getAdminStats,
   getAdminUsers,
   getClaimsPrint,
@@ -26,6 +27,7 @@ import {
   syncClaims,
   updateNeedStatus,
   type AdminStatsResponse,
+  type AdminClimateStats,
   type AdminUser,
   type CenterFlagInboxItem,
   type ClaimPrintItem,
@@ -48,9 +50,9 @@ import { deskStrings } from "@/i18n/desk";
 import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
-export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "orgs" | "admin";
+export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "orgs" | "admin" | "climate";
 
-const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "orgs", "admin"]);
+const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "orgs", "admin", "climate"]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
@@ -172,6 +174,9 @@ export function useDesk(language: Language) {
   const [adminStats, setAdminStats] = useState<AdminStatsResponse | null>(null);
   const [adminStatsLoading, setAdminStatsLoading] = useState(false);
   const [adminStatsError, setAdminStatsError] = useState<string | null>(null);
+  const [climateStats, setClimateStats] = useState<AdminClimateStats | null>(null);
+  const [climateStatsLoading, setClimateStatsLoading] = useState(false);
+  const [climateStatsError, setClimateStatsError] = useState<string | null>(null);
 
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -337,6 +342,18 @@ export function useDesk(language: Language) {
       setAdminStatsLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadClimateStats = useCallback(async () => {
+    if (!auth.idToken) return;
+    setClimateStatsLoading(true);
+    setClimateStatsError(null);
+    try {
+      setClimateStats(await getAdminClimate(auth.idToken));
+    } catch (error) {
+      setClimateStatsError(apiErrorMessage(error, language));
+    } finally {
+      setClimateStatsLoading(false);
+    }
+  }, [auth.idToken, language]);
 
   useEffect(() => {
     if (!auth.idToken || !auth.profile || (auth.profile.role !== "moderator" && auth.profile.role !== "admin")) return;
@@ -359,11 +376,14 @@ export function useDesk(language: Language) {
       void loadAdminModerators();
       void loadAdminStats();
     }
+    if (activeSection === "climate" && auth.profile?.role === "admin") void loadClimateStats();
   }, [
     activeSection,
     auth.idToken,
+    auth.profile?.role,
     loadAdminModerators,
     loadAdminStats,
+    loadClimateStats,
     loadCenterFlags,
     loadDispatches,
     loadFlags,
@@ -849,6 +869,10 @@ export function useDesk(language: Language) {
     adminStatsLoading,
     adminStatsError,
     loadAdminStats,
+    climateStats,
+    climateStatsLoading,
+    climateStatsError,
+    loadClimateStats,
     handleAdminLookup,
     handleAdminSave,
     actionMsg,

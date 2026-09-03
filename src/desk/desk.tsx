@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { Building2, Flag, FolderKanban, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
+import { Building2, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import type { Language, Page } from "@/lib/types";
 import { Admin } from "./admin";
 import { Boards } from "./boards";
+import { ClimateStats } from "./climate";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
 import { AuthGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
@@ -59,7 +60,12 @@ export function Desk({
     { key: "projects", label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
     { key: "dispatches", label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
     { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
-    ...(auth.profile.role === "admin" ? [{ key: "admin" as DeskSection, label: t.deskAdminTab, icon: <ShieldCheck /> }] : []),
+    ...(auth.profile.role === "admin"
+      ? [
+          { key: "admin" as DeskSection, label: t.deskAdminTab, icon: <ShieldCheck /> },
+          { key: "climate" as DeskSection, label: model.ds.deskClimateTab, icon: <Globe /> },
+        ]
+      : []),
   ];
   const scopeText = model.isScoped ? t.deskScopeBadge.replace("{districts}", model.scopeLabel) : t.deskScopeAll;
   const aside = (
@@ -104,6 +110,7 @@ export function Desk({
         {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
         {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
         {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
+        {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
         <DeskDialogs model={model} />
       </div>
     </AppShell>
