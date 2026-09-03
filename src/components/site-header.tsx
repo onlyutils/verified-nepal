@@ -39,6 +39,7 @@ export function SiteHeader({
   const t = labels[language];
   const ts = shellStrings[language];
   const [menuOpen, setMenuOpen] = useState(false);
+  const signedIn = Boolean(useGoogleAuth().idToken);
   const otherLanguage = language === "en" ? "नेपाली" : "EN";
 
   return (
@@ -90,11 +91,13 @@ export function SiteHeader({
                   </SheetClose>
                 ))}
                 <div className="my-3 border-t" />
-                <SheetClose asChild>
-                  <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("desk")}>
-                    {t.deskTitle}
-                  </Button>
-                </SheetClose>
+                {signedIn ? null : (
+                  <SheetClose asChild>
+                    <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("desk")}>
+                      {t.deskTitle}
+                    </Button>
+                  </SheetClose>
+                )}
                 <SheetClose asChild>
                   <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("org")}>
                     {orgStrings[language].navMyOrg}
