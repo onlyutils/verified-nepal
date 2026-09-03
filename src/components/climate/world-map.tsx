@@ -71,7 +71,7 @@ export function WorldMap({
   return (
     <div className="space-y-2">
       <div className="h-80 overflow-hidden rounded-xl border">
-        <MapContainer center={[20, 8]} zoom={1} minZoom={1} className="h-full w-full" scrollWheelZoom={false} worldCopyJump>
+        <MapContainer center={[28.4, 84.1]} zoom={6} minZoom={1} className="h-full w-full" scrollWheelZoom={false} worldCopyJump>
           <GeoJSON
             key={selectedIso3}
             data={geoJson}
@@ -92,6 +92,10 @@ export function WorldMap({
                 ? `${country.name}: ${country.warming_c.toFixed(4)}°C · ${country.share_pct.toFixed(2)}%`
                 : `${(feature.properties?.name as string | undefined) ?? iso3} — ${noDataLabel}`;
               layer.bindTooltip(label, { sticky: true });
+              if (country && iso3 === selectedIso3) {
+                layer.bindPopup(label);
+                layer.on("add", () => layer.openPopup());
+              }
               layer.on("click", () => {
                 if (country) onSelect(country.iso3);
               });

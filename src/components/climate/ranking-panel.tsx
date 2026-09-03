@@ -133,25 +133,27 @@ export function RankingPanel({
       )}
 
       {tab === "bar" ? (
-        <div className="rounded-xl border p-4 pt-3">
-          <div className="mb-2 flex justify-between pl-2 pr-2 text-[10px] text-muted-foreground">
-            {[0, 0.25, 0.5, 0.75, 1].map((f) => (
-              <span key={f}>
-                {formatNumber(maxWarming * f, 3)} {unit}
-              </span>
-            ))}
+        <div className="rounded-xl border p-4">
+          <div className="flex gap-2">
+            <div className="mt-4 flex h-44 shrink-0 flex-col justify-between text-right text-[10px] text-muted-foreground">
+              {[1, 0.75, 0.5, 0.25, 0].map((f) => (
+                <span key={f}>
+                  {formatNumber(maxWarming * f, 3)} {unit}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-1 items-start gap-1 overflow-x-auto">
+              {yearRows.slice(0, 15).map((row) => (
+                <BarColumn key={row.iso3} row={row} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight={row.iso3 === selectedIso3} />
+              ))}
+              {!nepalInTop && nepalRow ? (
+                <div className="ml-1 border-l pl-2">
+                  <BarColumn row={nepalRow} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight />
+                </div>
+              ) : null}
+            </div>
           </div>
-          <div className="space-y-2">
-            {yearRows.slice(0, 15).map((row) => (
-              <BarRow key={row.iso3} row={row} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight={row.iso3 === selectedIso3} />
-            ))}
-            {!nepalInTop && nepalRow ? (
-              <>
-                <p className="border-t pt-3 text-xs text-muted-foreground">{t.nepalHighlightNote}</p>
-                <BarRow row={nepalRow} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight />
-              </>
-            ) : null}
-          </div>
+          {!nepalInTop && nepalRow ? <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">{t.nepalHighlightNote}</p> : null}
         </div>
       ) : null}
 
@@ -251,7 +253,7 @@ export function RankingPanel({
   );
 }
 
-function BarRow({
+function BarColumn({
   row,
   maxWarming,
   unit,
@@ -264,25 +266,24 @@ function BarRow({
   onSelect: (iso3: string) => void;
   highlight: boolean;
 }) {
-  const widthPct = maxWarming > 0 ? Math.max(2, (row.warming_c / maxWarming) * 100) : 0;
+  const heightPct = maxWarming > 0 ? Math.max(2, (row.warming_c / maxWarming) * 100) : 0;
+  const title = `${row.rank}. ${row.name}: ${formatNumber(row.warming_c)} ${unit}${row.share_pct !== null ? ` · ${formatNumber(row.share_pct, 2)}%` : ""}`;
   return (
     <button
       type="button"
       onClick={() => onSelect(row.iso3)}
-      className={`w-full space-y-1 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent ${highlight ? "bg-accent" : ""}`}
+      title={title}
+      aria-label={title}
+      className={`flex min-w-8 flex-1 flex-col items-center rounded-md px-0.5 pb-1 transition-colors hover:bg-accent ${highlight ? "bg-accent" : ""}`}
     >
-      <div className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="font-medium text-foreground">
-          {row.rank}. {row.name}
-        </span>
-        <span className="whitespace-nowrap text-muted-foreground">
-          {formatNumber(row.warming_c)} {unit}
-          {row.share_pct !== null ? ` · ${formatNumber(row.share_pct, 2)}%` : ""}
-        </span>
+      <div className="mt-4 flex h-44 w-full items-end">
+        <div className="relative w-full rounded-t-sm bg-primary transition-[height] duration-200" style={{ height: `${heightPct}%` }}>
+          <span className="absolute -top-4 left-0 right-0 text-center text-[10px] tabular-nums text-muted-foreground">{formatNumber(row.warming_c, 3)}</span>
+        </div>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-        <div className="h-full rounded-full bg-primary transition-[width] duration-200" style={{ width: `${widthPct}%` }} />
-      </div>
+      <span className="mt-1 max-h-20 truncate text-[11px] font-medium text-foreground [writing-mode:vertical-rl]">
+        {row.rank}. {row.name}
+      </span>
     </button>
   );
 }
