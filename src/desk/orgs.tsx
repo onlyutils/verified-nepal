@@ -181,6 +181,8 @@ export function Organizations({ model }: { model: DeskModel }) {
                   <TableHead>{model.ds.deskOrganization}</TableHead>
                   <TableHead>{model.ds.deskTableStatus}</TableHead>
                   <TableHead>{model.ds.deskTableLocation}</TableHead>
+                  <TableHead>{model.dos.orgContactEmailLabel}</TableHead>
+                  <TableHead>{model.dos.orgContactPhoneLabel}</TableHead>
                   <TableHead>{model.ds.deskOrganizationCreated}</TableHead>
                   <TableHead>{model.ds.deskOrganizationActions}</TableHead>
                 </TableRow>
@@ -196,6 +198,24 @@ export function Organizations({ model }: { model: DeskModel }) {
                       <StatusBadge tone={toneForStatus(org.status)}>{statusLabel(model, org.status)}</StatusBadge>
                     </TableCell>
                     <TableCell>{org.districts.join(", ")}</TableCell>
+                    <TableCell>
+                      {org.contactEmail ? (
+                        <a className="underline underline-offset-4" href={`mailto:${org.contactEmail}`}>
+                          {org.contactEmail}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {org.contactPhone ? (
+                        <a className="underline underline-offset-4" href={`tel:${org.contactPhone}`}>
+                          {org.contactPhone}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>{new Date(org.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <OrgActions model={model} status={org.status} id={org.id} />
