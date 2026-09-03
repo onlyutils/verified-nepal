@@ -3,6 +3,7 @@ import { Menu, UserRound } from "lucide-react";
 import { useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
+import { climateStrings } from "@/i18n/climate";
 import { meStrings } from "@/i18n/me";
 import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
@@ -20,6 +21,7 @@ const navPages = [
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
   ["dropCenters", "dropCenters"],
+  ["climate", "climate"],
   ["info", "info"],
   ["projects", "projects"],
   ["dispatches", "dispatches"],
@@ -132,6 +134,7 @@ export function SiteHeader({
 function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
+  if (page === "climate") return climateStrings[language].navLabel;
   if (page === "poster") return posterStrings[language].title;
   return t[key] ?? page;
 }

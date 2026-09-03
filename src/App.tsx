@@ -13,6 +13,7 @@ import { meStrings } from "@/i18n/me";
 import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { centerStrings } from "@/i18n/centers";
+import { climateStrings } from "@/i18n/climate";
 import type { Language, Page } from "@/lib/types";
 
 const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
@@ -38,6 +39,7 @@ const OrgDashboard = lazy(() => import("@/org/org-dashboard").then((m) => ({ def
 const DropCenters = lazy(() => import("@/pages/drop-centers").then((m) => ({ default: m.DropCenters })));
 const DropCenterDetail = lazy(() => import("@/pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
 const DonationStatusPage = lazy(() => import("@/pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
+const ClimatePage = lazy(() => import("@/pages/climate").then((m) => ({ default: m.ClimatePage })));
 
 const pagePaths: Record<Page, string> = {
   dashboard: "/",
@@ -65,6 +67,7 @@ const pagePaths: Record<Page, string> = {
   dropCenters: "/drop-centers",
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
+  climate: "/climate",
 };
 
 function pageFromPath(pathname: string): Page {
@@ -73,6 +76,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/org")) return "org";
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
+  if (pathname.startsWith("/climate")) return "climate";
   if (pathname.match(/^\/dispatches\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/dispatches")) return "dispatches";
   if (pathname.startsWith("/projects/register")) return "projectRegister";
@@ -122,6 +126,7 @@ function pageTitle(page: Page, language: Language): string {
     dropCenters: centerStrings[language].dropCentersTitle,
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
+    climate: climateStrings[language].title,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -321,6 +326,11 @@ export function App() {
                     navigate={navigate}
                     id={decodeURIComponent(window.location.pathname.split("/")[2] || "")}
                   />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "climate" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ClimatePage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "donationStatus" ? (

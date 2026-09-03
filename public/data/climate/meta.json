@@ -1,0 +1,28 @@
+{
+  "synced_at": "2026-09-03T14:55:17.781Z",
+  "latest_year": 2024,
+  "global_warming_c": 1.678361,
+  "unit": "°C",
+  "source": {
+    "title": "National contributions to climate change due to historical emissions of carbon dioxide, methane and nitrous oxide",
+    "authors": [
+      "Jones, Matthew W.",
+      "Peters, Glen P.",
+      "Gasser, Thomas",
+      "Andrew, Robbie M.",
+      "Schwingshackl, Clemens",
+      "Gütschow, Johannes",
+      "Houghton, Richard A.",
+      "Friedlingstein, Pierre",
+      "Pongratz, Julia",
+      "Le Quéré, Corinne"
+    ],
+    "doi": "10.5281/zenodo.16640595",
+    "version": "2025.1",
+    "publication_date": "2025-11-13",
+    "record_url": "https://zenodo.org/records/16640595",
+    "github_url": "https://github.com/jonesmattw/National_Warming_Contributions",
+    "license": "CC-BY-4.0"
+  },
+  "methodology_note": "GMST response values represent an estimated contribution to global mean surface temperature change (IPCC AR6 TCRE methodology), not observed temperature within that country."
+}

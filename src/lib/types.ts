@@ -25,7 +25,8 @@ export type Page =
   | "org"
   | "dropCenters"
   | "dropCenterDetail"
-  | "donationStatus";
+  | "donationStatus"
+  | "climate";
 
 export interface RescueStatus {
   id: number;

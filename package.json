@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "sync": "node scripts/sync.mjs",
+    "sync:climate": "node scripts/sync-climate.mjs",
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\""

@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
+import { climateStrings } from "@/i18n/climate";
 import { shellStrings } from "@/i18n/shell";
 import { posterStrings } from "@/i18n/poster";
 import type { Language, Page } from "@/lib/types";
@@ -19,6 +20,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
     ["dashboard", t.dashboard],
     ["poster", posterStrings[language].title],
     ["dropCenters", centerStrings[language].navDropCenters],
+    ["climate", climateStrings[language].navLabel],
     ["projects", t.projects],
     ["dispatches", t.dispatches],
     ["ledger", t.ledgerTitle],
