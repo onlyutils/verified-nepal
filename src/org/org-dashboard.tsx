@@ -66,7 +66,7 @@ function Gate({
 }) {
   const { auth, t, language } = controller;
   return (
-    <div className="min-h-dvh bg-secondary px-4 py-6 sm:px-6">
+    <div className="min-h-dvh bg-background px-4 py-6 sm:px-6">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
         <Button variant="ghost" className="h-auto p-1" onClick={() => navigate("dashboard")}>
           <Logo language={language} />

@@ -22,7 +22,7 @@ function GateLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-secondary px-4 py-6 sm:px-6">
+    <div className="min-h-dvh bg-background px-4 py-6 sm:px-6">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
         <Button variant="ghost" className="h-auto p-1" onClick={onHome} aria-label={model.ds.deskHomeLabel}>
           <Logo language={language} />
@@ -168,7 +168,7 @@ export function GuidelinesGate({
   onHome: () => void;
 }) {
   return (
-    <div className="min-h-dvh bg-secondary px-4 py-6 sm:px-6">
+    <div className="min-h-dvh bg-background px-4 py-6 sm:px-6">
       <div className="mx-auto flex max-w-2xl items-center justify-between">
         <Button variant="ghost" className="h-auto p-1" onClick={onHome}>
           <Logo language={language} />
