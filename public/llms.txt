@@ -15,7 +15,7 @@ Live figures (rescued, missing, forces deployed) are fetched from NDRRMA's publi
 - [Projects](https://verifiednepal.com/projects): verified infrastructure needs (tuin, bridges, trails, water, schools); committees receive payments directly.
 - [Ledger](https://verifiednepal.com/ledger): public record of fulfilled aid, who received what, where and when. Nothing private is shown.
 - [Audit log](https://verifiednepal.com/audit): every moderator action, newest first, with names and targets masked.
-- [Dispatches](https://verifiednepal.com/dispatches): moderated community writing on mountains and climate; each article lives at /dispatches/{id}.
+- [Articles](https://verifiednepal.com/articles): moderated community writing on mountains and climate; each article lives at /articles/{id}.
 - [Info & Help](https://verifiednepal.com/info): verified emergency hotlines, data sources, how to report a missing person or ask for help.
 - [Privacy & Terms](https://verifiednepal.com/privacy): data handling, liability, and source-attribution policy.
 

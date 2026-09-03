@@ -32,7 +32,7 @@ export function isPublicApiPath(pathname: string): boolean {
   if (!pathname) return false;
   if (pathname === "/needs" || pathname === "/offers" || pathname === "/ledger" || pathname === "/audit") return true;
   if (pathname === "/projects" || pathname.startsWith("/projects/")) return true;
-  if (pathname === "/dispatches" || pathname.startsWith("/dispatches/")) return true;
+  if (pathname === "/articles" || pathname.startsWith("/articles/")) return true;
   if (pathname.startsWith("/status/")) return true;
   return false;
 }

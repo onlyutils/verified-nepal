@@ -99,7 +99,7 @@ export default defineConfig({
               if (p === "/claims" || p.startsWith("/claims/")) return false;
               if (p === "/needs" || p === "/offers" || p === "/ledger" || p === "/audit") return true;
               if (p === "/projects" || p.startsWith("/projects/")) return true;
-              if (p === "/dispatches" || p.startsWith("/dispatches/")) return true;
+              if (p === "/articles" || p.startsWith("/articles/")) return true;
               if (p.startsWith("/status/")) return true;
               return false;
             },

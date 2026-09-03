@@ -63,7 +63,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
           </AlertDescription>
         </Alert>
         <Button asChild variant="secondary">
-          <a href="/dispatches">{t.dispatchBack}</a>
+          <a href="/articles">{t.dispatchBack}</a>
         </Button>
       </div>
     );
@@ -73,12 +73,12 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         title={t.dispatchNotFound}
         action={
           <Button asChild>
-            <a href="/dispatches">{t.dispatchBack}</a>
+            <a href="/articles">{t.dispatchBack}</a>
           </Button>
         }
       />
     );
-  const url = `${window.location.origin}/dispatches/${encodeURIComponent(item.id)}`;
+  const url = `${window.location.origin}/articles/${encodeURIComponent(item.id)}`;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
@@ -91,7 +91,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
   return (
     <article className="mx-auto max-w-3xl space-y-8 print:max-w-none">
       <Button asChild variant="link" className="h-auto min-h-11 px-0 print:hidden">
-        <a href="/dispatches">← {t.dispatchBack}</a>
+        <a href="/articles">← {t.dispatchBack}</a>
       </Button>
       <PageHeader
         eyebrow={t.communityEyebrow}

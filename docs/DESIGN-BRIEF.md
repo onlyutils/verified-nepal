@@ -102,7 +102,7 @@ Top of page. Text size A− / A / A+ (five steps, 100 to 150%), high-contrast to
 - Desk (signed-in work surface) uses a compact single-row header: wordmark, "Desk" label, emergency 1234 link, then nav. No emergency strip.
 
 ### 5.3 Primary navigation
-Nine items: Find a person, Get help, Give help, Drop centers, Info / Help, Projects, Dispatches, Ledger, Audit. Active item underlined. Language toggle at the right on desktop. Known problem: nine items is too many for mobile; earlier fix added a "More" overflow. Desk and My organization are reached from masthead/footer, not the nav.
+Nine items: Find a person, Get help, Give help, Drop centers, Info / Help, Projects, Articles, Ledger, Audit. Active item underlined. Language toggle at the right on desktop. Known problem: nine items is too many for mobile; earlier fix added a "More" overflow. Desk and My organization are reached from masthead/footer, not the nav.
 
 ### 5.4 Emergency line
 Below the nav on all public pages: red dot + "Emergency" label, then tappable numbers 1234 (disaster hotline), 100 (police), 102 (ambulance). Each is a tel: link.
@@ -126,7 +126,7 @@ Order today, top to bottom:
 
 1. **Action triad**: Call 1234 (red), Find a person (primary), Get help (outline). Full width on mobile, three-up on desktop.
 2. **Lead**: eyebrow "Official figures" (blue dot), headline built from live numbers ("N rescued, M missing…"), byline (source NDRRMA, updated time), standfirst, and the official messages block (quoted government notices).
-3. **By the numbers** table: rescued, missing (red), out of reach, forces deployed, verified records. Flood date note. Below it: Find a person button, Register your organization button, and links to the five PDF guides (Seeking help, Providing help, Organization, Writing a dispatch, Moderator).
+3. **By the numbers** table: rescued, missing (red), out of reach, forces deployed, verified records. Flood date note. Below it: Find a person button, Register your organization button, and links to the five PDF guides (Seeking help, Providing help, Organization, Writing an article, Moderator).
 4. **Relief map** plate: district filter (All areas, Nuwakot, Rasuwa, Sindhupalchok) as tabs on desktop and a select on mobile; Show/Hide map toggle (collapsed by default on mobile); grayscale satellite map with pins for affected locations and relief camps; selected pin recenters; Clear selection button; map locked against accidental drag on touch until unlocked.
 5. **Affected districts** list: grouped by district, each location a button that selects the pin; "(approximate)" and "not mapped" markers; "N/M locations mapped" counter; relief camps "near you" block when a district is chosen.
 6. **Three columns**: Missing persons (lead, "not being listed is not proof" note, Search by name and Report a missing person buttons to the OPMCM portal); Help requests from OPMCM (open, critical, in progress, resolved, offers available, Ask for help button); Official updates (latest three government updates with dates, link to OPMCM).
@@ -209,12 +209,12 @@ No account. Three cards then Turnstile and submit.
 ### 7.6 Post a progress update `/projects/update`
 Narrow form: project id or link, update code, update text (2000 chars), amount spent NPR (optional), photos (JPEG, PNG, WebP; downsized to 1600 px before upload; only the first five are kept, silently). Selected files list with size and Remove. Upload progress line "Uploading: n/total". Success banner above the form with a View project link. Errors are a single line; some image errors are raw English today.
 
-### 7.7 Dispatches `/dispatches` and `/dispatches/:id`
+### 7.7 Articles `/articles` and `/articles/:id`
 A moderated editorial feed of community writing on mountains and climate. Explicitly not a forum: no comments, no threads, no reactions.
 
-- Header with **Write a dispatch** (scrolls to the form). Tag filter pills: All, climate, mountains, floods, landslides, glaciers, community, story (single select).
-- Ruled list, not cards: tag badges, headline, three-line excerpt, meta "By name · place · date", Read dispatch link. Cursor Load more. Loading, error with Try again and offline note, empty.
-- **Write a dispatch** form: title (200 chars), body (6000 chars, live counter that warns near the limit, markdown-lite), display name, place (optional), email (private, required, validated), language select (defaults to site language), tags (up to three, others disable at three). Turnstile required when configured. One generic validation message. Success panel with an "again" button that clears the form.
+- Header with **Write an article** (scrolls to the form). Tag filter pills: All, climate, mountains, floods, landslides, glaciers, community, story (single select).
+- Ruled list, not cards: tag badges, headline, three-line excerpt, meta "By name · place · date", Read article link. Cursor Load more. Loading, error with Try again and offline note, empty.
+- **Write an article** form: title (200 chars), body (6000 chars, live counter that warns near the limit, markdown-lite), display name, place (optional), email (private, required, validated), language select (defaults to site language), tags (up to three, others disable at three). Turnstile required when configured. One generic validation message. Success panel with an "again" button that clears the form.
 - **Detail**: back link, tags, headline, meta, long-form serif body; actions Copy link, WhatsApp, Facebook, Print; print stylesheet strips chrome. States: loading, not found or not yet published, offline note.
 
 ### 7.8 Ledger `/ledger`
@@ -236,7 +236,7 @@ Public accountability log of every moderator action, print-first.
 - Codes: reference code has copy and a gate; claim code and offer reference have no copy; update code has copy but no gate.
 - Validation: per-field on Get help, one generic line everywhere else.
 - Ward maximum 35 on Get help, 33 elsewhere.
-- Character limits are silent except the dispatch body.
+- Character limits are silent except the article body.
 - Raw enum values leak on project status filter, project type, ledger category, audit action and month.
 - Needs and offers boards have no pagination; every other list has Load more.
 - Phone inputs have no prefix, mask or formatting; only Get help validates digits.
@@ -318,8 +318,8 @@ The Desk is the signed-in work surface for moderators and admins. It uses the co
 
 ### 9.2 Desk shell
 - Header: "The Desk", "Signed in as {name}", **Sign out**.
-- **Tab bar** (wrapping, underline active): Queue · Published boards · Print claim list · Paper sync · Flags · Projects · Dispatches · Organizations · Admin (admin only). Count suffixes on Queue (pending needs), Flags, Projects, Dispatches, Organizations (pending). Counts are unfiltered, so a scoped moderator can see "Queue · 12" above three rows.
-- **Scope**: badge "Scope: Rasuwa" or "All districts" on Queue and Boards; hint line "Queue, boards, print and claims are filtered to your districts." Scoping applies to Queue, Boards, Projects, Print. Not scoped: Flags, Dispatches, Organizations, Paper sync, Admin.
+- **Tab bar** (wrapping, underline active): Queue · Published boards · Print claim list · Paper sync · Flags · Projects · Articles · Organizations · Admin (admin only). Count suffixes on Queue (pending needs), Flags, Projects, Articles, Organizations (pending). Counts are unfiltered, so a scoped moderator can see "Queue · 12" above three rows.
+- **Scope**: badge "Scope: Rasuwa" or "All districts" on Queue and Boards; hint line "Queue, boards, print and claims are filtered to your districts." Scoping applies to Queue, Boards, Projects, Print. Not scoped: Flags, Articles, Organizations, Paper sync, Admin.
 - **Feedback**: red error banner (persists until next action); ruled success banner "Updated" / "Redeemed" (auto-dismisses after 6 s). Dialog errors stay inside the dialog.
 - Tabs are plain buttons, no arrow-key navigation, no keyboard shortcuts anywhere. Loading is text only.
 
@@ -353,7 +353,7 @@ The Desk is the signed-in work surface for moderators and admins. It uses the co
 - Actions: **Verify committee** (confirm dialog "I called {contact} at {phone}"), **Publish** (blocked until verified, with tooltip), **Reject** (reason dialog), status select + **Set status** (pending, published, in-progress, completed, rejected, archived; immediate).
 - **Pending photos**: thumbnail, caption, Publish photo / Reject photo. **Pending updates**: text, spent, photos, Publish update / Reject update (canned reason, no prompt today).
 
-### 9.9 Dispatches (oldest first, not scoped)
+### 9.9 Articles (oldest first, not scoped)
 - Card: title, status, "By name · place · date · tags", full body, **Private** panel with the author's email ("Never public"). **Publish** (immediate), **Reject** (reason dialog).
 
 ### 9.10 Organizations
@@ -370,12 +370,12 @@ The Desk is the signed-in work surface for moderators and admins. It uses the co
 | Action | Gate today |
 |---|---|
 | Publish need | "I called the registrant" checkbox |
-| Reject need / project / dispatch | Required reason code + optional details |
+| Reject need / project / article | Required reason code + optional details |
 | Match need to offer | None |
 | Fulfill, Archive need | Confirm dialog |
 | Redeem claim | Dialog restating code, cannot be undone, optional note |
 | Verify committee | Dialog "I called {contact} at {phone}" |
-| Set project status, publish/reject photo or update, publish dispatch, reinstate org | None, immediate |
+| Set project status, publish/reject photo or update, publish article, reinstate org | None, immediate |
 | Publish project | Blocked until committee verified |
 | Verify / reject / suspend org | Dialog with tier or reason (5+ chars) |
 | Change a user's role | Confirm dialog, audited |
@@ -416,7 +416,7 @@ The Desk is the signed-in work surface for moderators and admins. It uses the co
 
 ## 12. Content and tone
 
-- Plain language, short sentences, verbs first. Define the nouns the site invents on first use: need, offer, claim code, ref code, update code, dispatch, drop center, ledger, audit.
+- Plain language, short sentences, verbs first. Define the nouns the site invents on first use: need, offer, claim code, ref code, update code, article, drop center, ledger, audit.
 - "What happens next" blocks after every submission (already liked by users; keep and make consistent).
 - Never imply the site can rescue, search physically, or handle money.
 - Errors say what went wrong and what to do, in the user's language. Never "Failed to fetch".
@@ -427,7 +427,7 @@ The Desk is the signed-in work surface for moderators and admins. It uses the co
 From the 2026-09-01 review and later testing, still open:
 
 - Two visual systems (editorial public pages vs stock shadcn portal/Desk); three status idioms; red overloaded.
-- Nine-item primary nav; Dispatches (essays) sit beside missing-persons search during a live emergency.
+- Nine-item primary nav; Articles (essays) sit beside missing-persons search during a live emergency.
 - Desk queue lacks filters, bulk actions, keyboard shortcuts; needs a way to edit a need's text before publishing (guidelines require removing phone numbers from descriptions).
 - Chat launcher collides with page controls on mobile.
 - Three different bearer codes (ref, claim, update) with no visual distinction.
@@ -451,7 +451,7 @@ From the 2026-09-01 review and later testing, still open:
 ## 15. Open questions for kickoff
 
 1. Should Nepali be the default language for Nepali-locale browsers?
-2. Do Dispatches stay in the primary nav, or move under a "Community" or "Stories" section?
+2. Do Articles stay in the primary nav, or move under a "Community" or "Stories" section?
 3. Is the newsprint direction kept, evolved, or replaced? Owner previously rejected "AI-looking" card-and-gradient styles.
 4. Does the Desk become a separate app shell (sidebar, dense tables) or stay within the public shell?
 5. What is the target for the map: keep satellite imagery or move to a lighter vector base?

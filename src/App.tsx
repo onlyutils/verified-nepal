@@ -55,9 +55,9 @@ const pagePaths: Record<Page, string> = {
   giveHelp: "/give-help",
   ledger: "/ledger",
   audit: "/audit",
-  dispatches: "/dispatches",
-  dispatchDetail: "/dispatches/:id",
-  dispatchWrite: "/dispatches",
+  dispatches: "/articles",
+  dispatchDetail: "/articles/:id",
+  dispatchWrite: "/articles",
   projects: "/projects",
   projectDetail: "/projects/:id",
   projectRegister: "/projects/register",
@@ -77,8 +77,8 @@ function pageFromPath(pathname: string): Page {
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
   if (pathname.startsWith("/climate")) return "climate";
-  if (pathname.match(/^\/dispatches\/[^\/]+/)) return "dispatchDetail";
-  if (pathname.startsWith("/dispatches")) return "dispatches";
+  if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
+  if (pathname.startsWith("/articles")) return "dispatches";
   if (pathname.startsWith("/projects/register")) return "projectRegister";
   if (pathname.startsWith("/projects/update")) return "projectUpdate";
   if (pathname.match(/^\/projects\/[^\/]+/)) return "projectDetail";
@@ -114,9 +114,9 @@ function pageTitle(page: Page, language: Language): string {
     giveHelp: t.giveHelp,
     ledger: t.ledgerTitle,
     audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
-    dispatches: (t as Record<string, string>).dispatches ?? "Dispatches",
-    dispatchDetail: (t as Record<string, string>).dispatches ?? "Dispatches",
-    dispatchWrite: (t as Record<string, string>).dispatches ?? "Dispatches",
+    dispatches: (t as Record<string, string>).dispatches ?? "Articles",
+    dispatchDetail: (t as Record<string, string>).dispatches ?? "Articles",
+    dispatchWrite: (t as Record<string, string>).dispatches ?? "Articles",
     projects: (t as Record<string, string>).projects ?? "Projects",
     projectDetail: (t as Record<string, string>).projects ?? "Projects",
     projectRegister: t.projectRegisterTitle,

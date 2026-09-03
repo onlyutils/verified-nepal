@@ -1,0 +1,2 @@
+/dispatches /articles 301
+/dispatches/* /articles/:splat 301

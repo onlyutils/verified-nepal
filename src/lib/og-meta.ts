@@ -1,4 +1,4 @@
-// Plain-text share metadata for a dispatch. Used by functions/dispatches/[id].ts
+// Plain-text share metadata for an article. Used by functions/articles/[id].ts
 // (Cloudflare Pages) to rewrite index.html's <title> and Open Graph tags so a
 // shared link previews the article instead of the generic site card.
 type Localized = string | { en: string; ne?: string };
@@ -20,7 +20,7 @@ function text(value: Localized | undefined): string {
 }
 
 export function dispatchMeta(item: DispatchLike): ShareMeta {
-  const title = text(item.title).trim() || "Dispatch";
+  const title = text(item.title).trim() || "Article";
   const excerpt = text(item.body).replace(/\s+/g, " ").trim().slice(0, 200);
   const by = [item.author?.displayName, item.author?.place].filter(Boolean).join(", ");
   const description = [excerpt, by ? `By ${by}` : ""].filter(Boolean).join(" — ");

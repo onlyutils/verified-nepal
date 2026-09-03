@@ -15,8 +15,8 @@ test("public GETs are StaleWhileRevalidate without auth", () => {
     "/projects",
     "/projects/proj_123",
     "/projects/proj_123/updates",
-    "/dispatches",
-    "/dispatches/disp_1",
+    "/articles",
+    "/articles/disp_1",
     "/audit",
   ];
   for (const p of publics) {

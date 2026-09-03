@@ -38,7 +38,7 @@ const enSections: Section[] = [
       "• Needs (get-help): beneficiary name, optional phone, district, ward, household size, category and description; registrant name and phone when you register on behalf of someone else (with their consent); language. Turnstile token if enabled for abuse prevention.",
       "• Offers (give-help): helper display name, phone, optional organisation name and contact, districts and categories you can help with, and description.",
       "• Projects (community infrastructure): title and description, type, district/ward/location text, cost estimate, committee name, contact person and phone, bank and digital-wallet details. Photos and updates you attach are stored as submitted.",
-      "• Dispatches: title, body (plain text / markdown-lite, up to 6,000 characters), author display name, place, private email for follow-up, tags (up to 3), and language. Turnstile token when configured.",
+      "• Articles: title, body (plain text / markdown-lite, up to 6,000 characters), author display name, place, private email for follow-up, tags (up to 3), and language. Turnstile token when configured.",
       "• Helper and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role). Sign-in session data lives in your browser's session storage / local storage; no other cookies are set.",
       "We set no analytics trackers, no advertising trackers, and no cookies beyond sign-in session storage. Your language, selected district, and whether you dismissed the emergency banner are stored locally in your browser and never leave your device.",
     ],
@@ -54,8 +54,8 @@ const enSections: Section[] = [
   {
     title: "6. What is public and what is never public — by design",
     body: [
-      "Public on the site: masked name (e.g., R. Gurung), district and ward-level location only, category, description (for needs and projects), and for dispatches the published title, excerpt/body, display name, place and tags. For projects, committee bank and wallet details become public only after moderator verification of the committee, by design.",
-      "Never public: phone numbers, registrant identity and contact, household size and household details, author email for dispatches, and any private contact for offers. Phones and registrant/household information are visible only to moderators and are never shown on public boards, ledger, or dispatch pages.",
+      "Public on the site: masked name (e.g., R. Gurung), district and ward-level location only, category, description (for needs and projects), and for articles the published title, excerpt/body, display name, place and tags. For projects, committee bank and wallet details become public only after moderator verification of the committee, by design.",
+      "Never public: phone numbers, registrant identity and contact, household size and household details, author email for articles, and any private contact for offers. Phones and registrant/household information are visible only to moderators and are never shown on public boards, ledger, or article pages.",
       "Nothing you type into the Find a Person search leaves your browser: searching is performed locally against the mirrored dataset.",
     ],
   },
@@ -63,22 +63,22 @@ const enSections: Section[] = [
     title: "7. Retention",
     body: [
       "Needs expire after 30 days unless you renew them with your reference code. Expired needs are removed from public boards and are not used for matching.",
-      "Ledger entries are retained as a permanent public audit record, but only in masked form (no phones, no registrant details). Dispatches, projects, and offers that are published remain public until archived or removed for cause; rejected items are retained for audit but not published.",
+      "Ledger entries are retained as a permanent public audit record, but only in masked form (no phones, no registrant details). Articles, projects, and offers that are published remain public until archived or removed for cause; rejected items are retained for audit but not published.",
       "Moderation and audit records are retained to account for every publish, reject, match and redemption decision.",
     ],
   },
   {
     title: "8. Who can see private data",
     body: [
-      "Private details (phones, registrant information, household details, dispatch author email) are visible only to moderators who sign in via OnlyUtils. Moderators are bound by written guidelines: they use private data only to verify, match and fulfil requests, never share it outside the desk, and redact it before any public display.",
+      "Private details (phones, registrant information, household details, article author email) are visible only to moderators who sign in via OnlyUtils. Moderators are bound by written guidelines: they use private data only to verify, match and fulfil requests, never share it outside the desk, and redact it before any public display.",
       "Every moderation action — publish, reject, verify, match, fulfil, redeem — creates an AUDIT item that records who acted, when, and why, so the history can be reviewed.",
     ],
   },
   {
     title: "9. Your rights — correction and removal",
     body: [
-      "You have the right under the Individual Privacy Act, 2075 to request correction or removal of your personal data held for needs, offers, projects, or dispatches.",
-      "Contact: verifiednepal01@gmail.com. Include your reference code or dispatch/project ID and what to correct or remove. We target a response within 7 days.",
+      "You have the right under the Individual Privacy Act, 2075 to request correction or removal of your personal data held for needs, offers, projects, or articles.",
+      "Contact: verifiednepal01@gmail.com. Include your reference code or article/project ID and what to correct or remove. We target a response within 7 days.",
       "For the mirrored NDRRMA rescue and missing-person lists, corrections must be made at the official source; once the source updates, the mirror reflects it at the next sync. We will still handle courtesy takedown requests for the mirrored copy.",
     ],
   },
@@ -125,7 +125,7 @@ const enSections: Section[] = [
   {
     title: "16. Intellectual property",
     body: [
-      "The mirrored records remain the property of their originating sources. Map imagery, boundary, and river data belong to the providers credited on the map (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap under ODbL). Dispatch and project content remains the author's, licensed to the site for non-commercial publication. The site's own design, text, and code are the work of the Maintainer. You are granted a limited, revocable, non-exclusive licence to view the site and to share its content for lawful, non-commercial purposes with source attribution preserved; no other rights are granted.",
+      "The mirrored records remain the property of their originating sources. Map imagery, boundary, and river data belong to the providers credited on the map (Esri/Maxar, dataofsandy/Nepal-GEOJSON, OpenStreetMap under ODbL). Article and project content remains the author's, licensed to the site for non-commercial publication. The site's own design, text, and code are the work of the Maintainer. You are granted a limited, revocable, non-exclusive licence to view the site and to share its content for lawful, non-commercial purposes with source attribution preserved; no other rights are granted.",
     ],
   },
   {

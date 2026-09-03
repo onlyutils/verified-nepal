@@ -81,7 +81,7 @@ export const shellStrings = {
     guideSeekingHelp: "Seeking help",
     guideProvidingHelp: "Providing help",
     guideOrganization: "Running an organization",
-    guideDispatch: "Writing a dispatch",
+    guideDispatch: "Writing an article",
     guideModerator: "For moderators",
   },
   ne: {
@@ -166,7 +166,7 @@ export const shellStrings = {
     guideSeekingHelp: "सहायता खोज्न",
     guideProvidingHelp: "सहायता दिन",
     guideOrganization: "संस्था चलाउन",
-    guideDispatch: "डिस्प्याच लेख्न",
+    guideDispatch: "लेख लेख्न",
     guideModerator: "मोडरेटरका लागि",
   },
 } as const;

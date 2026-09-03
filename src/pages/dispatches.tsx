@@ -160,7 +160,7 @@ export function DispatchesPage({ language }: { language: Language }) {
       {!loading && !error && !items.length ? <EmptyState title={t.dispatchEmpty} description={t.offline} /> : null}
       <div className="divide-y border-y">
         {items.map((item) => {
-          const url = `/dispatches/${encodeURIComponent(item.id)}`;
+          const url = `/articles/${encodeURIComponent(item.id)}`;
           return (
             <article key={item.id} className="space-y-3 py-6">
               <div className="flex flex-wrap gap-2">

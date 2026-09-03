@@ -177,7 +177,7 @@ Top to bottom, as in the Figma:
    menu button.
 2. **Status bar** (36 px, `bg-primary-soft`, `border-primary-soft-border`): blue live dot, "Official data snapshot ·
    Updated HH:MM NPT, D Mon YYYY" (or "Live"), then quick links right-aligned: Drop centers → · Projects → ·
-   Dispatches → · Ledger → · Audit →.
+   Articles → · Ledger → · Audit →.
 3. **Emergency bar** (`bg-destructive`, white text): warning icon, "In immediate danger? Call **1234**", pill buttons
    Police 100 / Ambulance 102 (tel: links); on the right an outlined white button "Donate on PM Disaster Relief Fund ↗".
    Present on every public page.

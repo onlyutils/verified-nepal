@@ -29,13 +29,13 @@ flowchart TB
     helper -->|offers help| offer[Offer to help]
     public -->|reports a| missing[Missing person poster]
     public -->|proposes a| project[Community rebuild project]
-    public -->|shares a| dispatch[News / story dispatch]
+    public -->|shares a| article[News / story article]
     org -->|runs a| center[Drop center]
 
     need --> desk[The Desk<br/>moderation queue]
     offer --> desk
     project --> desk
-    dispatch --> desk
+    article --> desk
     org --> desk
 
     desk -->|approved by| mod
@@ -119,7 +119,7 @@ but **offering help, running an organization, or managing a project always does.
 
 The Desk is the review room. Only moderators and admins can get in — everyone else is
 redirected elsewhere. It has one queue for pending needs and offers, plus tabs for projects,
-dispatches, organizations, flagged posts, and (for admins only) assigning roles.
+articles, organizations, flagged posts, and (for admins only) assigning roles.
 
 ```mermaid
 flowchart TD
@@ -200,9 +200,9 @@ It's a lightweight, honest paper trail rather than formal accounting.
 
 ---
 
-## 8. Dispatches — news and stories
+## 8. Articles — news and stories
 
-A **dispatch** is a short update from the ground: a situation report, a personal story, news
+A **article** is a short update from the ground: a situation report, a personal story, news
 about the relief effort, tagged by topic (floods, landslides, community stories, and so on).
 Anyone can submit one, and — like everything else — a moderator has to approve it before it's
 public.
@@ -259,7 +259,7 @@ flowchart TB
 Alongside this, public names are always shown masked (for example "Ram K." instead of a full
 name), so the system can stay open and transparent without exposing anyone's identity.
 
-And every kind of public submission — needs, offers, organizations, dispatches, projects,
+And every kind of public submission — needs, offers, organizations, articles, projects,
 project updates — follows the exact same pattern: **anyone can submit it, nothing is public
 until a moderator approves it, and every approval is logged.** Once you understand this
 pattern once, you understand most of the site.

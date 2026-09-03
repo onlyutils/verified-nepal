@@ -1,6 +1,6 @@
-// Cloudflare Pages Function for /dispatches/:id. Runs in front of the static
+// Cloudflare Pages Function for /articles/:id. Runs in front of the static
 // index.html and rewrites its <title>, description and Open Graph tags with the
-// dispatch's own, so shared links preview the article. Anything that fails
+// article's own, so shared links preview the article. Anything that fails
 // falls back to the untouched page. Wrangler picks this folder up automatically
 // on `pages deploy` (see infra/deploy.sh).
 import { dispatchMeta } from "../../src/lib/og-meta";
@@ -28,7 +28,7 @@ export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Resp
     return page;
   }
   const meta = dispatchMeta(item);
-  const canonical = `${url.origin}/dispatches/${encodeURIComponent(params.id)}`;
+  const canonical = `${url.origin}/articles/${encodeURIComponent(params.id)}`;
   const set = (attr: string, value: string) => ({ element: (e: Element) => e.setAttribute(attr, value) });
   return new HTMLRewriter()
     .on("title", { element: (e: Element) => e.setInnerContent(meta.title) })
