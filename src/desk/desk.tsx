@@ -36,6 +36,12 @@ export function Desk({
     if (auth.idToken && auth.profile && !auth.error && !isModerator) navigate("org");
   }, [auth.idToken, auth.profile, auth.error, isModerator, navigate]);
 
+  // Signed out: the login page owns the Google button.
+  useEffect(() => {
+    const returningFromOAuth = new URLSearchParams(window.location.search).has("code");
+    if (!auth.loading && !auth.idToken && !returningFromOAuth) navigate("deskLogin");
+  }, [auth.loading, auth.idToken, navigate]);
+
   if (auth.loading) return <LoadingGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (!auth.idToken) return <SignedOutGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.error || !auth.profile) return <AuthGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;

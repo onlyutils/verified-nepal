@@ -224,8 +224,10 @@ or row cards (mobile). Row actions are buttons on the right; anything destructiv
 with a required reason. Feedback is an `Alert` at the top of the section (success auto-dismisses after 6 s, error
 stays). Scope is a `Badge variant="info"` under the shell title.
 
-Sign-in gates (signed out, wrong role, guidelines acknowledgement) are a centered `Card` (`max-w-md`) with the logo,
-title, one paragraph and one primary button.
+Sign-in gates (wrong role, guidelines acknowledgement) are a centered `Card` (`max-w-md`) with the logo, title, one
+paragraph and one primary button. Signed-out visitors to `/desk` are sent to `/desk/login` (`src/desk/login.tsx`): a
+full-bleed photo with a dark gradient, the Google-branded sign-in button, and a photo credit line. The photo is
+CC BY-SA from Wikimedia Commons; keep the attribution when you swap it.
 
 ### 5.5 Chat assistant (`src/lib/chat-widget.ts`)
 

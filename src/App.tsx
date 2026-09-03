@@ -14,6 +14,7 @@ import { centerStrings } from "@/i18n/centers";
 import type { Language, Page } from "@/lib/types";
 
 const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
+const DeskLogin = lazy(() => import("@/desk/login").then((m) => ({ default: m.DeskLogin })));
 const GetHelp = lazy(() => import("@/pages/get-help").then((m) => ({ default: m.GetHelp })));
 const GiveHelp = lazy(() => import("@/pages/give-help").then((m) => ({ default: m.GiveHelp })));
 const Ledger = lazy(() => import("@/pages/ledger").then((m) => ({ default: m.Ledger })));
@@ -41,6 +42,7 @@ const pagePaths: Record<Page, string> = {
   info: "/info",
   privacy: "/privacy",
   desk: "/desk",
+  deskLogin: "/desk/login",
   getHelp: "/get-help",
   giveHelp: "/give-help",
   ledger: "/ledger",
@@ -75,6 +77,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/give-help")) return "giveHelp";
   if (pathname.startsWith("/audit")) return "audit";
   if (pathname.startsWith("/ledger")) return "ledger";
+  if (pathname.startsWith("/desk/login")) return "deskLogin";
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/missing")) return "missing";
@@ -92,6 +95,7 @@ function pageTitle(page: Page, language: Language): string {
     info: t.info,
     privacy: t.privacyTitle,
     desk: t.deskTitle,
+    deskLogin: t.deskTitle,
     getHelp: t.getHelp,
     giveHelp: t.giveHelp,
     ledger: t.ledgerTitle,
@@ -186,7 +190,7 @@ export function App() {
   const loading = <p className="min-h-[40vh] p-6 text-sm text-muted-foreground">{shellStrings[language].loading}</p>;
 
   // Signed-in work surfaces bring their own shell (AppShell); public pages share the site header and footer.
-  if (page === "desk" || page === "org") {
+  if (page === "desk" || page === "deskLogin" || page === "org") {
     return (
       <LiveDataProvider>
         {skipLink}
@@ -194,6 +198,8 @@ export function App() {
           <ComponentErrorBoundary language={language}>
             {page === "desk" ? (
               <Desk language={language} setLanguage={setLanguage} navigate={navigate} />
+            ) : page === "deskLogin" ? (
+              <DeskLogin language={language} setLanguage={setLanguage} navigate={navigate} />
             ) : (
               <OrgDashboard language={language} setLanguage={setLanguage} navigate={navigate} />
             )}

@@ -7,6 +7,7 @@ export type Page =
   | "info"
   | "privacy"
   | "desk"
+  | "deskLogin"
   | "getHelp"
   | "giveHelp"
   | "ledger"
