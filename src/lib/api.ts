@@ -147,8 +147,57 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
   return data as T;
 }
 
-export function createNeed(body: CreateNeedBody): Promise<CreateNeedResponse> {
-  return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body) });
+export function createNeed(body: CreateNeedBody, token?: string): Promise<CreateNeedResponse> {
+  return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body), token });
+}
+
+export interface MyNeed {
+  id: string;
+  refCode: string;
+  status: string;
+  category: Category;
+  district?: string;
+  ward?: number;
+  createdAt: string;
+  expiresAt?: string;
+}
+
+export interface MyOffer {
+  id: string;
+  status: string;
+  categories: Category[];
+  districts: string[];
+  createdAt: string;
+  expiresAt?: string;
+}
+
+export interface MyMissing {
+  id: string;
+  status: "missing" | "found";
+  name: string;
+  district: string;
+  photo?: { fileId: string; url: string };
+  updatedAt: string;
+  createdAt: string;
+  [key: string]: unknown;
+}
+
+export interface DashboardResponse {
+  missing: MyMissing[];
+  needs: MyNeed[];
+  offers: MyOffer[];
+}
+
+export function getDashboard(token: string): Promise<DashboardResponse> {
+  return request<DashboardResponse>("/me/dashboard", { token });
+}
+
+export function claimNeed(token: string, refCode: string): Promise<{ ok: boolean; id: string }> {
+  return request<{ ok: boolean; id: string }>("/me/needs/claim", {
+    method: "POST",
+    token,
+    body: JSON.stringify({ refCode }),
+  });
 }
 
 export function listNeeds(

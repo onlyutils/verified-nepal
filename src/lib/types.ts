@@ -5,6 +5,7 @@ export type Page =
   | "search"
   | "missing"
   | "poster"
+  | "me"
   | "info"
   | "privacy"
   | "desk"

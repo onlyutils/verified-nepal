@@ -1,0 +1,213 @@
+import { useEffect, useState } from "react";
+import { LogOut } from "lucide-react";
+import { meStrings } from "@/i18n/me";
+import { labels } from "@/i18n";
+import { orgStrings } from "@/i18n/orgs";
+import { useGoogleAuth } from "@/lib/auth";
+import { getDashboard, listMyOrgs, renewNeed, type Category, type DashboardResponse } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/api-error";
+import { formatDateTime } from "@/lib/format";
+import type { Language, Page } from "@/lib/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState, LoadingState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge, toneForStatus } from "@/components/status-badge";
+import { SignInNudge } from "@/components/sign-in-nudge";
+
+function categoryLabel(category: Category, language: Language) {
+  const t = labels[language];
+  return (
+    {
+      goods: t.categoryGoods,
+      shelter: t.categoryShelter,
+      transport: t.categoryTransport,
+      medical: t.categoryMedical,
+      "skilled-labor": t.categorySkilledLabor,
+      "funds-guidance": t.categoryFundsGuidance,
+    } as Record<Category, string>
+  )[category];
+}
+
+function statusLabel(status: string, language: Language) {
+  const t = labels[language] as Record<string, string>;
+  const key = `deskNeedsStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+  if (status === "in_progress" || status === "in-progress") return t.inProgress;
+  return t[key] ?? t.unavailable;
+}
+
+export function MePage({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+  const t = meStrings[language];
+  const tl = labels[language];
+  const auth = useGoogleAuth();
+  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [orgCount, setOrgCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [renewed, setRenewed] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!auth.idToken) {
+      setData(null);
+      return;
+    }
+    let cancelled = false;
+    setData(null);
+    setError(null);
+    Promise.all([getDashboard(auth.idToken), listMyOrgs(auth.idToken).catch(() => ({ items: [] }))])
+      .then(([dash, orgs]) => {
+        if (cancelled) return;
+        setData(dash);
+        setOrgCount(orgs.items.length);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(apiErrorMessage(e, language) || t.loadError);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.idToken, language, t.loadError]);
+
+  if (auth.loading) return <LoadingState label={t.loading} />;
+  if (!auth.idToken) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <PageHeader eyebrow={t.eyebrow} title={t.title} />
+        <SignInNudge language={language} id="me" title={t.signedOutTitle} body={t.signedOutBody} />
+      </div>
+    );
+  }
+
+  const isModerator = auth.profile?.role === "moderator" || auth.profile?.role === "admin";
+  return (
+    <div className="mx-auto max-w-5xl space-y-8">
+      <PageHeader
+        eyebrow={t.eyebrow}
+        title={auth.profile?.name || auth.profile?.displayName || t.title}
+        description={auth.profile?.email}
+        actions={
+          <Button type="button" variant="outline" onClick={auth.signOut}>
+            <LogOut aria-hidden="true" />
+            {t.signOut}
+          </Button>
+        }
+      />
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {!data && !error ? <LoadingState label={t.loading} /> : null}
+      {data ? (
+        <>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.needsTitle}</h2>
+            {data.needs.length === 0 ? (
+              <EmptyState
+                title={t.needsEmpty}
+                action={
+                  <Button type="button" onClick={() => navigate("getHelp")}>
+                    {t.needsNew}
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.needs.map((need) => (
+                  <Card key={need.id}>
+                    <CardHeader>
+                      <CardTitle className="font-mono tracking-widest">{need.refCode}</CardTitle>
+                      <CardDescription>
+                        {need.district ?? tl.unavailable}
+                        {need.ward ? ` · ${t.ward} ${need.ward}` : ""}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap items-center gap-3">
+                      <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(need.status, language)}</StatusBadge>
+                      {need.expiresAt ? (
+                        <span className="text-sm text-muted-foreground">
+                          {t.needExpires.replace("{date}", formatDateTime(need.expiresAt, language))}
+                        </span>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={renewed[need.id]}
+                        onClick={() =>
+                          renewNeed(need.refCode)
+                            .then(() => setRenewed((current) => ({ ...current, [need.id]: true })))
+                            .catch(() => {})
+                        }
+                      >
+                        {renewed[need.id] ? t.needRenewed : t.needRenew}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.offersTitle}</h2>
+            {data.offers.length === 0 ? (
+              <EmptyState
+                title={t.offersEmpty}
+                action={
+                  <Button type="button" onClick={() => navigate("giveHelp")}>
+                    {t.offersNew}
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.offers.map((offer) => (
+                  <Card key={offer.id}>
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {offer.categories.map((category) => categoryLabel(category, language)).join(", ")}
+                      </CardTitle>
+                      <CardDescription>{offer.districts.join(", ")}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(offer.status, language)}</StatusBadge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.postersTitle}</h2>
+            <EmptyState
+              title={t.postersEmpty}
+              action={
+                <Button type="button" onClick={() => navigate("poster")}>
+                  {t.postersMake}
+                </Button>
+              }
+            />
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.shortcutsTitle}</h2>
+            <div className="flex flex-wrap gap-3">
+              {isModerator ? (
+                <Button type="button" variant="secondary" onClick={() => navigate("desk")}>
+                  {t.shortcutDesk}
+                </Button>
+              ) : null}
+              {orgCount > 0 ? (
+                <Button type="button" variant="secondary" onClick={() => navigate("org")}>
+                  {t.shortcutOrg}
+                </Button>
+              ) : null}
+              <Button type="button" variant="outline" onClick={() => navigate("registerOrg")}>
+                {t.shortcutRegisterOrg}
+              </Button>
+            </div>
+          </section>
+        </>
+      ) : null}
+    </div>
+  );
+}

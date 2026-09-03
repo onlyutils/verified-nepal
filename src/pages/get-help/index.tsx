@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Check, Home, Search } from "lucide-react";
-import { CATEGORIES, createNeed, getStatus, renewNeed, type Category, type StatusResponse } from "@/lib/api";
+import { CATEGORIES, claimNeed, createNeed, getStatus, renewNeed, type Category, type StatusResponse } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
+import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
 import { formStrings } from "@/i18n/forms";
+import { meStrings } from "@/i18n/me";
 import type { Language } from "@/lib/types";
 import { TurnstileWidget } from "@/components/turnstile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeDisplay } from "@/components/code-display";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
+import { SignInNudge } from "@/components/sign-in-nudge";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
@@ -73,6 +76,7 @@ function statusLabel(status: string, language: Language) {
 export function GetHelp({ language }: { language: Language }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const auth = useGoogleAuth();
   const [onBehalf, setOnBehalf] = useState(false);
   const [consent, setConsent] = useState(false);
   const [registrantName, setRegistrantName] = useState("");
@@ -92,6 +96,22 @@ export function GetHelp({ language }: { language: Language }) {
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [success, setSuccess] = useState<{ id: string; refCode: string } | null>(null);
   const [draftTime, setDraftTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth.idToken) return;
+    let pending: string | null = null;
+    try {
+      pending = localStorage.getItem("vn:need-last");
+    } catch {}
+    if (!pending) return;
+    claimNeed(auth.idToken, pending)
+      .catch(() => {})
+      .finally(() => {
+        try {
+          localStorage.removeItem("vn:need-last");
+        } catch {}
+      });
+  }, [auth.idToken]);
 
   useEffect(() => {
     try {
@@ -233,28 +253,32 @@ export function GetHelp({ language }: { language: Language }) {
     setErrors({});
     setSubmitting(true);
     try {
-      const response = await createNeed({
-        onBehalf,
-        registrant: onBehalf
-          ? { name: registrantName.trim(), phone: registrantPhone.trim(), email: registrantEmail.trim() || undefined }
-          : null,
-        beneficiary: {
-          name: beneficiaryName.trim(),
-          phone: beneficiaryPhone.trim() || undefined,
-          email: beneficiaryEmail.trim() || undefined,
-          district,
-          ward: wardNumber,
-          householdSize: householdSize ? Number(householdSize) : undefined,
+      const response = await createNeed(
+        {
+          onBehalf,
+          registrant: onBehalf
+            ? { name: registrantName.trim(), phone: registrantPhone.trim(), email: registrantEmail.trim() || undefined }
+            : null,
+          beneficiary: {
+            name: beneficiaryName.trim(),
+            phone: beneficiaryPhone.trim() || undefined,
+            email: beneficiaryEmail.trim() || undefined,
+            district,
+            ward: wardNumber,
+            householdSize: householdSize ? Number(householdSize) : undefined,
+          },
+          category,
+          description: description.trim(),
+          language,
+          turnstileToken: turnstileToken || undefined,
         },
-        category,
-        description: description.trim(),
-        language,
-        turnstileToken: turnstileToken || undefined,
-      });
+        auth.idToken || undefined,
+      );
       setSuccess(response);
       setDraftTime(null);
       try {
         localStorage.removeItem(DRAFT_KEY);
+        if (!auth.idToken) localStorage.setItem("vn:need-last", response.refCode);
       } catch {
         /* ignore */
       }
@@ -579,6 +603,12 @@ function SuccessScreen({
             hint={t.getHelpRefCodeHint}
             copyLabel={t.getHelpRefCodeCopy}
             copiedLabel={t.getHelpRefCodeCopied}
+          />
+          <SignInNudge
+            language={language}
+            id="get-help"
+            title={meStrings[language].nudgeGetHelpTitle}
+            body={meStrings[language].nudgeGetHelpBody}
           />
           <section>
             <h2 className="text-2xl font-bold tracking-tight">{t.getHelpWhatNextTitle}</h2>

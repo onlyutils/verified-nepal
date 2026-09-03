@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, UserRound } from "lucide-react";
+import { useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
+import { meStrings } from "@/i18n/me";
 import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
@@ -51,6 +53,7 @@ export function SiteHeader({
           <Logo language={language} tagline={ts.tagline} className="min-w-0" />
         </button>
         <div className="flex shrink-0 items-center gap-1">
+          <AccountButton language={language} navigate={navigate} />
           <Button
             type="button"
             variant="outline"
@@ -142,3 +145,22 @@ function guideLinks(language: Language) {
 }
 
 export { guideLinks };
+
+function AccountButton({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+  const auth = useGoogleAuth();
+  const t = meStrings[language];
+  if (!auth.clientId) return null;
+  return (
+    <Button
+      type="button"
+      variant={auth.idToken ? "ghost" : "outline"}
+      size="sm"
+      className="min-h-11 h-auto"
+      aria-label={auth.idToken ? t.navAccount : t.navSignIn}
+      onClick={() => (auth.idToken ? navigate("me") : void auth.signIn())}
+    >
+      <UserRound aria-hidden="true" />
+      <span className="hidden sm:inline">{auth.idToken ? t.navAccount : t.navSignIn}</span>
+    </Button>
+  );
+}
