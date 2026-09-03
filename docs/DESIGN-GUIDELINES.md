@@ -145,7 +145,6 @@ Edit these files only to change a **variant or size for the whole site**; never 
 | `layout.tsx` | public site header, status bar, emergency bar, footer, accessibility bar |
 | `relief-map.tsx` | Leaflet map plate and location list |
 | `error-boundary.tsx` | per-route error boundary with retry |
-| `legacy.tsx` | **deprecated** newsprint primitives kept only until every import is migrated (§8) |
 
 ---
 
@@ -265,10 +264,11 @@ through the `Eyebrow` component. Never show a raw machine value.
 
 ---
 
-## 8. Migration rules (from the newsprint design)
+## 8. Migrating old code (from the newsprint design)
 
-Until every page is migrated, `src/components/legacy.tsx` and the Tailwind aliases `paper`, `ink`, `rule`, `red`,
-`blue`, `font-display`, `font-serif` keep old code compiling. In any file you touch:
+The newsprint primitives (`SquareButton`, `SectionLabel`, `Headline`, `StatusMark`, `RuledTable`, …) and the Tailwind
+aliases `paper`, `ink`, `rule`, `red`, `blue`, `font-serif`, `font-display` were removed on 2026-09-03. If you
+rebase an older branch, translate like this:
 
 | Old | New |
 |---|---|
@@ -285,8 +285,6 @@ Until every page is migrated, `src/components/legacy.tsx` and the Tailwind alias
 | hand-made `<button>` tabs | `Tabs` (in-page) or `AppShell` nav |
 | custom `<dialog>` | shadcn `Dialog` |
 | `<select>` | `NativeSelect` |
-
-Delete an export from `legacy.tsx` as soon as nothing imports it. The aliases in `tailwind.config.ts` go last.
 
 ---
 

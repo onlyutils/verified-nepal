@@ -65,7 +65,7 @@ All of these run in CI on every PR.
 
 ## Code style
 
-`src/App.tsx` is a routing shell; pages live in `src/pages/`, shared primitives in `src/ui.tsx` and `src/components/ui/`, and all backend calls go through `src/api.ts`. The backend is a single Lambda handler `server/src/index.js` with `node --test` tests in `server/test/`. Use Tailwind utility classes with no CSS-in-JS, keep TypeScript strict, and write comments that explain constraints rather than restating code.
+`src/App.tsx` is a routing shell; public pages live in `src/pages/`, the moderator Desk in `src/desk/`, the organization dashboard in `src/org/`, shadcn/ui components in `src/components/ui/` (added with `npx shadcn@latest add`), app components in `src/components/`, and all backend calls go through `src/lib/api.ts`. Read [docs/DESIGN-GUIDELINES.md](docs/DESIGN-GUIDELINES.md) before touching UI: it has the tokens, the component rules and a checklist for a new screen. Run `pnpm format` before committing. The backend is a single Lambda handler `server/src/index.js` with `node --test` tests in `server/test/`. Use Tailwind utility classes with no CSS-in-JS, keep TypeScript strict, and write comments that explain constraints rather than restating code.
 
 ## Bigger contributions
 

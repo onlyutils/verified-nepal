@@ -27,13 +27,6 @@ export default {
         border: token("border"),
         input: token("input"),
         ring: token("ring"),
-
-        // Legacy aliases from the newsprint design. Do not use in new code; see docs/DESIGN-GUIDELINES.md.
-        paper: token("background"),
-        ink: token("foreground"),
-        rule: token("border"),
-        red: token("destructive"),
-        blue: token("primary"),
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -42,9 +35,6 @@ export default {
       },
       fontFamily: {
         sans: ['"Noto Sans"', '"Noto Sans Devanagari"', "system-ui", "-apple-system", '"Segoe UI"', "Roboto", "sans-serif"],
-        // Legacy aliases: the site is single-family now. Do not use in new code.
-        display: ['"Noto Sans"', '"Noto Sans Devanagari"', "system-ui", "sans-serif"],
-        serif: ['"Noto Sans"', '"Noto Sans Devanagari"', "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
