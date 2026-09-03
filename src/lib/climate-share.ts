@@ -403,7 +403,7 @@ export function drawWorldMap(
 
   const legendY = box.y + box.h - 31;
   const swatchW = Math.max(18, Math.min(34, (box.w - 10) / 10));
-  setText(ctx, muted, `400 18px ${FAMILY}`);
+  setText(ctx, muted, `400 20px ${FAMILY}`);
   for (let index = 0; index < CHOROPLETH_SHADES.length; index += 1) {
     const x = box.x + index * (swatchW + 48);
     ctx.fillStyle = CHOROPLETH_SHADES[index];
