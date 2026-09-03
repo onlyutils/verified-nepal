@@ -22,6 +22,7 @@ export function WorldMap({
   noDataLabel,
   loadingLabel,
   legendTitle,
+  nepalPopup,
 }: {
   countries: CountryClimate[];
   selectedIso3: string;
@@ -29,6 +30,7 @@ export function WorldMap({
   noDataLabel: string;
   loadingLabel: string;
   legendTitle: string;
+  nepalPopup: string;
 }) {
   const [geoJson, setGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
 
@@ -76,9 +78,12 @@ export function WorldMap({
             onEachFeature={(feature, layer: Layer) => {
               const iso3 = feature.id ? String(feature.id) : "";
               const country = byIso3.get(iso3);
-              const label = country
-                ? `${country.name}: ${country.warming_c.toFixed(4)}°C · ${country.share_pct.toFixed(2)}%`
-                : `${(feature.properties?.name as string | undefined) ?? iso3} — ${noDataLabel}`;
+              const label =
+                iso3 === "NPL"
+                  ? nepalPopup
+                  : country
+                    ? `${country.name}: ${country.warming_c.toFixed(4)}°C · ${country.share_pct.toFixed(2)}%`
+                    : `${(feature.properties?.name as string | undefined) ?? iso3} — ${noDataLabel}`;
               layer.bindTooltip(label, { sticky: true });
               if (country && iso3 === selectedIso3) {
                 layer.bindPopup(label);

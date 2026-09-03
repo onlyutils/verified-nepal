@@ -1,4 +1,5 @@
 import { Pause, Play } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { ClimateRankingsByYear, CountryClimate } from "@/lib/climate-data";
 import { WorldMap } from "@/components/climate/world-map";
@@ -34,6 +35,7 @@ export function RankingPanel({
   onSelect,
   strings,
   unit,
+  mapExtra,
 }: {
   countriesLatest: CountryClimate[];
   rankingsByYear: ClimateRankingsByYear;
@@ -42,6 +44,7 @@ export function RankingPanel({
   onSelect: (iso3: string) => void;
   strings: Record<string, string>;
   unit: string;
+  mapExtra?: ReactNode;
 }) {
   const t = strings;
   const [tab, setTab] = useState<Tab>("bar");
@@ -144,7 +147,14 @@ export function RankingPanel({
             </div>
             <div className="flex flex-1 items-start gap-1 overflow-x-auto">
               {yearRows.slice(0, 15).map((row) => (
-                <BarColumn key={row.iso3} row={row} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight={row.iso3 === selectedIso3} />
+                <BarColumn
+                  key={row.iso3}
+                  row={row}
+                  maxWarming={maxWarming}
+                  unit={unit}
+                  onSelect={onSelect}
+                  highlight={row.iso3 === selectedIso3}
+                />
               ))}
               {!nepalInTop && nepalRow ? (
                 <div className="ml-1 border-l pl-2">
@@ -240,14 +250,18 @@ export function RankingPanel({
       ) : null}
 
       {tab === "map" ? (
-        <WorldMap
-          countries={countriesLatest}
-          selectedIso3={selectedIso3}
-          onSelect={onSelect}
-          noDataLabel={t.noData}
-          loadingLabel={t.mapLoading}
-          legendTitle={t.mapLegendTitle}
-        />
+        <>
+          <WorldMap
+            countries={countriesLatest}
+            selectedIso3={selectedIso3}
+            onSelect={onSelect}
+            noDataLabel={t.noData}
+            loadingLabel={t.mapLoading}
+            legendTitle={t.mapLegendTitle}
+            nepalPopup={t.nepalPopup}
+          />
+          {mapExtra}
+        </>
       ) : null}
     </div>
   );
@@ -278,7 +292,9 @@ function BarColumn({
     >
       <div className="mt-4 flex h-44 w-full items-end">
         <div className="relative w-full rounded-t-sm bg-primary transition-[height] duration-200" style={{ height: `${heightPct}%` }}>
-          <span className="absolute -top-4 left-0 right-0 text-center text-[10px] tabular-nums text-muted-foreground">{formatNumber(row.warming_c, 3)}</span>
+          <span className="absolute -top-4 left-0 right-0 text-center text-[10px] tabular-nums text-muted-foreground">
+            {formatNumber(row.warming_c, 3)}
+          </span>
         </div>
       </div>
       <span className="mt-1 max-h-20 truncate text-[11px] font-medium text-foreground [writing-mode:vertical-rl]">

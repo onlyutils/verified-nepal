@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dispatchMeta } from "./og-meta.ts";
+import { climateMeta, dispatchMeta } from "./og-meta.ts";
 
 test("dispatchMeta builds a title and a 200-char excerpt with author", () => {
   const meta = dispatchMeta({
@@ -17,4 +17,10 @@ test("dispatchMeta builds a title and a 200-char excerpt with author", () => {
 test("dispatchMeta tolerates plain strings and missing author", () => {
   const meta = dispatchMeta({ title: "  Plain ", body: "Short" });
   assert.deepEqual(meta, { title: "Plain · verifiedNepal", description: "Short" });
+});
+
+test("climateMeta includes the computed share and Nepal in the description", () => {
+  const meta = climateMeta();
+  assert.match(meta.title, /%/);
+  assert.match(meta.description, /Nepal/);
 });
