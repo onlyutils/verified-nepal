@@ -53,7 +53,9 @@ pnpm build
 - `GET /dispatches/{id}` → anonymous get single published dispatch
 - `GET /moderation/dispatches` → moderator/admin list pending dispatches
 - `POST /moderation/dispatches/{id}` → moderator/admin `publish|reject` dispatch (writes `AUDIT`)
-- `POST /needs` → anonymous (+ Turnstile) create need → `201 {id, refCode}` (pending; the `claimCode` is minted by the moderator on publish)
+- `POST /needs` → anonymous (+ Turnstile) create need → `201 {id, refCode}` (pending; the `claimCode` is minted by the moderator on publish); optional `Authorization: Bearer` writes a private ownership pointer when present, while the need itself stays anonymous
+- `GET /me/dashboard` → signed-in; `{missing:[], needs:[{id,refCode,status,category,district,ward,createdAt,expiresAt}], offers:[{id,status,categories,districts,createdAt,expiresAt}]}` from the caller's private `USER#<sub>` pointers. Public need/offer views are unchanged.
+- `POST /me/needs/claim` → signed-in `{refCode}`; attaches an anonymous need to the caller's dashboard → `200 {ok:true,id}` / `404`. Idempotent.
 - `GET /needs?district=&ward=&category=&status=&cursor=` → anonymous list needs (masked, status-filtered)
 - `GET /status/{refCode}` → anonymous lookup need by refCode → `{status, category, district, createdAt, expiresAt}` plus `claimCode` once the need is published/matched/fulfilled
 - `POST /needs/{refCode}/renew` → anonymous renew own need by refCode (extends TTL)

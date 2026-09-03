@@ -2,7 +2,7 @@ import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../l
 import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { requireAuth, optionalAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
 import { CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS } from "../constants.js";
 import {
   createNeed, listPublicNeeds, getRefPointer, getNeedById, renewNeed,
@@ -10,9 +10,10 @@ import {
   listFlaggedPointers, listFlagsForNeed,
 } from "../models/need.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
+import { putPointer } from "../models/mine.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
-export async function handlePostNeeds(event, { getDdb, env }) {
+export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken } = body;
@@ -48,6 +49,7 @@ export async function handlePostNeeds(event, { getDdb, env }) {
   const desc = validateString(description, "description", 10, 2000);
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
   await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  const auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
@@ -55,6 +57,7 @@ export async function handlePostNeeds(event, { getDdb, env }) {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
     district, ward, householdSize, category, description: desc, language,
   });
+  if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });
 }
 

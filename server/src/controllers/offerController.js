@@ -3,6 +3,7 @@ import { validateString, validatePhone, validateOptionalEmail, validateDistrict 
 import { requireAuth } from "../lib/auth.js";
 import { CATEGORIES } from "../constants.js";
 import { createOffer, listPublicOffers } from "../models/offer.js";
+import { putPointer } from "../models/mine.js";
 import { toPublicOfferListItem } from "../views/offer.js";
 
 export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
@@ -33,6 +34,7 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
     helperSub, helperName, org: cleanOrg, categories: cleanCategories, districts: cleanDistricts,
     description: desc, phone: cleanPhone, email: cleanEmail,
   });
+  await putPointer(auth.ddb, auth.tableName, { sub: helperSub, type: "OFFER", id });
   return json(201, { id });
 }
 

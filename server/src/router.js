@@ -8,6 +8,7 @@ import {
   handlePostNeedStatus, handlePostFlag, handleGetFlags,
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers } from "./controllers/offerController.js";
+import { handleGetDashboard, handlePostNeedClaim } from "./controllers/meController.js";
 import { handleGetModerationQueue, handlePostModeration } from "./controllers/moderationController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
 import {
@@ -31,11 +32,13 @@ export async function route(event, ctx) {
   if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });
   if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env, fetchImpl });
   if (method === "POST" && path === "/me/ack-guidelines") return await handleAckGuidelines(event, { fetchJwks, getDdb, env });
+  if (method === "GET" && path === "/me/dashboard") return await handleGetDashboard(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/me/needs/claim") return await handlePostNeedClaim(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/users/lookup") return await handleAdminUsersLookup(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/users") return await handleAdminUsersList(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/audit") return await handleGetAudit(event, { getDdb, env });
-  if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env });
+  if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env, fetchJwks });
   if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });
   if (method === "GET" && path.startsWith("/status/")) {
     const ref = decodeURIComponent(path.slice("/status/".length));

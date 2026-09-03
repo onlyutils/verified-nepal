@@ -97,6 +97,13 @@ export async function requireAuth(event, { fetchJwks, getDdb, env }) {
   return { payload, user, role, ddb, tableName };
 }
 
+/** Like requireAuth, but a request without an Authorization header is allowed through as null. */
+export async function optionalAuth(event, opts) {
+  const header = getAuthToken(event.headers);
+  if (!header) return null;
+  return requireAuth(event, opts);
+}
+
 export async function requireModAuth(event, opts) {
   const auth = await requireAuth(event, opts);
   if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
