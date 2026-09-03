@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { orgStrings } from "@/i18n/orgs";
+import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTi
 const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
 const navPages = [
   ["search", "search"],
+  ["poster", "poster"],
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
   ["dropCenters", "dropCenters"],
@@ -124,6 +126,7 @@ export function SiteHeader({
 function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
+  if (page === "poster") return posterStrings[language].title;
   return t[key] ?? page;
 }
 

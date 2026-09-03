@@ -1,5 +1,17 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
-import { ArrowUpCircle, ExternalLink, Flame, HandHelping, Phone, Plus, Search, Shield, ShieldCheck, UserX } from "lucide-react";
+import {
+  ArrowUpCircle,
+  ExternalLink,
+  Flame,
+  HandHelping,
+  Image as ImageIcon,
+  Phone,
+  Plus,
+  Search,
+  Shield,
+  ShieldCheck,
+  UserX,
+} from "lucide-react";
 import { openChatWidget } from "@/lib/chat-widget";
 import { data } from "@/lib/data";
 import { helplines } from "@/lib/helplines";
@@ -22,6 +34,7 @@ import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
+import { posterStrings } from "@/i18n/poster";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
 const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
@@ -47,6 +60,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
           <div className="grid gap-5">
             <ActionCard language={language} kind="find" navigate={navigate} />
             <ActionCard language={language} kind="missing" navigate={navigate} />
+            <ActionCard language={language} kind="poster" navigate={navigate} />
             <ActionCard language={language} kind="need" navigate={navigate} />
             <ActionCard language={language} kind="want" navigate={navigate} />
             <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
@@ -153,7 +167,7 @@ function useRegion() {
   return [region, setRegion] as const;
 }
 
-type ActionKind = "find" | "missing" | "need" | "want";
+type ActionKind = "find" | "missing" | "poster" | "need" | "want";
 function ActionCard({ language, kind, navigate }: { language: Language; kind: ActionKind; navigate: (page: Page) => void }) {
   const ts = shellStrings[language];
   const config = {
@@ -175,6 +189,16 @@ function ActionCard({ language, kind, navigate }: { language: Language; kind: Ac
       chip: "bg-destructive-soft text-destructive",
       card: "border-2 bg-background",
       action: undefined,
+      variant: "secondary" as const,
+    },
+    poster: {
+      title: posterStrings[language].title,
+      description: ts.posterCardDescription,
+      cta: ts.posterCardCta,
+      icon: ImageIcon,
+      chip: "bg-destructive-soft text-destructive",
+      card: "border-2 bg-background",
+      action: () => navigate("poster"),
       variant: "secondary" as const,
     },
     need: {

@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { shellStrings } from "@/i18n/shell";
+import { posterStrings } from "@/i18n/poster";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { LiveStatusBadge } from "@/lib/live";
@@ -13,6 +14,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
   const ts = shellStrings[language];
   const links: Array<[Page, string]> = [
     ["dashboard", t.dashboard],
+    ["poster", posterStrings[language].title],
     ["dropCenters", centerStrings[language].navDropCenters],
     ["projects", t.projects],
     ["dispatches", t.dispatches],

@@ -148,7 +148,13 @@ export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets
   // Disaster line
   ctx.fillStyle = p.muted;
   ctx.font = `600 30px ${FAMILY}`;
-  y = drawLines(ctx, wrapText(measure(ctx), disasterLine(CURRENT_DISASTER, input.district, input.language, t), contentW, 2), margin, y, 40);
+  y = drawLines(
+    ctx,
+    wrapText(measure(ctx), disasterLine(CURRENT_DISASTER, input.district, input.language, t, input.status), contentW, 2),
+    margin,
+    y,
+    40,
+  );
   y += 16;
   ctx.fillStyle = p.rule;
   ctx.fillRect(margin, y, 120, 6);
@@ -185,7 +191,7 @@ export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets
     ty += 20;
     ctx.fillStyle = p.muted;
     ctx.font = `400 32px ${FAMILY}`;
-    ty = drawLines(ctx, wrapText(measure(ctx), input.story.trim(), textW, input.size === "story" ? 6 : 4), textX, ty, 44);
+    ty = drawLines(ctx, wrapText(measure(ctx), input.story.trim(), textW, input.size === "story" ? 6 : 3), textX, ty, 44);
   }
 
   // Contact block sits above the footer regardless of how much text there was.

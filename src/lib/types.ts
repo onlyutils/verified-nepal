@@ -4,6 +4,7 @@ export type Page =
   | "dashboard"
   | "search"
   | "missing"
+  | "poster"
   | "info"
   | "privacy"
   | "desk"

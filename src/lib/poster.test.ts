@@ -17,6 +17,7 @@ const t: PosterStrings = {
   headlineMissing: "MISSING",
   headlineFound: "FOUND",
   since: "Missing since the {disaster}",
+  sinceFound: "Reported missing after the {disaster}",
   lastSeen: "Last seen",
   age: "Age",
   contact: "Contact",
@@ -36,6 +37,7 @@ const base = {
 
 test("disaster line names the disaster, date and district", () => {
   assert.equal(disasterLine(CURRENT_DISASTER, "Rasuwa", "en", t), "Missing since the Bhote Koshi flash flood · 26 August 2026 · Rasuwa");
+  assert.equal(disasterLine(CURRENT_DISASTER, "", "en", t, "found"), "Reported missing after the Bhote Koshi flash flood · 26 August 2026");
 });
 
 test("person line joins name, nickname, age and gender", () => {

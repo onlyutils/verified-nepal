@@ -28,6 +28,7 @@ export interface PosterStrings {
   headlineMissing: string;
   headlineFound: string;
   since: string;
+  sinceFound: string;
   lastSeen: string;
   age: string;
   contact: string;
@@ -67,8 +68,9 @@ function districtLabel(district: string, language: Language) {
   return entry ? entry[language] : district;
 }
 
-export function disasterLine(disaster: Disaster, district: string, language: Language, t: PosterStrings) {
-  const parts = [t.since.replace("{disaster}", disaster.name[language]), disasterDateLabel(disaster, language)];
+export function disasterLine(disaster: Disaster, district: string, language: Language, t: PosterStrings, status: PosterStatus = "missing") {
+  const template = status === "found" ? t.sinceFound : t.since;
+  const parts = [template.replace("{disaster}", disaster.name[language]), disasterDateLabel(disaster, language)];
   if (district) parts.push(districtLabel(district as DistrictName, language));
   return parts.join(" · ");
 }

@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteStatusBar } from "@/components/site-status-bar";
 import { LiveDataProvider } from "@/lib/live";
 import { labels } from "@/i18n";
+import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { centerStrings } from "@/i18n/centers";
@@ -21,6 +22,7 @@ const Ledger = lazy(() => import("@/pages/ledger").then((m) => ({ default: m.Led
 const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.AuditPage })));
 const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
+const PosterPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterPage })));
 const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
 const ProjectsList = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsList })));
 const DispatchesPage = lazy(() => import("@/pages/dispatches").then((m) => ({ default: m.DispatchesPage })));
@@ -39,6 +41,7 @@ const pagePaths: Record<Page, string> = {
   dashboard: "/",
   search: "/search",
   missing: "/missing",
+  poster: "/poster",
   info: "/info",
   privacy: "/privacy",
   desk: "/desk",
@@ -81,6 +84,7 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/desk")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/missing")) return "missing";
+  if (pathname.startsWith("/poster")) return "poster";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
   return "dashboard";
@@ -92,6 +96,7 @@ function pageTitle(page: Page, language: Language): string {
     dashboard: t.dashboard,
     search: t.search,
     missing: t.missingGuideTitle,
+    poster: posterStrings[language].title,
     info: t.info,
     privacy: t.privacyTitle,
     desk: t.deskTitle,
@@ -228,6 +233,11 @@ export function App() {
             <Suspense fallback={loading}>
               {page === "search" ? <FindPerson language={language} navigate={navigate} /> : null}
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
+              {page === "poster" ? (
+                <ComponentErrorBoundary language={language}>
+                  <PosterPage language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
               {page === "info" ? <InfoHelp language={language} /> : null}
               {page === "privacy" ? <PrivacyPolicy language={language} /> : null}
               {page === "getHelp" ? (
