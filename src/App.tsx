@@ -138,6 +138,7 @@ export function App() {
 
   useEffect(() => {
     document.title = `${pageTitle(page, language)} · verifiedNepal`;
+    document.documentElement.dataset.page = page;
   }, [page, language]);
 
   useEffect(() => {

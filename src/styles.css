@@ -127,6 +127,11 @@ html[data-contrast="high"] a {
   }
 }
 
+/* No assistant launcher on the sign-in page. */
+html[data-page="deskLogin"] #onyutils-chat-widget {
+  display: none !important;
+}
+
 /* Thin scrollbars in scrolling lists. */
 .overflow-auto,
 .overflow-y-auto {

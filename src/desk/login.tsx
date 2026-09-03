@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 
-/** Photo credit for the background (CC BY-SA 4.0). Keep the attribution when you change the image. */
+/** Background credit: Landsat 9 view of the 2026 Rasuwa / Bhote Koshi flood aftermath. Keep the attribution when you change the image. */
 const photo = {
   src: "/images/desk-login.jpg",
-  title: "Flood in Biratnagar 2019",
-  author: "Sandeep Raut",
-  license: "CC BY-SA 4.0",
-  url: "https://commons.wikimedia.org/wiki/File:Flood_in_Biratnagar_2019.jpg",
+  title: "Landsat 9 image of the Bhote Koshi flood aftermath, 26 August 2026",
+  author: "USGS",
+  license: "public domain",
+  url: "https://commons.wikimedia.org/wiki/File:Landsat_Nepal_flood_2026-08-26.png",
 };
 
 function GoogleMark() {

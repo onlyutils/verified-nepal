@@ -37,10 +37,7 @@ function notify() {
 }
 
 export function saveTokens(t: Tokens): void {
-  storage()?.setItem(
-    TOKEN_KEY,
-    JSON.stringify({ access_token: t.access_token, refresh_token: t.refresh_token, expires_in: t.expires_in }),
-  );
+  storage()?.setItem(TOKEN_KEY, JSON.stringify({ access_token: t.access_token, refresh_token: t.refresh_token, expires_in: t.expires_in }));
   notify();
 }
 
