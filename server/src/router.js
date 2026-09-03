@@ -27,6 +27,9 @@ import {
   handlePostDispatch, handleGetDispatches, handleGetModerationDispatches,
   handlePostModerationDispatch, handleGetDispatch,
 } from "./controllers/dispatchController.js";
+import {
+  handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
+} from "./controllers/climateController.js";
 
 export async function route(event, ctx) {
   const { getDdb, env, fetchJwks, fetchImpl } = ctx;
@@ -54,6 +57,7 @@ export async function route(event, ctx) {
   if (method === "GET" && path === "/admin/users/lookup") return await handleAdminUsersLookup(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/users") return await handleAdminUsersList(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });
+  if (method === "GET" && path === "/admin/climate") return await handleGetAdminClimate(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/audit") return await handleGetAudit(event, { getDdb, env });
   if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env, fetchJwks });
   if (method === "GET" && path === "/needs") return await handleGetNeeds(event, { getDdb, env });
@@ -152,6 +156,9 @@ export async function route(event, ctx) {
   }
   if (method === "POST" && path === "/dispatches") return await handlePostDispatch(event, { getDdb, env });
   if (method === "GET" && path === "/dispatches") return await handleGetDispatches(event, { getDdb, env });
+  if (method === "POST" && path === "/climate/messages") return await handlePostClimateMessage(event, { getDdb, env });
+  if (method === "GET" && path === "/climate/messages") return await handleGetClimateMessages(event, { getDdb, env });
+  if (method === "POST" && path === "/climate/downloads") return await handlePostClimateDownload(event, { getDdb, env });
   if (method === "GET" && path === "/moderation/dispatches") return await handleGetModerationDispatches(event, { fetchJwks, getDdb, env });
   if (method === "POST" && /^\/moderation\/dispatches\/[^\/]+$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[3]);

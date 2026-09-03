@@ -79,6 +79,10 @@ pnpm build
 - `GET /admin/users/lookup?email=` → admin lookup user by email
 - `POST /admin/users/{sub}/role` → admin set `role` + `districts` (self-demotion blocked, writes `AUDIT`)
 - `GET /admin/stats` → admin counts for needs/offers/projects/dispatches by status, moderators, oldest pending age
+- `POST /climate/messages` → anonymous (+ Turnstile) record a fixed message to a country
+- `GET /climate/messages?country=ISO3` → public climate message counts
+- `POST /climate/downloads` → record a climate image download
+- `GET /admin/climate` → admin climate message and download statistics
 - Other routes → `404 {error:"Not Found"}`. Errors never include stack traces.
 - `POST /orgs` → signed-in create org → `201 {id, status:"pending"}` (max 3 owned → 400)
 - `GET /orgs/mine` → signed-in list own orgs → `{items:[{...org, role}]}`
