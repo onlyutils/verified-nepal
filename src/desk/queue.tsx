@@ -71,6 +71,12 @@ export function Queue({ model }: { model: DeskModel }) {
             const district = item.district || item.districts?.[0] || "—";
             const category = String(item.category || item.categories?.join(", ") || "");
             const flagCount = typeof item.flagCount === "number" ? item.flagCount : 0;
+            const remainingMs = item.claimExpiresAt ? new Date(item.claimExpiresAt).getTime() - model.nowTick : 0;
+            const isClaimed = !!item.claimedBy && remainingMs > 0;
+            const isMine = isClaimed && item.claimedBy === model.myModeratorId;
+            const remainingLabel = isClaimed
+              ? `${Math.floor(remainingMs / 60000)}:${String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0")}`
+              : null;
             return (
               <Card key={item.id}>
                 <CardHeader className="gap-3">
@@ -84,9 +90,16 @@ export function Queue({ model }: { model: DeskModel }) {
                         </Badge>
                       ) : null}
                     </div>
-                    <StatusBadge tone={toneForStatus(String(item.status || "pending"))}>
-                      {statusLabel(t, String(item.status || "pending"))}
-                    </StatusBadge>
+                    <div className="flex items-center gap-2">
+                      {isClaimed ? (
+                        <Badge variant={isMine ? "warning" : "secondary"} className="tabular-nums">
+                          {isMine ? t.deskClaimedByYou : item.claimedByName || t.deskClaimedByOther} · {remainingLabel}
+                        </Badge>
+                      ) : null}
+                      <StatusBadge tone={toneForStatus(String(item.status || "pending"))}>
+                        {statusLabel(t, String(item.status || "pending"))}
+                      </StatusBadge>
+                    </div>
                   </div>
                   <CardDescription>
                     {district} · W{item.ward ?? "—"} · {new Date(item.createdAt).toLocaleString()}
@@ -158,31 +171,48 @@ export function Queue({ model }: { model: DeskModel }) {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id={`publish-${item.id}`}
-                      checked={!!model.publishConfirmed[item.id]}
-                      onCheckedChange={(checked) => model.setPublishConfirmed((current) => ({ ...current, [item.id]: checked === true }))}
-                    />
-                    <Label htmlFor={`publish-${item.id}`} className="leading-6">
-                      {model.ds.publishConfirmLabel}
-                    </Label>
-                  </div>
+                  {isClaimed && !isMine ? null : (
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={`publish-${item.id}`}
+                        checked={!!model.publishConfirmed[item.id]}
+                        onCheckedChange={(checked) => model.setPublishConfirmed((current) => ({ ...current, [item.id]: checked === true }))}
+                      />
+                      <Label htmlFor={`publish-${item.id}`} className="leading-6">
+                        {model.ds.publishConfirmLabel}
+                      </Label>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => model.handlePublish(item.id)} disabled={!model.publishConfirmed[item.id]}>
-                      {t.deskPublish}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        model.setRejectId(item.id);
-                        model.setRejectCode("");
-                        model.setRejectDetail("");
-                        model.setRejectError(null);
-                      }}
-                    >
-                      {t.deskReject}
-                    </Button>
+                    {isClaimed && !isMine ? null : !isClaimed ? (
+                      <Button onClick={() => model.handleClaim(item.id)} disabled={model.claimActionLoading === item.id}>
+                        {t.deskClaim}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button onClick={() => model.handlePublish(item.id)} disabled={!model.publishConfirmed[item.id]}>
+                          {t.deskPublish}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            model.setRejectId(item.id);
+                            model.setRejectCode("");
+                            model.setRejectDetail("");
+                            model.setRejectError(null);
+                          }}
+                        >
+                          {t.deskReject}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => model.handleRelease(item.id)}
+                          disabled={model.claimActionLoading === item.id}
+                        >
+                          {t.deskRelease}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>

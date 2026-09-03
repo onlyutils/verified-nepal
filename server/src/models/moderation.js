@@ -4,6 +4,8 @@ import { validateString, validatePhone } from "../lib/validate.js";
 import { generateClaimCode, maskName } from "../lib/format.js";
 import { CATEGORIES, LANGUAGES } from "../constants.js";
 
+const CLAIM_LEASE_MS = 10 * 60 * 1000;
+
 export async function listPendingNeedsAndOffers(ddb, tableName) {
   let pending = [];
   for (const type of ["NEED", "OFFER"]) {
@@ -114,7 +116,50 @@ export function applyModerationEdits(type, item, edits) {
   }
 }
 
-export async function moderatePendingItem(ddb, tableName, { id, type, item, action, reason }) {
+export async function claimPendingItem(ddb, tableName, { item, actorSub, actorName }) {
+  const nowIso = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + CLAIM_LEASE_MS).toISOString();
+  const updated = { ...item, claimedBy: actorSub, claimedByName: actorName, claimExpiresAt: expiresAt };
+  try {
+    await ddb.send(new PutCommand({
+      TableName: tableName,
+      Item: updated,
+      ConditionExpression: "attribute_not_exists(claimedBy) OR claimExpiresAt < :now OR claimedBy = :me",
+      ExpressionAttributeValues: { ":now": nowIso, ":me": actorSub },
+    }));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(409, "already_claimed");
+    throw e;
+  }
+  return { claimedBy: actorSub, claimedByName: actorName, claimExpiresAt: expiresAt };
+}
+
+export async function releaseClaim(ddb, tableName, { item, actorSub }) {
+  const updated = { ...item };
+  delete updated.claimedBy;
+  delete updated.claimedByName;
+  delete updated.claimExpiresAt;
+  try {
+    await ddb.send(new PutCommand({
+      TableName: tableName,
+      Item: updated,
+      ConditionExpression: "attribute_not_exists(claimedBy) OR claimedBy = :me",
+      ExpressionAttributeValues: { ":me": actorSub },
+    }));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(409, "not_claim_owner");
+    throw e;
+  }
+}
+
+export async function moderatePendingItem(ddb, tableName, { id, type, item, action, reason, actorSub }) {
+  const nowIso = new Date().toISOString();
+  if (item.claimedBy && item.claimedBy !== actorSub && item.claimExpiresAt && item.claimExpiresAt > nowIso) {
+    throw err(409, "claim_required");
+  }
+  delete item.claimedBy;
+  delete item.claimedByName;
+  delete item.claimExpiresAt;
   const newStatus = action === "publish" ? "published" : "rejected";
   item.status = newStatus;
   if (type === "NEED") {

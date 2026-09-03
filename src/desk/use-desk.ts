@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   ackGuidelines,
+  claimQueueItem,
   getAdminStats,
   getAdminUsers,
   getClaimsPrint,
@@ -20,6 +21,7 @@ import {
   moderateProject,
   moderateProjectUpdate,
   redeemClaim,
+  releaseQueueItem,
   setAdminUserRole,
   syncClaims,
   updateNeedStatus,
@@ -86,6 +88,8 @@ export function useDesk(language: Language) {
   const [rejectCode, setRejectCode] = useState("");
   const [rejectDetail, setRejectDetail] = useState("");
   const [rejectError, setRejectError] = useState<string | null>(null);
+  const [claimActionLoading, setClaimActionLoading] = useState<string | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [offers, setOffers] = useState<OfferPublic[]>([]);
@@ -370,6 +374,12 @@ export function useDesk(language: Language) {
   useEffect(() => {
     if (isScoped && scopeDistricts[0]) setPrintDistrict(scopeDistricts[0] as string);
   }, [isScoped, scopeDistricts]);
+  useEffect(() => {
+    if (activeSection !== "queue") return;
+    if (!queue.some((item) => item.claimExpiresAt)) return;
+    const interval = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [activeSection, queue]);
 
   const filteredQueue = useMemo(
     () =>
@@ -434,6 +444,36 @@ export function useDesk(language: Language) {
       setRejectId(null);
     } catch (error) {
       setRejectError(apiErrorMessage(error, language));
+    }
+  };
+  const handleClaim = async (id: string) => {
+    if (!auth.idToken) return;
+    setClaimActionLoading(id);
+    clearFeedback();
+    try {
+      const result = await claimQueueItem(auth.idToken, id);
+      setQueue((items) => items.map((item) => (item.id === id ? { ...item, ...result } : item)));
+    } catch (error) {
+      const apiError = error as ApiError;
+      setActionError(apiError.status === 409 ? t.deskAlreadyClaimed : apiErrorMessage(error, language));
+      void loadQueue();
+    } finally {
+      setClaimActionLoading(null);
+    }
+  };
+  const handleRelease = async (id: string) => {
+    if (!auth.idToken) return;
+    setClaimActionLoading(id);
+    clearFeedback();
+    try {
+      await releaseQueueItem(auth.idToken, id);
+      setQueue((items) =>
+        items.map((item) => (item.id === id ? { ...item, claimedBy: undefined, claimedByName: undefined, claimExpiresAt: undefined } : item)),
+      );
+    } catch (error) {
+      setActionError(apiErrorMessage(error, language));
+    } finally {
+      setClaimActionLoading(null);
     }
   };
   const handleNeedStatus = async (needId: string, status: "matched" | "fulfilled" | "archived") => {
@@ -677,6 +717,11 @@ export function useDesk(language: Language) {
     setRejectError,
     handlePublish,
     handleReject,
+    claimActionLoading,
+    nowTick,
+    myModeratorId: auth.profile?.sub,
+    handleClaim,
+    handleRelease,
     publishedNeeds,
     filteredNeeds,
     filteredOffers,

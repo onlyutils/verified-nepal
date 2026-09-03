@@ -96,6 +96,9 @@ export interface ModerationQueueItem {
   language?: string;
   createdAt: string;
   dupCandidates?: Array<{ id: string; maskedName: string; ward: number }>;
+  claimedBy?: string;
+  claimedByName?: string;
+  claimExpiresAt?: string;
   [key: string]: unknown;
 }
 
@@ -271,6 +274,17 @@ export function moderateNeed(
     token,
     body: JSON.stringify(body),
   });
+}
+
+export function claimQueueItem(
+  token: string,
+  id: string,
+): Promise<{ claimedBy: string; claimedByName?: string; claimExpiresAt: string }> {
+  return request(`/moderation/${encodeURIComponent(id)}/claim`, { method: "POST", token, body: JSON.stringify({}) });
+}
+
+export function releaseQueueItem(token: string, id: string): Promise<{ ok: boolean }> {
+  return request(`/moderation/${encodeURIComponent(id)}/release`, { method: "POST", token, body: JSON.stringify({}) });
 }
 
 export function updateNeedStatus(

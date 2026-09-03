@@ -11,7 +11,9 @@ import { handlePostOffers, handleGetOffers } from "./controllers/offerController
 import {
   handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
-import { handleGetModerationQueue, handlePostModeration } from "./controllers/moderationController.js";
+import {
+  handleGetModerationQueue, handlePostModeration, handlePostModerationClaim, handlePostModerationRelease,
+} from "./controllers/moderationController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
 import {
   handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
@@ -63,6 +65,14 @@ export async function route(event, ctx) {
   if (method === "POST" && path === "/offers") return await handlePostOffers(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/offers") return await handleGetOffers(event, { getDdb, env });
   if (method === "GET" && path === "/moderation/queue") return await handleGetModerationQueue(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && /^\/moderation\/[^\/]+\/claim$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostModerationClaim(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/moderation\/[^\/]+\/release$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostModerationRelease(event, { fetchJwks, getDdb, env }, id);
+  }
   if (method === "POST" && /^\/moderation\/[^\/]+$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[2]);
     return await handlePostModeration(event, { fetchJwks, getDdb, env }, id);
