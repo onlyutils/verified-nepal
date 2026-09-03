@@ -226,8 +226,8 @@ stays). Scope is a `Badge variant="info"` under the shell title.
 
 Sign-in gates (wrong role, guidelines acknowledgement) are a centered `Card` (`max-w-md`) with the logo, title, one
 paragraph and one primary button. Signed-out visitors to `/desk` are sent to `/desk/login` (`src/desk/login.tsx`): a
-full-bleed photo with a dark gradient, the Google-branded sign-in button, and a photo credit line. The photo is
-CC BY-SA from Wikimedia Commons; keep the attribution when you swap it.
+full-bleed satellite image with a dark gradient, the Google-branded sign-in button, and a credit line. The image
+is from Planet Labs' 2026 flood data release (CC BY-NC 4.0); keep the attribution when you swap it.
 
 ### 5.5 Chat assistant (`src/lib/chat-widget.ts`)
 

@@ -9,13 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/logo";
 
-/** Background credit: Landsat 9 view of the 2026 Rasuwa / Bhote Koshi flood aftermath. Keep the attribution when you change the image. */
+/**
+ * Background: Planet SkySat scene of the flood-widened Trishuli at Betrawati, five days after the
+ * 26 August 2026 Bhote Koshi outburst flood. Planet's disaster data release is CC BY-NC 4.0 —
+ * fine for this non-commercial volunteer site; keep the attribution when you change the image.
+ */
 const photo = {
   src: "/images/desk-login.jpg",
-  title: "Landsat 9 image of the Bhote Koshi flood aftermath, 26 August 2026",
-  author: "USGS",
-  license: "public domain",
-  url: "https://commons.wikimedia.org/wiki/File:Landsat_Nepal_flood_2026-08-26.png",
+  title: "SkySat image of the Trishuli at Betrawati, 31 August 2026",
+  author: "Planet Labs PBC",
+  license: "CC BY-NC 4.0",
+  url: "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26",
 };
 
 function GoogleMark() {
@@ -62,7 +66,7 @@ export function DeskLogin({
   return (
     <div className="relative flex min-h-dvh flex-col bg-foreground text-background">
       <img src={photo.src} alt="" className="absolute inset-0 size-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-b from-foreground/70 via-foreground/55 to-foreground/85" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-foreground/60 via-foreground/45 to-foreground/80" aria-hidden="true" />
 
       <div className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <Button
