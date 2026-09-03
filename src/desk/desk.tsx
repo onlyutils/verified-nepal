@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Building2, Flag, FolderKanban, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,12 @@ export function Desk({
   const model = useDesk(language);
   const { auth, t } = model;
   const onHome = () => navigate("dashboard");
+  const isModerator = auth.profile?.role === "moderator" || auth.profile?.role === "admin";
+
+  // Helpers (organization accounts) have no business on the Desk: send them to My organization.
+  useEffect(() => {
+    if (auth.idToken && auth.profile && !auth.error && !isModerator) navigate("org");
+  }, [auth.idToken, auth.profile, auth.error, isModerator, navigate]);
 
   if (auth.loading) return <LoadingGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (!auth.idToken) return <SignedOutGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
