@@ -20,6 +20,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
 import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, LoadingState } from "@/components/empty-state";
@@ -46,6 +47,12 @@ function statusLabel(status: string, language: Language) {
   const key = `deskNeedsStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`;
   if (status === "in_progress" || status === "in-progress") return t.inProgress;
   return t[key] ?? t.unavailable;
+}
+
+function groupItemStatusLabel(status: string, t: (typeof meStrings)["en"]) {
+  if (status === "open") return t.groupsStatusOpen;
+  if (status === "claimed") return t.groupsStatusClaimed;
+  return t.groupsStatusDone;
 }
 
 export function MePage({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
@@ -181,6 +188,39 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                       >
                         {renewed[need.id] ? t.needRenewed : t.needRenew}
                       </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.groupsTitle}</h2>
+            {data.groups.length === 0 ? (
+              <EmptyState title={t.groupsEmpty} />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.groups.map((group) => (
+                  <Card key={group.id}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{group.groupName ?? t.groupsTitle}</CardTitle>
+                      <CardDescription>{group.district ?? tl.unavailable}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {group.myItems.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">{t.groupsNoItems}</p>
+                      ) : (
+                        <ul className="space-y-1 text-sm">
+                          {group.myItems.map((item) => (
+                            <li key={item.itemId} className="flex items-center justify-between gap-2">
+                              <span>{item.description}</span>
+                              <Badge variant={item.status === "done" ? "default" : "secondary"}>
+                                {groupItemStatusLabel(item.status, t)}
+                              </Badge>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
