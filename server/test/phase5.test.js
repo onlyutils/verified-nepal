@@ -213,9 +213,17 @@ describe("Phase5 district scoping", () => {
     res = await handler(makeEvent({ method: "POST", path: `/moderation/projects/${projG}`, headers: { authorization: `Bearer ${modGTok}` }, body: { action: "verify-committee" } }));
     assert.equal(res.statusCode, 200);
     // dispatches are not district-scoped: scoped mod can moderate any dispatch
-    const dispRes = await handler(makeEvent({ method: "POST", path: "/dispatches", body: { title: "Hello", body: "This is a dispatch body long enough for testing dispatches indeed", author: { displayName: "A", email: "a@b.com" }, tags: ["story"], language: "en" } }));
+    const authorTok = createToken(basePayload({ sub: "author-1", name: "A", email: "a@b.com" }), kp.privateKey);
+    const dispRes = await handler(makeEvent({ method: "POST", path: "/me/articles", headers: { authorization: `Bearer ${authorTok}` }, body: { language: "en" } }));
     assert.equal(dispRes.statusCode, 201);
     const dispId = JSON.parse(dispRes.body).id;
+    res = await handler(makeEvent({ method: "PUT", path: `/me/articles/${dispId}`, headers: { authorization: `Bearer ${authorTok}` }, body: {
+      title: "Hello", blocks: [{ type: "paragraph", text: "This is an article body long enough for testing." }],
+      cover: { url: "https://cdn.example/c.jpg", fileId: "c1", source: "Author" }, tags: ["story"], displayName: "A",
+    } }));
+    assert.equal(res.statusCode, 200, res.body);
+    res = await handler(makeEvent({ method: "POST", path: `/me/articles/${dispId}/submit`, headers: { authorization: `Bearer ${authorTok}` } }));
+    assert.equal(res.statusCode, 200, res.body);
     res = await handler(makeEvent({ method: "POST", path: `/moderation/dispatches/${dispId}`, headers: { authorization: `Bearer ${modGTok}` }, body: { action: "publish" } }));
     assert.equal(res.statusCode, 200);
   });

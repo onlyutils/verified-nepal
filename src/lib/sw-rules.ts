@@ -20,6 +20,7 @@ export function hasAuthHeader(headers: unknown): boolean {
 
 export function isPrivateApiPath(pathname: string): boolean {
   if (!pathname) return false;
+  if (pathname === "/me/articles" || pathname.startsWith("/me/articles/")) return true;
   if (pathname === "/me" || pathname.startsWith("/me/")) return true;
   if (pathname === "/auth" || pathname.startsWith("/auth/")) return true;
   if (pathname.startsWith("/moderation/")) return true;

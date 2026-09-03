@@ -38,6 +38,9 @@ test("claims is NOT public and is private", () => {
 test("private paths are NetworkOnly", () => {
   const privates = [
     "/me",
+    "/me/articles",
+    "/me/articles/article_1",
+    "/me/articles/article_1/edit",
     "/auth/exchange",
     "/auth/refresh",
     "/moderation/queue",

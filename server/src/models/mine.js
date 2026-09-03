@@ -1,6 +1,6 @@
 import { PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
-export const MINE_TYPES = ["NEED", "OFFER", "MISSING", "GROUP"];
+export const MINE_TYPES = ["NEED", "OFFER", "MISSING", "GROUP", "ARTICLE"];
 
 /** Private "this is mine" pointer. Only GET /me/dashboard reads it; nothing public does. */
 export async function putPointer(ddb, tableName, { sub, type, id, createdAt }) {

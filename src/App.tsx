@@ -14,7 +14,11 @@ import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
+import { articlesEditorStrings } from "@/i18n/articles-editor";
 import type { Language, Page } from "@/lib/types";
+
+type ArticlePage = "myArticles" | "articleEdit";
+type AppPage = Page | ArticlePage;
 
 const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
 const DeskLogin = lazy(() => import("@/desk/login").then((m) => ({ default: m.DeskLogin })));
@@ -40,13 +44,17 @@ const DropCenters = lazy(() => import("@/pages/drop-centers").then((m) => ({ def
 const DropCenterDetail = lazy(() => import("@/pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
 const DonationStatusPage = lazy(() => import("@/pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
 const ClimatePage = lazy(() => import("@/pages/climate").then((m) => ({ default: m.ClimatePage })));
+const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
+const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
 
-const pagePaths: Record<Page, string> = {
+const pagePaths: Record<AppPage, string> = {
   dashboard: "/",
   search: "/search",
   missing: "/missing",
   poster: "/poster",
   me: "/me",
+  myArticles: "/me/articles",
+  articleEdit: "/me/articles/:id/edit",
   info: "/info",
   privacy: "/privacy",
   desk: "/desk",
@@ -70,7 +78,7 @@ const pagePaths: Record<Page, string> = {
   climate: "/climate",
 };
 
-function pageFromPath(pathname: string): Page {
+function pageFromPath(pathname: string): AppPage {
   if (pathname.match(/^\/donation\/[^\/]+/)) return "donationStatus";
   if (pathname.startsWith("/register-organization")) return "registerOrg";
   if (pathname.startsWith("/org")) return "org";
@@ -79,6 +87,8 @@ function pageFromPath(pathname: string): Page {
   if (pathname.startsWith("/climate")) return "climate";
   if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/articles")) return "dispatches";
+  if (pathname.match(/^\/me\/articles\/[^\/]+\/edit/)) return "articleEdit";
+  if (pathname.startsWith("/me/articles")) return "myArticles";
   if (pathname.startsWith("/projects/register")) return "projectRegister";
   if (pathname.startsWith("/projects/update")) return "projectUpdate";
   if (pathname.match(/^\/projects\/[^\/]+/)) return "projectDetail";
@@ -98,14 +108,16 @@ function pageFromPath(pathname: string): Page {
   return "dashboard";
 }
 
-function pageTitle(page: Page, language: Language): string {
+function pageTitle(page: AppPage, language: Language): string {
   const t = labels[language] as Record<string, string>;
-  const map: Record<Page, string> = {
+  const map: Record<AppPage, string> = {
     dashboard: t.dashboard,
     search: t.search,
     missing: t.missingGuideTitle,
     poster: posterStrings[language].title,
     me: meStrings[language].title,
+    myArticles: articlesEditorStrings[language].listTitle,
+    articleEdit: articlesEditorStrings[language].title,
     info: t.info,
     privacy: t.privacyTitle,
     desk: t.deskTitle,
@@ -144,7 +156,7 @@ export function App() {
     const stored = localStorage.getItem("verifiednepal:language");
     return stored === "ne" ? "ne" : "en";
   });
-  const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname));
+  const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname));
 
   useEffect(() => {
     localStorage.setItem("verifiednepal:language", language);
@@ -255,6 +267,16 @@ export function App() {
               {page === "me" ? (
                 <ComponentErrorBoundary language={language}>
                   <MePage language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "myArticles" ? (
+                <ComponentErrorBoundary language={language}>
+                  <MyArticlesPage language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "articleEdit" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ArticleEditor language={language} id={decodeURIComponent(window.location.pathname.split("/")[3] || "")} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "info" ? <InfoHelp language={language} /> : null}

@@ -24,8 +24,9 @@ import {
   handlePostUpdate, handleGetModerationProjects, handlePostModerationProject, handlePostModerationUpdate,
 } from "./controllers/projectController.js";
 import {
-  handlePostDispatch, handleGetDispatches, handleGetModerationDispatches,
-  handlePostModerationDispatch, handleGetDispatch,
+  handlePostArticle, handleGetMyArticles, handleGetMyArticle, handlePutArticle, handleSubmitArticle,
+  handleDeleteArticle, handlePostArticlePresign, handlePostArticleView, handlePostArticleShare, handlePostArticleLike,
+  handleGetDispatches, handleGetModerationDispatches, handlePostModerationDispatch, handleGetDispatch,
 } from "./controllers/dispatchController.js";
 import {
   handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
@@ -44,6 +45,21 @@ export async function route(event, ctx) {
   if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env, fetchImpl });
   if (method === "POST" && path === "/me/ack-guidelines") return await handleAckGuidelines(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/me/dashboard") return await handleGetDashboard(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/me/articles") return await handlePostArticle(event, { fetchJwks, getDdb, env });
+  if (method === "GET" && path === "/me/articles") return await handleGetMyArticles(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/me/articles/media/presign") return await handlePostArticlePresign(event, { fetchJwks, getDdb, env, fetchImpl });
+  if (method === "POST" && /^\/me\/articles\/[^/]+\/submit$/.test(path)) {
+    return await handleSubmitArticle(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
+  if (method === "PUT" && /^\/me\/articles\/[^/]+$/.test(path)) {
+    return await handlePutArticle(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
+  if (method === "DELETE" && /^\/me\/articles\/[^/]+$/.test(path)) {
+    return await handleDeleteArticle(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
+  if (method === "GET" && /^\/me\/articles\/[^/]+$/.test(path)) {
+    return await handleGetMyArticle(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
   if (method === "POST" && path === "/me/needs/claim") return await handlePostNeedClaim(event, { fetchJwks, getDdb, env });
   if (method === "POST" && path === "/me/missing/presign") return await handlePostMissingPresign(event, { fetchJwks, getDdb, env, fetchImpl });
   if (method === "PUT" && /^\/me\/missing\/[^\/]+$/.test(path)) {
@@ -154,8 +170,14 @@ export async function route(event, ctx) {
     const id = decodeURIComponent(path.split("/")[3]);
     return await handlePostModerationProject(event, { fetchJwks, getDdb, env }, id);
   }
-  if (method === "POST" && path === "/dispatches") return await handlePostDispatch(event, { getDdb, env });
   if (method === "GET" && path === "/dispatches") return await handleGetDispatches(event, { getDdb, env });
+  if (method === "POST" && /^\/dispatches\/[^/]+\/(view|share|like)$/.test(path)) {
+    const parts = path.split("/");
+    const id = decodeURIComponent(parts[2]);
+    if (parts[3] === "view") return await handlePostArticleView(event, { getDdb, env }, id);
+    if (parts[3] === "share") return await handlePostArticleShare(event, { getDdb, env }, id);
+    return await handlePostArticleLike(event, { fetchJwks, getDdb, env }, id);
+  }
   if (method === "POST" && path === "/climate/messages") return await handlePostClimateMessage(event, { getDdb, env });
   if (method === "GET" && path === "/climate/messages") return await handleGetClimateMessages(event, { getDdb, env });
   if (method === "POST" && path === "/climate/downloads") return await handlePostClimateDownload(event, { getDdb, env });

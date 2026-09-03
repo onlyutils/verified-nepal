@@ -1,31 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { err } from "../lib/http.js";
 import { buildAuditEntry, writeAudit, getTargetLabelForAudit } from "./audit.js";
-
-export async function createDispatch(ddb, tableName, { titleObj, bodyObj, displayName, place, email, uniqueTags, language }) {
-  const id = randomUUID();
-  const createdAt = new Date().toISOString();
-  const status = "pending";
-  const item = {
-    PK: `DISPATCH#${id}`,
-    SK: "META",
-    type: "DISPATCH",
-    id,
-    title: titleObj,
-    body: bodyObj,
-    author: { displayName, place, email },
-    tags: uniqueTags,
-    language,
-    status,
-    createdAt,
-    gsi2pk: `DISPATCH#${status}`,
-    gsi2sk: createdAt,
-  };
-  if (!item.author.place) delete item.author.place;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
-  return { id };
-}
 
 export async function queryPublishedDispatchesPage(ddb, tableName, { tagRaw, cursorKey }) {
   const limit = 20;
@@ -106,7 +80,8 @@ export async function moderateDispatch(ddb, tableName, { item, action, reason, a
     item.status = "rejected";
     item.gsi2pk = "DISPATCH#rejected";
     item.gsi2sk = item.createdAt;
-    if (reason && typeof reason === "string" && reason.trim()) item.rejectionReason = reason.trim();
+    if (reason && typeof reason === "string" && reason.trim()) item.rejectReason = reason.trim();
+    else delete item.rejectReason;
     await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   }
   const targetLabel = getTargetLabelForAudit("DISPATCH", item);

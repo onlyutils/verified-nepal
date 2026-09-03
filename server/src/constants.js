@@ -12,21 +12,10 @@ export const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
 export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 export const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 export const MAX_NEED_MEDIA_ITEMS = 4;
-export const REJECT_REASON_CODES = [
-  "not_consented",
-  "duplicate",
-  "unreachable",
-  "out_of_scope",
-  "insufficient_detail",
-  "fraud_suspected",
-  "already_assisted",
-  "ineligible_criteria",
-  "unverifiable_identity",
-  "incomplete_beneficiary_info",
-  "spam",
-  "other",
-];
 export const DISPATCH_TAGS = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
+export const ALLOWED_ARTICLE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"];
+export const MAX_ARTICLE_IMAGE_SIZE = 10 * 1024 * 1024;
+export const MAX_ARTICLE_VIDEO_SIZE = 100 * 1024 * 1024;
 
 // Keep in sync with src/lib/climate-messages.ts (client test checks both lists match).
 export const CLIMATE_MESSAGE_IDS = [

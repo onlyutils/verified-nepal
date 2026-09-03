@@ -7,6 +7,7 @@ import { downscaleImage } from "@/lib/image";
 import { apiErrorMessage } from "@/lib/api-error";
 import { getDashboard, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
+import { uploadMedia } from "@/lib/media";
 import { EMPTY_POSTER, POSTER_LIMITS, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
 import { drawPoster, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
 import type { Language, Page } from "@/lib/types";
@@ -206,18 +207,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
       if (!photo && photoUrl.startsWith("data:")) {
         const blob = await (await fetch(photoUrl)).blob();
         const file = new File([blob], "photo.jpg", { type: blob.type || "image/jpeg" });
-        const presign = await presignMissingPhoto(auth.idToken, {
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-        });
-        const headers = {
-          ...(presign.headers || {}),
-          ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
-        };
-        const upload = await fetch(presign.uploadUrl, { method: "PUT", body: file, headers });
-        if (!upload.ok) throw new Error("upload");
-        photo = { fileId: presign.fileId, url: presign.publicUrl };
+        photo = await uploadMedia((body) => presignMissingPhoto(auth.idToken as string, body), file);
         setPhotoRemote(photo);
       }
       await putMissing(auth.idToken, recordId, {

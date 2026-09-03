@@ -48,9 +48,18 @@ pnpm build
 - `GET /moderation/projects` → mod list all projects oldest-first with private fields + pending photos/updates 
 - `POST /moderation/projects/{id}` → mod `verify-committee|publish|reject|set-status|publish-photo|reject-photo` (`publish` requires `committee.verified`; every action writes `AUDIT` item) 
 - `POST /moderation/projects/{id}/updates/{updateId}` → mod `publish|reject` update 
-- `POST /dispatches` → anonymous (+ Turnstile) create dispatch → `201 {id}` (pending)
+- `POST /me/articles` → signed-in create an empty article draft → `201 {id}`
+- `GET /me/articles` → signed-in list owned articles with status, counters and reject reason
+- `GET /me/articles/{id}` → signed-in get an owned article for editing
+- `PUT /me/articles/{id}` → signed-in save an owned draft or rejected article
+- `POST /me/articles/{id}/submit` → signed-in submit a draft or rejected article for moderation
+- `DELETE /me/articles/{id}` → signed-in delete an owned draft, rejected or pending article
+- `POST /me/articles/media/presign` → signed-in presign an article image or video upload
 - `GET /dispatches?tag=&cursor=` → anonymous list published dispatches (excerpts, tag filter)
 - `GET /dispatches/{id}` → anonymous get single published dispatch
+- `POST /dispatches/{id}/view` → anonymous increment a published article view counter
+- `POST /dispatches/{id}/share` → anonymous increment a published article share counter
+- `POST /dispatches/{id}/like` → optional-auth toggle or undo a published article like
 - `GET /moderation/dispatches` → moderator/admin list pending dispatches
 - `POST /moderation/dispatches/{id}` → moderator/admin `publish|reject` dispatch (writes `AUDIT`)
 - `POST /needs` → anonymous (+ Turnstile) create need → `201 {id, refCode}` (pending; the `claimCode` is minted by the moderator on publish); optional `Authorization: Bearer` writes a private ownership pointer when present, while the need itself stays anonymous

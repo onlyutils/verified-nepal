@@ -10,7 +10,11 @@ export function toPublicDispatchListItem(it) {
     author,
     tags: it.tags || [],
     publishedAt: it.publishedAt,
+    views: Number(it.views) || 0,
+    likes: Number(it.likes) || 0,
+    shares: Number(it.shares) || 0,
   };
+  if (it.cover && typeof it.cover.url === "string") out.cover = { url: it.cover.url };
   if (!out.publishedAt) delete out.publishedAt;
   return out;
 }
@@ -25,7 +29,12 @@ export function toPublicDispatchDetail(item) {
     publishedAt: item.publishedAt,
     createdAt: item.createdAt,
     status: item.status,
+    views: Number(item.views) || 0,
+    likes: Number(item.likes) || 0,
+    shares: Number(item.shares) || 0,
   };
+  if (item.cover) publicItem.cover = item.cover;
+  if (Array.isArray(item.blocks)) publicItem.blocks = item.blocks;
   if (item.author?.place) publicItem.author.place = item.author.place;
   if (!publicItem.publishedAt) delete publicItem.publishedAt;
   return publicItem;

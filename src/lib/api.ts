@@ -1,5 +1,6 @@
 // Relative .ts import so the Node test runner (no "@/" alias) can load this module.
 import { refreshAccessToken } from "./tokens.ts";
+import type { Block, Cover } from "../articles/types.ts";
 import type { PosterInput } from "@/lib/poster";
 
 export const API_BASE =
@@ -727,7 +728,12 @@ export interface DispatchAuthorPublic {
   displayName: string;
   place?: string;
 }
-export interface DispatchPublicItem {
+export interface ArticleCounters {
+  views: number;
+  likes: number;
+  shares: number;
+}
+export interface DispatchPublicItem extends Partial<ArticleCounters> {
   id: string;
   title: string | { en: string; ne?: string };
   excerpt: string | { en: string; ne?: string };
@@ -735,13 +741,14 @@ export interface DispatchPublicItem {
   tags: DispatchTag[];
   publishedAt: string;
   createdAt?: string;
+  cover?: { url: string };
 }
 export interface DispatchListResponse {
   items: DispatchPublicItem[];
   cursor?: string;
 }
 
-export interface DispatchDetailResponse {
+export interface DispatchDetailResponse extends Partial<ArticleCounters> {
   id: string;
   title: string | { en: string; ne?: string };
   body: string | { en: string; ne?: string };
@@ -749,18 +756,8 @@ export interface DispatchDetailResponse {
   tags: DispatchTag[];
   publishedAt: string;
   createdAt: string;
-}
-
-export interface CreateDispatchBody {
-  title: string;
-  body: string;
-  author: { displayName: string; place?: string; email: string };
-  tags: DispatchTag[];
-  language: "en" | "ne";
-  turnstileToken?: string;
-}
-export interface CreateDispatchResponse {
-  id: string;
+  cover?: Cover;
+  blocks?: Block[]; // absent on articles written before the block editor
 }
 
 export interface ModerationDispatchItem {
@@ -772,14 +769,13 @@ export interface ModerationDispatchItem {
   status: "pending" | "published" | "rejected";
   createdAt: string;
   publishedAt?: string;
+  cover?: Cover;
+  blocks?: Block[];
 }
 export interface ModerationDispatchResponse {
   items: ModerationDispatchItem[];
 }
 
-export function createDispatch(body: CreateDispatchBody): Promise<CreateDispatchResponse> {
-  return request<CreateDispatchResponse>("/dispatches", { method: "POST", body: JSON.stringify(body) });
-}
 export function listDispatches(params: { tag?: string; cursor?: string } = {}): Promise<DispatchListResponse> {
   const q = new URLSearchParams();
   if (params.tag) q.set("tag", params.tag);
@@ -1203,4 +1199,72 @@ export interface AdminClimateStats {
 
 export function getAdminClimate(token: string): Promise<AdminClimateStats> {
   return request<AdminClimateStats>("/admin/climate", { token });
+}
+
+// ---- Articles: signed-in authoring and engagement (spec 2026-09-03-articles-authoring-design) ----
+export type ArticleStatus = "draft" | "pending" | "published" | "rejected";
+export interface MyArticle extends ArticleCounters {
+  id: string;
+  status: ArticleStatus;
+  title: string;
+  language: "en" | "ne";
+  tags: DispatchTag[];
+  cover?: Cover;
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+  publishedAt?: string;
+  rejectReason?: string;
+}
+export interface MyArticleDetail extends MyArticle {
+  blocks: Block[];
+  displayName: string;
+  place?: string;
+}
+export interface ArticleSaveBody {
+  title?: string;
+  blocks?: Block[];
+  cover?: Cover | null; // null clears the cover
+  tags?: DispatchTag[];
+  language?: "en" | "ne";
+  displayName?: string;
+  place?: string;
+}
+export function createArticle(token: string, body: { language: "en" | "ne" }): Promise<{ id: string }> {
+  return request<{ id: string }>("/me/articles", { method: "POST", token, body: JSON.stringify(body) });
+}
+export function listMyArticles(token: string): Promise<{ items: MyArticle[] }> {
+  return request<{ items: MyArticle[] }>("/me/articles", { token });
+}
+export function getMyArticle(token: string, id: string): Promise<MyArticleDetail> {
+  return request<MyArticleDetail>(`/me/articles/${encodeURIComponent(id)}`, { token });
+}
+export function saveArticle(token: string, id: string, body: ArticleSaveBody): Promise<{ updatedAt: string }> {
+  return request<{ updatedAt: string }>(`/me/articles/${encodeURIComponent(id)}`, { method: "PUT", token, body: JSON.stringify(body) });
+}
+export function submitArticle(token: string, id: string): Promise<{ status: ArticleStatus }> {
+  return request<{ status: ArticleStatus }>(`/me/articles/${encodeURIComponent(id)}/submit`, { method: "POST", token });
+}
+export function deleteArticle(token: string, id: string): Promise<void> {
+  return request<void>(`/me/articles/${encodeURIComponent(id)}`, { method: "DELETE", token });
+}
+export function presignArticleMedia(
+  token: string,
+  body: { filename: string; contentType: string; size: number },
+): Promise<PresignResponse> {
+  return request<PresignResponse>("/me/articles/media/presign", { method: "POST", token, body: JSON.stringify(body) });
+}
+export function postArticleView(id: string): Promise<void> {
+  return request<void>(`/dispatches/${encodeURIComponent(id)}/view`, { method: "POST" });
+}
+export function postArticleShare(id: string): Promise<void> {
+  return request<void>(`/dispatches/${encodeURIComponent(id)}/share`, { method: "POST" });
+}
+/** Signed in: toggles and returns `liked`. Anonymous: pass `undo` to take a like back. */
+export function postArticleLike(id: string, token?: string, body: { undo?: boolean } = {}): Promise<{ liked?: boolean; likes: number }> {
+  return request<{ liked?: boolean; likes: number }>(`/dispatches/${encodeURIComponent(id)}/like`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }

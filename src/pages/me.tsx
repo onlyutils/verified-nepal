@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { meStrings } from "@/i18n/me";
+import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
@@ -57,6 +58,7 @@ function groupItemStatusLabel(status: string, t: (typeof meStrings)["en"]) {
 
 export function MePage({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = meStrings[language];
+  const articleT = articlesEditorStrings[language];
   const tl = labels[language];
   const auth = useGoogleAuth();
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -294,6 +296,17 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 ))}
               </div>
             )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{articleT.listTitle}</h2>
+            <Card>
+              <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">{articleT.articlesCardBody}</p>
+                <Button asChild variant="outline" className="shrink-0">
+                  <a href="/me/articles">{articleT.listTitle}</a>
+                </Button>
+              </CardContent>
+            </Card>
           </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.shortcutsTitle}</h2>
