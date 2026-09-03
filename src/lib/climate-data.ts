@@ -1,5 +1,6 @@
 import countries from "../../public/data/climate/countries.json";
 import timeseries from "../../public/data/climate/timeseries.json";
+import rankingsByYear from "../../public/data/climate/rankings-by-year.json";
 import meta from "../../public/data/climate/meta.json";
 
 export interface CountryClimate {
@@ -18,6 +19,25 @@ export interface CountryClimate {
 export interface ClimateTimeseries {
   years: number[];
   series: Record<string, (number | null)[]>;
+}
+
+export interface YearRankingRow {
+  iso3: string;
+  name: string;
+  warming_c: number;
+  share_pct: number | null;
+  rank: number;
+}
+
+export interface ClimateRankingsByYear {
+  years: number[];
+  byYear: YearRankingRow[][];
+}
+
+/** GeoJSON world country boundaries (id = ISO3), loaded on demand — see world-map.tsx. */
+export async function loadWorldGeoJson(): Promise<GeoJSON.FeatureCollection> {
+  const mod = await import("../../public/data/climate/world-countries.geo.json");
+  return mod.default as unknown as GeoJSON.FeatureCollection;
 }
 
 export interface ClimateMeta {
@@ -41,5 +61,6 @@ export interface ClimateMeta {
 export const climateData = {
   countries: countries as unknown as CountryClimate[],
   timeseries: timeseries as unknown as ClimateTimeseries,
+  rankingsByYear: rankingsByYear as unknown as ClimateRankingsByYear,
   meta: meta as unknown as ClimateMeta,
 };

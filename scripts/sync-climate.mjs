@@ -165,6 +165,28 @@ async function main() {
     console.warn(`Skipped ${skipped.length} ISO3 codes missing a ${latestYear} 3-GHG Total value: ${skipped.join(", ")}`);
   }
 
+  const rankingsByYear = years.map((year) => {
+    const globalForYear = gmstIndex.get(`GLOBAL|3-GHG|Total|${year}`);
+    const rows = [];
+    for (const [iso3, name] of namesByIso3) {
+      const warming = gmstIndex.get(`${iso3}|3-GHG|Total|${year}`);
+      if (warming === undefined) continue;
+      rows.push({
+        iso3,
+        name,
+        warming_c: round(warming),
+        share_pct: globalForYear ? round((warming / globalForYear) * 100, 4) : null,
+      });
+    }
+    rows.sort((a, b) => b.warming_c - a.warming_c);
+    const top = rows.slice(0, TOP_N_TIMESERIES);
+    if (!top.some((r) => r.iso3 === "NPL")) {
+      const nepal = rows.find((r) => r.iso3 === "NPL");
+      if (nepal) top.push({ ...nepal, rank: rows.indexOf(nepal) + 1 });
+    }
+    return top.map((r) => (r.rank ? r : { ...r, rank: rows.indexOf(r) + 1 }));
+  });
+
   const seriesIso3 = new Set(countries.slice(0, TOP_N_TIMESERIES).map((c) => c.iso3));
   seriesIso3.add("NPL");
   const series = { GLOBAL: years.map((year) => round(gmstIndex.get(`GLOBAL|3-GHG|Total|${year}`))) };
@@ -194,6 +216,7 @@ async function main() {
   await Promise.all([
     writeFile(path.join(OUT_DIR, "countries.json"), JSON.stringify(countries, null, 2)),
     writeFile(path.join(OUT_DIR, "timeseries.json"), JSON.stringify({ years, series }, null, 2)),
+    writeFile(path.join(OUT_DIR, "rankings-by-year.json"), JSON.stringify({ years, byYear: rankingsByYear })),
     writeFile(path.join(OUT_DIR, "meta.json"), JSON.stringify(meta, null, 2)),
   ]);
 

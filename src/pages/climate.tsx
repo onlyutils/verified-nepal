@@ -1,112 +1,58 @@
-import { useMemo, useState } from "react";
-import { climateData, type CountryClimate } from "@/lib/climate-data";
+import { X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { climateData } from "@/lib/climate-data";
+import { climateSeriesColor } from "@/lib/climate-colors";
 import { climateStrings } from "@/i18n/climate";
 import type { Language } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Button } from "@/components/ui/button";
 import { PageHeader, SectionHeader } from "@/components/page-header";
+import { RankingPanel } from "@/components/climate/ranking-panel";
+import { MultiLineChart } from "@/components/climate/line-chart";
+import { DonutChart } from "@/components/climate/donut-chart";
 
-const TOP_N = 15;
+const MAX_COMPARE = 6;
+const DEFAULT_COMPARE = ["NPL", "USA", "CHN"];
 
 function formatNumber(value: number | null, digits = 4) {
-  if (value === null || value === undefined) return null;
+  if (value === null || value === undefined) return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: 0 });
-}
-
-function RankRow({
-  rank,
-  country,
-  maxWarming,
-  unit,
-  shareLabel,
-  highlight = false,
-}: {
-  rank: number;
-  country: CountryClimate;
-  maxWarming: number;
-  unit: string;
-  shareLabel: string;
-  highlight?: boolean;
-}) {
-  const widthPct = maxWarming > 0 ? Math.max(2, (country.warming_c / maxWarming) * 100) : 0;
-  return (
-    <div className={`space-y-1 rounded-lg px-2 py-1.5 ${highlight ? "bg-accent" : ""}`}>
-      <div className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="font-medium text-foreground">
-          {rank}. {country.name}
-        </span>
-        <span className="whitespace-nowrap text-muted-foreground">
-          {formatNumber(country.warming_c)} {unit} · {formatNumber(country.share_pct, 2)}% {shareLabel}
-        </span>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${widthPct}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function StatTile({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">
-        {label}
-        {note ? <span className="ml-1 italic">({note})</span> : null}
-      </p>
-      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function TrendChart({ years, values, unit }: { years: number[]; values: (number | null)[]; unit: string }) {
-  const width = 640;
-  const height = 160;
-  const padding = 8;
-  const points = years.map((year, i) => ({ year, value: values[i] }));
-  const known = points.filter((p): p is { year: number; value: number } => p.value !== null);
-  if (known.length < 2) return null;
-
-  const minYear = years[0];
-  const maxYear = years[years.length - 1];
-  const maxValue = Math.max(...known.map((p) => p.value), 0);
-  const minValue = Math.min(...known.map((p) => p.value), 0);
-  const range = maxValue - minValue || 1;
-
-  const x = (year: number) => padding + ((year - minYear) / (maxYear - minYear || 1)) * (width - padding * 2);
-  const y = (value: number) => height - padding - ((value - minValue) / range) * (height - padding * 2);
-
-  const path = known.map((p) => `${x(p.year)},${y(p.value)}`).join(" ");
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" role="img" aria-label={`${minYear}–${maxYear} trend`}>
-      <polyline points={path} fill="none" stroke="rgb(var(--primary))" strokeWidth={2} />
-      <text x={padding} y={height - 2} className="fill-muted-foreground text-[10px]">
-        {minYear}
-      </text>
-      <text x={width - padding} y={height - 2} textAnchor="end" className="fill-muted-foreground text-[10px]">
-        {maxYear} · {formatNumber(known[known.length - 1].value)} {unit}
-      </text>
-    </svg>
-  );
 }
 
 export function ClimatePage({ language }: { language: Language }) {
   const t = climateStrings[language];
-  const { countries, timeseries, meta } = climateData;
-  const [selectedIso3, setSelectedIso3] = useState("NPL");
+  const { countries, timeseries, rankingsByYear, meta } = climateData;
+  const [compareIso3s, setCompareIso3s] = useState<string[]>(DEFAULT_COMPARE);
+  const [logScale, setLogScale] = useState(false);
+  const [addValue, setAddValue] = useState("");
+  const compareRef = useRef<HTMLDivElement>(null);
 
-  const top = useMemo(() => countries.slice(0, TOP_N), [countries]);
-  const maxWarming = top[0]?.warming_c ?? 1;
-  const nepalIndex = useMemo(() => countries.findIndex((c) => c.iso3 === "NPL"), [countries]);
-  const nepal = nepalIndex >= 0 ? countries[nepalIndex] : undefined;
-  const nepalInTop = nepalIndex >= 0 && nepalIndex < TOP_N;
-
+  const byIso3 = useMemo(() => new Map(countries.map((c) => [c.iso3, c])), [countries]);
   const sortedByName = useMemo(() => [...countries].sort((a, b) => a.name.localeCompare(b.name)), [countries]);
-  const selected = countries.find((c) => c.iso3 === selectedIso3);
-  const selectedSeries = timeseries.series[selectedIso3];
-
   const dateLocale = language === "ne" ? "ne-NP" : "en-GB";
+
+  const handleSelect = (iso3: string) => {
+    setCompareIso3s((current) => [iso3, ...current.filter((c) => c !== iso3)].slice(0, MAX_COMPARE));
+    compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const addCountry = (iso3: string) => {
+    if (!iso3 || compareIso3s.includes(iso3) || compareIso3s.length >= MAX_COMPARE) return;
+    setCompareIso3s((current) => [...current, iso3]);
+    setAddValue("");
+  };
+
+  const removeCountry = (iso3: string) => {
+    setCompareIso3s((current) => (current.length > 1 ? current.filter((c) => c !== iso3) : current));
+  };
+
+  const primary = byIso3.get(compareIso3s[0]);
+  const lineSeries = compareIso3s
+    .map((iso3, i) => ({ iso3, name: byIso3.get(iso3)?.name ?? iso3, values: timeseries.series[iso3], colorIndex: i }))
+    .filter((s) => s.values);
+  const missingTrend = compareIso3s.filter((iso3) => !timeseries.series[iso3]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -130,88 +76,124 @@ export function ClimatePage({ language }: { language: Language }) {
       </Card>
 
       <div className="space-y-3">
-        <SectionHeader title={t.rankingTitle} aside={`${t.rankingSubtitle} (${meta.latest_year})`} />
-        <Card>
-          <CardContent className="space-y-2 pt-6">
-            {top.map((country, i) => (
-              <RankRow
-                key={country.iso3}
-                rank={i + 1}
-                country={country}
-                maxWarming={maxWarming}
-                unit={t.unitCelsius}
-                shareLabel={t.shareOfGlobal}
-                highlight={country.iso3 === "NPL"}
-              />
-            ))}
-            {!nepalInTop && nepal ? (
-              <>
-                <p className="border-t pt-3 text-xs text-muted-foreground">{t.nepalHighlightNote}</p>
-                <RankRow
-                  rank={nepalIndex + 1}
-                  country={nepal}
-                  maxWarming={maxWarming}
-                  unit={t.unitCelsius}
-                  shareLabel={t.shareOfGlobal}
-                  highlight
-                />
-              </>
-            ) : null}
-          </CardContent>
-        </Card>
+        <SectionHeader title={t.rankingTitle} aside={t.rankingSubtitle} />
+        <RankingPanel
+          countriesLatest={countries}
+          rankingsByYear={rankingsByYear}
+          latestYear={meta.latest_year}
+          selectedIso3={compareIso3s[0]}
+          onSelect={handleSelect}
+          strings={t}
+          unit={t.unitCelsius}
+        />
+        <p className="text-xs text-muted-foreground">{t.clickToCompareHint}</p>
       </div>
 
-      <div className="space-y-3">
+      <div ref={compareRef} className="scroll-mt-20 space-y-3">
         <SectionHeader title={t.exploreTitle} />
         <Card>
           <CardContent className="space-y-6 pt-6">
-            <div className="max-w-xs space-y-2">
-              <Label htmlFor="climate-country">{t.countryPickerLabel}</Label>
-              <NativeSelect id="climate-country" value={selectedIso3} onChange={(e) => setSelectedIso3(e.target.value)}>
-                {sortedByName.map((country) => (
-                  <NativeSelectOption key={country.iso3} value={country.iso3}>
-                    {country.name}
-                  </NativeSelectOption>
+            <div className="space-y-3">
+              <Label htmlFor="climate-add-country">{t.addCountryLabel}</Label>
+              <div className="flex flex-wrap gap-2">
+                {compareIso3s.map((iso3, i) => (
+                  <span
+                    key={iso3}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm"
+                    style={{ borderColor: climateSeriesColor(i) }}
+                  >
+                    <span className="size-2 rounded-full" style={{ backgroundColor: climateSeriesColor(i) }} aria-hidden="true" />
+                    {byIso3.get(iso3)?.name ?? iso3}
+                    {compareIso3s.length > 1 ? (
+                      <button type="button" onClick={() => removeCountry(iso3)} aria-label={`${t.removeCountry} ${byIso3.get(iso3)?.name ?? iso3}`}>
+                        <X className="size-3.5" />
+                      </button>
+                    ) : null}
+                  </span>
                 ))}
-              </NativeSelect>
+              </div>
+              {compareIso3s.length < MAX_COMPARE ? (
+                <NativeSelect
+                  id="climate-add-country"
+                  value={addValue}
+                  onChange={(e) => addCountry(e.target.value)}
+                  className="max-w-xs"
+                >
+                  <NativeSelectOption value="">{t.addCountryPlaceholder}</NativeSelectOption>
+                  {sortedByName
+                    .filter((c) => !compareIso3s.includes(c.iso3))
+                    .map((c) => (
+                      <NativeSelectOption key={c.iso3} value={c.iso3}>
+                        {c.name}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
+              ) : null}
             </div>
 
-            {selected ? (
-              <>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  <StatTile label={t.statsWarmingLabel} value={`${formatNumber(selected.warming_c)} ${t.unitCelsius}`} />
-                  <StatTile label={t.statsShareLabel} value={`${formatNumber(selected.share_pct, 2)}%`} note={t.calculatedLabel} />
-                  <StatTile
-                    label={t.statsCumulativeLabel}
-                    value={selected.cumulative_pg_co2e100 !== null ? `${formatNumber(selected.cumulative_pg_co2e100)} ${t.unitPgCo2e100}` : t.notAvailable}
-                  />
-                  <StatTile label={t.statsCo2Label} value={selected.co2_c !== null ? `${formatNumber(selected.co2_c)} ${t.unitCelsius}` : t.notAvailable} />
-                  <StatTile label={t.statsCh4Label} value={selected.ch4_c !== null ? `${formatNumber(selected.ch4_c)} ${t.unitCelsius}` : t.notAvailable} />
-                  <StatTile label={t.statsN2oLabel} value={selected.n2o_c !== null ? `${formatNumber(selected.n2o_c)} ${t.unitCelsius}` : t.notAvailable} />
-                  <StatTile
-                    label={t.statsFossilLabel}
-                    value={selected.fossil_c !== null ? `${formatNumber(selected.fossil_c)} ${t.unitCelsius}` : t.notAvailable}
-                  />
-                  <StatTile
-                    label={t.statsLulucfLabel}
-                    value={selected.lulucf_c !== null ? `${formatNumber(selected.lulucf_c)} ${t.unitCelsius}` : t.notAvailable}
-                  />
-                </div>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">{t.trendTitle}</p>
+              <div className="flex gap-1 rounded-md border p-0.5">
+                <Button type="button" size="sm" variant={logScale ? "ghost" : "default"} onClick={() => setLogScale(false)}>
+                  {t.linearScaleLabel}
+                </Button>
+                <Button type="button" size="sm" variant={logScale ? "default" : "ghost"} onClick={() => setLogScale(true)}>
+                  {t.logScaleLabel}
+                </Button>
+              </div>
+            </div>
+            {lineSeries.length ? (
+              <MultiLineChart
+                years={timeseries.years}
+                series={lineSeries}
+                unit={t.unitCelsius}
+                logScale={logScale}
+                formatValue={(v) => formatNumber(v)}
+              />
+            ) : null}
+            {missingTrend.length ? (
+              <p className="text-sm text-muted-foreground">
+                {t.trendMissingNote} {missingTrend.map((iso3) => byIso3.get(iso3)?.name ?? iso3).join(", ")} —{" "}
+                <a href={meta.source.record_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
+                  {t.sourceLink}
+                </a>
+              </p>
+            ) : null}
 
-                <div>
-                  <p className="mb-2 text-sm font-medium text-foreground">{t.trendTitle}</p>
-                  {selectedSeries ? (
-                    <TrendChart years={timeseries.years} values={selectedSeries} unit={t.unitCelsius} />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t.trendMissingNote}{" "}
-                      <a href={meta.source.record_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
-                        {t.sourceLink}
-                      </a>
-                    </p>
-                  )}
+            {primary ? (
+              <div className="space-y-4 border-t pt-6">
+                <p className="text-sm font-medium text-foreground">
+                  {primary.name} · {formatNumber(primary.warming_c)} {t.unitCelsius} ({formatNumber(primary.share_pct, 2)}% {t.calculatedLabel})
+                </p>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <p className="mb-2 text-xs text-muted-foreground">{t.gasCompositionTitle}</p>
+                    <DonutChart
+                      centerLabel={t.unitCelsius}
+                      segments={[
+                        { label: t.statsCo2Label, value: primary.co2_c ?? 0, color: climateSeriesColor(0) },
+                        { label: t.statsCh4Label, value: primary.ch4_c ?? 0, color: climateSeriesColor(1) },
+                        { label: t.statsN2oLabel, value: primary.n2o_c ?? 0, color: climateSeriesColor(2) },
+                      ]}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs text-muted-foreground">{t.sourceCompositionTitle}</p>
+                    <DonutChart
+                      centerLabel={t.unitCelsius}
+                      segments={[
+                        { label: t.statsFossilLabel, value: primary.fossil_c ?? 0, color: climateSeriesColor(3) },
+                        { label: t.statsLulucfLabel, value: primary.lulucf_c ?? 0, color: climateSeriesColor(4) },
+                      ]}
+                    />
+                  </div>
                 </div>
-              </>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <StatTile label={t.statsCumulativeLabel} value={primary.cumulative_pg_co2e100 !== null ? `${formatNumber(primary.cumulative_pg_co2e100)} ${t.unitPgCo2e100}` : t.notAvailable} />
+                  <StatTile label={t.statsCo2Label} value={primary.co2_c !== null ? `${formatNumber(primary.co2_c)} ${t.unitCelsius}` : t.notAvailable} />
+                  <StatTile label={t.statsCh4Label} value={primary.ch4_c !== null ? `${formatNumber(primary.ch4_c)} ${t.unitCelsius}` : t.notAvailable} />
+                </div>
+              </div>
             ) : null}
           </CardContent>
         </Card>
@@ -227,6 +209,15 @@ export function ClimatePage({ language }: { language: Language }) {
           {t.methodologyLink}
         </a>
       </p>
+    </div>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
     </div>
   );
 }
