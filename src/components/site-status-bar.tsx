@@ -24,7 +24,6 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
     ["projects", t.projects],
     ["dispatches", t.dispatches],
     ["ledger", t.ledgerTitle],
-    ["audit", t.navAuditLabel],
   ];
 
   return (

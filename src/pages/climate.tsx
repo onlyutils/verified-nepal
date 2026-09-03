@@ -59,18 +59,7 @@ export function ClimatePage({ language }: { language: Language }) {
       <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.description} />
 
       <Card>
-        <CardContent className="space-y-2 pt-6 text-sm text-muted-foreground">
-          <p>
-            {t.attributionText}{" "}
-            <a href={meta.source.record_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
-              {t.sourceLink}
-            </a>{" "}
-            (
-            <a href={meta.source.github_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
-              {t.methodologyLink}
-            </a>
-            ), {t.licenseNote}
-          </p>
+        <CardContent className="pt-6 text-sm">
           <p className="font-medium text-foreground">{t.caveatNote}</p>
         </CardContent>
       </Card>
@@ -91,6 +80,7 @@ export function ClimatePage({ language }: { language: Language }) {
 
       <div ref={compareRef} className="scroll-mt-20 space-y-3">
         <SectionHeader title={t.exploreTitle} />
+        <p className="text-sm text-muted-foreground">{t.exploreDescription}</p>
         <Card>
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-3">
@@ -199,16 +189,22 @@ export function ClimatePage({ language }: { language: Language }) {
         </Card>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        {t.lastUpdatedLabel}: {new Date(meta.synced_at).toLocaleDateString(dateLocale, { dateStyle: "medium" })} ·{" "}
-        <a href={meta.source.record_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
-          {t.sourceLink}
-        </a>{" "}
-        ·{" "}
-        <a href={meta.source.github_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
-          {t.methodologyLink}
-        </a>
-      </p>
+      <Card>
+        <CardContent className="space-y-1.5 pt-6 text-xs text-muted-foreground">
+          <p>
+            {t.attributionText}{" "}
+            <a href={meta.source.record_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
+              {t.sourceLink}
+            </a>{" "}
+            (
+            <a href={meta.source.github_url} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">
+              {t.methodologyLink}
+            </a>
+            ), {t.licenseNote}
+          </p>
+          <p>{t.lastUpdatedLabel}: {new Date(meta.synced_at).toLocaleDateString(dateLocale, { dateStyle: "medium" })}</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

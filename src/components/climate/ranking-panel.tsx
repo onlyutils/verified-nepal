@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { ClimateRankingsByYear, CountryClimate } from "@/lib/climate-data";
 import { WorldMap } from "@/components/climate/world-map";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Tab = "bar" | "table" | "map";
 type SortKey = "warming_c" | "share_pct" | "cumulative_pg_co2e100" | "name";
+const PAGE_SIZE = 25;
 
 function formatNumber(value: number | null, digits = 4) {
   if (value === null || value === undefined) return "—";
@@ -47,6 +49,8 @@ export function RankingPanel({
   const [playing, setPlaying] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("warming_c");
   const [sortDesc, setSortDesc] = useState(true);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -70,7 +74,8 @@ export function RankingPanel({
   const maxWarming = yearRows[0]?.warming_c ?? 1;
 
   const sortedTable = useMemo(() => {
-    const rows = [...countriesLatest];
+    const query = search.trim().toLocaleLowerCase();
+    const rows = query ? countriesLatest.filter((c) => c.name.toLocaleLowerCase().includes(query)) : [...countriesLatest];
     rows.sort((a, b) => {
       if (sortKey === "name") return sortDesc ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name);
       const av = a[sortKey] ?? -Infinity;
@@ -78,7 +83,10 @@ export function RankingPanel({
       return sortDesc ? bv - av : av - bv;
     });
     return rows;
-  }, [countriesLatest, sortKey, sortDesc]);
+  }, [countriesLatest, sortKey, sortDesc, search]);
+
+  const pageCount = Math.max(1, Math.ceil(sortedTable.length / PAGE_SIZE));
+  const pageRows = sortedTable.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) setSortDesc((d) => !d);
@@ -86,6 +94,7 @@ export function RankingPanel({
       setSortKey(key);
       setSortDesc(true);
     }
+    setPage(0);
   };
 
   return (
@@ -124,70 +133,119 @@ export function RankingPanel({
       )}
 
       {tab === "bar" ? (
-        <div className="space-y-2 rounded-xl border p-4">
-          {yearRows.slice(0, 15).map((row) => (
-            <BarRow key={row.iso3} row={row} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight={row.iso3 === selectedIso3} />
-          ))}
-          {!nepalInTop && nepalRow ? (
-            <>
-              <p className="border-t pt-3 text-xs text-muted-foreground">{t.nepalHighlightNote}</p>
-              <BarRow row={nepalRow} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight />
-            </>
-          ) : null}
+        <div className="rounded-xl border p-4 pt-3">
+          <div className="mb-2 flex justify-between pl-2 pr-2 text-[10px] text-muted-foreground">
+            {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+              <span key={f}>
+                {formatNumber(maxWarming * f, 3)} {unit}
+              </span>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {yearRows.slice(0, 15).map((row) => (
+              <BarRow key={row.iso3} row={row} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight={row.iso3 === selectedIso3} />
+            ))}
+            {!nepalInTop && nepalRow ? (
+              <>
+                <p className="border-t pt-3 text-xs text-muted-foreground">{t.nepalHighlightNote}</p>
+                <BarRow row={nepalRow} maxWarming={maxWarming} unit={unit} onSelect={onSelect} highlight />
+              </>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
       {tab === "table" ? (
-        <div className="overflow-x-auto rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <SortableHead label={t.colCountry} active={sortKey === "name"} desc={sortDesc} onClick={() => toggleSort("name")} />
-                <SortableHead
-                  label={t.colWarming}
-                  active={sortKey === "warming_c"}
-                  desc={sortDesc}
-                  onClick={() => toggleSort("warming_c")}
-                  align="right"
-                />
-                <SortableHead
-                  label={t.colShare}
-                  active={sortKey === "share_pct"}
-                  desc={sortDesc}
-                  onClick={() => toggleSort("share_pct")}
-                  align="right"
-                />
-                <SortableHead
-                  label={t.colCumulative}
-                  active={sortKey === "cumulative_pg_co2e100"}
-                  desc={sortDesc}
-                  onClick={() => toggleSort("cumulative_pg_co2e100")}
-                  align="right"
-                />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedTable.map((row) => (
-                <TableRow
-                  key={row.iso3}
-                  className={`cursor-pointer ${row.iso3 === selectedIso3 ? "bg-accent" : ""}`}
-                  onClick={() => onSelect(row.iso3)}
-                >
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatNumber(row.warming_c)} {unit}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(row.share_pct, 2)}%</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(row.cumulative_pg_co2e100)}</TableCell>
+        <div className="space-y-3">
+          <Input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            placeholder={t.tableSearchPlaceholder}
+            aria-label={t.tableSearchPlaceholder}
+            className="max-w-xs"
+          />
+          <div className="overflow-x-auto rounded-xl border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHead label={t.colCountry} active={sortKey === "name"} desc={sortDesc} onClick={() => toggleSort("name")} />
+                  <SortableHead
+                    label={t.colWarming}
+                    active={sortKey === "warming_c"}
+                    desc={sortDesc}
+                    onClick={() => toggleSort("warming_c")}
+                    align="right"
+                  />
+                  <SortableHead
+                    label={t.colShare}
+                    active={sortKey === "share_pct"}
+                    desc={sortDesc}
+                    onClick={() => toggleSort("share_pct")}
+                    align="right"
+                  />
+                  <SortableHead
+                    label={t.colCumulative}
+                    active={sortKey === "cumulative_pg_co2e100"}
+                    desc={sortDesc}
+                    onClick={() => toggleSort("cumulative_pg_co2e100")}
+                    align="right"
+                  />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {pageRows.map((row) => (
+                  <TableRow
+                    key={row.iso3}
+                    className={`cursor-pointer ${row.iso3 === selectedIso3 ? "bg-accent" : ""}`}
+                    onClick={() => onSelect(row.iso3)}
+                  >
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNumber(row.warming_c)} {unit}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(row.share_pct, 2)}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(row.cumulative_pg_co2e100)}</TableCell>
+                  </TableRow>
+                ))}
+                {!pageRows.length ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                      {t.tableNoResults}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+          {pageCount > 1 ? (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <Button type="button" size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                {t.paginationPrev}
+              </Button>
+              <span className="text-muted-foreground">
+                {t.paginationPageInfo.replace("{page}", String(page + 1)).replace("{total}", String(pageCount))}
+              </span>
+              <Button type="button" size="sm" variant="outline" disabled={page >= pageCount - 1} onClick={() => setPage((p) => p + 1)}>
+                {t.paginationNext}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {tab === "map" ? (
-        <WorldMap countries={countriesLatest} selectedIso3={selectedIso3} onSelect={onSelect} noDataLabel={t.noData} loadingLabel={t.mapLoading} />
+        <WorldMap
+          countries={countriesLatest}
+          selectedIso3={selectedIso3}
+          onSelect={onSelect}
+          noDataLabel={t.noData}
+          loadingLabel={t.mapLoading}
+          legendTitle={t.mapLegendTitle}
+        />
       ) : null}
     </div>
   );

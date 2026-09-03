@@ -17,18 +17,30 @@ function bucketIndex(value: number, thresholds: number[]) {
   return i;
 }
 
+function formatPct(value: number) {
+  return `${value.toLocaleString(undefined, { maximumSignificantDigits: value < 1 ? 2 : 3 })}%`;
+}
+
+function bucketLabel(index: number, thresholds: number[]) {
+  if (index === 0) return `< ${formatPct(thresholds[0])}`;
+  if (index === thresholds.length) return `> ${formatPct(thresholds[thresholds.length - 1])}`;
+  return `${formatPct(thresholds[index - 1])} – ${formatPct(thresholds[index])}`;
+}
+
 export function WorldMap({
   countries,
   selectedIso3,
   onSelect,
   noDataLabel,
   loadingLabel,
+  legendTitle,
 }: {
   countries: CountryClimate[];
   selectedIso3: string;
   onSelect: (iso3: string) => void;
   noDataLabel: string;
   loadingLabel: string;
+  legendTitle: string;
 }) {
   const [geoJson, setGeoJson] = useState<GeoJSON.FeatureCollection | null>(null);
 
@@ -57,34 +69,49 @@ export function WorldMap({
   );
 
   return (
-    <div className="h-80 overflow-hidden rounded-xl border">
-      <MapContainer center={[20, 8]} zoom={1} minZoom={1} className="h-full w-full" scrollWheelZoom={false} worldCopyJump>
-        <GeoJSON
-          key={selectedIso3}
-          data={geoJson}
-          style={(feature): PathOptions => {
-            const country = feature?.id ? byIso3.get(String(feature.id)) : undefined;
-            const isSelected = feature?.id !== undefined && String(feature.id) === selectedIso3;
-            return {
-              fillColor: country ? CHOROPLETH_SHADES[bucketIndex(country.share_pct, thresholds)] : "rgb(var(--secondary))",
-              fillOpacity: 0.85,
-              color: isSelected ? "rgb(var(--destructive))" : "rgb(var(--border))",
-              weight: isSelected ? 2.5 : 0.5,
-            };
-          }}
-          onEachFeature={(feature, layer: Layer) => {
-            const iso3 = feature.id ? String(feature.id) : "";
-            const country = byIso3.get(iso3);
-            const label = country
-              ? `${country.name}: ${country.warming_c.toFixed(4)}°C · ${country.share_pct.toFixed(2)}%`
-              : `${(feature.properties?.name as string | undefined) ?? iso3} — ${noDataLabel}`;
-            layer.bindTooltip(label, { sticky: true });
-            layer.on("click", () => {
-              if (country) onSelect(country.iso3);
-            });
-          }}
-        />
-      </MapContainer>
+    <div className="space-y-2">
+      <div className="h-80 overflow-hidden rounded-xl border">
+        <MapContainer center={[20, 8]} zoom={1} minZoom={1} className="h-full w-full" scrollWheelZoom={false} worldCopyJump>
+          <GeoJSON
+            key={selectedIso3}
+            data={geoJson}
+            style={(feature): PathOptions => {
+              const country = feature?.id ? byIso3.get(String(feature.id)) : undefined;
+              const isSelected = feature?.id !== undefined && String(feature.id) === selectedIso3;
+              return {
+                fillColor: country ? CHOROPLETH_SHADES[bucketIndex(country.share_pct, thresholds)] : "rgb(var(--secondary))",
+                fillOpacity: 0.85,
+                color: isSelected ? "rgb(var(--destructive))" : "rgb(var(--border))",
+                weight: isSelected ? 2.5 : 0.5,
+              };
+            }}
+            onEachFeature={(feature, layer: Layer) => {
+              const iso3 = feature.id ? String(feature.id) : "";
+              const country = byIso3.get(iso3);
+              const label = country
+                ? `${country.name}: ${country.warming_c.toFixed(4)}°C · ${country.share_pct.toFixed(2)}%`
+                : `${(feature.properties?.name as string | undefined) ?? iso3} — ${noDataLabel}`;
+              layer.bindTooltip(label, { sticky: true });
+              layer.on("click", () => {
+                if (country) onSelect(country.iso3);
+              });
+            }}
+          />
+        </MapContainer>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">{legendTitle}:</span>
+        {CHOROPLETH_SHADES.map((color, i) => (
+          <span key={color} className="inline-flex items-center gap-1.5">
+            <span className="size-3 rounded-sm" style={{ backgroundColor: color }} aria-hidden="true" />
+            {bucketLabel(i, thresholds)}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-sm bg-secondary" aria-hidden="true" />
+          {noDataLabel}
+        </span>
+      </div>
     </div>
   );
 }

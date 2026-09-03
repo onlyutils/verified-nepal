@@ -26,7 +26,6 @@ const navPages = [
   ["projects", "projects"],
   ["dispatches", "dispatches"],
   ["ledger", "ledgerTitle"],
-  ["audit", "navAuditLabel"],
 ] as const;
 
 export function SiteHeader({
