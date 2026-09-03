@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { meStrings } from "@/i18n/me";
+import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
-import { getDashboard, listMyOrgs, renewNeed, type Category, type DashboardResponse } from "@/lib/api";
+import {
+  deleteMissing,
+  getDashboard,
+  listMyOrgs,
+  putMissing,
+  renewNeed,
+  type Category,
+  type DashboardResponse,
+  type MissingBody,
+  type MyMissing,
+} from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
 import type { Language, Page } from "@/lib/types";
@@ -45,6 +56,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   const [orgCount, setOrgCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [renewed, setRenewed] = useState<Record<string, boolean>>({});
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!auth.idToken) {
@@ -67,6 +79,33 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       cancelled = true;
     };
   }, [auth.idToken, language, t.loadError]);
+
+  const toggleFound = async (m: MyMissing) => {
+    if (!auth.idToken) return;
+    setBusy((b) => ({ ...b, [m.id]: true }));
+    try {
+      const { id, createdAt, updatedAt, ...fields } = m as MyMissing & MissingBody;
+      await putMissing(auth.idToken, m.id, { ...fields, status: m.status === "found" ? "missing" : "found" });
+      setData(
+        (d) =>
+          d && {
+            ...d,
+            missing: d.missing.map((x) => (x.id === m.id ? { ...x, status: m.status === "found" ? "missing" : "found" } : x)),
+          },
+      );
+    } catch {}
+    setBusy((b) => ({ ...b, [m.id]: false }));
+  };
+
+  const remove = async (id: string) => {
+    if (!auth.idToken || !window.confirm(t.posterDeleteConfirm)) return;
+    setBusy((b) => ({ ...b, [id]: true }));
+    try {
+      await deleteMissing(auth.idToken, id);
+      setData((d) => d && { ...d, missing: d.missing.filter((x) => x.id !== id) });
+    } catch {}
+    setBusy((b) => ({ ...b, [id]: false }));
+  };
 
   if (auth.loading) return <LoadingState label={t.loading} />;
   if (!auth.idToken) {
@@ -179,14 +218,42 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
           </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.postersTitle}</h2>
-            <EmptyState
-              title={t.postersEmpty}
-              action={
-                <Button type="button" onClick={() => navigate("poster")}>
-                  {t.postersMake}
-                </Button>
-              }
-            />
+            {data.missing.length === 0 ? (
+              <EmptyState
+                title={t.postersEmpty}
+                action={
+                  <Button type="button" onClick={() => navigate("poster")}>
+                    {t.postersMake}
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {data.missing.map((m) => (
+                  <Card key={m.id} className="overflow-hidden">
+                    {m.photo ? <img src={m.photo.url} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : null}
+                    <CardHeader>
+                      <CardTitle className="text-base">{m.name}</CardTitle>
+                      <CardDescription>{m.district}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap items-center gap-2">
+                      <StatusBadge tone={m.status === "found" ? "success" : "danger"}>
+                        {m.status === "found" ? posterStrings[language].headlineFound : posterStrings[language].headlineMissing}
+                      </StatusBadge>
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`/poster?id=${encodeURIComponent(m.id)}`}>{t.posterOpen}</a>
+                      </Button>
+                      <Button size="sm" variant="outline" type="button" disabled={busy[m.id]} onClick={() => toggleFound(m)}>
+                        {m.status === "found" ? t.posterMissingAgain : t.posterFound}
+                      </Button>
+                      <Button size="sm" variant="ghost" type="button" disabled={busy[m.id]} onClick={() => remove(m.id)}>
+                        {t.posterDelete}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.shortcutsTitle}</h2>

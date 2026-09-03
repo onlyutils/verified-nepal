@@ -240,7 +240,11 @@ export function App() {
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "poster" ? (
                 <ComponentErrorBoundary language={language}>
-                  <PosterPage language={language} navigate={navigate} />
+                  <PosterPage
+                    language={language}
+                    navigate={navigate}
+                    savedId={new URLSearchParams(window.location.search).get("id") || undefined}
+                  />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "me" ? (

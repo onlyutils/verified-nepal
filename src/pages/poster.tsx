@@ -4,6 +4,9 @@ import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { downscaleImage } from "@/lib/image";
+import { apiErrorMessage } from "@/lib/api-error";
+import { getDashboard, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
+import { useGoogleAuth } from "@/lib/auth";
 import { EMPTY_POSTER, POSTER_LIMITS, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
 import { drawPoster, loadLogo, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
 import type { Language, Page } from "@/lib/types";
@@ -54,23 +57,29 @@ function fileToDataUrl(file: File) {
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
+    if (src.startsWith("http")) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("image"));
     img.src = src;
   });
 }
 
-export function PosterPage({ language }: { language: Language; navigate: (page: Page) => void }) {
+export function PosterPage({ language, navigate, savedId }: { language: Language; navigate: (page: Page) => void; savedId?: string }) {
   const t = posterStrings[language];
   const tl = labels[language];
+  const auth = useGoogleAuth();
   const draft = useMemo(readDraft, []);
   const [input, setInput] = useState<PosterInput>(() => draft?.input ?? { ...EMPTY_POSTER, language });
   const [photoUrl, setPhotoUrl] = useState<string | null>(() => draft?.photo ?? null);
+  const [recordId, setRecordId] = useState<string>(() => savedId ?? crypto.randomUUID());
+  const [photoRemote, setPhotoRemote] = useState<{ fileId: string; url: string } | null>(null);
   const [photoError, setPhotoError] = useState(false);
   const [errors, setErrors] = useState<ReturnType<typeof validatePoster>>({});
   const [assets, setAssets] = useState<PosterAssets>({ photo: null, logo: null });
   const [downloaded, setDownloaded] = useState(false);
   const [exportError, setExportError] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveMessage, setSaveMessage] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canShare = typeof navigator !== "undefined" && typeof navigator.canShare === "function";
 
@@ -80,6 +89,27 @@ export function PosterPage({ language }: { language: Language; navigate: (page: 
   useEffect(() => {
     writeDraft({ input, photo: photoUrl });
   }, [input, photoUrl]);
+
+  useEffect(() => {
+    if (!savedId || !auth.idToken) return;
+    let cancelled = false;
+    getDashboard(auth.idToken)
+      .then((dash) => {
+        const item = dash.missing.find((m) => m.id === savedId);
+        if (!item || cancelled) return;
+        const { photo, id, createdAt, updatedAt, ...fields } = item as MyMissing & MissingBody;
+        setInput({ ...EMPTY_POSTER, ...fields, phones: [fields.phones[0] ?? "", fields.phones[1] ?? ""] });
+        setRecordId(id);
+        if (photo) {
+          setPhotoRemote(photo);
+          setPhotoUrl(photo.url);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [savedId, auth.idToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +138,9 @@ export function PosterPage({ language }: { language: Language; navigate: (page: 
       return;
     }
     setPhotoError(false);
+    setPhotoRemote(null);
+    setSaveState("idle");
+    setSaveMessage("");
     const resized = await downscaleImage(file, 1600);
     setPhotoUrl(await fileToDataUrl(resized));
   };
@@ -160,11 +193,57 @@ export function PosterPage({ language }: { language: Language; navigate: (page: 
     }
   };
 
+  const save = async () => {
+    if (!auth.idToken) return;
+    if (!validate()) return;
+    if (!photoUrl) {
+      setSaveState("error");
+      setSaveMessage(t.savePhotoRequired);
+      return;
+    }
+    setSaveState("saving");
+    setSaveMessage("");
+    try {
+      let photo = photoRemote;
+      if (!photo && photoUrl.startsWith("data:")) {
+        const blob = await (await fetch(photoUrl)).blob();
+        const file = new File([blob], "photo.jpg", { type: blob.type || "image/jpeg" });
+        const presign = await presignMissingPhoto(auth.idToken, {
+          filename: file.name,
+          contentType: file.type,
+          size: file.size,
+        });
+        const headers = {
+          ...(presign.headers || {}),
+          ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
+        };
+        const upload = await fetch(presign.uploadUrl, { method: "PUT", body: file, headers });
+        if (!upload.ok) throw new Error("upload");
+        photo = { fileId: presign.fileId, url: presign.publicUrl };
+        setPhotoRemote(photo);
+      }
+      await putMissing(auth.idToken, recordId, {
+        ...input,
+        phones: input.phones.map((p) => p.trim()).filter(Boolean),
+        photo: photo ?? undefined,
+      });
+      setSaveState("saved");
+    } catch (e) {
+      setSaveState("error");
+      setSaveMessage(apiErrorMessage(e, language) || t.saveError);
+    }
+  };
+
   const reset = () => {
     setInput({ ...EMPTY_POSTER, language });
     setPhotoUrl(null);
+    setRecordId(crypto.randomUUID());
+    setPhotoRemote(null);
     setErrors({});
     setDownloaded(false);
+    setSaveState("idle");
+    setSaveMessage("");
+    setExportError(false);
     try {
       localStorage.removeItem(DRAFT_KEY);
     } catch {
@@ -388,10 +467,27 @@ export function PosterPage({ language }: { language: Language; navigate: (page: 
               <p role="status" className="text-sm font-medium text-success">
                 {t.downloaded}
               </p>
-              <SignInNudge language={language} id="poster" title={t.nudgeTitle} body={t.nudgeBody} />
+              {!auth.idToken ? <SignInNudge language={language} id="poster" title={t.nudgeTitle} body={t.nudgeBody} /> : null}
               <Button type="button" variant="link" className="px-0" onClick={reset}>
                 {t.reset}
               </Button>
+            </>
+          ) : null}
+          {auth.idToken ? (
+            <>
+              <Button type="button" variant="secondary" disabled={saveState === "saving"} onClick={save}>
+                {saveState === "saving" ? t.saving : t.save}
+              </Button>
+              {saveState === "saved" ? (
+                <p role="status" className="text-sm font-medium text-success">
+                  {t.saved}
+                </p>
+              ) : null}
+              {saveState === "error" ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {saveMessage}
+                </p>
+              ) : null}
             </>
           ) : null}
         </div>

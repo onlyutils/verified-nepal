@@ -61,6 +61,11 @@ export const posterStrings = {
     reset: "Start a new poster",
     nudgeTitle: "Keep this poster",
     nudgeBody: "Sign in with Google to find this poster again later and mark the person found.",
+    save: "Save to my account",
+    saving: "Saving…",
+    saved: "Saved to your account.",
+    saveError: "Could not save. Try again.",
+    savePhotoRequired: "Add a photo before saving.",
   },
   ne: {
     headlineMissing: "हराइरहेका",
@@ -122,5 +127,10 @@ export const posterStrings = {
     reset: "नयाँ पोस्टर बनाउनुहोस्",
     nudgeTitle: "यो पोस्टर सुरक्षित राख्नुहोस्",
     nudgeBody: "पछि यो पोस्टर फेरि भेट्न र व्यक्ति फेला परेको जनाउन Google बाट साइन इन गर्नुहोस्।",
+    save: "मेरो खातामा सेभ गर्नुहोस्",
+    saving: "सेभ हुँदै…",
+    saved: "तपाईंको खातामा सेभ भयो।",
+    saveError: "सेभ गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
+    savePhotoRequired: "सेभ गर्नुअघि तस्बिर थप्नुहोस्।",
   },
 } satisfies Record<Language, Record<string, string>>;

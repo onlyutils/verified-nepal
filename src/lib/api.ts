@@ -1,5 +1,6 @@
 // Relative .ts import so the Node test runner (no "@/" alias) can load this module.
 import { refreshAccessToken } from "./tokens.ts";
+import type { PosterInput } from "@/lib/poster";
 
 export const API_BASE =
   ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
@@ -188,8 +189,32 @@ export interface DashboardResponse {
   offers: MyOffer[];
 }
 
+export type MissingBody = Omit<PosterInput, "phones"> & {
+  phones: string[];
+  photo?: { fileId: string; url: string };
+};
+
 export function getDashboard(token: string): Promise<DashboardResponse> {
   return request<DashboardResponse>("/me/dashboard", { token });
+}
+
+export function presignMissingPhoto(
+  token: string,
+  body: { filename: string; contentType: string; size: number },
+): Promise<PresignResponse> {
+  return request<PresignResponse>("/me/missing/presign", { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function putMissing(token: string, id: string, body: MissingBody): Promise<{ id: string; updatedAt: string }> {
+  return request<{ id: string; updatedAt: string }>(`/me/missing/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteMissing(token: string, id: string): Promise<void> {
+  return request<void>(`/me/missing/${encodeURIComponent(id)}`, { method: "DELETE", token });
 }
 
 export function claimNeed(token: string, refCode: string): Promise<{ ok: boolean; id: string }> {
