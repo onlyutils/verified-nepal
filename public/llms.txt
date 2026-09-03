@@ -9,6 +9,13 @@ Live figures (rescued, missing, forces deployed) are fetched from NDRRMA's publi
 - [Dashboard](https://verifiednepal.com/): live rescued/missing/deployed counts, relief map, official updates.
 - [Find a person](https://verifiednepal.com/search): name search across NDRRMA's verified rescued and missing-persons lists and the public lost/found reports on the OPMCM rescue portal. Not indexed (results are per-query, not a browsable listing).
 - [Someone is missing](https://verifiednepal.com/missing): step-by-step guide for families — search the lists, register on the OPMCM portal, police/DAO report, hospitals, the Rasuwagadhi border channel, scam warning, verified hotlines.
+- [Get help](https://verifiednepal.com/get-help): request goods, shelter, transport or medical support; requests are verified before they are listed.
+- [Give help](https://verifiednepal.com/give-help): respond to verified needs or register an offer.
+- [Drop centres](https://verifiednepal.com/drop-centers): registered collection points for relief goods and their current status.
+- [Projects](https://verifiednepal.com/projects): verified infrastructure needs (tuin, bridges, trails, water, schools); committees receive payments directly.
+- [Ledger](https://verifiednepal.com/ledger): public record of fulfilled aid, who received what, where and when. Nothing private is shown.
+- [Audit log](https://verifiednepal.com/audit): every moderator action, newest first, with names and targets masked.
+- [Dispatches](https://verifiednepal.com/dispatches): moderated community writing on mountains and climate; each article lives at /dispatches/{id}.
 - [Info & Help](https://verifiednepal.com/info): verified emergency hotlines, data sources, how to report a missing person or ask for help.
 - [Privacy & Terms](https://verifiednepal.com/privacy): data handling, liability, and source-attribution policy.
 

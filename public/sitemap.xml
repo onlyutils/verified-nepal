@@ -20,4 +20,39 @@
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+    <loc>https://verifiednepal.com/get-help</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/give-help</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/drop-centers</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/projects</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/dispatches</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/ledger</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://verifiednepal.com/audit</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.4</priority>
+  </url>
 </urlset>

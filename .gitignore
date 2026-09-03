@@ -11,3 +11,4 @@ dist/
 # local working dirs — not part of the project
 docs/superpowers/
 .impeccable/
+.wrangler/
