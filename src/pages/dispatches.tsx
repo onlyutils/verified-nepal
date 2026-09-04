@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Eye, Heart, Share2 } from "lucide-react";
 import { ApiError, DISPATCH_TAGS, listDispatches, type DispatchPublicItem, type DispatchTag } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
-import { articlesPublicStrings } from "@/i18n/articles-public";
+import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
 import { useGoogleAuth } from "@/lib/auth";
@@ -56,7 +56,10 @@ function Counters({ item, language, t }: { item: DispatchPublicItem; language: L
 export function DispatchesPage({ language }: { language: Language }) {
   const t = articlesPublicStrings[language];
   const auth = useGoogleAuth();
-  const [activeTag, setActiveTag] = useState("");
+  const [activeTag, setActiveTag] = useState(() => {
+    const tag = new URLSearchParams(window.location.search).get("tag") ?? "";
+    return (DISPATCH_TAGS as string[]).includes(tag) ? tag : "";
+  });
   const [items, setItems] = useState<DispatchPublicItem[]>([]);
   const [cursor, setCursor] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -155,6 +158,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                       {tagLabel(tag, language)}
                     </Badge>
                   ))}
+                  {item.storyRole ? <Badge variant="outline">{storyRoleLabel(item.storyRole, language)}</Badge> : null}
                 </div>
                 <a href={url} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <h2 className="line-clamp-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">

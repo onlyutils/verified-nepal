@@ -8,6 +8,7 @@ import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, putMissing } from "../models/missing.js";
 import { toMyMissing, toMyNeed, toMyOffer, toMyGroup } from "../views/mine.js";
+import { storyRole } from "../models/story.js";
 
 export async function handleGetDashboard(event, opts) {
   const auth = await requireAuth(event, opts);
@@ -25,6 +26,7 @@ export async function handleGetDashboard(event, opts) {
     else if (p.kind === "MISSING") out.missing.push(toMyMissing(item));
     else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
   }
+  out.storyRole = await storyRole(ddb, tableName, payload.sub);
   return json(200, out);
 }
 

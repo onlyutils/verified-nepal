@@ -29,7 +29,7 @@ async function createSubmittedArticle(handler, kp, sub = "author-1", overrides =
     title: overrides.title ?? "A published article",
     blocks: overrides.blocks ?? [{ type: "paragraph", text: "A paragraph that is long enough to be a valid article." }],
     cover: overrides.cover ?? { url: "https://cdn.example/cover.jpg", fileId: "cover-1", source: "Author" },
-    tags: overrides.tags ?? ["story"],
+    tags: overrides.tags ?? ["community"],
     displayName: "Author Name",
     place: "Kathmandu",
   };

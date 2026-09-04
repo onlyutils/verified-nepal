@@ -35,6 +35,9 @@ import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
+import { listDispatches, type DispatchPublicItem } from "@/lib/api";
+import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
+import { localizedText } from "@/lib/format";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
 const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
@@ -143,6 +146,8 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
       </section>
 
       <OfficialUpdates language={language} />
+
+      <Stories language={language} />
 
       <section className="bg-background">
         <div className={`${container} py-12 lg:py-16`}>
@@ -287,6 +292,57 @@ function SituationBand({ language }: { language: Language }) {
           <p className="text-xs text-subtle">{ts.currentSituationDisclaimer}</p>
         </div>
         <OfficialMessages language={language} />
+      </div>
+    </section>
+  );
+}
+
+function Stories({ language }: { language: Language }) {
+  const ts = shellStrings[language];
+  const ta = articlesPublicStrings[language];
+  const [items, setItems] = useState<DispatchPublicItem[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    listDispatches({ tag: "story" })
+      .then((r) => { if (!cancelled) setItems(r.items.slice(0, 3)); })
+      .catch(() => {}); // ponytail: no stories yet or offline both mean "show nothing"
+    return () => { cancelled = true; };
+  }, []);
+  if (!items.length) return null;
+  return (
+    <section className="bg-secondary">
+      <div className={`${container} py-12 lg:py-16`}>
+        <SectionHeader
+          title={ts.storiesTitle}
+          aside={
+            <Button asChild variant="link" className="h-auto min-h-0 px-0">
+              <a href="/articles?tag=story">{ts.storiesAll}</a>
+            </Button>
+          }
+        />
+        <p className="mt-2 max-w-2xl text-muted-foreground">{ts.storiesLead}</p>
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          {items.map((item) => {
+            const url = `/articles/${encodeURIComponent(item.id)}`;
+            return (
+              <Card key={item.id} className="overflow-hidden">
+                {item.cover?.url ? (
+                  <a href={url}><img src={item.cover.url} alt={ta.coverAlt} className="aspect-video w-full object-cover" loading="lazy" /></a>
+                ) : null}
+                <div className="space-y-2 p-5">
+                  {item.storyRole ? <Badge variant="outline">{storyRoleLabel(item.storyRole, language)}</Badge> : null}
+                  <a href={url} className="block">
+                    <h3 className="line-clamp-2 text-lg font-bold tracking-tight">{localizedText(item.title, language)}</h3>
+                    <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{localizedText(item.excerpt, language)}</p>
+                  </a>
+                  <p className="text-sm text-muted-foreground">
+                    {ta.by} {item.author.displayName}{item.author.place ? ` · ${item.author.place}` : ""}
+                  </p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

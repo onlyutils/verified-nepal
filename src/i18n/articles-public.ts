@@ -1,3 +1,4 @@
+import type { StoryRole } from "@/lib/api";
 import type { Language } from "@/lib/types";
 
 export const articlesPublicStrings = {
@@ -32,6 +33,9 @@ export const articlesPublicStrings = {
     like: "Like",
     liked: "Liked",
     signInToKeepLikes: "Sign in to keep your likes",
+    storyRoleNeedy: "Received help",
+    storyRoleHelper: "Helped someone",
+    storyRoleOrg: "Organization",
   },
   ne: {
     eyebrow: "लेख",
@@ -64,5 +68,13 @@ export const articlesPublicStrings = {
     like: "मन पराउनुहोस्",
     liked: "मन परेको",
     signInToKeepLikes: "आफ्नो मन पराइ राख्न साइन-इन गर्नुहोस्",
+    storyRoleNeedy: "सहयोग पाएको",
+    storyRoleHelper: "सहयोग गरेको",
+    storyRoleOrg: "संस्था",
   },
 } satisfies Record<Language, Record<string, string>>;
+
+export function storyRoleLabel(role: StoryRole, language: Language) {
+  const t = articlesPublicStrings[language];
+  return { needy: t.storyRoleNeedy, helper: t.storyRoleHelper, org: t.storyRoleOrg }[role];
+}

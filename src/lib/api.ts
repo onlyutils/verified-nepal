@@ -238,11 +238,15 @@ export interface MyGroup {
   myItems: MyGroupItem[];
 }
 
+export type StoryRole = "needy" | "helper" | "org";
+
 export interface DashboardResponse {
   missing: MyMissing[];
   needs: MyNeed[];
   offers: MyOffer[];
   groups: MyGroup[];
+  /** Who the caller may tell a story as; null until they have received or given help. */
+  storyRole?: StoryRole | null;
 }
 
 export type MissingBody = Omit<PosterInput, "phones"> & {
@@ -762,6 +766,7 @@ export interface DispatchPublicItem extends Partial<ArticleCounters> {
   excerpt: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
+  storyRole?: StoryRole;
   publishedAt: string;
   createdAt?: string;
   cover?: { url: string };
@@ -777,6 +782,7 @@ export interface DispatchDetailResponse extends Partial<ArticleCounters> {
   body: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
+  storyRole?: StoryRole;
   publishedAt: string;
   createdAt: string;
   cover?: Cover;

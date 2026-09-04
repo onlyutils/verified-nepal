@@ -10,7 +10,7 @@ import {
   type DispatchTag,
 } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
-import { articlesPublicStrings } from "@/i18n/articles-public";
+import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
 import { useGoogleAuth } from "@/lib/auth";
@@ -184,6 +184,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
             {tagLabel(tag, language)}
           </Badge>
         ))}
+        {item.storyRole ? <Badge variant="outline">{storyRoleLabel(item.storyRole, language)}</Badge> : null}
       </div>
       {item.cover?.url ? (
         <figure className="space-y-3">
