@@ -1,5 +1,5 @@
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import { listPointers } from "./mine.js";
+import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { listPointers, putPointer, deletePointer } from "./mine.js";
 import { listUserMemberships } from "./org.js";
 import { listOrgCenterPointers } from "./center.js";
 import { listAllEntries } from "./goods.js";
@@ -31,4 +31,38 @@ export async function storyRole(ddb, tableName, sub) {
     }
   }
   return null;
+}
+
+export async function createStory(ddb, tableName, item) {
+  await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  await putPointer(ddb, tableName, { sub: item.authorSub, type: "STORY", id: item.id, createdAt: item.createdAt });
+}
+
+export async function getStory(ddb, tableName, id) {
+  return (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `STORY#${id}`, SK: "META" } }))).Item;
+}
+
+export async function deleteStory(ddb, tableName, story) {
+  await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: story.PK, SK: story.SK } }));
+  await deletePointer(ddb, tableName, { sub: story.authorSub, type: "STORY", id: story.id });
+}
+
+/** Newest first for the public strip, oldest first for the moderation queue. */
+export async function listStoriesByStatus(ddb, tableName, status, { newestFirst, limit, cursorKey } = {}) {
+  const res = await ddb.send(new QueryCommand({
+    TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk",
+    ExpressionAttributeValues: { ":pk": `STORY#${status}` }, ScanIndexForward: !newestFirst,
+    ...(limit ? { Limit: limit } : {}), ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}),
+  }));
+  return { items: res.Items || [], lastEvaluatedKey: res.LastEvaluatedKey || null };
+}
+
+export async function moderateStory(ddb, tableName, story, { action, reason }) {
+  const now = new Date().toISOString();
+  story.status = action === "publish" ? "published" : "rejected";
+  story.gsi2pk = `STORY#${story.status}`;
+  story.gsi2sk = action === "publish" ? now : story.createdAt;
+  if (action === "publish") { story.publishedAt = now; delete story.rejectReason; }
+  else if (reason) story.rejectReason = reason;
+  await ddb.send(new PutCommand({ TableName: tableName, Item: story }));
 }

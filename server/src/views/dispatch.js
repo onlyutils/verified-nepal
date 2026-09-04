@@ -15,7 +15,6 @@ export function toPublicDispatchListItem(it) {
     shares: Number(it.shares) || 0,
   };
   if (it.cover && typeof it.cover.url === "string") out.cover = { url: it.cover.url };
-  if (it.storyRole) out.storyRole = it.storyRole;
   if (!out.publishedAt) delete out.publishedAt;
   return out;
 }
@@ -37,7 +36,6 @@ export function toPublicDispatchDetail(item) {
   if (item.cover) publicItem.cover = item.cover;
   if (Array.isArray(item.blocks)) publicItem.blocks = item.blocks;
   if (item.author?.place) publicItem.author.place = item.author.place;
-  if (item.storyRole) publicItem.storyRole = item.storyRole;
   if (!publicItem.publishedAt) delete publicItem.publishedAt;
   return publicItem;
 }

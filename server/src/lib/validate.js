@@ -154,7 +154,7 @@ function articleString(v, name, max, { required = false, trim = false } = {}) {
   return value;
 }
 
-function validateArticleUrl(url, name, mediaPublicBase) {
+export function validateArticleUrl(url, name, mediaPublicBase) {
   const value = articleString(url, name, 2000, { trim: true }) ?? "";
   if (value && !/^https:\/\//.test(value)) throw err(400, `${name} must be an https URL`);
   if (mediaPublicBase && value && !value.startsWith(String(mediaPublicBase).replace(/\/+$/, "") + "/")) {

@@ -6,13 +6,11 @@ import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
 import {
-  createArticle,
   deleteMissing,
   getDashboard,
   listMyOrgs,
   putMissing,
   renewNeed,
-  saveArticle,
   type Category,
   type DashboardResponse,
   type MissingBody,
@@ -29,6 +27,7 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SignInNudge } from "@/components/sign-in-nudge";
+import { MyStories } from "@/components/my-stories";
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -97,19 +96,6 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       cancelled = true;
     };
   }, [auth.idToken, language, t.loadError]);
-
-  const shareStory = async () => {
-    if (!auth.idToken) return;
-    setBusy((b) => ({ ...b, story: true }));
-    try {
-      const { id } = await createArticle(auth.idToken, { language });
-      await saveArticle(auth.idToken, id, { tags: ["story"] });
-      window.location.assign(`/me/articles/${encodeURIComponent(id)}/edit`);
-    } catch (e) {
-      setError(apiErrorMessage(e, language));
-      setBusy((b) => ({ ...b, story: false }));
-    }
-  };
 
   const toggleFound = async (m: MyMissing) => {
     if (!auth.idToken) return;
@@ -366,16 +352,10 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">{data.storyRole ? t.storyEligibleBody : t.storyIneligibleBody}</p>
-                {data.storyRole ? (
-                  <Button type="button" className="shrink-0" disabled={busy.story} onClick={() => void shareStory()}>
-                    {t.storyShare}
-                  </Button>
-                ) : null}
-              </CardContent>
-            </Card>
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.storyTitle}</h2>
+            <MyStories language={language} token={auth.idToken} eligible={!!data.storyRole} />
           </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.shortcutsTitle}</h2>

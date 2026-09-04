@@ -8,7 +8,6 @@ import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { queryPublishedDispatchesPage, getDispatchById, listPendingDispatches, moderateDispatch } from "../models/dispatch.js";
 import { toPublicDispatchListItem, toPublicDispatchDetail } from "../views/dispatch.js";
-import { storyRole } from "../models/story.js";
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const envOf = (opts) => opts.env || {};
@@ -30,7 +29,7 @@ function articleListView(item) {
     views: Number(item.views) || 0, likes: Number(item.likes) || 0, shares: Number(item.shares) || 0,
   };
   if (item.cover) out.cover = item.cover;
-  for (const key of ["submittedAt", "publishedAt", "rejectReason", "storyRole"]) if (item[key] !== undefined) out[key] = item[key];
+  for (const key of ["submittedAt", "publishedAt", "rejectReason"]) if (item[key] !== undefined) out[key] = item[key];
   return out;
 }
 
@@ -141,12 +140,6 @@ export async function handleSubmitArticle(event, opts, id) {
   if (!["draft", "rejected"].includes(item.status)) throw err(409, "article cannot be submitted in its current status");
   const missing = strictMissing(item);
   if (missing.length) return json(400, { error: "invalid", missing });
-  if (item.tags.includes("story")) {
-    // A story is told by someone who received help, gave it, or runs an org that distributed goods.
-    const role = await storyRole(auth.ddb, auth.tableName, auth.payload.sub);
-    if (!role) return json(403, { error: "story_not_eligible" });
-    item.storyRole = role;
-  } else delete item.storyRole;
   const now = new Date().toISOString();
   item.status = "pending"; item.submittedAt = now; item.gsi2pk = "DISPATCH#pending"; item.gsi2sk = now; item.updatedAt = now;
   delete item.rejectReason;

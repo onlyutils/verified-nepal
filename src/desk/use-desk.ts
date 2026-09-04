@@ -10,6 +10,8 @@ import {
   getClaimsPrint,
   getModerationCenterFlags,
   getModerationDispatches,
+  getModerationStories,
+  moderateStory,
   getModerationFlags,
   getModerationOrgs,
   getModerationProjects,
@@ -34,6 +36,7 @@ import {
   type ClaimPrintItem,
   type FlagInboxItem,
   type ModerationDispatchItem,
+  type ModerationStoryItem,
   type ModerationOrgItem,
   type ModerationProjectItem,
   type ModerationQueueItem,
@@ -51,9 +54,9 @@ import { deskStrings } from "@/i18n/desk";
 import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
-export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "orgs" | "admin" | "climate";
+export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "admin" | "climate";
 
-const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "orgs", "admin", "climate"]);
+const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "admin", "climate"]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
@@ -120,6 +123,9 @@ export function useDesk(language: Language) {
   const [projectStatus, setProjectStatus] = useState<Record<string, string>>({});
   const [photoActionLoading, setPhotoActionLoading] = useState<string | null>(null);
 
+  const [stories, setStories] = useState<ModerationStoryItem[]>([]);
+  const [storiesLoading, setStoriesLoading] = useState(false);
+  const [storiesError, setStoriesError] = useState<string | null>(null);
   const [dispatches, setDispatches] = useState<ModerationDispatchItem[]>([]);
   const [dispatchesLoading, setDispatchesLoading] = useState(false);
   const [dispatchesError, setDispatchesError] = useState<string | null>(null);
@@ -287,6 +293,18 @@ export function useDesk(language: Language) {
       setDispatchesLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadStories = useCallback(async () => {
+    if (!auth.idToken) return;
+    setStoriesLoading(true);
+    setStoriesError(null);
+    try {
+      setStories((await getModerationStories(auth.idToken)).items);
+    } catch (error) {
+      setStoriesError(apiErrorMessage(error, language));
+    } finally {
+      setStoriesLoading(false);
+    }
+  }, [auth.idToken, language]);
   const loadOrgs = useCallback(
     async (status: OrgStatus = orgsStatus) => {
       if (!auth.idToken) return;
@@ -371,6 +389,7 @@ export function useDesk(language: Language) {
     if (!auth.idToken) return;
     if (activeSection === "projects") void loadProjects();
     if (activeSection === "dispatches") void loadDispatches();
+    if (activeSection === "stories") void loadStories();
     if (activeSection === "orgs") void loadOrgs(orgsStatus);
     if (activeSection === "flags") {
       void loadFlags();
@@ -390,6 +409,7 @@ export function useDesk(language: Language) {
     loadClimateStats,
     loadCenterFlags,
     loadDispatches,
+    loadStories,
     loadFlags,
     loadOrgs,
     loadProjects,
@@ -574,6 +594,16 @@ export function useDesk(language: Language) {
       setDispatchesError(apiErrorMessage(error, language));
     } finally {
       setDispatchActionLoading(null);
+    }
+  };
+  const handleStoryModerate = async (id: string, action: "publish" | "reject", reason?: string) => {
+    if (!auth.idToken) return;
+    try {
+      await moderateStory(auth.idToken, id, reason ? { action, reason } : { action });
+      success(t.deskActionSuccess);
+      void loadStories();
+    } catch (error) {
+      setStoriesError(apiErrorMessage(error, language));
     }
   };
   const handleDispatchReject = async () => {
@@ -821,6 +851,11 @@ export function useDesk(language: Language) {
     setDispatchRejectError,
     handleDispatchPublish,
     handleDispatchReject,
+    stories,
+    storiesLoading,
+    storiesError,
+    loadStories,
+    handleStoryModerate,
     orgs,
     orgsStatus,
     setOrgsStatus,

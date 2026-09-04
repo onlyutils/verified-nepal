@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
+import { Building2, Camera, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Boards } from "./boards";
 import { ClimateStats } from "./climate";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
+import { Stories } from "./stories";
 import { AuthGate, DistrictCheckboxes, DistrictGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
 import { Flags } from "./flags";
 import { Organizations } from "./orgs";
@@ -64,6 +65,7 @@ export function Desk({
     { key: "flags", label: t.deskFlagsTab, count: model.flags.length, icon: <Flag /> },
     { key: "projects", label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
     { key: "dispatches", label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
+    { key: "stories", label: model.ds.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
     { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
     ...(auth.profile.role === "admin"
       ? [
@@ -128,6 +130,7 @@ export function Desk({
         {model.activeSection === "flags" ? <Flags model={model} /> : null}
         {model.activeSection === "projects" ? <Projects model={model} /> : null}
         {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
+        {model.activeSection === "stories" ? <Stories model={model} /> : null}
         {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
         {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
         {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}

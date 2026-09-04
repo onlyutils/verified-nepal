@@ -219,7 +219,7 @@ describe("Phase5 district scoping", () => {
     const dispId = JSON.parse(dispRes.body).id;
     res = await handler(makeEvent({ method: "PUT", path: `/me/articles/${dispId}`, headers: { authorization: `Bearer ${authorTok}` }, body: {
       title: "Hello", blocks: [{ type: "paragraph", text: "This is an article body long enough for testing." }],
-      cover: { url: "https://cdn.example/c.jpg", fileId: "c1", source: "Author" }, tags: ["community"], displayName: "A",
+      cover: { url: "https://cdn.example/c.jpg", fileId: "c1", source: "Author" }, tags: ["story"], displayName: "A",
     } }));
     assert.equal(res.statusCode, 200, res.body);
     res = await handler(makeEvent({ method: "POST", path: `/me/articles/${dispId}/submit`, headers: { authorization: `Bearer ${authorTok}` } }));

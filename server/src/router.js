@@ -28,6 +28,7 @@ import {
   handleDeleteArticle, handlePostArticlePresign, handlePostArticleView, handlePostArticleShare, handlePostArticleLike,
   handleGetDispatches, handleGetModerationDispatches, handlePostModerationDispatch, handleGetDispatch,
 } from "./controllers/dispatchController.js";
+import { handlePostStory, handleGetMyStories, handleDeleteStory, handleGetStories, handleGetModerationStories, handlePostModerationStory } from "./controllers/storyController.js";
 import {
   handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
 } from "./controllers/climateController.js";
@@ -60,6 +61,16 @@ export async function route(event, ctx) {
   }
   if (method === "GET" && /^\/me\/articles\/[^/]+$/.test(path)) {
     return await handleGetMyArticle(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
+  if (method === "POST" && path === "/me/stories") return await handlePostStory(event, { fetchJwks, getDdb, env });
+  if (method === "GET" && path === "/me/stories") return await handleGetMyStories(event, { fetchJwks, getDdb, env });
+  if (method === "DELETE" && /^\/me\/stories\/[^/]+$/.test(path)) {
+    return await handleDeleteStory(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
+  }
+  if (method === "GET" && path === "/stories") return await handleGetStories(event, { getDdb, env });
+  if (method === "GET" && path === "/moderation/stories") return await handleGetModerationStories(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && /^\/moderation\/stories\/[^/]+$/.test(path)) {
+    return await handlePostModerationStory(event, { fetchJwks, getDdb, env }, decodeURIComponent(path.split("/")[3]));
   }
   if (method === "POST" && path === "/me/needs/claim") return await handlePostNeedClaim(event, { fetchJwks, getDdb, env });
   if (method === "POST" && path === "/me/missing/presign") return await handlePostMissingPresign(event, { fetchJwks, getDdb, env, fetchImpl });

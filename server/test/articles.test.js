@@ -30,7 +30,7 @@ const validSave = {
   title: "A useful article",
   blocks: [{ type: "paragraph", text: "A paragraph with enough content for the article." }],
   cover: { url: "https://cdn.example/cover.jpg", fileId: "cover-1", source: "Photo desk", caption: "A mountain" },
-  tags: ["community"], displayName: "Sita", place: "Gorkha",
+  tags: ["story"], displayName: "Sita", place: "Gorkha",
 };
 
 async function submit(handler, kp, id, sub = "author-1") {
@@ -219,57 +219,5 @@ describe("public article privacy", () => {
     assert.equal(body.cover.fileId, "cover-1");
     assert.equal(body.likes, 0);
     assert.equal(res.body.includes("author-1@example.com"), false);
-  });
-});
-
-describe("stories", () => {
-  beforeEach(() => clearJwksCache());
-
-  async function storyDraft(handler, kp, sub) {
-    const id = await create(handler, kp, sub);
-    assert.equal((await save(handler, kp, id, { ...validSave, tags: ["story"] }, sub)).statusCode, 200);
-    return id;
-  }
-
-  it("rejects a story from someone who has neither received nor given help", async () => {
-    const { handler, kp } = setup();
-    const id = await storyDraft(handler, kp, "nobody");
-    const res = await submit(handler, kp, id, "nobody");
-    assert.equal(res.statusCode, 403);
-    assert.equal(JSON.parse(res.body).error, "story_not_eligible");
-    const dash = await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: { authorization: auth(kp, "nobody") } }));
-    assert.equal(JSON.parse(dash.body).storyRole, null);
-  });
-
-  it("lets a person with a fulfilled request tell a story as needy, visible publicly", async () => {
-    const { handler, ddb, kp } = setup();
-    ddb.store.set("NEED#n1|META", { PK: "NEED#n1", SK: "META", type: "NEED", id: "n1", status: "fulfilled", category: "goods", beneficiary: { district: "Gorkha", ward: 1 } });
-    ddb.store.set("USER#sita|NEED#n1", { PK: "USER#sita", SK: "NEED#n1", type: "MINE", kind: "NEED", id: "n1", sub: "sita", createdAt: "2026-01-01T00:00:00.000Z" });
-    const dash = await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: { authorization: auth(kp, "sita") } }));
-    assert.equal(JSON.parse(dash.body).storyRole, "needy");
-    const id = await storyDraft(handler, kp, "sita");
-    assert.equal((await submit(handler, kp, id, "sita")).statusCode, 200);
-    assert.equal(ddb.store.get(`DISPATCH#${id}|META`).storyRole, "needy");
-    assert.equal((await publish(handler, kp, ddb, id)).statusCode, 200);
-    const list = await handler(makeEvent({ method: "GET", path: "/dispatches", query: { tag: "story" } }));
-    assert.equal(JSON.parse(list.body).items[0].storyRole, "needy");
-    const detail = await handler(makeEvent({ method: "GET", path: `/dispatches/${id}` }));
-    assert.equal(JSON.parse(detail.body).storyRole, "needy");
-  });
-
-  it("counts a finished group item as helping, and a center distribution as an org", async () => {
-    const { handler, ddb, kp } = setup();
-    ddb.store.set("NEED#g1|META", { PK: "NEED#g1", SK: "META", type: "NEED", id: "g1", status: "published", group: { name: "Ward 3" }, groupItems: { i1: { claimedBy: "ram", status: "done" } } });
-    ddb.store.set("USER#ram|GROUP#g1", { PK: "USER#ram", SK: "GROUP#g1", type: "MINE", kind: "GROUP", id: "g1", sub: "ram", createdAt: "2026-01-01T00:00:00.000Z" });
-    let id = await storyDraft(handler, kp, "ram");
-    assert.equal((await submit(handler, kp, id, "ram")).statusCode, 200);
-    assert.equal(ddb.store.get(`DISPATCH#${id}|META`).storyRole, "helper");
-
-    ddb.store.set("USER#org-owner|ORG#o1", { PK: "USER#org-owner", SK: "ORG#o1", type: "ORGMEMBER", orgId: "o1", role: "owner" });
-    ddb.store.set("ORG#o1|CENTER#c1", { PK: "ORG#o1", SK: "CENTER#c1", centerId: "c1" });
-    ddb.store.set("GOODS#c1|2026-01-01T00:00:00.000Z#e1", { PK: "GOODS#c1", SK: "2026-01-01T00:00:00.000Z#e1", type: "GOODS", id: "e1", centerId: "c1", entryType: "distribution" });
-    id = await storyDraft(handler, kp, "org-owner");
-    assert.equal((await submit(handler, kp, id, "org-owner")).statusCode, 200);
-    assert.equal(ddb.store.get(`DISPATCH#${id}|META`).storyRole, "org");
   });
 });

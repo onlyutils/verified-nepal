@@ -258,6 +258,48 @@ export function getDashboard(token: string): Promise<DashboardResponse> {
   return request<DashboardResponse>("/me/dashboard", { token });
 }
 
+// ---- Stories: one photo or video plus a caption, from people who received or gave help ----
+export interface StoryMedia {
+  type: "photo" | "video";
+  fileId: string;
+  url: string;
+}
+export interface StoryPublicItem {
+  id: string;
+  media: StoryMedia;
+  caption: string;
+  role: StoryRole;
+  author: { displayName: string };
+  publishedAt?: string;
+}
+export type StoryStatus = "pending" | "published" | "rejected";
+export interface MyStory extends StoryPublicItem {
+  status: StoryStatus;
+  createdAt: string;
+  rejectReason?: string;
+}
+export interface ModerationStoryItem extends MyStory {
+  author: { displayName: string; email?: string };
+}
+export function createStory(token: string, body: { caption: string; media: StoryMedia }): Promise<{ id: string }> {
+  return request<{ id: string }>("/me/stories", { method: "POST", token, body: JSON.stringify(body) });
+}
+export function listMyStories(token: string): Promise<{ items: MyStory[] }> {
+  return request<{ items: MyStory[] }>("/me/stories", { token });
+}
+export function deleteStory(token: string, id: string): Promise<void> {
+  return request<void>(`/me/stories/${encodeURIComponent(id)}`, { method: "DELETE", token });
+}
+export function listStories(cursor?: string): Promise<{ items: StoryPublicItem[]; cursor?: string }> {
+  return request(`/stories${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+}
+export function getModerationStories(token: string): Promise<{ items: ModerationStoryItem[] }> {
+  return request<{ items: ModerationStoryItem[] }>("/moderation/stories", { token });
+}
+export function moderateStory(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: StoryStatus }> {
+  return request<{ status: StoryStatus }>(`/moderation/stories/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
 export function presignMissingPhoto(
   token: string,
   body: { filename: string; contentType: string; size: number },
@@ -766,7 +808,6 @@ export interface DispatchPublicItem extends Partial<ArticleCounters> {
   excerpt: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
-  storyRole?: StoryRole;
   publishedAt: string;
   createdAt?: string;
   cover?: { url: string };
@@ -782,7 +823,6 @@ export interface DispatchDetailResponse extends Partial<ArticleCounters> {
   body: string | { en: string; ne?: string };
   author: DispatchAuthorPublic;
   tags: DispatchTag[];
-  storyRole?: StoryRole;
   publishedAt: string;
   createdAt: string;
   cover?: Cover;
