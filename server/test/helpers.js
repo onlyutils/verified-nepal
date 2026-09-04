@@ -1,5 +1,34 @@
 import { generateKeyPairSync, createSign } from "node:crypto";
 
+export const TEST_INCIDENT_ID = "test-incident";
+
+export function seedActiveIncident(ddb, overrides = {}) {
+  const id = overrides.id ?? TEST_INCIDENT_ID;
+  const status = overrides.status ?? "active";
+  const createdAt = overrides.createdAt ?? "2026-01-01T00:00:00.000Z";
+  const item = {
+    name: "Test Incident",
+    kind: "flash-flood",
+    startedAt: "2026-01-01",
+    affectedDistricts: ["Gorkha", "Rasuwa", "Nuwakot", "Sindhupalchok", "Kaski", "Kathmandu"],
+    summary: "Incident used by backend tests",
+    requestOrigin: "admin",
+    createdBy: "test-admin",
+    createdAt,
+    ...overrides,
+  };
+  item.PK = `INCIDENT#${id}`;
+  item.SK = "META";
+  item.type = "INCIDENT";
+  item.id = id;
+  item.status = status;
+  item.createdAt = createdAt;
+  item.gsi1pk = overrides.gsi1pk ?? `INCIDENT#${status}`;
+  item.gsi1sk = overrides.gsi1sk ?? createdAt;
+  ddb.store.set(`${item.PK}|${item.SK}`, item);
+  return item;
+}
+
 export function makeKeyPair() {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", {
     modulusLength: 2048,

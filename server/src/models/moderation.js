@@ -3,6 +3,7 @@ import { err } from "../lib/http.js";
 import { validateString, validatePhone } from "../lib/validate.js";
 import { generateClaimCode, maskName } from "../lib/format.js";
 import { CATEGORIES, LANGUAGES } from "../constants.js";
+import { getIncidentById, saveIncident } from "./incident.js";
 
 const CLAIM_LEASE_MS = 10 * 60 * 1000;
 
@@ -164,13 +165,13 @@ export async function moderatePendingItem(ddb, tableName, { id, type, item, acti
   item.status = newStatus;
   if (type === "NEED") {
     const district = item.beneficiary?.district || item.district || "";
-    item.gsi1pk = `NEED#${district}#${newStatus}`;
+    item.gsi1pk = `NEED#${item.incidentId}#${district}#${newStatus}`;
     item.gsi1sk = item.createdAt;
     item.gsi2pk = `NEED#${newStatus}`;
     item.gsi2sk = item.createdAt;
   } else {
     const district = Array.isArray(item.districts) && item.districts[0] ? item.districts[0] : "";
-    item.gsi1pk = `OFFER#${district}#${newStatus}`;
+    item.gsi1pk = `OFFER#${item.incidentId}#${district}#${newStatus}`;
     item.gsi1sk = item.createdAt;
     item.gsi2pk = `OFFER#${newStatus}`;
     item.gsi2sk = item.createdAt;
@@ -189,6 +190,17 @@ export async function moderatePendingItem(ddb, tableName, { id, type, item, acti
     item.claimCode = mintedClaimCode;
   }
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
+  if (type === "NEED" && newStatus === "published" && item.incidentId) {
+    const incident = await getIncidentById(ddb, tableName, item.incidentId);
+    if (incident?.status === "pending") {
+      incident.status = "active";
+      incident.approvedBy = actorSub;
+      incident.approvedAt = nowIso;
+      incident.gsi1pk = "INCIDENT#active";
+      incident.gsi1sk = incident.createdAt;
+      await saveIncident(ddb, tableName, incident);
+    }
+  }
   if (type === "NEED" && newStatus === "rejected") {
     try {
       await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: "FLAGGED", SK: id } }));

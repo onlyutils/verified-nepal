@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function setup() {
   const kp = makeKeyPair();
   const ddb = new FakeDdb();
+  seedActiveIncident(ddb);
   const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks: async () => ({ keys: [kp.jwk] }) });
   const token = (sub, overrides) => createToken(basePayload({ sub, ...overrides }), kp.privateKey);
   return { handler, ddb, token };
@@ -18,6 +19,7 @@ const needBody = {
   category: "shelter",
   description: "Lost the house in the flood, needs shelter and food",
   language: "en",
+  incidentId: TEST_INCIDENT_ID,
 };
 
 describe("dashboard groups", () => {
@@ -32,7 +34,7 @@ describe("dashboard groups", () => {
     // leave the item internally inconsistent (status says published, gsi2pk still says pending).
     const need = ddb.store.get(`NEED#${id}|META`);
     need.status = "published";
-    need.gsi1pk = `NEED#${need.beneficiary.district}#published`;
+    need.gsi1pk = `NEED#${need.incidentId}#${need.beneficiary.district}#published`;
     need.gsi1sk = need.createdAt;
     need.gsi2pk = "NEED#published";
     need.gsi2sk = need.createdAt;

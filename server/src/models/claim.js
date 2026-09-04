@@ -24,7 +24,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
   if (!district || ward === undefined) throw err(500, "need missing district/ward");
   need.status = "fulfilled";
   need.redeemedAt = redeemedAt;
-  need.gsi1pk = `NEED#${district}#fulfilled`;
+  need.gsi1pk = `NEED#${need.incidentId}#${district}#fulfilled`;
   need.gsi1sk = need.createdAt;
   need.gsi2pk = "NEED#fulfilled";
   need.gsi2sk = need.createdAt;

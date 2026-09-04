@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler, __clearMediaTokenCache } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function makeHandler({ envOverrides = {}, ddb, kp, fetchImpl } = {}) {
   const keyPair = kp ?? makeKeyPair();
   const d = ddb ?? new FakeDdb();
+  seedActiveIncident(d);
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", OU_MEDIA_CLIENT_ID: "ou_client_test", OU_MEDIA_CLIENT_SECRET: "secret123", MEDIA_HOST: "https://media.onlyutils.com", ...envOverrides };
   const fetchJwks = async () => ({ keys: [keyPair.jwk] });
   const handler = createHandler({ env, ddbClient: d, fetchJwks, fetch: fetchImpl });
@@ -19,6 +20,7 @@ function projectBody(overrides = {}) {
     description: { en: "Rebuilding the tuin bridge in ward 5 that was damaged in the landslide, need support for materials and labor for community" },
     type: "tuin",
     district: "Gorkha",
+    incidentId: TEST_INCIDENT_ID,
     ward: 5,
     locationText: "Ward 5, near river",
     costEstimateNpr: 500000,
@@ -55,7 +57,7 @@ describe("POST /projects", () => {
     assert.ok(item.updateCodeHash);
     assert.equal(item.updateCodeHash.length, 64);
     assert.equal(item.committee.phone, "+977-9801234567");
-    assert.equal(item.gsi1pk, `PROJECT#Gorkha#pending`);
+    assert.equal(item.gsi1pk, `PROJECT#${TEST_INCIDENT_ID}#Gorkha#pending`);
     assert.equal(item.gsi2pk, `PROJECT#pending`);
     const pcodeHash = item.updateCodeHash;
     const pcode = ddb.store.get(`PCODE#${pcodeHash}|META`);
@@ -145,7 +147,7 @@ describe("GET /projects", () => {
     await handler(makeEvent({ method: "POST", path: `/moderation/projects/${id2}`, headers: { authorization: `Bearer ${modTok}` }, body: { action: "set-status", status: "in-progress" } }));
 
     // public list without filters should return only published/in-progress (2 items), not pending
-    let res = await handler(makeEvent({ method: "GET", path: "/projects" }));
+    let res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 200);
     let body = JSON.parse(res.body);
     assert.equal(body.items.length, 2);
@@ -155,20 +157,20 @@ describe("GET /projects", () => {
     assert.equal(ids.includes(id3), false);
 
     // district filter
-    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { district: "Gorkha" } }));
+    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { district: "Gorkha", incidentId: TEST_INCIDENT_ID } }));
     body = JSON.parse(res.body);
     assert.equal(body.items.length, 2);
     assert.ok(body.items.every(i => i.district === "Gorkha"));
 
     // status filter
-    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { status: "published" } }));
+    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { status: "published", incidentId: TEST_INCIDENT_ID } }));
     body = JSON.parse(res.body);
     assert.equal(body.items.length, 1);
     assert.equal(body.items[0].id, id1);
     assert.equal(body.items[0].status, "published");
 
     // district+status
-    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { district: "Gorkha", status: "in-progress" } }));
+    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { district: "Gorkha", status: "in-progress", incidentId: TEST_INCIDENT_ID } }));
     body = JSON.parse(res.body);
     assert.equal(body.items.length, 1);
     assert.equal(body.items[0].id, id2);
@@ -193,7 +195,7 @@ describe("GET /projects", () => {
     proj1.photos.push({ fileId: "f1", url: "https://cdn.example.com/f1", status: "pending" });
     const { PutCommand } = await import("@aws-sdk/lib-dynamodb");
     await ddb.send(new PutCommand({ TableName: "test-table", Item: proj1 }));
-    res = await handler(makeEvent({ method: "GET", path: "/projects" }));
+    res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { incidentId: TEST_INCIDENT_ID } }));
     body = JSON.parse(res.body);
     const p1 = body.items.find(i => i.id === id1);
     assert.equal(p1.photos.length, 0, "pending photo should not appear in public list");
@@ -217,13 +219,13 @@ describe("GET /projects", () => {
       await new Promise(r => setTimeout(r, 2));
     }
     // list with limit 20 will return all 3, but test cursor by manually fetching? We'll test invalid cursor
-    let res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { cursor: "invalid" } }));
+    let res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { cursor: "invalid", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
   });
 
   it("rejects invalid status", async () => {
     const { handler } = makeHandler();
-    const res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { status: "rejected" } }));
+    const res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { status: "rejected", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
   });
 });
@@ -298,7 +300,7 @@ describe("GET /projects/{id} public detail", () => {
     const id2 = JSON.parse(r2.body).id;
     let proj2 = ddb.store.get(`PROJECT#${id2}|META`);
     proj2.status = "published";
-    proj2.gsi1pk = `PROJECT#Kaski#published`;
+    proj2.gsi1pk = `PROJECT#${proj2.incidentId}#Kaski#published`;
     proj2.gsi2pk = `PROJECT#published`;
     const { PutCommand } = await import("@aws-sdk/lib-dynamodb");
     await ddb.send(new PutCommand({ TableName: "test-table", Item: proj2 }));
@@ -574,7 +576,7 @@ describe("moderation", () => {
     assert.equal(first.photos[0].status, "pending");
     assert.equal(first.updates[0].status, "pending");
     // public list should not have those pending
-    let pub = await handler(makeEvent({ method: "GET", path: "/projects" }));
+    let pub = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { incidentId: TEST_INCIDENT_ID } }));
     // not published yet so zero
     assert.equal(JSON.parse(pub.body).items.length, 0);
   });
@@ -690,7 +692,7 @@ describe("masking test", () => {
     await ddb.send(new PutCommand({ TableName: "test-table", Item: { PK: `PROJECT#${id}`, SK: `UPDATE#${now}#x`, type: "UPDATE", id: "u-pending", projectId: id, text: "pending", photos: [], status: "pending", createdAt: now } }));
     await ddb.send(new PutCommand({ TableName: "test-table", Item: { PK: `PROJECT#${id}`, SK: `UPDATE#${new Date(Date.now()+1000).toISOString()}#y`, type: "UPDATE", id: "u-pub", projectId: id, text: "published update", photos: [], status: "published", createdAt: new Date(Date.now()+1000).toISOString() } }));
 
-    const listRes = await handler(makeEvent({ method: "GET", path: "/projects" }));
+    const listRes = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { incidentId: TEST_INCIDENT_ID } }));
     const listBody = JSON.parse(listRes.body);
     const listStr = JSON.stringify(listBody);
     assert.equal(listStr.includes("phone"), false);

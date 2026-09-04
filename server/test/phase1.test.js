@@ -2,11 +2,18 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+
+function testDdb() {
+  const ddb = new FakeDdb();
+  seedActiveIncident(ddb);
+  return ddb;
+}
 
 function makeHandler({ envOverrides = {}, ddb, kp } = {}) {
   const keyPair = kp ?? makeKeyPair();
   const d = ddb ?? new FakeDdb();
+  seedActiveIncident(d);
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ADMIN_EMAILS: "", ...envOverrides };
   const fetchJwks = async () => ({ keys: [keyPair.jwk] });
   const handler = createHandler({ env, ddbClient: d, fetchJwks });
@@ -23,9 +30,9 @@ describe("POST /needs", () => {
   beforeEach(() => { clearJwksCache(); kp = makeKeyPair(); fetchJwks = async () => ({ keys: [kp.jwk] }); });
 
   it("creates need anonymously and returns 12-char refCode", async () => {
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
-    const res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5 }, category: "goods", description: "Need food and water for family in ward five", language: "en" } }));
+    const res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5 }, category: "goods", description: "Need food and water for family in ward five", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 201);
     const body = JSON.parse(res.body);
     assert.ok(body.id);
@@ -45,58 +52,58 @@ describe("POST /needs", () => {
   });
 
   it("validates required fields and enums", async () => {
-    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks });
+    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: testDdb(), fetchJwks });
     // missing ward
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha" }, category: "goods", description: "need description long enough here", language: "en" } }));
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha" }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
     // invalid ward 34
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 34 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 34 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
     // invalid category
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "invalid", description: "need description long enough here", language: "en" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "invalid", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
     // description too short
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "short", language: "en" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "short", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
     // language invalid
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "fr" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "fr", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
   });
 
   it("requires registrant when onBehalf true", async () => {
-    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks });
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: testDdb(), fetchJwks });
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Reg", phone: "98abc" }, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Reg", phone: "98abc" }, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
   });
 
   it("rejects a malformed optional email but accepts a valid one", async () => {
-    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: new FakeDdb(), fetchJwks });
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "not-an-email", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: testDdb(), fetchJwks });
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "not-an-email", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "valid@example.com", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "x", email: "valid@example.com", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 201);
   });
 
   it("skips turnstile when secret unset, verifies when set", async () => {
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     // unset -> should succeed without token
     let handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en" } }));
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 201);
     // with secret set, token required
     const origFetch = global.fetch;
     global.fetch = async () => ({ json: async () => ({ success: true }) });
-    handler = createHandler({ env: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddbClient: new FakeDdb(), fetchJwks });
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en" } }));
+    handler = createHandler({ env: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddbClient: testDdb(), fetchJwks });
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", turnstileToken: "tok" } }));
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", turnstileToken: "tok", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 201);
     // failed verification
     global.fetch = async () => ({ json: async () => ({ success: false }) });
-    handler = createHandler({ env: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddbClient: new FakeDdb(), fetchJwks });
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", turnstileToken: "bad" } }));
+    handler = createHandler({ env: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddbClient: testDdb(), fetchJwks });
+    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "A B", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here again", language: "en", turnstileToken: "bad", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
     global.fetch = origFetch;
   });
@@ -107,20 +114,20 @@ describe("GET /needs public board", () => {
     clearJwksCache();
     const kp = makeKeyPair();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     // create need with private data
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001", email: "registrar@example.com" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", email: "rita@example.com", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en" } }));
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001", email: "registrar@example.com" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", email: "rita@example.com", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en", incidentId: TEST_INCIDENT_ID } }));
     const { id, refCode } = JSON.parse(res.body);
     // pending not visible
-    res = await handler(makeEvent({ method: "GET", path: "/needs" }));
+    res = await handler(makeEvent({ method: "GET", path: `/needs?incidentId=${TEST_INCIDENT_ID}` }));
     assert.equal(JSON.parse(res.body).items.length, 0);
     // publish as moderator
     ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     res = await handler(makeEvent({ method: "POST", path: `/moderation/${id}`, headers: { authorization: `Bearer ${modToken}` }, body: { action: "publish" } }));
     assert.equal(res.statusCode, 200);
-    res = await handler(makeEvent({ method: "GET", path: "/needs" }));
+    res = await handler(makeEvent({ method: "GET", path: `/needs?incidentId=${TEST_INCIDENT_ID}` }));
     const items = JSON.parse(res.body).items;
     assert.equal(items.length, 1);
     const item = items[0];
@@ -149,38 +156,38 @@ describe("GET /needs public board", () => {
     clearJwksCache();
     const kp = makeKeyPair();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator" , guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
     // create 3 needs in different districts/categories
     const ids = [];
     for (const cfg of [{district:"Gorkha", category:"goods"}, {district:"Kathmandu", category:"medical"}, {district:"Gorkha", category:"medical"}]) {
-      let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf:false, beneficiary:{name:`Ben ${cfg.district}`, district:cfg.district, ward:1}, category:cfg.category, description:"Need description long enough for test "+cfg.district, language:"en" } }));
+      let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf:false, beneficiary:{name:`Ben ${cfg.district}`, district:cfg.district, ward:1}, category:cfg.category, description:"Need description long enough for test "+cfg.district, language:"en", incidentId: TEST_INCIDENT_ID } }));
       const {id} = JSON.parse(res.body);
       ids.push(id);
       await handler(makeEvent({ method:"POST", path:`/moderation/${id}`, headers:{authorization:`Bearer ${modToken}`}, body:{action:"publish"}}));
     }
-    let res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{district:"Gorkha"}}));
+    let res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{district:"Gorkha", incidentId: TEST_INCIDENT_ID}}));
     // also test rawPath query parsing
-    res = await handler(makeEvent({ method:"GET", path:"/needs?district=Gorkha" }));
+    res = await handler(makeEvent({ method:"GET", path:`/needs?district=Gorkha&incidentId=${TEST_INCIDENT_ID}` }));
     assert.equal(JSON.parse(res.body).items.length, 2);
-    res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{category:"medical"}}));
+    res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{category:"medical", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(JSON.parse(res.body).items.length, 2);
-    res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{district:"Gorkha", category:"goods"}}));
+    res = await handler(makeEvent({ method:"GET", path:"/needs", queryStringParameters:{district:"Gorkha", category:"goods", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(JSON.parse(res.body).items.length, 1);
   });
 });
 
 describe("GET /status and POST renew", () => {
   it("returns 404 for unknown refCode and returns status for known", async () => {
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const kp = makeKeyPair();
     const fetchJwks = async () => ({ keys: [kp.jwk] });
     const handler = createHandler({ env:{TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     let res = await handler(makeEvent({method:"GET", path:"/status/UNKNOWN123"}));
     assert.equal(res.statusCode, 404);
-    res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"X Y", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough here for status", language:"en"}}));
+    res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"X Y", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough here for status", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {refCode} = JSON.parse(res.body);
     res = await handler(makeEvent({method:"GET", path:`/status/${refCode}`}));
     assert.equal(res.statusCode, 200);
@@ -190,9 +197,9 @@ describe("GET /status and POST renew", () => {
     assert.ok(body.createdAt);
   });
   it("renew extends TTL 30 days", async () => {
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const handler = createHandler({ env:{TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks: async()=>({keys:[]}) });
-    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"A B", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for renew test", language:"en"}}));
+    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"A B", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for renew test", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {refCode, id} = JSON.parse(res.body);
     const before = ddb.store.get(`NEED#${id}|META`).ttl;
     // wait a bit
@@ -212,47 +219,47 @@ describe("offers", () => {
   it("requires auth and validates input", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
-    let res = await handler(makeEvent({method:"POST", path:"/offers", body:{categories:["goods"], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000"}}));
+    let res = await handler(makeEvent({method:"POST", path:"/offers", body:{categories:["goods"], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(res.statusCode, 401);
     const token = createToken(basePayload({sub:"h1"}), kp.privateKey);
-    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:[], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000"}}));
+    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:[], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(res.statusCode, 400);
-    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:["invalid"], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000"}}));
+    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:["invalid"], districts:["Gorkha"], description:"We can provide goods in Gorkha for ten families", phone:"+9779800000000", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(res.statusCode, 400);
   });
   it("creates offer and public GET does not leak phone", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     const token = createToken(basePayload({sub:"h1", name:"Helper Person"}), kp.privateKey);
-    let res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:["goods","medical"], districts:["Gorkha","Kathmandu"], description:"We can provide goods and medical aid in Gorkha and Kathmandu", phone:"+9779800000000", org:{name:"Youth Club", contact:"contact@youth.org"}}}));
+    let res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${token}`}, body:{categories:["goods","medical"], districts:["Gorkha","Kathmandu"], description:"We can provide goods and medical aid in Gorkha and Kathmandu", phone:"+9779800000000", org:{name:"Youth Club", contact:"contact@youth.org"}, incidentId: TEST_INCIDENT_ID}}));
     assert.equal(res.statusCode, 201);
     const {id} = JSON.parse(res.body);
     // pending not visible
-    res = await handler(makeEvent({method:"GET", path:"/offers"}));
+    res = await handler(makeEvent({method:"GET", path:`/offers?incidentId=${TEST_INCIDENT_ID}`}));
     assert.equal(JSON.parse(res.body).items.length, 0);
     // publish
     ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modToken = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     res = await handler(makeEvent({method:"POST", path:`/moderation/${id}`, headers:{authorization:`Bearer ${modToken}`}, body:{action:"publish"}}));
     assert.equal(res.statusCode, 200);
-    res = await handler(makeEvent({method:"GET", path:"/offers"}));
+    res = await handler(makeEvent({method:"GET", path:`/offers?incidentId=${TEST_INCIDENT_ID}`}));
     const items = JSON.parse(res.body).items;
     assert.equal(items.length, 1);
     assert.ok(!("phone" in items[0]));
     assert.equal(items[0].helperLabel, "Helper P.");
     assert.ok(items[0].org);
     // filter
-    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{district:"Gorkha"}}));
+    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{district:"Gorkha", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(JSON.parse(res.body).items.length, 1);
-    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{district:"Unknown"}}));
+    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{district:"Unknown", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(JSON.parse(res.body).items.length, 0);
-    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{category:"goods"}}));
+    res = await handler(makeEvent({method:"GET", path:"/offers", queryStringParameters:{category:"goods", incidentId: TEST_INCIDENT_ID}}));
     assert.equal(JSON.parse(res.body).items.length, 1);
   });
 });
@@ -261,7 +268,7 @@ describe("moderation", () => {
   it("queue requires moderator|admin role", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     const helperTok = createToken(basePayload({sub:"h1"}), kp.privateKey);
@@ -278,17 +285,17 @@ describe("moderation", () => {
   it("publish and reject with reason, audit written, dupCandidates present", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
     // create need
-    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Dup Name", district:"Gorkha", ward:2}, category:"goods", description:"Need description long enough for moderation dup test", language:"en"}}));
+    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Dup Name", district:"Gorkha", ward:2}, category:"goods", description:"Need description long enough for moderation dup test", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {id:id1} = JSON.parse(res.body);
     // queue oldest first
     await new Promise(r=>setTimeout(r,5));
-    res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Dup Name", district:"Gorkha", ward:2}, category:"shelter", description:"Another need same name ward for duplicate detection", language:"en"}}));
+    res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Dup Name", district:"Gorkha", ward:2}, category:"shelter", description:"Another need same name ward for duplicate detection", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {id:id2} = JSON.parse(res.body);
     res = await handler(makeEvent({method:"GET", path:"/moderation/queue", headers:{authorization:`Bearer ${modTok}`}}));
     const items = JSON.parse(res.body).items;
@@ -315,10 +322,10 @@ describe("moderation", () => {
   it("forbidden for helper on moderation action", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
-    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"X Y", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for helper forbid", language:"en"}}));
+    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"X Y", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for helper forbid", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {id} = JSON.parse(res.body);
     ddb.store.set("USER#helper-1|PROFILE", {PK:"USER#helper-1", SK:"PROFILE", sub:"helper-1", role:"helper"});
     const helperTok = createToken(basePayload({sub:"helper-1"}), kp.privateKey);
@@ -327,21 +334,107 @@ describe("moderation", () => {
   });
 });
 
+async function createInlineNeed(handler, kp, ddb, name = "House Fire") {
+  const res = await handler(makeEvent({
+    method: "POST",
+    path: "/needs",
+    headers: { authorization: `Bearer ${createToken(basePayload({ sub: "reporter-1" }), kp.privateKey)}` },
+    body: {
+      onBehalf: false,
+      beneficiary: { name: "Inline Reporter", district: "Gorkha", ward: 4 },
+      category: "shelter",
+      description: "The household needs urgent shelter after this local emergency",
+      language: "en",
+      newIncident: { name, kind: "fire", district: "Gorkha", description: "A local emergency needs review" },
+      media: [{ fileId: "proof-1", type: "photo", originalUrl: "https://example.com/proof.jpg" }],
+    },
+  }));
+  assert.equal(res.statusCode, 201, res.body);
+  const created = JSON.parse(res.body);
+  created.incidentId = ddb.store.get(`NEED#${created.id}|META`).incidentId;
+  return created;
+}
+
+function addInlineModerator(ddb) {
+  ddb.store.set("USER#mod-inline|PROFILE", {
+    PK: "USER#mod-inline", SK: "PROFILE", sub: "mod-inline", role: "moderator",
+    guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [],
+    gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  });
+}
+
+describe("inline incident need lifecycle", () => {
+  beforeEach(() => clearJwksCache());
+
+  it("requires auth and a photo, then creates a pending incident", async () => {
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const { handler } = makeHandler({ ddb, kp });
+    const body = {
+      onBehalf: false,
+      beneficiary: { name: "Inline Reporter", district: "Gorkha", ward: 4 },
+      category: "shelter",
+      description: "The household needs urgent shelter after this local emergency",
+      language: "en",
+      newIncident: { name: "No Photo Fire", kind: "fire", district: "Gorkha", description: "A local emergency needs review" },
+    };
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", body }));
+    assert.equal(res.statusCode, 401);
+    const auth = { authorization: `Bearer ${createToken(basePayload({ sub: "reporter-1" }), kp.privateKey)}` };
+    res = await handler(makeEvent({ method: "POST", path: "/needs", headers: auth, body }));
+    assert.equal(res.statusCode, 400);
+    const created = await createInlineNeed(handler, kp, ddb);
+    const need = ddb.store.get(`NEED#${created.id}|META`);
+    const incident = ddb.store.get(`INCIDENT#${created.incidentId}|META`);
+    assert.equal(need.incidentId, created.incidentId);
+    assert.equal(incident.status, "pending");
+    assert.equal(incident.requestOrigin, "community-request-inline");
+  });
+
+  it("publishing an inline-incident need activates its incident", async () => {
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const { handler } = makeHandler({ ddb, kp });
+    const created = await createInlineNeed(handler, kp, ddb, "Publish Fire");
+    addInlineModerator(ddb);
+    const modToken = createToken(basePayload({ sub: "mod-inline" }), kp.privateKey);
+    const res = await handler(makeEvent({ method: "POST", path: `/moderation/${created.id}`, headers: { authorization: `Bearer ${modToken}` }, body: { action: "publish" } }));
+    assert.equal(res.statusCode, 200);
+    const incident = ddb.store.get(`INCIDENT#${created.incidentId}|META`);
+    assert.equal(incident.status, "active");
+    assert.equal(incident.approvedBy, "mod-inline");
+  });
+
+  it("rejecting an inline-incident need leaves its incident pending", async () => {
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const { handler } = makeHandler({ ddb, kp });
+    const created = await createInlineNeed(handler, kp, ddb, "Reject Fire");
+    addInlineModerator(ddb);
+    const modToken = createToken(basePayload({ sub: "mod-inline" }), kp.privateKey);
+    const res = await handler(makeEvent({ method: "POST", path: `/moderation/${created.id}`, headers: { authorization: `Bearer ${modToken}` }, body: { action: "reject", reason: "invalid request" } }));
+    assert.equal(res.statusCode, 200);
+    assert.equal(ddb.store.get(`NEED#${created.id}|META`).status, "rejected");
+    assert.equal(ddb.store.get(`INCIDENT#${created.incidentId}|META`).status, "pending");
+  });
+});
+
 describe("POST /needs/:id/status", () => {
   it("moderator can change status and matched returns contact", async () => {
     clearJwksCache();
     const kp = makeKeyPair();
-    const ddb = new FakeDdb();
+    const ddb = testDdb();
     const fetchJwks = async()=>({keys:[kp.jwk]});
     const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
     ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
     const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
-    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Benef Person", phone:"+9779800000001", district:"Gorkha", ward:3}, category:"goods", description:"Need description long enough for status change", language:"en"}}));
+    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Benef Person", phone:"+9779800000001", district:"Gorkha", ward:3}, category:"goods", description:"Need description long enough for status change", language:"en", incidentId: TEST_INCIDENT_ID}}));
     const {id:needId} = JSON.parse(res.body);
     await handler(makeEvent({method:"POST", path:`/moderation/${needId}`, headers:{authorization:`Bearer ${modTok}`}, body:{action:"publish"}}));
     // create offer
     const helperTok = createToken(basePayload({sub:"h1", name:"Offer Helper"}), kp.privateKey);
-    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${helperTok}`}, body:{categories:["goods"], districts:["Gorkha"], description:"Offer description long enough for matching test case", phone:"+9779800000009"}}));
+    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${helperTok}`}, body:{categories:["goods"], districts:["Gorkha"], description:"Offer description long enough for matching test case", phone:"+9779800000009", incidentId: TEST_INCIDENT_ID}}));
     const {id:offerId} = JSON.parse(res.body);
     await handler(makeEvent({method:"POST", path:`/moderation/${offerId}`, headers:{authorization:`Bearer ${modTok}`}, body:{action:"publish"}}));
     // helper cannot change status

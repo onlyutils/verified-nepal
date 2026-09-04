@@ -1,11 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
-import { FakeDdb, makeEvent } from "./helpers.js";
+import { FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 import { MAX_NEED_MEDIA_ITEMS } from "../src/constants.js";
 
 function makeHandler(opts = {}) {
   const ddb = opts.ddb ?? new FakeDdb();
+  seedActiveIncident(ddb);
   const env = { TABLE_NAME: "t", ...opts.envOverrides };
   const handler = createHandler({ env, ddbClient: ddb, fetch: opts.fetch });
   return { handler, ddb };
@@ -18,6 +19,7 @@ function needBody(extra = {}) {
     category: "goods",
     description: "Need food and shelter for testing media support",
     language: "en",
+    incidentId: TEST_INCIDENT_ID,
     ...extra,
   };
 }

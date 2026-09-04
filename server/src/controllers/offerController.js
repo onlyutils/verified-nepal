@@ -3,6 +3,7 @@ import { validateString, validatePhone, validateOptionalEmail, validateDistrict 
 import { requireAuth } from "../lib/auth.js";
 import { CATEGORIES } from "../constants.js";
 import { createOffer, listPublicOffers } from "../models/offer.js";
+import { getIncidentById } from "../models/incident.js";
 import { putPointer } from "../models/mine.js";
 import { toPublicOfferListItem } from "../views/offer.js";
 
@@ -10,7 +11,10 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   const auth = await requireAuth(event, { fetchJwks, getDdb, env });
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { org, categories, districts, description, phone, email } = body;
+  const { org, categories, districts, description, phone, email, incidentId } = body;
+  if (typeof incidentId !== "string" || !incidentId.trim()) throw err(400, "invalid incident");
+  const incident = await getIncidentById(auth.ddb, auth.tableName, incidentId.trim());
+  if (!incident || incident.status !== "active") throw err(400, "invalid incident");
   if (!Array.isArray(categories) || categories.length === 0) throw err(400, "categories must be non-empty array");
   if (categories.length > 20) throw err(400, "categories must be at most 20");
   for (const c of categories) if (!CATEGORIES.includes(c)) throw err(400, `invalid category ${c}`);
@@ -32,7 +36,7 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   const helperName = auth.user?.name || auth.payload.name || "Helper";
   const { id } = await createOffer(auth.ddb, auth.tableName, {
     helperSub, helperName, org: cleanOrg, categories: cleanCategories, districts: cleanDistricts,
-    description: desc, phone: cleanPhone, email: cleanEmail,
+    description: desc, phone: cleanPhone, email: cleanEmail, incidentId: incident.id,
   });
   await putPointer(auth.ddb, auth.tableName, { sub: helperSub, type: "OFFER", id });
   return json(201, { id });
@@ -42,13 +46,15 @@ export async function handleGetOffers(event, { getDdb, env }) {
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
   const category = q.category ? String(q.category).trim() : "";
+  const incidentId = q.incidentId ? String(q.incidentId).trim() : "";
   const cursorRaw = q.cursor ? String(q.cursor) : "";
+  if (!incidentId) throw err(400, "incidentId required");
   if (category && !CATEGORIES.includes(category)) throw err(400, `category must be one of ${CATEGORIES.join(",")}`);
   const cursorKey = decodeCursor(cursorRaw);
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const items = await listPublicOffers(ddb, tableName, { district, category });
+  const items = await listPublicOffers(ddb, tableName, { incidentId, district, category });
   let start = 0;
   if (cursorKey) {
     const idx = items.findIndex((it) => it.PK === cursorKey.PK && it.SK === cursorKey.SK);
