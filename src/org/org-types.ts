@@ -13,7 +13,7 @@ import type {
 } from "@/lib/api";
 import type { Language } from "@/lib/types";
 
-export type OrgSection = "overview" | "centers" | "donations" | "team" | "settings";
+export type OrgSection = "overview" | "needs" | "centers" | "donations" | "team" | "settings";
 export type OrgCopy = Record<string, string>;
 
 export type LogForm = {

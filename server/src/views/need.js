@@ -30,6 +30,7 @@ export function toPublicNeedListItem(it) {
     status: it.status,
     createdAt: it.createdAt,
     group: toPublicGroup(it),
+    ...(it.handledBy?.orgName ? { handledBy: it.handledBy.orgName } : {}),
   };
 }
 
@@ -44,6 +45,7 @@ export function toStatusView(need) {
   if (need.claimCode && ["published", "matched", "fulfilled"].includes(need.status)) {
     out.claimCode = need.claimCode;
   }
+  if (need.handledBy?.orgName) out.handledBy = need.handledBy.orgName;
   return out;
 }
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Flag, Share2 } from "lucide-react";
 import {
-  CATEGORIES, addGroupItem, claimGroupItem, createOffer, flagNeed, joinGroupApi, listNeeds, listOffers,
-  markGroupItemDone, releaseGroupItem, startGroup,
-  type Category, type GroupPublic, type NeedPublic, type OfferPublic,
+  CATEGORIES, addGroupItem, claimGroupItem, createOffer, flagNeed, joinGroupApi, listMyOrgs, listNeeds, listOffers,
+  markGroupItemDone, orgClaimNeed, releaseGroupItem, startGroup,
+  type Category, type GroupPublic, type MyOrg, type NeedPublic, type OfferPublic,
 } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
@@ -366,6 +366,19 @@ export function GiveHelp({ language }: { language: Language }) {
   const [flagId, setFlagId] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
+  // Verified organizations the signed-in person belongs to; they may take a need off the board.
+  const [verifiedOrgs, setVerifiedOrgs] = useState<MyOrg[]>([]);
+  useEffect(() => {
+    if (!auth.idToken) {
+      setVerifiedOrgs([]);
+      return;
+    }
+    let cancelled = false;
+    listMyOrgs(auth.idToken)
+      .then((r) => { if (!cancelled) setVerifiedOrgs(r.items.filter((org) => org.status === "verified")); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [auth.idToken]);
   useEffect(() => {
     let cancelled = false;
     setNeedsLoading(true);
@@ -457,7 +470,7 @@ export function GiveHelp({ language }: { language: Language }) {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {needs.map((need) => (
-                <NeedCard key={need.id} language={language} need={need} onFlag={() => setFlagId(need.id)} />
+                <NeedCard key={need.id} language={language} need={need} orgs={verifiedOrgs} onFlag={() => setFlagId(need.id)} />
               ))}
             </div>
           )}
@@ -653,13 +666,29 @@ function GroupPanel({
   );
 }
 
-function NeedCard({ language, need, onFlag }: { language: Language; need: NeedPublic; onFlag: () => void }) {
+function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: NeedPublic; orgs: MyOrg[]; onFlag: () => void }) {
   const t = labels[language];
   const ts = formStrings[language];
   const auth = useGoogleAuth();
   const [group, setGroup] = useState<GroupPublic | undefined>(need.group);
   const [forming, setForming] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [handledBy, setHandledBy] = useState<{ status: string; org: string } | null>(need.handledBy ? { status: need.status, org: need.handledBy } : null);
+  const [taking, setTaking] = useState(false);
+
+  const takeForOrg = async (org: MyOrg) => {
+    if (!auth.idToken) return;
+    setTaking(true);
+    setFormError(null);
+    try {
+      await orgClaimNeed(auth.idToken, org.id, need.id);
+      setHandledBy({ status: "matched", org: org.name });
+    } catch (err) {
+      setFormError(apiErrorMessage(err, language));
+    } finally {
+      setTaking(false);
+    }
+  };
 
   const formGroup = async () => {
     if (!auth.idToken) return;
@@ -680,7 +709,7 @@ function NeedCard({ language, need, onFlag }: { language: Language; need: NeedPu
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Badge variant="secondary">{categoryLabel(need.category, language)}</Badge>
-          <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(need.status, language)}</StatusBadge>
+          <StatusBadge tone={toneForStatus(handledBy?.status ?? need.status)}>{statusLabel(handledBy?.status ?? need.status, language)}</StatusBadge>
         </div>
         <CardTitle className="text-lg">{need.maskedName}</CardTitle>
         <CardDescription>
@@ -690,6 +719,21 @@ function NeedCard({ language, need, onFlag }: { language: Language; need: NeedPu
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-base leading-relaxed">{need.description}</p>
+        {handledBy ? (
+          <p className="text-sm text-muted-foreground" role="status">
+            {handledBy.status === "matched" && orgs.some((org) => org.name === handledBy.org)
+              ? ts.orgHandled.replace("{org}", handledBy.org)
+              : (handledBy.status === "fulfilled" ? ts.orgFulfilledBy : ts.orgHandledBy).replace("{org}", handledBy.org)}
+          </p>
+        ) : need.status === "published" && orgs.length && !group ? (
+          <div className="flex flex-wrap gap-2">
+            {orgs.map((org) => (
+              <Button key={org.id} size="sm" disabled={taking} onClick={() => void takeForOrg(org)}>
+                {ts.orgHandle.replace("{org}", org.name)}
+              </Button>
+            ))}
+          </div>
+        ) : null}
         {group ? (
           <GroupPanel language={language} needId={need.id} group={group} onGroupChange={setGroup} />
         ) : need.status === "published" && auth.idToken ? (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LayoutDashboard, PackageCheck, Settings, Users, Warehouse } from "lucide-react";
+import { HandHeart, LayoutDashboard, PackageCheck, Settings, Users, Warehouse } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import { EmptyState, LoadingState } from "@/components/empty-state";
@@ -15,6 +15,7 @@ import { orgStatusLabel, statusTone, useOrg } from "./use-org";
 import type { OrgSection } from "./org-types";
 import { Overview } from "./overview";
 import { Centers } from "./centers";
+import { OrgNeeds } from "./needs";
 import { Donations } from "./donations";
 import { Team } from "./team";
 import { SettingsSection } from "./settings";
@@ -153,6 +154,7 @@ export function OrgDashboard({
 
   const nav: AppShellNavItem<OrgSection>[] = [
     { key: "overview", label: t.navOverview, icon: <LayoutDashboard /> },
+    { key: "needs", label: t.navNeeds, icon: <HandHeart /> },
     { key: "centers", label: t.navCenters, icon: <Warehouse /> },
     { key: "donations", label: t.navDonations, icon: <PackageCheck /> },
     { key: "team", label: t.navTeam, icon: <Users /> },
@@ -192,6 +194,7 @@ export function OrgDashboard({
       aside={aside}
     >
       {active === "overview" ? <Overview controller={controller} /> : null}
+      {active === "needs" ? <OrgNeeds controller={controller} navigate={navigate} /> : null}
       {active === "centers" ? <Centers controller={controller} /> : null}
       {active === "donations" ? <Donations controller={controller} /> : null}
       {active === "team" ? <Team controller={controller} /> : null}

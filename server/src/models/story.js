@@ -3,6 +3,7 @@ import { listPointers, putPointer, deletePointer } from "./mine.js";
 import { listUserMemberships } from "./org.js";
 import { listOrgCenterPointers } from "./center.js";
 import { listAllEntries } from "./goods.js";
+import { listOrgNeeds } from "./orgNeed.js";
 
 export const STORY_ROLES = ["needy", "helper", "org"];
 
@@ -25,6 +26,7 @@ export async function storyRole(ddb, tableName, sub) {
   }
   if (helper) return "helper";
   for (const m of await listUserMemberships(ddb, tableName, sub)) {
+    if ((await listOrgNeeds(ddb, tableName, m.orgId)).some((n) => n.status === "fulfilled")) return "org";
     for (const c of await listOrgCenterPointers(ddb, tableName, m.orgId)) {
       const centerId = c.centerId || String(c.SK).replace(/^CENTER#/, "");
       if ((await listAllEntries(ddb, tableName, centerId)).some((e) => e.entryType === "distribution")) return "org";

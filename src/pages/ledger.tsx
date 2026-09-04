@@ -123,6 +123,7 @@ export function Ledger({ language }: { language: Language }) {
                   {goodsLabel(item.category, language)} · {t.ledgerWard} {item.ward}
                 </p>
                 <p className="text-sm text-muted-foreground">{dateLabel(item.redeemedAt, language)}</p>
+                {item.orgName ? <p className="text-sm text-muted-foreground">{t.ledgerOrg}: {item.orgName}</p> : null}
               </div>
             ))}
           </div>
@@ -134,6 +135,7 @@ export function Ledger({ language }: { language: Language }) {
                   <TableHead>{t.ledgerCategory}</TableHead>
                   <TableHead>{t.ledgerWard}</TableHead>
                   <TableHead>{t.ledgerDate}</TableHead>
+                  <TableHead>{t.ledgerOrg}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,6 +147,7 @@ export function Ledger({ language }: { language: Language }) {
                       {t.ledgerWard} {item.ward}
                     </TableCell>
                     <TableCell>{dateLabel(item.redeemedAt, language)}</TableCell>
+                    <TableCell>{item.orgName ?? ""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -14,35 +14,38 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
   if (need.redeemedAt) {
     return { status: "already_redeemed", needId, redeemedAt: need.redeemedAt };
   }
-  const redeemedAt = providedRedeemedAt || new Date().toISOString();
-  if (providedRedeemedAt) {
-    const d = new Date(providedRedeemedAt);
-    if (Number.isNaN(d.getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
-  }
+  if (providedRedeemedAt && Number.isNaN(new Date(providedRedeemedAt).getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
+  const redeemedAt = await fulfilNeed(ddb, tableName, { need, redeemedAt: providedRedeemedAt, note, actorSub, actorName, reason: "redeem" });
+  return { status: "redeemed", needId, redeemedAt };
+}
+
+/**
+ * The one place a need becomes "fulfilled": status + GSI keys, public ledger rows, audit.
+ * Used by the moderator claim-code redeem and by organizations marking a need delivered.
+ */
+export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName }) {
+  const at = redeemedAt || new Date().toISOString();
   const district = need.beneficiary?.district || need.district || "";
   const ward = need.beneficiary?.ward ?? need.ward;
   if (!district || ward === undefined) throw err(500, "need missing district/ward");
   need.status = "fulfilled";
-  need.redeemedAt = redeemedAt;
+  need.redeemedAt = at;
   need.gsi1pk = `NEED#${district}#fulfilled`;
   need.gsi1sk = need.createdAt;
   need.gsi2pk = "NEED#fulfilled";
   need.gsi2sk = need.createdAt;
   await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
-  const masked = maskName(need.beneficiary?.name || "");
-  const ledgerBase = { type: "LEDGER", needId, claimCode, maskedName: masked, category: need.category, district, ward, redeemedAt };
+  const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, redeemedAt: at };
+  if (orgName) ledgerBase.orgName = orgName;
   if (note !== undefined && note !== null && String(note).trim() !== "") {
     const n = String(note).trim();
     if (n.length > 500) throw err(400, "note too long");
     ledgerBase.note = n;
   }
-  const item1 = { PK: `LEDGER#${district}#${ward}`, SK: `${redeemedAt}#${needId}`, ...ledgerBase };
-  const item2 = { PK: `LEDGER#${district}`, SK: `${redeemedAt}#${needId}`, ...ledgerBase };
-  await ddb.send(new PutCommand({ TableName: tableName, Item: item1 }));
-  await ddb.send(new PutCommand({ TableName: tableName, Item: item2 }));
-  const targetLabel = getTargetLabelForAudit("NEED", need);
-  await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: needId, targetLabel, reason: "redeem" });
-  return { status: "redeemed", needId, redeemedAt };
+  await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: `LEDGER#${district}#${ward}`, SK: `${at}#${need.id}`, ...ledgerBase } }));
+  await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: `LEDGER#${district}`, SK: `${at}#${need.id}`, ...ledgerBase } }));
+  await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason });
+  return at;
 }
 
 export async function queryLedger(ddb, tableName, pk) {

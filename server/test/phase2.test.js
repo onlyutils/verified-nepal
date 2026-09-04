@@ -312,7 +312,7 @@ describe("GET /ledger", () => {
     assert.match(res.headers["content-type"], /csv/);
     const csv = res.body;
     const lines = csv.split("\n");
-    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt");
+    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName");
     // second line should be for newest in ward 4 (Sita K.)
     assert.ok(lines[1].includes("Sita K."));
     // line with comma should be quoted

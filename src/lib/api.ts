@@ -35,6 +35,8 @@ export interface NeedPublic {
   claimCode?: string;
   flagCount?: number;
   group?: GroupPublic;
+  /** Name of the verified organization delivering this need, once one has taken it. */
+  handledBy?: string;
 }
 
 export interface NeedsListResponse {
@@ -49,6 +51,7 @@ export interface StatusResponse {
   createdAt: string;
   expiresAt: string;
   claimCode?: string;
+  handledBy?: string;
 }
 
 export interface NeedMediaItem {
@@ -536,6 +539,7 @@ export interface LedgerItem {
   district: string;
   ward: number;
   redeemedAt: string;
+  orgName?: string;
 }
 
 export interface LedgerResponse {
@@ -1115,6 +1119,28 @@ export function updateOrg(token: string, id: string, body: Partial<CreateOrgBody
 }
 export function createCenter(token: string, orgId: string, body: CreateCenterBody): Promise<{ id: string }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { method: "POST", body: JSON.stringify(body), token });
+}
+// ---- Organizations handling needs: take a published need, deliver it, or hand it back ----
+export interface OrgNeed {
+  id: string;
+  status: string;
+  category: Category;
+  description: string;
+  createdAt: string;
+  beneficiary: { name: string; phone: string | null; district: string; ward: number };
+  handledAt?: string;
+}
+export function listOrgNeeds(token: string, orgId: string): Promise<{ items: OrgNeed[] }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/needs`, { token });
+}
+export function orgClaimNeed(token: string, orgId: string, needId: string): Promise<OrgNeed> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/claim`, { method: "POST", token });
+}
+export function orgReleaseNeed(token: string, orgId: string, needId: string): Promise<{ status: string }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
+}
+export function orgDeliverNeed(token: string, orgId: string, needId: string, note?: string): Promise<{ status: string; redeemedAt: string }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
 }
 export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { token });

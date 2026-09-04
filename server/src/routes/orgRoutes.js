@@ -16,6 +16,7 @@ import {
   handleListMembers,
   handleRemoveMember,
 } from "../controllers/orgController.js";
+import { handleOrgClaimNeed, handleOrgReleaseNeed, handleOrgDeliverNeed, handleListOrgNeeds } from "../controllers/orgNeedController.js";
 import {
   handleListCenters,
   handleGetCenter,
@@ -46,6 +47,10 @@ const routes = [
   ["POST", /^\/orgs\/([^\/]+)$/, (e, o, m) => handleUpdateOrg(e, o, decodeURIComponent(m[1]))],
   ["POST", /^\/orgs\/([^\/]+)\/centers$/, (e, o, m) => handleCreateCenter(e, o, decodeURIComponent(m[1]))],
   ["GET", /^\/orgs\/([^\/]+)\/centers$/, (e, o, m) => handleListOrgCenters(e, o, decodeURIComponent(m[1]))],
+  ["GET", /^\/orgs\/([^\/]+)\/needs$/, (e, o, m) => handleListOrgNeeds(e, o, decodeURIComponent(m[1]))],
+  ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/claim$/, (e, o, m) => handleOrgClaimNeed(e, o, decodeURIComponent(m[1]), decodeURIComponent(m[2]))],
+  ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/release$/, (e, o, m) => handleOrgReleaseNeed(e, o, decodeURIComponent(m[1]), decodeURIComponent(m[2]))],
+  ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/deliver$/, (e, o, m) => handleOrgDeliverNeed(e, o, decodeURIComponent(m[1]), decodeURIComponent(m[2]))],
   ["GET", /^\/moderation\/center-flags$/, (e, o) => handleCenterFlags(e, o)],
   ["GET", /^\/centers$/, (e, o) => handleListCenters(e, o)],
   ["GET", /^\/centers\/([^\/]+)\/inbound$/, (e, o, m) => handleInbound(e, o, decodeURIComponent(m[1]))],

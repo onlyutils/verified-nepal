@@ -849,6 +849,9 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               {categoryLabel(result.category, language)} ·{" "}
               {districtLabels[result.district as keyof typeof districtLabels]?.[language] ?? result.district}
             </p>
+            {result.handledBy ? (
+              <p>{(result.status === "fulfilled" ? formStrings[language].orgFulfilledBy : formStrings[language].orgHandledBy).replace("{org}", result.handledBy)}</p>
+            ) : null}
             {result.claimCode && (result.status === "published" || result.status === "matched") ? (
               <CodeDisplay
                 code={result.claimCode}
