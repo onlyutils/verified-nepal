@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Tracked uppercase label above a title or section, e.g. "RASUWA / BHOTE KOSHI FLASH FLOOD · 2026". */
+/** Tracked uppercase label above a title or section, e.g. "2026 XYZ EARTHQUAKE". */
 export function Eyebrow({
   children,
   tone = "primary",
