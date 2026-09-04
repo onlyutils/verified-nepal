@@ -11,6 +11,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SectionEmpty, SectionError, SectionLoading, SectionFrame } from "./section-ui";
 import type { DeskModel } from "./use-desk";
 import { districtNames } from "@/lib/geo";
+import { useIncidents } from "@/lib/incidents";
 
 function categoryLabel(t: Record<string, string>, category: string) {
   const key = `category${category.charAt(0).toUpperCase()}${category.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`;
@@ -23,6 +24,7 @@ function statusLabel(t: Record<string, string>, status: string) {
 
 export function Queue({ model }: { model: DeskModel }) {
   const { t } = model;
+  const { incidents } = useIncidents("active,pending,archived");
   return (
     <SectionFrame
       title={t.deskQueueTitleRevised}
@@ -70,6 +72,7 @@ export function Queue({ model }: { model: DeskModel }) {
           {model.filteredQueue.map((item) => {
             const district = item.district || item.districts?.[0] || "—";
             const category = String(item.category || item.categories?.join(", ") || "");
+            const incident = item.incidentId ? incidents.find((candidate) => candidate.id === item.incidentId) : undefined;
             const flagCount = typeof item.flagCount === "number" ? item.flagCount : 0;
             const remainingMs = item.claimExpiresAt ? new Date(item.claimExpiresAt).getTime() - model.nowTick : 0;
             const isClaimed = !!item.claimedBy && remainingMs > 0;
@@ -84,6 +87,7 @@ export function Queue({ model }: { model: DeskModel }) {
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <CardTitle className="text-lg">{item.maskedName || item.helperLabel || item.beneficiary?.name || item.id}</CardTitle>
                       <Badge variant="secondary">{categoryLabel(t, category)}</Badge>
+                      {item.incidentId ? <Badge variant="outline">{incident?.name || item.incidentId}</Badge> : null}
                       {flagCount ? (
                         <Badge variant="danger">
                           {flagCount} {t.deskFlagCount.replace("{count}", "")}

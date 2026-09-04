@@ -26,7 +26,7 @@ export function locationMatchesRegion(location: NamedLocation, region: string) {
   );
 }
 
-const districtPlaceHints: Record<DistrictName, string[]> = {
+const districtPlaceHints: Partial<Record<DistrictName, string[]>> = {
   Rasuwa: [
     "dhunche",
     "syabru",
@@ -47,5 +47,5 @@ const districtPlaceHints: Record<DistrictName, string[]> = {
 
 function locationTextHasKnownPlace(location: NamedLocation, district: DistrictName) {
   const text = `${location.title || ""} ${location.title_ne || ""}`.toLocaleLowerCase();
-  return districtPlaceHints[district].some((hint) => text.includes(hint.toLocaleLowerCase()));
+  return districtPlaceHints[district]?.some((hint) => text.includes(hint.toLocaleLowerCase())) ?? false;
 }

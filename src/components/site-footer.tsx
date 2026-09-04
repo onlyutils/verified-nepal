@@ -31,9 +31,7 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
             <p className="mt-5 max-w-sm text-sm leading-6 text-faint">{t.aboutBody}</p>
           </div>
           <FooterColumn title={ts.footerOfficialLinks}>
-            <a className={linkClass} href="https://ndrrma.gov.np" target="_blank" rel="noopener noreferrer">
-              {ts.footerNdrRma} ↗
-            </a>
+            {routeLink("reportIncident", ts.footerReportIncident)}
             <a className={linkClass} href={pmdrfUrl} target="_blank" rel="noopener noreferrer">
               {ts.footerPmdrf} ↗
             </a>

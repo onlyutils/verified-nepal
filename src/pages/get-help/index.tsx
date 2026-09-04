@@ -14,10 +14,14 @@ import {
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
+import { useIncidents } from "@/lib/incidents";
+import { saveSelectedIncidentId } from "@/lib/incidents";
 import { labels } from "@/i18n";
+import { disasterStrings } from "@/i18n/disasters";
 import { formStrings } from "@/i18n/forms";
 import { meStrings } from "@/i18n/me";
 import type { Language } from "@/lib/types";
+import type { DistrictName } from "@/lib/districts";
 import { TurnstileWidget } from "@/components/turnstile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -39,6 +43,7 @@ const MAX_NEED_PHOTO_SIZE = 8 * 1024 * 1024; // Keep in sync with server MAX_PHO
 const MAX_NEED_VIDEO_SIZE = 50 * 1024 * 1024; // Keep in sync with server MAX_VIDEO_SIZE.
 const NEED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const NEED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+const NEW_INCIDENT_VALUE = "__new_incident__";
 type FieldKey =
   | "beneficiaryName"
   | "district"
@@ -49,7 +54,13 @@ type FieldKey =
   | "consent"
   | "registrantEmail"
   | "beneficiaryEmail"
-  | "beneficiaryPhone";
+  | "beneficiaryPhone"
+  | "incident"
+  | "newIncidentName"
+  | "newIncidentKind"
+  | "newIncidentDistrict"
+  | "newIncidentDescription"
+  | "media";
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -91,7 +102,9 @@ function statusLabel(status: string, language: Language) {
 export function GetHelp({ language }: { language: Language }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const disaster = disasterStrings[language];
   const auth = useGoogleAuth();
+  const { incidents, currentIncidentId, setCurrentIncidentId } = useIncidents();
   const [onBehalf, setOnBehalf] = useState(false);
   const [consent, setConsent] = useState(false);
   const [registrantName, setRegistrantName] = useState("");
@@ -105,6 +118,11 @@ export function GetHelp({ language }: { language: Language }) {
   const [householdSize, setHouseholdSize] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
+  const [newIncidentMode, setNewIncidentMode] = useState(false);
+  const [newIncidentName, setNewIncidentName] = useState("");
+  const [newIncidentKind, setNewIncidentKind] = useState("");
+  const [newIncidentDistrict, setNewIncidentDistrict] = useState("");
+  const [newIncidentDescription, setNewIncidentDescription] = useState("");
   const [mediaItems, setMediaItems] = useState<NeedMediaItem[]>([]);
   const [mediaNames, setMediaNames] = useState<Record<string, string>>({});
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, string>>({});
@@ -150,6 +168,12 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.householdSize === "string") setHouseholdSize(draft.householdSize);
       if (typeof draft.category === "string" && CATEGORIES.includes(draft.category as Category)) setCategory(draft.category as Category);
       if (typeof draft.description === "string") setDescription(draft.description);
+      if (typeof draft.newIncidentMode === "boolean") setNewIncidentMode(draft.newIncidentMode);
+      if (typeof draft.incidentId === "string") saveSelectedIncidentId(draft.incidentId);
+      if (typeof draft.newIncidentName === "string") setNewIncidentName(draft.newIncidentName);
+      if (typeof draft.newIncidentKind === "string") setNewIncidentKind(draft.newIncidentKind);
+      if (typeof draft.newIncidentDistrict === "string") setNewIncidentDistrict(draft.newIncidentDistrict);
+      if (typeof draft.newIncidentDescription === "string") setNewIncidentDescription(draft.newIncidentDescription);
       if (typeof draft.savedAt === "string") setDraftTime(new Date(draft.savedAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US"));
     } catch {
       /* an unreadable draft should not block the form */
@@ -172,6 +196,12 @@ export function GetHelp({ language }: { language: Language }) {
       householdSize,
       category,
       description,
+      incidentId: newIncidentMode ? undefined : currentIncidentId,
+      newIncidentMode,
+      newIncidentName,
+      newIncidentKind,
+      newIncidentDistrict,
+      newIncidentDescription,
       savedAt: new Date().toISOString(),
     };
     if (
@@ -184,7 +214,13 @@ export function GetHelp({ language }: { language: Language }) {
       !district &&
       !ward &&
       !householdSize &&
-      !description
+      !description &&
+      !currentIncidentId &&
+      !newIncidentMode &&
+      !newIncidentName &&
+      !newIncidentKind &&
+      !newIncidentDistrict &&
+      !newIncidentDescription
     )
       return;
     try {
@@ -207,6 +243,12 @@ export function GetHelp({ language }: { language: Language }) {
     registrantPhone,
     success,
     ward,
+    currentIncidentId,
+    newIncidentDescription,
+    newIncidentDistrict,
+    newIncidentKind,
+    newIncidentMode,
+    newIncidentName,
   ]);
 
   const clearError = (key: FieldKey) =>
@@ -227,6 +269,11 @@ export function GetHelp({ language }: { language: Language }) {
     setBeneficiaryPhone("");
     setBeneficiaryEmail("");
     setDescription("");
+    setNewIncidentMode(false);
+    setNewIncidentName("");
+    setNewIncidentKind("");
+    setNewIncidentDistrict("");
+    setNewIncidentDescription("");
     setHouseholdSize("");
     setMediaItems([]);
     setMediaNames({});
@@ -309,6 +356,15 @@ export function GetHelp({ language }: { language: Language }) {
     event.preventDefault();
     setError(null);
     const next: Partial<Record<FieldKey, string>> = {};
+    if (!newIncidentMode && !currentIncidentId) next.incident = disaster.incidentValidation;
+    if (newIncidentMode) {
+      if (!newIncidentName.trim()) next.newIncidentName = disaster.reportIncidentRequired;
+      if (!newIncidentKind.trim()) next.newIncidentKind = disaster.reportIncidentRequired;
+      if (!newIncidentDistrict) next.newIncidentDistrict = disaster.reportIncidentRequired;
+      if (!newIncidentDescription.trim()) next.newIncidentDescription = disaster.reportIncidentRequired;
+      if (!mediaItems.some((item) => item.type === "photo")) next.media = disaster.incidentPhotoRequired;
+      if (!auth.idToken) next.incident = disaster.reportIncidentSignIn;
+    }
     if (!beneficiaryName.trim()) next.beneficiaryName = ts.validationBeneficiaryName;
     if (!district) next.district = ts.validationDistrict;
     const wardNumber = Number(ward);
@@ -336,6 +392,12 @@ export function GetHelp({ language }: { language: Language }) {
         "registrantEmail",
         "beneficiaryEmail",
         "beneficiaryPhone",
+        "incident",
+        "newIncidentName",
+        "newIncidentKind",
+        "newIncidentDistrict",
+        "newIncidentDescription",
+        "media",
       ];
       const first = order.find((key) => next[key]);
       document.getElementById(first ?? "beneficiaryName")?.focus();
@@ -363,6 +425,16 @@ export function GetHelp({ language }: { language: Language }) {
           language,
           turnstileToken: turnstileToken || undefined,
           media: mediaItems.length ? mediaItems : undefined,
+          ...(newIncidentMode
+            ? {
+                newIncident: {
+                  name: newIncidentName.trim(),
+                  kind: newIncidentKind.trim(),
+                  district: newIncidentDistrict as DistrictName,
+                  description: newIncidentDescription.trim(),
+                },
+              }
+            : { incidentId: currentIncidentId }),
         },
         auth.idToken || undefined,
       );
@@ -474,6 +546,93 @@ export function GetHelp({ language }: { language: Language }) {
               </NativeSelect>
               <FieldError id="district-error" error={errors.district} />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="incident">{disaster.incidentPickerLabel} *</Label>
+              <NativeSelect
+                id="incident"
+                value={newIncidentMode ? NEW_INCIDENT_VALUE : (currentIncidentId ?? "")}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  clearError("incident");
+                  if (value === NEW_INCIDENT_VALUE) {
+                    setNewIncidentMode(true);
+                    if (!newIncidentDistrict) setNewIncidentDistrict(district);
+                  } else {
+                    setNewIncidentMode(false);
+                    if (value) setCurrentIncidentId(value);
+                  }
+                }}
+                aria-invalid={Boolean(errors.incident)}
+                aria-describedby={errors.incident ? "incident-error" : undefined}
+              >
+                <NativeSelectOption value="">{incidents.length ? disaster.incidentSelect : disaster.incidentNotListed}</NativeSelectOption>
+                {incidents
+                  .filter((incident) => incident.status === "active" || incident.status === "pending")
+                  .map((incident) => (
+                    <NativeSelectOption key={incident.id} value={incident.id}>
+                      {language === "ne" && incident.nameNe ? incident.nameNe : incident.name}
+                      {incident.status === "pending" ? ` (${disaster.incidentUnderReview})` : ""}
+                    </NativeSelectOption>
+                  ))}
+                <NativeSelectOption value={NEW_INCIDENT_VALUE}>{disaster.incidentNotListed}</NativeSelectOption>
+              </NativeSelect>
+              <FieldError id="incident-error" error={errors.incident} />
+            </div>
+            {newIncidentMode ? (
+              <div className="space-y-5 sm:col-span-2 rounded-lg border border-dashed p-4">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field
+                    id="new-incident-name"
+                    label={`${disaster.newIncidentName} *`}
+                    value={newIncidentName}
+                    onChange={update("newIncidentName", setNewIncidentName)}
+                    error={errors.newIncidentName}
+                  />
+                  <Field
+                    id="new-incident-kind"
+                    label={`${disaster.newIncidentKind} *`}
+                    value={newIncidentKind}
+                    onChange={update("newIncidentKind", setNewIncidentKind)}
+                    error={errors.newIncidentKind}
+                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="new-incident-district">{disaster.newIncidentDistrict} *</Label>
+                    <NativeSelect
+                      id="new-incident-district"
+                      value={newIncidentDistrict}
+                      onChange={(event) => {
+                        setNewIncidentDistrict(event.target.value);
+                        clearError("newIncidentDistrict");
+                      }}
+                      aria-invalid={Boolean(errors.newIncidentDistrict)}
+                    >
+                      <NativeSelectOption value="">{t.getHelpSelectDistrict}</NativeSelectOption>
+                      {districtNames.map((item) => (
+                        <NativeSelectOption key={item} value={item}>
+                          {districtLabels[item][language]}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldError id="new-incident-district-error" error={errors.newIncidentDistrict} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-incident-description">{disaster.newIncidentDescription} *</Label>
+                  <Textarea
+                    id="new-incident-description"
+                    value={newIncidentDescription}
+                    onChange={(event) => {
+                      setNewIncidentDescription(event.target.value);
+                      clearError("newIncidentDescription");
+                    }}
+                    rows={4}
+                    placeholder={disaster.newIncidentDescriptionHint}
+                    aria-invalid={Boolean(errors.newIncidentDescription)}
+                  />
+                  <FieldError id="new-incident-description-error" error={errors.newIncidentDescription} />
+                </div>
+              </div>
+            ) : null}
             <Field
               id="ward"
               label={`${t.getHelpWard} *`}
@@ -526,7 +685,9 @@ export function GetHelp({ language }: { language: Language }) {
               <p className="text-sm text-muted-foreground">{errors.description ? "" : t.getHelpDescriptionHint}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="need-media">{ts.getHelpMediaLabel}</Label>
+              <Label htmlFor="need-media">
+                {ts.getHelpMediaLabel} {newIncidentMode ? "*" : ""}
+              </Label>
               <Input
                 id="need-media"
                 type="file"
@@ -545,6 +706,7 @@ export function GetHelp({ language }: { language: Language }) {
                   {mediaError}
                 </p>
               ) : null}
+              <FieldError id="need-media-required-error" error={errors.media} />
               {Object.entries(uploadingFiles).map(([uploadId, fileName]) => (
                 <p key={uploadId} className="text-sm text-muted-foreground" aria-live="polite">
                   {fileName} — {ts.getHelpMediaUploading}

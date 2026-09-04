@@ -3,6 +3,7 @@ import riverGeo from "../../public/data/geo/bhotekoshi.json";
 import type { NamedLocation } from "@/lib/types";
 
 import { districtLabels, districtNames, type DistrictName } from "./districts.ts";
+import { districtCentroids } from "./district-centroids";
 
 export { districtLabels, districtNames, type DistrictName };
 
@@ -54,11 +55,9 @@ const districtIndex: Record<string, DistrictName> = {
   Sindhupalchowk: "Sindhupalchok",
 };
 
-export const districtCenters: Record<DistrictName, [number, number]> = {
-  Rasuwa: [28.1128, 85.2961], // Dhunche fallback for bare district titles.
-  Nuwakot: [27.8953, 85.1464], // Bidur fallback for bare district titles.
-  Sindhupalchok: [27.7751, 85.7148], // Chautara fallback for bare district titles.
-};
+export const districtCenters: Record<DistrictName, [number, number]> = Object.fromEntries(
+  districtCentroids.map(({ district, lat, lng }) => [district, [lat, lng] as [number, number]]),
+) as Record<DistrictName, [number, number]>;
 
 /** "वेत्रवती, रसुवा" and "Sindhupalchok " both reduce to their bare place name. */
 function placeKey(title: string) {
