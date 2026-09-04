@@ -2,6 +2,7 @@ import { verifyIdToken } from "../verify.js";
 import { json, err, getAuthToken, parseBody } from "../lib/http.js";
 import { requireAuth, logAuthFail } from "../lib/auth.js";
 import { getUserProfile, createUserProfile, createEmailPointer, ensureUserBackfill, saveUserProfile } from "../models/user.js";
+import { validateDistrict } from "../lib/validate.js";
 import { toMeView } from "../views/user.js";
 
 function getTokenEndpoint(env) {
@@ -102,6 +103,21 @@ export async function handleAckGuidelines(event, opts) {
   if (!user.gsi2sk) user.gsi2sk = user.createdAt || nowIso;
   await saveUserProfile(ddb, tableName, user);
   return json(200, { guidelinesAckAt: nowIso });
+}
+
+export async function handleSetMyDistricts(event, opts) {
+  const auth = await requireAuth(event, opts);
+  if (auth.role !== "moderator") throw err(403, "moderators_only");
+  const body = parseBody(event);
+  if (!body || !Array.isArray(body.districts)) throw err(400, "districts must be array");
+  if (body.districts.length < 1 || body.districts.length > 10) throw err(400, "districts must be 1-10 items");
+  const districts = body.districts.map((d) => validateDistrict(d, "districts[]"));
+  const user = auth.user;
+  user.districts = districts;
+  if (!user.gsi2pk) user.gsi2pk = `USER#${user.role}`;
+  if (!user.gsi2sk) user.gsi2sk = user.createdAt || new Date().toISOString();
+  await saveUserProfile(auth.ddb, auth.tableName, user);
+  return json(200, { districts });
 }
 
 export async function handleAuthExchange(event, { env, fetchImpl }) {

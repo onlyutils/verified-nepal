@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Building2, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import type { Language, Page } from "@/lib/types";
 import { Admin } from "./admin";
@@ -9,7 +11,7 @@ import { Boards } from "./boards";
 import { ClimateStats } from "./climate";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
-import { AuthGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
+import { AuthGate, DistrictCheckboxes, DistrictGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
 import { Flags } from "./flags";
 import { Organizations } from "./orgs";
 import { PrintClaims } from "./print";
@@ -29,6 +31,7 @@ export function Desk({
 }) {
   const model = useDesk(language);
   const { auth, t } = model;
+  const [districtEditDraft, setDistrictEditDraft] = useState<string[]>([]);
   const onHome = () => navigate("dashboard");
   const isModerator = auth.profile?.role === "moderator" || auth.profile?.role === "admin";
 
@@ -50,6 +53,8 @@ export function Desk({
     return <UnauthorizedGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} onOrg={() => navigate("org")} />;
   if (auth.profile.role === "moderator" && !model.ackedNow && !auth.profile.guidelinesAckAt)
     return <GuidelinesGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
+  if (auth.profile.role === "moderator" && (auth.profile.districts?.length ?? 0) === 0)
+    return <DistrictGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
 
   const nav: AppShellNavItem<DeskSection>[] = [
     { key: "queue", label: t.deskQueueNeedsTab, count: model.queue.length, icon: <Inbox /> },
@@ -70,7 +75,22 @@ export function Desk({
   const scopeText = model.isScoped ? t.deskScopeBadge.replace("{districts}", model.scopeLabel) : t.deskScopeAll;
   const aside = (
     <div className="space-y-2">
-      <Badge variant="info">{scopeText}</Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="info">{scopeText}</Badge>
+        {auth.profile.role === "moderator" ? (
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0"
+            onClick={() => {
+              setDistrictEditDraft(auth.profile?.districts ?? []);
+              model.setDistrictEditOpen(true);
+            }}
+          >
+            {model.ds.deskScopeEdit}
+          </Button>
+        ) : null}
+      </div>
       <p className="text-xs leading-5 text-muted-foreground">{model.ds.deskScopeHint}</p>
     </div>
   );
@@ -112,6 +132,30 @@ export function Desk({
         {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
         {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
         <DeskDialogs model={model} />
+        <Dialog open={model.districtEditOpen} onOpenChange={model.setDistrictEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{model.ds.deskScopeEdit}</DialogTitle>
+            </DialogHeader>
+            <DistrictCheckboxes selected={districtEditDraft} onChange={setDistrictEditDraft} language={language} />
+            {model.districtError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{model.districtError}</AlertDescription>
+              </Alert>
+            ) : null}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => model.setDistrictEditOpen(false)}>
+                {t.deskCancel}
+              </Button>
+              <Button
+                onClick={() => model.handleSetDistricts(districtEditDraft)}
+                disabled={model.districtSaving || districtEditDraft.length === 0}
+              >
+                {model.districtSaving ? model.ds.deskDistrictGateSaving : model.ds.deskDistrictGateSave}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );

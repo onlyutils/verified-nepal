@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   ackGuidelines,
+  setMyDistricts,
   claimQueueItem,
   getAdminClimate,
   getAdminStats,
@@ -79,6 +80,9 @@ export function useDesk(language: Language) {
   const [guidelinesChecked, setGuidelinesChecked] = useState(false);
   const [ackLoading, setAckLoading] = useState(false);
   const [ackError, setAckError] = useState<string | null>(null);
+  const [districtEditOpen, setDistrictEditOpen] = useState(false);
+  const [districtSaving, setDistrictSaving] = useState(false);
+  const [districtError, setDistrictError] = useState<string | null>(null);
 
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
@@ -698,6 +702,20 @@ export function useDesk(language: Language) {
       setAckLoading(false);
     }
   };
+  const handleSetDistricts = async (districts: string[]) => {
+    if (!auth.idToken) return;
+    setDistrictSaving(true);
+    setDistrictError(null);
+    try {
+      await setMyDistricts(auth.idToken, districts);
+      if (auth.profile) auth.setProfile({ ...auth.profile, districts });
+      setDistrictEditOpen(false);
+    } catch (error) {
+      setDistrictError(apiErrorMessage(error, language));
+    } finally {
+      setDistrictSaving(false);
+    }
+  };
 
   return {
     auth,
@@ -713,6 +731,11 @@ export function useDesk(language: Language) {
     ackLoading,
     ackError,
     handleAck,
+    districtEditOpen,
+    setDistrictEditOpen,
+    districtSaving,
+    districtError,
+    handleSetDistricts,
     isScoped,
     scopeDistricts,
     scopeLabel,

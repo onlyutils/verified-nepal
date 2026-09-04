@@ -290,6 +290,7 @@ export function useGoogleAuth() {
     idToken: accessToken,
     accessToken,
     profile,
+    setProfile,
     loading,
     error,
     buttonRef,

@@ -1,6 +1,6 @@
 import { json, err } from "./lib/http.js";
 import { routeOrgs } from "./routes/orgRoutes.js";
-import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines } from "./controllers/authController.js";
+import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines, handleSetMyDistricts } from "./controllers/authController.js";
 import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole } from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
@@ -44,6 +44,7 @@ export async function route(event, ctx) {
   if (method === "POST" && path === "/auth/refresh") return await handleAuthRefresh(event, { env, fetchImpl });
   if (method === "GET" && path === "/me") return await handleMe(event, { fetchJwks, getDdb, env, fetchImpl });
   if (method === "POST" && path === "/me/ack-guidelines") return await handleAckGuidelines(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/me/districts") return await handleSetMyDistricts(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/me/dashboard") return await handleGetDashboard(event, { fetchJwks, getDdb, env });
   if (method === "POST" && path === "/me/articles") return await handlePostArticle(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/me/articles") return await handleGetMyArticles(event, { fetchJwks, getDdb, env });

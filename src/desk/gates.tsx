@@ -1,12 +1,40 @@
+import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
+import { districtLabels, districtNames } from "@/lib/geo";
 import type { DeskModel } from "./use-desk";
 import type { Language } from "@/lib/types";
 import guidelinesRaw from "../../docs/MODERATION-GUIDELINES.md?raw";
+
+export function DistrictCheckboxes({
+  selected,
+  onChange,
+  language,
+}: {
+  selected: string[];
+  onChange: (districts: string[]) => void;
+  language: Language;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-3">
+      {districtNames.map((district) => (
+        <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
+          <Checkbox
+            checked={selected.includes(district)}
+            onCheckedChange={(checked) =>
+              onChange(checked ? [...selected, district] : selected.filter((value) => value !== district))
+            }
+          />
+          {districtLabels[district][language]}
+        </Label>
+      ))}
+    </div>
+  );
+}
 
 function GateLayout({
   model,
@@ -214,5 +242,40 @@ export function GuidelinesGate({
         </Card>
       </div>
     </div>
+  );
+}
+
+export function DistrictGate({
+  model,
+  language,
+  setLanguage,
+  onHome,
+}: {
+  model: DeskModel;
+  language: Language;
+  setLanguage: (language: Language) => void;
+  onHome: () => void;
+}) {
+  const [selected, setSelected] = useState<string[]>([]);
+  return (
+    <GateLayout model={model} language={language} setLanguage={setLanguage} onHome={onHome}>
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle>{model.ds.deskDistrictGateTitle}</CardTitle>
+          <CardDescription>{model.ds.deskDistrictGateLead}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <DistrictCheckboxes selected={selected} onChange={setSelected} language={language} />
+          {model.districtError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{model.districtError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <Button onClick={() => model.handleSetDistricts(selected)} disabled={model.districtSaving || selected.length === 0}>
+            {model.districtSaving ? model.ds.deskDistrictGateSaving : model.ds.deskDistrictGateSave}
+          </Button>
+        </CardContent>
+      </Card>
+    </GateLayout>
   );
 }

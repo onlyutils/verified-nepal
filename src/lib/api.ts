@@ -395,6 +395,10 @@ export function ackGuidelines(token: string): Promise<{ guidelinesAckAt: string 
   return request<{ guidelinesAckAt: string }>("/me/ack-guidelines", { method: "POST", token, body: JSON.stringify({}) });
 }
 
+export function setMyDistricts(token: string, districts: string[]): Promise<{ districts: string[] }> {
+  return request<{ districts: string[] }>("/me/districts", { method: "POST", token, body: JSON.stringify({ districts }) });
+}
+
 export interface AdminUser {
   sub: string;
   email: string;
