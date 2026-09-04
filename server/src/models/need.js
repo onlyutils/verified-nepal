@@ -7,7 +7,7 @@ import { PUBLIC_NEED_STATUSES } from "../constants.js";
 export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, ward, householdSize,
-  category, description, language, media,
+  category, description, language, media, incidentId,
 }) {
   const id = randomUUID();
   let refCode;
@@ -38,7 +38,8 @@ export async function createNeed(ddb, tableName, {
     createdAt,
     ttl,
     expiresAt,
-    gsi1pk: `NEED#${district}#${status}`,
+    incidentId,
+    gsi1pk: `NEED#${incidentId}#${district}#${status}`,
     gsi1sk: createdAt,
     gsi2pk: `NEED#${status}`,
     gsi2sk: createdAt,
@@ -57,11 +58,11 @@ export async function createNeed(ddb, tableName, {
   return { id, refCode };
 }
 
-export async function listPublicNeeds(ddb, tableName, { district, category }) {
+export async function listPublicNeeds(ddb, tableName, { incidentId, district, category }) {
   let items = [];
   if (district) {
     for (const status of PUBLIC_NEED_STATUSES) {
-      const pk = `NEED#${district}#${status}`;
+      const pk = `NEED#${incidentId}#${district}#${status}`;
       const res = await ddb.send(new QueryCommand({
         TableName: tableName,
         IndexName: "GSI1",
@@ -81,7 +82,7 @@ export async function listPublicNeeds(ddb, tableName, { district, category }) {
         ExpressionAttributeValues: { ":pk": pk },
         ScanIndexForward: false,
       }));
-      if (res.Items) items.push(...res.Items);
+      if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
     }
   }
   if (category) items = items.filter((it) => it.category === category);
@@ -115,7 +116,7 @@ export async function renewNeed(ddb, tableName, { ref, need }) {
 export async function setNeedStatus(ddb, tableName, { need, status, offerId }) {
   need.status = status;
   const district = need.beneficiary?.district || need.district || "";
-  need.gsi1pk = `NEED#${district}#${status}`;
+  need.gsi1pk = `NEED#${need.incidentId}#${district}#${status}`;
   need.gsi1sk = need.createdAt;
   need.gsi2pk = `NEED#${status}`;
   need.gsi2sk = need.createdAt;
@@ -203,12 +204,27 @@ export async function listFlagsForNeed(ddb, tableName, needId) {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function listNeedsByDistrictStatuses(ddb, tableName, district, statuses) {
+export async function listNeedsByDistrictStatuses(ddb, tableName, districtOrIncidentId, statusesOrDistrict, incidentIdOrStatuses) {
+  let district = districtOrIncidentId;
+  let statuses = statusesOrDistrict;
+  let incidentId = incidentIdOrStatuses;
+  if (Array.isArray(incidentIdOrStatuses)) {
+    incidentId = districtOrIncidentId;
+    district = statusesOrDistrict;
+    statuses = incidentIdOrStatuses;
+  }
   let items = [];
-  for (const status of statuses) {
-    const pk = `NEED#${district}#${status}`;
-    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk } }));
-    if (res.Items) items.push(...res.Items);
+  if (incidentId) {
+    for (const status of statuses) {
+      const pk = `NEED#${incidentId}#${district}#${status}`;
+      const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk } }));
+      if (res.Items) items.push(...res.Items);
+    }
+  } else {
+    for (const status of statuses) {
+      const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": `NEED#${status}` } }));
+      if (res.Items) items.push(...res.Items.filter((item) => (item.beneficiary?.district || item.district) === district));
+    }
   }
   return items;
 }

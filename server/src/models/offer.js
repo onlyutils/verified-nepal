@@ -3,7 +3,7 @@ import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ttlSeconds, toExpiresAt, maskName } from "../lib/format.js";
 import { PUBLIC_OFFER_STATUSES } from "../constants.js";
 
-export async function createOffer(ddb, tableName, { helperSub, helperName, org, categories, districts, description, phone, email }) {
+export async function createOffer(ddb, tableName, { helperSub, helperName, org, categories, districts, description, phone, email, incidentId }) {
   const helperLabel = maskName(helperName);
   const id = randomUUID();
   const createdAt = new Date().toISOString();
@@ -15,6 +15,7 @@ export async function createOffer(ddb, tableName, { helperSub, helperName, org, 
     SK: "META",
     type: "OFFER",
     id,
+    incidentId,
     helperSub,
     helperLabel,
     org,
@@ -27,7 +28,7 @@ export async function createOffer(ddb, tableName, { helperSub, helperName, org, 
     createdAt,
     ttl,
     expiresAt,
-    gsi1pk: `OFFER#${districts[0]}#${status}`,
+    gsi1pk: `OFFER#${incidentId}#${districts[0]}#${status}`,
     gsi1sk: createdAt,
     gsi2pk: `OFFER#${status}`,
     gsi2sk: createdAt,
@@ -38,11 +39,11 @@ export async function createOffer(ddb, tableName, { helperSub, helperName, org, 
   return { id };
 }
 
-export async function listPublicOffers(ddb, tableName, { district, category }) {
+export async function listPublicOffers(ddb, tableName, { incidentId, district, category }) {
   let items = [];
   if (district) {
     for (const status of PUBLIC_OFFER_STATUSES) {
-      const pk = `OFFER#${district}#${status}`;
+      const pk = `OFFER#${incidentId}#${district}#${status}`;
       const res = await ddb.send(new QueryCommand({
         TableName: tableName,
         IndexName: "GSI1",
@@ -50,7 +51,7 @@ export async function listPublicOffers(ddb, tableName, { district, category }) {
         ExpressionAttributeValues: { ":pk": pk },
         ScanIndexForward: false,
       }));
-      if (res.Items) items.push(...res.Items);
+      if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
     }
     items = items.filter((it) => Array.isArray(it.districts) && it.districts.includes(district));
   } else {

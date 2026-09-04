@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function makeHandler(opts = {}) {
   const kp = opts.kp ?? makeKeyPair();
   const ddb = opts.ddb ?? new FakeDdb();
+  seedActiveIncident(ddb);
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t", ...opts.envOverrides };
   const fetchJwks = opts.fetchJwks ?? (async () => ({ keys: [kp.jwk] }));
   const handler = createHandler({ env, ddbClient: ddb, fetchJwks, fetch: opts.fetch });
@@ -20,6 +21,7 @@ async function createNeed(handler, overrides={}) {
     category: overrides.category || "goods",
     description: overrides.description || "Need food and shelter for testing phase two long enough description",
     language: "en",
+    incidentId: TEST_INCIDENT_ID,
     ...overrides.extra
   };
   if (overrides.beneficiary) body.beneficiary = { ...body.beneficiary, ...overrides.beneficiary };
@@ -48,7 +50,7 @@ describe("Phase2 claim mint", () => {
     let body = JSON.parse(res.body);
     assert.equal(body.claimCode, undefined);
     // public needs should not leak claimCode even after publish
-    let pubBefore = await handler(makeEvent({method:"GET", path:"/needs"}));
+    let pubBefore = await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`}));
     assert.equal(JSON.parse(pubBefore.body).items.length, 0);
     const pubRes = await publishNeed(handler, modTok, id);
     assert.ok(pubRes.claimCode, "publish should return claimCode");
@@ -66,7 +68,7 @@ describe("Phase2 claim mint", () => {
     body = JSON.parse(res.body);
     assert.equal(body.claimCode, pubRes.claimCode);
     // public /needs never exposes claimCode or sensitive fields
-    res = await handler(makeEvent({method:"GET", path:"/needs"}));
+    res = await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`}));
     const items = JSON.parse(res.body).items;
     assert.equal(items.length, 1);
     const it = items[0];
@@ -133,7 +135,7 @@ describe("POST /claims/:code/redeem", () => {
     // need fulfilled GSI
     const need = ddb.store.get(`NEED#${id}|META`);
     assert.equal(need.status, "fulfilled");
-    assert.equal(need.gsi1pk, `NEED#Gorkha#fulfilled`);
+    assert.equal(need.gsi1pk, `NEED#${TEST_INCIDENT_ID}#Gorkha#fulfilled`);
     assert.equal(need.gsi2pk, `NEED#fulfilled`);
     assert.equal(need.redeemedAt, redeemedAt);
     // ledger dual copy
@@ -396,11 +398,11 @@ describe("flags", () => {
     assert.equal(flagsBody.items[0].needId, id, "most flagged first");
     assert.equal(flagsBody.items[1].needId, id2);
     // public endpoints never expose flags
-    res = await handler(makeEvent({method:"GET", path:"/needs"}));
+    res = await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`}));
     // publish both to make them visible publicly
     await publishNeed(handler, modTok, id);
     await publishNeed(handler, modTok, id2);
-    res = await handler(makeEvent({method:"GET", path:"/needs"}));
+    res = await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`}));
     const pubItems = JSON.parse(res.body).items;
     for(const it of pubItems){
       assert.equal("flagCount" in it, false);

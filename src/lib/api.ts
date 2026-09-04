@@ -2,6 +2,7 @@
 import { refreshAccessToken } from "./tokens.ts";
 import type { Block, Cover } from "../articles/types.ts";
 import type { PosterInput } from "@/lib/poster";
+import type { DistrictName } from "@/lib/districts";
 
 export const API_BASE =
   ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
@@ -37,6 +38,7 @@ export interface NeedPublic {
   group?: GroupPublic;
   /** Name of the verified organization delivering this need, once one has taken it. */
   handledBy?: string;
+  incidentId?: string;
 }
 
 export interface NeedsListResponse {
@@ -62,6 +64,28 @@ export interface NeedMediaItem {
   compressedUrl?: string;
 }
 
+export type IncidentStatus = "draft" | "pending" | "active" | "archived" | "rejected";
+
+export interface Incident {
+  id: string;
+  name: string;
+  nameNe?: string;
+  kind: string;
+  status: IncidentStatus;
+  startedAt: string;
+  affectedDistricts: DistrictName[];
+  summary?: string;
+  summaryNe?: string;
+  coverImageUrl?: string;
+  landingPagePath?: string;
+  sourceAttribution?: { label: string; url: string };
+  requestOrigin?: "admin" | "community-request" | "community-request-inline";
+  createdAt: string;
+  createdBy?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
 export interface CreateNeedBody {
   onBehalf: boolean;
   registrant: { name: string; phone: string; email?: string } | null;
@@ -71,6 +95,8 @@ export interface CreateNeedBody {
   language: "en" | "ne";
   turnstileToken?: string;
   media?: NeedMediaItem[];
+  incidentId?: string;
+  newIncident?: { name: string; kind: string; district: DistrictName; description: string };
 }
 
 export interface CreateNeedResponse {
@@ -87,6 +113,7 @@ export interface OfferPublic {
   description: string;
   status: string;
   createdAt: string;
+  incidentId?: string;
 }
 
 export interface OffersListResponse {
@@ -101,6 +128,7 @@ export interface CreateOfferBody {
   description: string;
   phone: string;
   email?: string;
+  incidentId: string;
 }
 
 export interface ModerationQueueItem {
@@ -123,6 +151,7 @@ export interface ModerationQueueItem {
   email?: string;
   language?: string;
   createdAt: string;
+  incidentId?: string;
   dupCandidates?: Array<{ id: string; maskedName: string; ward: number }>;
   claimedBy?: string;
   claimedByName?: string;
@@ -182,6 +211,26 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
 
 export function createNeed(body: CreateNeedBody, token?: string): Promise<CreateNeedResponse> {
   return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body), token });
+}
+
+export function listIncidents(status = "active,pending"): Promise<{ items: Incident[] }> {
+  return request<{ items: Incident[] }>(`/incidents?status=${encodeURIComponent(status)}`);
+}
+
+export interface RequestIncidentBody {
+  name: string;
+  kind: string;
+  district: DistrictName;
+  description: string;
+  media: NeedMediaItem[];
+}
+
+export function requestIncident(body: RequestIncidentBody, token: string): Promise<{ id: string }> {
+  return request<{ id: string }>("/incidents/request", {
+    method: "POST",
+    body: JSON.stringify(body),
+    token,
+  });
 }
 
 export function presignNeedMedia(body: {
@@ -331,13 +380,14 @@ export function claimNeed(token: string, refCode: string): Promise<{ ok: boolean
 }
 
 export function listNeeds(
-  params: { district?: string; category?: string; cursor?: string } = {},
+  params: { district?: string; category?: string; cursor?: string; incidentId?: string } = {},
   token?: string,
 ): Promise<NeedsListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.category) q.set("category", params.category);
   if (params.cursor) q.set("cursor", params.cursor);
+  if (params.incidentId) q.set("incidentId", params.incidentId);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return request<NeedsListResponse>(`/needs${suffix}`, { token });
 }
@@ -378,10 +428,14 @@ export function markGroupItemDone(token: string, needId: string, itemId: string)
   return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/done`, { method: "POST", token });
 }
 
-export function listOffers(params: { district?: string; category?: string } = {}, token?: string): Promise<OffersListResponse> {
+export function listOffers(
+  params: { district?: string; category?: string; incidentId?: string } = {},
+  token?: string,
+): Promise<OffersListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.category) q.set("category", params.category);
+  if (params.incidentId) q.set("incidentId", params.incidentId);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return request<OffersListResponse>(`/offers${suffix}`, { token });
 }
@@ -664,6 +718,7 @@ export interface ProjectPublic {
   coverPhoto?: { url: string; fileId?: string } | string;
   status: ProjectStatus;
   createdAt: string;
+  incidentId?: string;
   updates?: ProjectUpdate[];
 }
 export interface ProjectListResponse {
@@ -691,6 +746,7 @@ export interface CreateProjectBody {
     khaltiId?: string;
   };
   turnstileToken?: string;
+  incidentId: string;
 }
 export interface CreateProjectResponse {
   id: string;
@@ -715,11 +771,14 @@ export interface ModerationProjectsResponse {
   items: ModerationProjectItem[];
 }
 
-export function listProjects(params: { district?: string; status?: string; cursor?: string } = {}): Promise<ProjectListResponse> {
+export function listProjects(
+  params: { district?: string; status?: string; cursor?: string; incidentId?: string } = {},
+): Promise<ProjectListResponse> {
   const q = new URLSearchParams();
   if (params.district) q.set("district", params.district);
   if (params.status) q.set("status", params.status);
   if (params.cursor) q.set("cursor", params.cursor);
+  if (params.incidentId) q.set("incidentId", params.incidentId);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return request<ProjectListResponse>(`/projects${suffix}`);
 }

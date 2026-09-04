@@ -7,6 +7,7 @@ import { PUBLIC_PROJECT_STATUSES, PROJECT_ALL_STATUSES } from "../constants.js";
 export async function createProject(ddb, tableName, {
   titleObj, descObj, type, districtClean, ward, locationTextClean, costClean,
   committeeName, contactName, phone, email, bankName, accountName, accountNumber, esewaId, khaltiId,
+  incidentId,
 }) {
   const id = randomUUID();
   const updateCode = generateUpdateCode();
@@ -17,6 +18,7 @@ export async function createProject(ddb, tableName, {
     PK: `PROJECT#${id}`,
     SK: "META",
     id,
+    incidentId,
     title: titleObj,
     description: descObj,
     type,
@@ -29,7 +31,7 @@ export async function createProject(ddb, tableName, {
     status,
     updateCodeHash,
     createdAt,
-    gsi1pk: `PROJECT#${districtClean}#${status}`,
+    gsi1pk: `PROJECT#${incidentId}#${districtClean}#${status}`,
     gsi1sk: createdAt,
     gsi2pk: `PROJECT#${status}`,
     gsi2sk: createdAt,
@@ -51,27 +53,27 @@ export async function putProject(ddb, tableName, proj) {
   await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
 }
 
-export async function listPublicProjects(ddb, tableName, { district, status }) {
+export async function listPublicProjects(ddb, tableName, { incidentId, district, status }) {
   let items = [];
   if (district && status) {
-    const pk = `PROJECT#${district}#${status}`;
+    const pk = `PROJECT#${incidentId}#${district}#${status}`;
     const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
     if (res.Items) items.push(...res.Items);
   } else if (district && !status) {
     for (const s of PUBLIC_PROJECT_STATUSES) {
-      const pk = `PROJECT#${district}#${s}`;
+      const pk = `PROJECT#${incidentId}#${district}#${s}`;
       const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
       if (res.Items) items.push(...res.Items);
     }
   } else if (!district && status) {
     const pk = `PROJECT#${status}`;
     const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
-    if (res.Items) items.push(...res.Items);
+    if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
   } else {
     for (const s of PUBLIC_PROJECT_STATUSES) {
       const pk = `PROJECT#${s}`;
       const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
-      if (res.Items) items.push(...res.Items);
+      if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
     }
   }
   items.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
@@ -127,7 +129,7 @@ export async function moderateProject(ddb, tableName, { proj, action, reason, st
     if (!proj.committee.verified) throw err(400, "committee must be verified before publish");
     if (proj.status !== "pending") throw err(400, "only pending projects can be published");
     proj.status = "published";
-    proj.gsi1pk = `PROJECT#${proj.district}#published`;
+    proj.gsi1pk = `PROJECT#${proj.incidentId}#${proj.district}#published`;
     proj.gsi1sk = proj.createdAt;
     proj.gsi2pk = "PROJECT#published";
     proj.gsi2sk = proj.createdAt;
@@ -135,7 +137,7 @@ export async function moderateProject(ddb, tableName, { proj, action, reason, st
   } else if (action === "reject") {
     if (!reason || typeof reason !== "string" || !reason.trim() || reason.trim().length < 5) throw err(400, "reason required for reject");
     proj.status = "rejected";
-    proj.gsi1pk = `PROJECT#${proj.district}#rejected`;
+    proj.gsi1pk = `PROJECT#${proj.incidentId}#${proj.district}#rejected`;
     proj.gsi1sk = proj.createdAt;
     proj.gsi2pk = "PROJECT#rejected";
     proj.gsi2sk = proj.createdAt;
@@ -145,7 +147,7 @@ export async function moderateProject(ddb, tableName, { proj, action, reason, st
     if (!status || typeof status !== "string" || !PROJECT_ALL_STATUSES.includes(status)) throw err(400, `status must be one of ${PROJECT_ALL_STATUSES.join(",")}`);
     if (status === "published" && !proj.committee.verified) throw err(400, "committee must be verified before publish");
     proj.status = status;
-    proj.gsi1pk = `PROJECT#${proj.district}#${status}`;
+    proj.gsi1pk = `PROJECT#${proj.incidentId}#${proj.district}#${status}`;
     proj.gsi1sk = proj.createdAt;
     proj.gsi2pk = `PROJECT#${status}`;
     proj.gsi2sk = proj.createdAt;

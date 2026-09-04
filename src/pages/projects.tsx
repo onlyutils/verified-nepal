@@ -3,6 +3,7 @@ import { ApiError, listProjects, type ProjectPublic, type ProjectStatus, type Pr
 import { apiErrorMessage } from "@/lib/api-error";
 import { communityStrings } from "@/i18n/community";
 import { districtLabels, districtNames } from "@/lib/geo";
+import { useIncidents } from "@/lib/incidents";
 import { formatNumber } from "@/lib/format";
 import { fillTemplate } from "@/lib/edition";
 import type { Language } from "@/lib/types";
@@ -50,6 +51,11 @@ function coverUrl(project: ProjectPublic): string | null {
 
 export function ProjectsList({ language }: { language: Language }) {
   const t = communityStrings[language];
+  const { incidents, currentIncidentId } = useIncidents();
+  const activeIncidents = incidents.filter((incident) => incident.status === "active");
+  const boardIncidentId = activeIncidents.some((incident) => incident.id === currentIncidentId)
+    ? currentIncidentId
+    : activeIncidents[0]?.id;
   const [district, setDistrict] = useState("");
   const [status, setStatus] = useState("");
   const [items, setItems] = useState<ProjectPublic[]>([]);
@@ -64,7 +70,17 @@ export function ProjectsList({ language }: { language: Language }) {
     setError(null);
     setOffline(false);
     try {
-      const result = await listProjects({ district: district || undefined, status: status || undefined, cursor });
+      if (!boardIncidentId) {
+        setItems([]);
+        setNextCursor(undefined);
+        return;
+      }
+      const result = await listProjects({
+        district: district || undefined,
+        status: status || undefined,
+        cursor,
+        incidentId: boardIncidentId,
+      });
       setItems((previous) => (append ? [...previous, ...result.items] : result.items));
       setNextCursor(result.cursor);
     } catch (cause) {
@@ -77,7 +93,7 @@ export function ProjectsList({ language }: { language: Language }) {
 
   useEffect(() => {
     void fetchList(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [district, status]);
+  }, [boardIncidentId, district, status]);
 
   const copyLink = async (id: string) => {
     try {

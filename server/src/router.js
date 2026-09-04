@@ -4,6 +4,10 @@ import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines, h
 import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole } from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
+  handleGetIncidents, handleGetAdminIncidents, handlePostAdminIncident, handlePostIncidentRequest,
+  handlePublishIncident, handleArchiveIncident, handleApproveIncident, handleRejectIncident,
+} from "./controllers/incidentController.js";
+import {
   handlePostNeeds, handlePostNeedsMediaPresign, handleGetNeeds, handleGetStatus, handlePostRenew,
   handlePostNeedStatus, handlePostFlag, handleGetFlags,
 } from "./controllers/needController.js";
@@ -86,6 +90,22 @@ export async function route(event, ctx) {
   if (method === "GET" && path === "/admin/users") return await handleAdminUsersList(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/stats") return await handleAdminStats(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/admin/climate") return await handleGetAdminClimate(event, { fetchJwks, getDdb, env });
+  if (method === "GET" && path === "/admin/incidents") return await handleGetAdminIncidents(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && path === "/admin/incidents") return await handlePostAdminIncident(event, { fetchJwks, getDdb, env });
+  if (method === "POST" && /^\/admin\/incidents\/[^/]+\/(publish|archive)$/.test(path)) {
+    const parts = path.split("/");
+    const incidentId = decodeURIComponent(parts[3]);
+    if (parts[4] === "publish") return await handlePublishIncident(event, { fetchJwks, getDdb, env }, incidentId);
+    return await handleArchiveIncident(event, { fetchJwks, getDdb, env }, incidentId);
+  }
+  if (method === "POST" && /^\/admin\/incidents\/[^/]+\/(approve|reject)$/.test(path)) {
+    const parts = path.split("/");
+    const incidentId = decodeURIComponent(parts[3]);
+    if (parts[4] === "approve") return await handleApproveIncident(event, { fetchJwks, getDdb, env }, incidentId);
+    return await handleRejectIncident(event, { fetchJwks, getDdb, env }, incidentId);
+  }
+  if (method === "GET" && path === "/incidents") return await handleGetIncidents(event, { getDdb, env });
+  if (method === "POST" && path === "/incidents/request") return await handlePostIncidentRequest(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/audit") return await handleGetAudit(event, { getDdb, env });
   if (method === "POST" && path === "/needs/media/presign") return await handlePostNeedsMediaPresign(event, { env, fetchImpl });
   if (method === "POST" && path === "/needs") return await handlePostNeeds(event, { getDdb, env, fetchJwks });

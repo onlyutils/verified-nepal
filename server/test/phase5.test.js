@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler, __clearMediaTokenCache } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function makeHandler(opts = {}) {
   const kp = opts.kp ?? makeKeyPair();
   const ddb = opts.ddb ?? new FakeDdb();
+  seedActiveIncident(ddb);
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", ...opts.envOverrides };
   const fetchJwks = opts.fetchJwks ?? (async () => ({ keys: [kp.jwk] }));
   const handler = createHandler({ env, ddbClient: ddb, fetchJwks, fetch: opts.fetch });
@@ -20,6 +21,7 @@ async function createNeed(handler, overrides = {}) {
     category: overrides.category || "goods",
     description: overrides.description || "Need description long enough for testing phase five governance",
     language: "en",
+    incidentId: TEST_INCIDENT_ID,
   };
   const res = await handler(makeEvent({ method: "POST", path: "/needs", body }));
   assert.equal(res.statusCode, 201);
@@ -194,6 +196,7 @@ describe("Phase5 district scoping", () => {
         ward: 1,
         locationText: "loc",
         costEstimateNpr: 100000,
+        incidentId: TEST_INCIDENT_ID,
         committee: { name: "Com", contactName: "C", phone: "+9779800000001", bank: { bankName: "B", accountName: "A", accountNumber: "1" } }
       };
       const r = await handler(makeEvent({ method: "POST", path: "/projects", body }));
@@ -345,6 +348,7 @@ describe("Phase5 admin stats and audit", () => {
       ward: 1,
       locationText: "loc",
       costEstimateNpr: 100000,
+      incidentId: TEST_INCIDENT_ID,
       committee: { name: "Com", contactName: "C", phone: "+9779800000001", bank: { bankName: "B", accountName: "A", accountNumber: "1" } }
     };
     let r = await handler(makeEvent({ method: "POST", path: "/projects", body: projBody }));

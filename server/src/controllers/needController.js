@@ -1,13 +1,14 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
-import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
+import { validateString, validatePhone, validateOptionalEmail, validateDistrict, validateNeedMedia } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth, optionalAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
 import {
   CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS,
-  ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE, MAX_NEED_MEDIA_ITEMS,
+  ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE,
 } from "../constants.js";
 import { requestPresign } from "../models/media.js";
+import { createIncident, getIncidentById } from "../models/incident.js";
 import {
   createNeed, listPublicNeeds, getRefPointer, getNeedById, renewNeed,
   setNeedStatus, getOfferById, addFlag, bumpFlagCount, upsertFlaggedPointer,
@@ -17,28 +18,13 @@ import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { putPointer } from "../models/mine.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
-function validateNeedMedia(media) {
-  if (media === undefined || media === null) return undefined;
-  if (!Array.isArray(media)) throw err(400, "media must be an array");
-  if (media.length > MAX_NEED_MEDIA_ITEMS) throw err(400, `media must have at most ${MAX_NEED_MEDIA_ITEMS} items`);
-  return media.map((item, i) => {
-    if (!item || typeof item !== "object") throw err(400, `media[${i}] must be an object`);
-    if (!["photo", "video"].includes(item.type)) throw err(400, `media[${i}].type must be "photo" or "video"`);
-    const fileId = validateString(item.fileId, `media[${i}].fileId`, 1, 300);
-    const originalUrl = validateString(item.originalUrl, `media[${i}].originalUrl`, 1, 2000);
-    const out = { fileId, type: item.type, originalUrl };
-    // Reserved for the OnlyUtils media-variants requirement (docs/onlyutils-media-variants-requirement.md);
-    // no caller populates these yet, but accepting them now avoids a schema migration later.
-    if (item.smallUrl !== undefined) out.smallUrl = validateString(item.smallUrl, `media[${i}].smallUrl`, 1, 2000);
-    if (item.compressedUrl !== undefined) out.compressedUrl = validateString(item.compressedUrl, `media[${i}].compressedUrl`, 1, 2000);
-    return out;
-  });
-}
-
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident } = body;
+  const hasIncidentId = incidentId !== undefined && incidentId !== null;
+  const hasNewIncident = newIncident !== undefined && newIncident !== null;
+  if (hasIncidentId === hasNewIncident) throw err(400, "exactly one of incidentId or newIncident is required");
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
   let regName, regPhone, regEmail;
   if (onBehalf) {
@@ -72,13 +58,40 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
   const cleanMedia = validateNeedMedia(media);
   await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
-  const auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
+  let auth;
+  let resolvedIncidentId;
+  if (hasIncidentId) {
+    if (typeof incidentId !== "string" || !incidentId.trim()) throw err(400, "invalid incident");
+    const incident = await getIncidentById(ddb, tableName, incidentId.trim());
+    if (!incident || !["active", "pending"].includes(incident.status)) throw err(400, "invalid incident");
+    resolvedIncidentId = incident.id;
+    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
+  } else {
+    auth = await requireAuth(event, { fetchJwks, getDdb, env });
+    if (typeof newIncident !== "object" || Array.isArray(newIncident)) throw err(400, "newIncident must be object");
+    const incidentName = validateString(newIncident.name, "newIncident.name", 2, 150);
+    const incidentKind = validateString(newIncident.kind, "newIncident.kind", 1, 50);
+    const incidentDistrict = validateDistrict(newIncident.district, "newIncident.district");
+    const incidentDescription = validateString(newIncident.description, "newIncident.description", 10, 2000);
+    if (!cleanMedia || !cleanMedia.some((item) => item.type === "photo")) throw err(400, "media must include at least one photo");
+    const incident = await createIncident(ddb, tableName, {
+      name: incidentName,
+      kind: incidentKind,
+      startedAt: new Date().toISOString().slice(0, 10),
+      affectedDistricts: [incidentDistrict],
+      summary: incidentDescription,
+      status: "pending",
+      requestOrigin: "community-request-inline",
+      createdBy: auth.payload.sub,
+    });
+    resolvedIncidentId = incident.id;
+  }
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
-    district, ward, householdSize, category, description: desc, language, media: cleanMedia,
+    incidentId: resolvedIncidentId, district, ward, householdSize, category, description: desc, language, media: cleanMedia,
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });
@@ -114,13 +127,15 @@ export async function handleGetNeeds(event, { getDdb, env }) {
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
   const category = q.category ? String(q.category).trim() : "";
+  const incidentId = q.incidentId ? String(q.incidentId).trim() : "";
   const cursorRaw = q.cursor ? String(q.cursor) : "";
+  if (!incidentId) throw err(400, "incidentId required");
   if (category && !CATEGORIES.includes(category)) throw err(400, `category must be one of ${CATEGORIES.join(",")}`);
   const cursorKey = decodeCursor(cursorRaw);
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const items = await listPublicNeeds(ddb, tableName, { district, category });
+  const items = await listPublicNeeds(ddb, tableName, { incidentId, district, category });
   let start = 0;
   if (cursorKey) {
     const idx = items.findIndex((it) => it.PK === cursorKey.PK && it.SK === cursorKey.SK);

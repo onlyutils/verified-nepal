@@ -11,16 +11,18 @@ import { requestPresign } from "../models/media.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { toPublicProject, toPublishedUpdatesView } from "../views/project.js";
 import { PUBLIC_PROJECT_STATUSES } from "../constants.js";
+import { getIncidentById } from "../models/incident.js";
 
 export async function handlePostProject(event, { getDdb, env }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { title, description, type, district, ward, locationText, costEstimateNpr, committee, turnstileToken } = body;
+  const { title, description, type, district, ward, locationText, costEstimateNpr, committee, turnstileToken, incidentId } = body;
   await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const titleObj = validateTitle(title, "title");
   const descObj = validateDescription(description, "description");
   if (!PROJECT_TYPES.includes(type)) throw err(400, `type must be one of ${PROJECT_TYPES.join(",")}`);
   const districtClean = validateDistrict(district, "district");
+  if (typeof incidentId !== "string" || !incidentId.trim()) throw err(400, "invalid incident");
   if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "ward must be integer 1-33");
   const locationTextClean = validateString(locationText, "locationText", 1, 500);
   if (typeof costEstimateNpr !== "number" || !Number.isFinite(costEstimateNpr) || costEstimateNpr <= 0 || costEstimateNpr > 1e12) throw err(400, "costEstimateNpr must be positive number");
@@ -45,9 +47,11 @@ export async function handlePostProject(event, { getDdb, env }) {
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
+  const incident = await getIncidentById(ddb, tableName, incidentId.trim());
+  if (!incident || incident.status !== "active") throw err(400, "invalid incident");
   const { id, updateCode } = await createProject(ddb, tableName, {
     titleObj, descObj, type, districtClean, ward, locationTextClean, costClean,
-    committeeName, contactName, phone, email, bankName, accountName, accountNumber, esewaId, khaltiId,
+    committeeName, contactName, phone, email, bankName, accountName, accountNumber, esewaId, khaltiId, incidentId: incident.id,
   });
   return json(201, { id, updateCode });
 }
@@ -55,14 +59,16 @@ export async function handlePostProject(event, { getDdb, env }) {
 export async function handleGetProjects(event, { getDdb, env }) {
   const q = getQuery(event);
   const districtRaw = q.district ? String(q.district).trim() : "";
+  const incidentId = q.incidentId ? String(q.incidentId).trim() : "";
   const statusRaw = q.status ? String(q.status).trim() : "";
   const cursorRaw = q.cursor ? String(q.cursor) : "";
+  if (!incidentId) throw err(400, "incidentId required");
   const cursorKey = decodeCursor(cursorRaw);
   if (statusRaw && !PUBLIC_PROJECT_STATUSES.includes(statusRaw)) throw err(400, `status must be one of ${PUBLIC_PROJECT_STATUSES.join(",")}`);
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const items = await listPublicProjects(ddb, tableName, { district: districtRaw, status: statusRaw });
+  const items = await listPublicProjects(ddb, tableName, { incidentId, district: districtRaw, status: statusRaw });
   let start = 0;
   if (cursorKey) {
     const idx = items.findIndex((it) => it.PK === cursorKey.PK && it.SK === cursorKey.SK);

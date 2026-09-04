@@ -1,14 +1,31 @@
 import { useEffect, useState } from "react";
 import { Flag, Share2 } from "lucide-react";
 import {
-  CATEGORIES, addGroupItem, claimGroupItem, createOffer, flagNeed, joinGroupApi, listMyOrgs, listNeeds, listOffers,
-  markGroupItemDone, orgClaimNeed, releaseGroupItem, startGroup,
-  type Category, type GroupPublic, type MyOrg, type NeedPublic, type OfferPublic,
+  CATEGORIES,
+  addGroupItem,
+  claimGroupItem,
+  createOffer,
+  flagNeed,
+  joinGroupApi,
+  listMyOrgs,
+  listNeeds,
+  listOffers,
+  markGroupItemDone,
+  orgClaimNeed,
+  releaseGroupItem,
+  startGroup,
+  type Category,
+  type GroupPublic,
+  type MyOrg,
+  type NeedPublic,
+  type OfferPublic,
 } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
+import { useIncidents } from "@/lib/incidents";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
+import { disasterStrings } from "@/i18n/disasters";
 import { formStrings } from "@/i18n/forms";
 import type { Language } from "@/lib/types";
 import { TurnstileWidget } from "@/components/turnstile";
@@ -179,14 +196,21 @@ function OfferDialog({
   open,
   onOpenChange,
   onSuccess,
+  incidents,
+  incidentId,
+  onIncidentChange,
 }: {
   language: Language;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (id: string) => void;
+  incidents: import("@/lib/api").Incident[];
+  incidentId: string;
+  onIncidentChange: (id: string) => void;
 }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const disaster = disasterStrings[language];
   const auth = useGoogleAuth();
   const [orgOnBehalf, setOrgOnBehalf] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -209,6 +233,7 @@ function OfferDialog({
     if (
       !categories.length ||
       !districts.length ||
+      !incidentId ||
       !description.trim() ||
       !phone.trim() ||
       (orgOnBehalf && (!orgName.trim() || !orgContact.trim()))
@@ -226,6 +251,7 @@ function OfferDialog({
         description: description.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
+        incidentId,
       });
       onSuccess(response.id);
       setDescription("");
@@ -270,6 +296,19 @@ function OfferDialog({
             onToggle={(value) => toggle(value as Category, categories, setCategories)}
             getLabel={(value) => categoryLabel(value, language)}
           />
+          <div className="space-y-2">
+            <Label htmlFor="offer-incident">{disaster.incidentPickerLabel} *</Label>
+            <NativeSelect id="offer-incident" value={incidentId} onChange={(event) => onIncidentChange(event.target.value)}>
+              <NativeSelectOption value="">{disaster.incidentSelect}</NativeSelectOption>
+              {incidents
+                .filter((incident) => incident.status === "active")
+                .map((incident) => (
+                  <NativeSelectOption key={incident.id} value={incident.id}>
+                    {language === "ne" && incident.nameNe ? incident.nameNe : incident.name}
+                  </NativeSelectOption>
+                ))}
+            </NativeSelect>
+          </div>
           <ChoiceGroup
             id="offerDistricts"
             label={`${t.giveHelpDistricts} *`}
@@ -353,7 +392,13 @@ function ChoiceGroup({
 export function GiveHelp({ language }: { language: Language }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const disaster = disasterStrings[language];
   const auth = useGoogleAuth();
+  const { incidents, currentIncidentId, setCurrentIncidentId } = useIncidents();
+  const activeIncidents = incidents.filter((incident) => incident.status === "active");
+  const boardIncidentId = activeIncidents.some((incident) => incident.id === currentIncidentId)
+    ? currentIncidentId
+    : activeIncidents[0]?.id;
   const [needsDistrict, setNeedsDistrict] = useState("");
   const [needsCategory, setNeedsCategory] = useState("");
   const [needs, setNeeds] = useState<NeedPublic[]>([]);
@@ -379,11 +424,22 @@ export function GiveHelp({ language }: { language: Language }) {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [auth.idToken]);
+  const [offerIncidentId, setOfferIncidentId] = useState("");
+  useEffect(() => {
+    if (offerIncidentId && activeIncidents.some((incident) => incident.id === offerIncidentId)) return;
+    const next = activeIncidents.find((incident) => incident.id === currentIncidentId)?.id ?? activeIncidents[0]?.id ?? "";
+    setOfferIncidentId(next);
+  }, [activeIncidents, currentIncidentId, offerIncidentId]);
   useEffect(() => {
     let cancelled = false;
+    if (!boardIncidentId) {
+      setNeeds([]);
+      setNeedsLoading(false);
+      return;
+    }
     setNeedsLoading(true);
     setNeedsError(null);
-    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined })
+    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined, incidentId: boardIncidentId })
       .then((response) => {
         if (!cancelled) setNeeds(response.items);
       })
@@ -399,11 +455,16 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [language, needsCategory, needsDistrict]);
+  }, [boardIncidentId, language, needsCategory, needsDistrict]);
   useEffect(() => {
     let cancelled = false;
+    if (!boardIncidentId) {
+      setOffers([]);
+      setOffersLoading(false);
+      return;
+    }
     setOffersLoading(true);
-    listOffers({ district: offersDistrict || undefined, category: offersCategory || undefined })
+    listOffers({ district: offersDistrict || undefined, category: offersCategory || undefined, incidentId: boardIncidentId })
       .then((response) => {
         if (!cancelled) setOffers(response.items);
       })
@@ -416,7 +477,7 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [language, offersCategory, offersDistrict]);
+  }, [boardIncidentId, language, offersCategory, offersDistrict]);
   const filters = (prefix: "needs" | "offers") => {
     const district = prefix === "needs" ? needsDistrict : offersDistrict;
     const category = prefix === "needs" ? needsCategory : offersCategory;
@@ -531,7 +592,18 @@ export function GiveHelp({ language }: { language: Language }) {
             )}
           </CardContent>
         </Card>
-        <OfferDialog language={language} open={offerOpen} onOpenChange={setOfferOpen} onSuccess={setOfferSuccess} />
+        <OfferDialog
+          language={language}
+          open={offerOpen}
+          onOpenChange={setOfferOpen}
+          onSuccess={setOfferSuccess}
+          incidents={activeIncidents}
+          incidentId={offerIncidentId}
+          onIncidentChange={(id) => {
+            setOfferIncidentId(id);
+            if (id) setCurrentIncidentId(id);
+          }}
+        />
       </section>
     </div>
   );
@@ -646,7 +718,12 @@ function GroupPanel({
         </ul>
       ) : null}
       <div className="flex gap-2">
-        <Input value={itemText} onChange={(event) => setItemText(event.target.value)} placeholder={ts.groupItemPlaceholder} maxLength={300} />
+        <Input
+          value={itemText}
+          onChange={(event) => setItemText(event.target.value)}
+          placeholder={ts.groupItemPlaceholder}
+          maxLength={300}
+        />
         <Button size="sm" disabled={busy.add || !itemText.trim()} onClick={submitItem}>
           {ts.groupAddItem}
         </Button>

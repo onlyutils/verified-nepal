@@ -14,6 +14,7 @@ import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
+import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import type { Language, Page } from "@/lib/types";
 
@@ -37,6 +38,7 @@ const DispatchDetail = lazy(() => import("@/pages/dispatch-detail").then((m) => 
 const ProjectDetail = lazy(() => import("@/pages/project-detail").then((m) => ({ default: m.ProjectDetail })));
 const ProjectRegister = lazy(() => import("@/pages/project-register").then((m) => ({ default: m.ProjectRegister })));
 const ProjectUpdate = lazy(() => import("@/pages/project-update").then((m) => ({ default: m.ProjectUpdate })));
+const ReportIncident = lazy(() => import("@/pages/report-incident").then((m) => ({ default: m.ReportIncident })));
 const PrivacyPolicy = lazy(() => import("@/pages/privacy").then((m) => ({ default: m.PrivacyPolicy })));
 const RegisterOrganization = lazy(() => import("@/pages/register-organization").then((m) => ({ default: m.RegisterOrganization })));
 const OrgDashboard = lazy(() => import("@/org/org-dashboard").then((m) => ({ default: m.OrgDashboard })));
@@ -76,6 +78,7 @@ const pagePaths: Record<AppPage, string> = {
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
   climate: "/climate",
+  reportIncident: "/report-incident",
 };
 
 function pageFromPath(pathname: string): AppPage {
@@ -85,6 +88,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
   if (pathname.startsWith("/climate")) return "climate";
+  if (pathname.startsWith("/report-incident")) return "reportIncident";
   if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/articles")) return "dispatches";
   if (pathname.match(/^\/me\/articles\/[^\/]+\/edit/)) return "articleEdit";
@@ -139,6 +143,7 @@ function pageTitle(page: AppPage, language: Language): string {
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
     climate: climateStrings[language].title,
+    reportIncident: disasterStrings[language].reportIncidentTitle,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -353,6 +358,11 @@ export function App() {
               {page === "climate" ? (
                 <ComponentErrorBoundary language={language}>
                   <ClimatePage language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "reportIncident" ? (
+                <ComponentErrorBoundary language={language}>
+                  <ReportIncident language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "donationStatus" ? (

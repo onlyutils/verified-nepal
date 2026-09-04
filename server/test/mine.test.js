@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function setup() {
   const kp = makeKeyPair();
   const ddb = new FakeDdb();
+  seedActiveIncident(ddb);
   const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks: async () => ({ keys: [kp.jwk] }) });
   const token = (sub) => createToken(basePayload({ sub }), kp.privateKey);
   return { handler, ddb, token };
@@ -17,6 +18,7 @@ const needBody = {
   category: "goods",
   description: "Need description long enough for the dashboard tests",
   language: "en",
+  incidentId: TEST_INCIDENT_ID,
 };
 
 describe("ownership pointers and dashboard", () => {
@@ -60,7 +62,7 @@ describe("ownership pointers and dashboard", () => {
     const n1 = JSON.parse((await handler(makeEvent({ method: "POST", path: "/needs", body: needBody, headers: auth }))).body);
     const n2 = JSON.parse((await handler(makeEvent({ method: "POST", path: "/needs", body: needBody, headers: auth }))).body);
     await handler(makeEvent({ method: "POST", path: "/needs", body: needBody, headers: { authorization: `Bearer ${token("someone-else")}` } }));
-    const offerRes = await handler(makeEvent({ method: "POST", path: "/offers", body: { categories: ["goods"], districts: ["Rasuwa"], description: "Can bring rice and tarpaulins", phone: "+9779800000002" }, headers: auth }));
+    const offerRes = await handler(makeEvent({ method: "POST", path: "/offers", body: { categories: ["goods"], districts: ["Rasuwa"], description: "Can bring rice and tarpaulins", phone: "+9779800000002", incidentId: TEST_INCIDENT_ID }, headers: auth }));
     assert.equal(offerRes.statusCode, 201);
     ddb.store.delete(`NEED#${n1.id}|META`);
     const res = await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: auth }));

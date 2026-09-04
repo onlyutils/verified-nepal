@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, createProject, PROJECT_TYPES, type ProjectType } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { communityStrings } from "@/i18n/community";
+import { disasterStrings } from "@/i18n/disasters";
 import { districtLabels, districtNames } from "@/lib/geo";
+import { useIncidents } from "@/lib/incidents";
 import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,12 +35,16 @@ function typeLabel(type: ProjectType, language: Language) {
 
 export function ProjectRegister({ language }: { language: Language }) {
   const t = communityStrings[language];
+  const disaster = disasterStrings[language];
+  const { incidents, currentIncidentId, setCurrentIncidentId } = useIncidents();
+  const activeIncidents = incidents.filter((incident) => incident.status === "active");
   const [titleEn, setTitleEn] = useState("");
   const [titleNe, setTitleNe] = useState("");
   const [descEn, setDescEn] = useState("");
   const [descNe, setDescNe] = useState("");
   const [type, setType] = useState<ProjectType>("tuin");
   const [district, setDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
+  const [incidentId, setIncidentId] = useState("");
   const [ward, setWard] = useState("1");
   const [locationText, setLocationText] = useState("");
   const [cost, setCost] = useState("");
@@ -56,6 +62,12 @@ export function ProjectRegister({ language }: { language: Language }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; updateCode: string } | null>(null);
 
+  useEffect(() => {
+    if (incidentId && activeIncidents.some((incident) => incident.id === incidentId)) return;
+    const next = activeIncidents.find((incident) => incident.id === currentIncidentId)?.id ?? activeIncidents[0]?.id ?? "";
+    setIncidentId(next);
+  }, [activeIncidents, currentIncidentId, incidentId]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -68,7 +80,8 @@ export function ProjectRegister({ language }: { language: Language }) {
       !locationText.trim() ||
       !bankName.trim() ||
       !accountName.trim() ||
-      !accountNumber.trim()
+      !accountNumber.trim() ||
+      !incidentId
     ) {
       setError(t.validationRequired);
       return;
@@ -106,6 +119,7 @@ export function ProjectRegister({ language }: { language: Language }) {
           khaltiId: khaltiId.trim() || undefined,
         },
         turnstileToken: turnstileToken || undefined,
+        incidentId,
       });
       setResult(response);
     } catch (cause) {
@@ -197,7 +211,7 @@ export function ProjectRegister({ language }: { language: Language }) {
               t.projectDescriptionNe,
               <Textarea id="project-description-ne" value={descNe} onChange={(e) => setDescNe(e.target.value)} maxLength={2000} rows={5} />,
             )}
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-3">
               {field(
                 "project-type",
                 `${t.projectTypeLabel} *`,
@@ -216,6 +230,25 @@ export function ProjectRegister({ language }: { language: Language }) {
                   {districtNames.map((value) => (
                     <NativeSelectOption key={value} value={value}>
                       {districtLabels[value][language]}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>,
+              )}
+              {field(
+                "project-incident",
+                `${disaster.incidentPickerLabel} *`,
+                <NativeSelect
+                  id="project-incident"
+                  value={incidentId}
+                  onChange={(event) => {
+                    setIncidentId(event.target.value);
+                    if (event.target.value) setCurrentIncidentId(event.target.value);
+                  }}
+                >
+                  <NativeSelectOption value="">{disaster.incidentSelect}</NativeSelectOption>
+                  {activeIncidents.map((incident) => (
+                    <NativeSelectOption key={incident.id} value={incident.id}>
+                      {language === "ne" && incident.nameNe ? incident.nameNe : incident.name}
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>,

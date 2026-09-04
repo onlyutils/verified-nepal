@@ -47,6 +47,7 @@ import {
   type SyncResult,
 } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
+import { useIncidents } from "@/lib/incidents";
 import { apiErrorMessage } from "@/lib/api-error";
 import { districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
@@ -74,6 +75,11 @@ function rejectReason(code: string, detail: string) {
 
 export function useDesk(language: Language) {
   const auth = useGoogleAuth();
+  const incidentState = useIncidents();
+  const activeIncidents = incidentState.incidents.filter((incident) => incident.status === "active");
+  const boardIncidentId = activeIncidents.some((incident) => incident.id === incidentState.currentIncidentId)
+    ? incidentState.currentIncidentId
+    : activeIncidents[0]?.id;
   const t = labels[language] as Record<string, string>;
   const ds = deskStrings[language] as Record<string, string>;
   const dos = deskOrgStrings[language] as Record<string, string>;
@@ -236,7 +242,16 @@ export function useDesk(language: Language) {
     setBoardsLoading(true);
     setBoardsError(null);
     try {
-      const [needs, availableOffers] = await Promise.all([listNeeds({}, auth.idToken), listOffers({}, auth.idToken)]);
+      if (!boardIncidentId) {
+        setPublishedNeeds([]);
+        setOffers([]);
+        setBoardsLoading(false);
+        return;
+      }
+      const [needs, availableOffers] = await Promise.all([
+        listNeeds({ incidentId: boardIncidentId }, auth.idToken),
+        listOffers({ incidentId: boardIncidentId }, auth.idToken),
+      ]);
       setPublishedNeeds(needs.items as NeedPublic[]);
       setOffers(availableOffers.items);
     } catch (error) {
@@ -244,7 +259,7 @@ export function useDesk(language: Language) {
     } finally {
       setBoardsLoading(false);
     }
-  }, [auth.idToken, language]);
+  }, [auth.idToken, boardIncidentId, language]);
   const loadFlags = useCallback(async () => {
     if (!auth.idToken) return;
     setFlagsLoading(true);

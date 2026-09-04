@@ -1,5 +1,5 @@
 import { err } from "./http.js";
-import { DISPATCH_TAGS } from "../constants.js";
+import { DISPATCH_TAGS, MAX_NEED_MEDIA_ITEMS } from "../constants.js";
 
 export function validateString(v, name, min, max) {
   if (typeof v !== "string") throw err(400, `${name} must be a string`);
@@ -18,6 +18,22 @@ export function validateDistrict(v, name = "district") {
   const t = validateString(v, name, 1, 100);
   if (t.includes("#")) throw err(400, `${name} contains an invalid character`);
   return t;
+}
+
+export function validateNeedMedia(media) {
+  if (media === undefined || media === null) return undefined;
+  if (!Array.isArray(media)) throw err(400, "media must be an array");
+  if (media.length > MAX_NEED_MEDIA_ITEMS) throw err(400, `media must have at most ${MAX_NEED_MEDIA_ITEMS} items`);
+  return media.map((item, i) => {
+    if (!item || typeof item !== "object") throw err(400, `media[${i}] must be an object`);
+    if (!["photo", "video"].includes(item.type)) throw err(400, `media[${i}].type must be "photo" or "video"`);
+    const fileId = validateString(item.fileId, `media[${i}].fileId`, 1, 300);
+    const originalUrl = validateString(item.originalUrl, `media[${i}].originalUrl`, 1, 2000);
+    const out = { fileId, type: item.type, originalUrl };
+    if (item.smallUrl !== undefined) out.smallUrl = validateString(item.smallUrl, `media[${i}].smallUrl`, 1, 2000);
+    if (item.compressedUrl !== undefined) out.compressedUrl = validateString(item.compressedUrl, `media[${i}].compressedUrl`, 1, 2000);
+    return out;
+  });
 }
 
 export function validatePhone(v, name = "phone") {

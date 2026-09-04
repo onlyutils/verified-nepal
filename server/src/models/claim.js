@@ -30,7 +30,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   if (!district || ward === undefined) throw err(500, "need missing district/ward");
   need.status = "fulfilled";
   need.redeemedAt = at;
-  need.gsi1pk = `NEED#${district}#fulfilled`;
+  need.gsi1pk = `NEED#${need.incidentId}#${district}#fulfilled`;
   need.gsi1sk = need.createdAt;
   need.gsi2pk = "NEED#fulfilled";
   need.gsi2sk = need.createdAt;

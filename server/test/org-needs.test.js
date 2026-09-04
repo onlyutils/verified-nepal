@@ -2,13 +2,14 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
-import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
+import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 
 function setup() {
   const kp = makeKeyPair();
   const ddb = new FakeDdb();
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" };
   const handler = createHandler({ env, ddbClient: ddb, fetchJwks: async () => ({ keys: [kp.jwk] }) });
+  seedActiveIncident(ddb, { affectedDistricts: ["Gorkha"] });
   ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", role: "moderator", name: "Mod", guidelinesAckAt: "now", districts: [] });
   ddb.store.set("ORG#o1|META", { PK: "ORG#o1", SK: "META", type: "ORG", id: "o1", name: "Helping Hands", status: "verified", districts: ["Gorkha"] });
   ddb.store.set("USER#member|ORG#o1", { PK: "USER#member", SK: "ORG#o1", type: "ORGMEMBER", orgId: "o1", role: "member" });
@@ -23,6 +24,7 @@ async function publishedNeed(handler, kp) {
   const res = await handler(makeEvent({ method: "POST", path: "/needs", body: {
     onBehalf: false, category: "goods", language: "en", description: "Need food and blankets for a family of four after the flood",
     beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5, householdSize: 4, phone: "+9779800000001" },
+    incidentId: TEST_INCIDENT_ID,
   } }));
   assert.equal(res.statusCode, 201, res.body);
   const { id } = JSON.parse(res.body);
@@ -54,7 +56,7 @@ describe("organizations handling needs", () => {
     assert.equal(ddb.store.get(`ORG#o1|NEED#${id}`).status, "matched");
     assert.equal((await post(handler, kp, "member", `/orgs/o1/needs/${id}/claim`)).statusCode, 409);
 
-    const pub = await handler(makeEvent({ method: "GET", path: "/needs", queryStringParameters: { district: "Gorkha" } }));
+    const pub = await handler(makeEvent({ method: "GET", path: "/needs", queryStringParameters: { district: "Gorkha", incidentId: TEST_INCIDENT_ID } }));
     const item = JSON.parse(pub.body).items.find((n) => n.id === id);
     assert.equal(item.status, "matched");
     assert.equal(item.handledBy, "Helping Hands");
