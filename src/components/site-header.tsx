@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, UserRound } from "lucide-react";
+import { LogOut, Menu, UserRound } from "lucide-react";
 import { useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
@@ -10,6 +10,14 @@ import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/logo";
 import { AccessibilityBar } from "@/components/accessibility-bar";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -155,6 +163,39 @@ function AccountButton({ language, navigate }: { language: Language; navigate: (
   const auth = useGoogleAuth();
   const t = meStrings[language];
   if (!auth.clientId) return null;
+  if (auth.idToken) {
+    const displayName = auth.profile?.name || auth.profile?.displayName || auth.profile?.email;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={t.navAccount}>
+            <span
+              className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
+              aria-hidden="true"
+            >
+              {(auth.profile?.name || auth.profile?.email || "?").slice(0, 1)}
+            </span>
+            <span className="hidden truncate sm:inline">{displayName}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="font-normal">
+            <span className="block truncate text-sm font-semibold">{auth.profile?.name || auth.profile?.displayName || t.navAccount}</span>
+            {auth.profile?.email ? <span className="block truncate text-xs text-muted-foreground">{auth.profile.email}</span> : null}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate("me")}>
+            <UserRound />
+            {t.navAccount}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => auth.signOut()}>
+            <LogOut />
+            {t.signOut}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
   return (
     <Button
       type="button"

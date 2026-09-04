@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
 import { meStrings } from "@/i18n/me";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { posterStrings } from "@/i18n/poster";
@@ -54,6 +53,14 @@ function groupItemStatusLabel(status: string, t: (typeof meStrings)["en"]) {
   if (status === "open") return t.groupsStatusOpen;
   if (status === "claimed") return t.groupsStatusClaimed;
   return t.groupsStatusDone;
+}
+
+function timestamp(value?: string) {
+  return value ? new Date(value).getTime() : 0;
+}
+
+function latestTimestamp(values: Array<string | undefined>) {
+  return Math.max(0, ...values.map(timestamp));
 }
 
 export function MePage({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
@@ -127,18 +134,201 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   }
 
   const isModerator = auth.profile?.role === "moderator" || auth.profile?.role === "admin";
+  const dashboardSections = data
+    ? (() => {
+        const needs = [...data.needs].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
+        const groups = [...data.groups].sort((a, b) => timestamp(b.joinedAt) - timestamp(a.joinedAt));
+        const offers = [...data.offers].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
+        const missing = [...data.missing].sort((a, b) => timestamp(b.updatedAt) - timestamp(a.updatedAt));
+        return [
+          {
+            key: "needs",
+            hasItems: needs.length > 0,
+            latestTimestamp: latestTimestamp(data.needs.map((need) => need.createdAt)),
+            render: () => (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">{t.needsTitle}</h2>
+                {needs.length === 0 ? (
+                  <EmptyState
+                    title={t.needsEmpty}
+                    action={
+                      <Button type="button" onClick={() => navigate("getHelp")}>
+                        {t.needsNew}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {needs.map((need) => (
+                      <Card key={need.id}>
+                        <CardHeader>
+                          <CardTitle className="font-mono tracking-widest">{need.refCode}</CardTitle>
+                          <CardDescription>
+                            {need.district ?? tl.unavailable}
+                            {need.ward ? ` · ${t.ward} ${need.ward}` : ""}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-wrap items-center gap-3">
+                          <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(need.status, language)}</StatusBadge>
+                          {need.expiresAt ? (
+                            <span className="text-sm text-muted-foreground">
+                              {t.needExpires.replace("{date}", formatDateTime(need.expiresAt, language))}
+                            </span>
+                          ) : null}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={renewed[need.id]}
+                            onClick={() =>
+                              renewNeed(need.refCode)
+                                .then(() => setRenewed((current) => ({ ...current, [need.id]: true })))
+                                .catch(() => {})
+                            }
+                          >
+                            {renewed[need.id] ? t.needRenewed : t.needRenew}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ),
+          },
+          {
+            key: "groups",
+            hasItems: groups.length > 0,
+            latestTimestamp: latestTimestamp(
+              data.groups.flatMap((group) => [group.joinedAt, ...group.myItems.flatMap((item) => [item.claimedAt, item.doneAt])]),
+            ),
+            render: () => (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">{t.groupsTitle}</h2>
+                {groups.length === 0 ? (
+                  <EmptyState title={t.groupsEmpty} />
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {groups.map((group) => (
+                      <Card key={group.id}>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{group.groupName ?? t.groupsTitle}</CardTitle>
+                          <CardDescription>{group.district ?? tl.unavailable}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {group.myItems.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">{t.groupsNoItems}</p>
+                          ) : (
+                            <ul className="space-y-1 text-sm">
+                              {group.myItems.map((item) => (
+                                <li key={item.itemId} className="flex items-center justify-between gap-2">
+                                  <span>{item.description}</span>
+                                  <Badge variant={item.status === "done" ? "default" : "secondary"}>
+                                    {groupItemStatusLabel(item.status, t)}
+                                  </Badge>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ),
+          },
+          {
+            key: "offers",
+            hasItems: offers.length > 0,
+            latestTimestamp: latestTimestamp(data.offers.map((offer) => offer.createdAt)),
+            render: () => (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">{t.offersTitle}</h2>
+                {offers.length === 0 ? (
+                  <EmptyState
+                    title={t.offersEmpty}
+                    action={
+                      <Button type="button" onClick={() => navigate("giveHelp")}>
+                        {t.offersNew}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {offers.map((offer) => (
+                      <Card key={offer.id}>
+                        <CardHeader>
+                          <CardTitle className="text-base">
+                            {offer.categories.map((category) => categoryLabel(category, language)).join(", ")}
+                          </CardTitle>
+                          <CardDescription>{offer.districts.join(", ")}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(offer.status, language)}</StatusBadge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ),
+          },
+          {
+            key: "missing",
+            hasItems: missing.length > 0,
+            latestTimestamp: latestTimestamp(data.missing.map((item) => item.updatedAt)),
+            render: () => (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">{t.postersTitle}</h2>
+                {missing.length === 0 ? (
+                  <EmptyState
+                    title={t.postersEmpty}
+                    action={
+                      <Button type="button" onClick={() => navigate("poster")}>
+                        {t.postersMake}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {missing.map((m) => (
+                      <Card key={m.id} className="overflow-hidden">
+                        {m.photo ? <img src={m.photo.url} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : null}
+                        <CardHeader>
+                          <CardTitle className="text-base">{m.name}</CardTitle>
+                          <CardDescription>{m.district}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-wrap items-center gap-2">
+                          <StatusBadge tone={m.status === "found" ? "success" : "danger"}>
+                            {m.status === "found" ? posterStrings[language].headlineFound : posterStrings[language].headlineMissing}
+                          </StatusBadge>
+                          <Button asChild size="sm" variant="outline">
+                            <a href={`/poster?id=${encodeURIComponent(m.id)}`}>{t.posterOpen}</a>
+                          </Button>
+                          <Button size="sm" variant="outline" type="button" disabled={busy[m.id]} onClick={() => toggleFound(m)}>
+                            {m.status === "found" ? t.posterMissingAgain : t.posterFound}
+                          </Button>
+                          <Button size="sm" variant="ghost" type="button" disabled={busy[m.id]} onClick={() => remove(m.id)}>
+                            {t.posterDelete}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ),
+          },
+        ].sort((a, b) => Number(b.hasItems) - Number(a.hasItems) || b.latestTimestamp - a.latestTimestamp);
+      })()
+    : [];
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <PageHeader
         eyebrow={t.eyebrow}
         title={auth.profile?.name || auth.profile?.displayName || t.title}
         description={auth.profile?.email}
-        actions={
-          <Button type="button" variant="outline" onClick={auth.signOut}>
-            <LogOut aria-hidden="true" />
-            {t.signOut}
-          </Button>
-        }
       />
       {error ? (
         <Alert variant="destructive">
@@ -148,155 +338,9 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       {!data && !error ? <LoadingState label={t.loading} /> : null}
       {data ? (
         <>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.needsTitle}</h2>
-            {data.needs.length === 0 ? (
-              <EmptyState
-                title={t.needsEmpty}
-                action={
-                  <Button type="button" onClick={() => navigate("getHelp")}>
-                    {t.needsNew}
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.needs.map((need) => (
-                  <Card key={need.id}>
-                    <CardHeader>
-                      <CardTitle className="font-mono tracking-widest">{need.refCode}</CardTitle>
-                      <CardDescription>
-                        {need.district ?? tl.unavailable}
-                        {need.ward ? ` · ${t.ward} ${need.ward}` : ""}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap items-center gap-3">
-                      <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(need.status, language)}</StatusBadge>
-                      {need.expiresAt ? (
-                        <span className="text-sm text-muted-foreground">
-                          {t.needExpires.replace("{date}", formatDateTime(need.expiresAt, language))}
-                        </span>
-                      ) : null}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={renewed[need.id]}
-                        onClick={() =>
-                          renewNeed(need.refCode)
-                            .then(() => setRenewed((current) => ({ ...current, [need.id]: true })))
-                            .catch(() => {})
-                        }
-                      >
-                        {renewed[need.id] ? t.needRenewed : t.needRenew}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.groupsTitle}</h2>
-            {data.groups.length === 0 ? (
-              <EmptyState title={t.groupsEmpty} />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.groups.map((group) => (
-                  <Card key={group.id}>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{group.groupName ?? t.groupsTitle}</CardTitle>
-                      <CardDescription>{group.district ?? tl.unavailable}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {group.myItems.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">{t.groupsNoItems}</p>
-                      ) : (
-                        <ul className="space-y-1 text-sm">
-                          {group.myItems.map((item) => (
-                            <li key={item.itemId} className="flex items-center justify-between gap-2">
-                              <span>{item.description}</span>
-                              <Badge variant={item.status === "done" ? "default" : "secondary"}>
-                                {groupItemStatusLabel(item.status, t)}
-                              </Badge>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.offersTitle}</h2>
-            {data.offers.length === 0 ? (
-              <EmptyState
-                title={t.offersEmpty}
-                action={
-                  <Button type="button" onClick={() => navigate("giveHelp")}>
-                    {t.offersNew}
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.offers.map((offer) => (
-                  <Card key={offer.id}>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        {offer.categories.map((category) => categoryLabel(category, language)).join(", ")}
-                      </CardTitle>
-                      <CardDescription>{offer.districts.join(", ")}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(offer.status, language)}</StatusBadge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.postersTitle}</h2>
-            {data.missing.length === 0 ? (
-              <EmptyState
-                title={t.postersEmpty}
-                action={
-                  <Button type="button" onClick={() => navigate("poster")}>
-                    {t.postersMake}
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {data.missing.map((m) => (
-                  <Card key={m.id} className="overflow-hidden">
-                    {m.photo ? <img src={m.photo.url} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : null}
-                    <CardHeader>
-                      <CardTitle className="text-base">{m.name}</CardTitle>
-                      <CardDescription>{m.district}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap items-center gap-2">
-                      <StatusBadge tone={m.status === "found" ? "success" : "danger"}>
-                        {m.status === "found" ? posterStrings[language].headlineFound : posterStrings[language].headlineMissing}
-                      </StatusBadge>
-                      <Button asChild size="sm" variant="outline">
-                        <a href={`/poster?id=${encodeURIComponent(m.id)}`}>{t.posterOpen}</a>
-                      </Button>
-                      <Button size="sm" variant="outline" type="button" disabled={busy[m.id]} onClick={() => toggleFound(m)}>
-                        {m.status === "found" ? t.posterMissingAgain : t.posterFound}
-                      </Button>
-                      <Button size="sm" variant="ghost" type="button" disabled={busy[m.id]} onClick={() => remove(m.id)}>
-                        {t.posterDelete}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
+          {dashboardSections.map((section) => (
+            <Fragment key={section.key}>{section.render()}</Fragment>
+          ))}
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{articleT.listTitle}</h2>
             <Card>
