@@ -125,7 +125,7 @@ function pageTitle(page: AppPage, language: Language): string {
     info: t.info,
     privacy: t.privacyTitle,
     desk: t.deskTitle,
-    deskLogin: t.deskTitle,
+    deskLogin: meStrings[language].navSignIn,
     getHelp: t.getHelp,
     giveHelp: t.giveHelp,
     ledger: t.ledgerTitle,

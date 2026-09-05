@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LogOut, Phone } from "lucide-react";
+import { AccessibilityBar } from "@/components/accessibility-bar";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,6 +83,7 @@ export function AppShell<K extends string>({
             >
               <span lang={language === "en" ? "ne" : "en"}>{language === "en" ? "नेपाली" : "EN"}</span>
             </Button>
+            <AccessibilityBar language={language} />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

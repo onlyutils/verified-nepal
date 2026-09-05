@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
+import { meStrings } from "@/i18n/me";
 import { shellStrings } from "@/i18n/shell";
 import { posterStrings } from "@/i18n/poster";
 import type { Language, Page } from "@/lib/types";
@@ -14,7 +15,7 @@ const container = "mx-auto flex min-h-9 w-full max-w-7xl items-center justify-be
 export function SiteStatusBar({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = labels[language] as Record<string, string>;
   const ts = shellStrings[language];
-  // Signed-in people reach the Desk from My account; the bar link is for the signed-out entry.
+  // Signed-in people reach the Desk from My account; the bar link is the site's single sign-in entry.
   const signedIn = Boolean(useGoogleAuth().idToken);
   const links: Array<[Page, string]> = [
     ["dashboard", t.dashboard],
@@ -39,9 +40,9 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
           {signedIn ? null : (
             <>
               <span aria-hidden="true" className="h-4 w-px bg-primary-soft-border" />
-              <Button type="button" variant="link" size="sm" className="h-auto min-h-11 px-0" onClick={() => navigate("desk")}>
+              <Button type="button" variant="link" size="sm" className="h-auto min-h-11 px-0" onClick={() => navigate("deskLogin")}>
                 <ShieldCheck aria-hidden="true" />
-                {t.deskTitle}
+                {meStrings[language].navSignIn}
               </Button>
             </>
           )}

@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { deskStrings } from "@/i18n/desk";
+import { meStrings } from "@/i18n/me";
 import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ function GoogleMark() {
   );
 }
 
-/** /desk/login — the only screen that shows the Google button for the Desk. Signed-in users are sent on to /desk. */
+/** /desk/login — the site's single sign-in screen. Signed-in users are sent on to /desk. */
 export function DeskLogin({
   language,
   setLanguage,
@@ -90,7 +91,7 @@ export function DeskLogin({
       <main id="main" tabIndex={-1} className="relative flex flex-1 items-center justify-center px-4 py-8 focus:outline-none">
         <Card className="w-full max-w-md border-transparent">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{t.deskTitle}</CardTitle>
+            <CardTitle className="text-2xl">{meStrings[language].navSignIn}</CardTitle>
             <CardDescription>{ds.deskLoginTagline}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -107,7 +108,6 @@ export function DeskLogin({
                 <AlertDescription>{t.deskSignInFailed}</AlertDescription>
               </Alert>
             ) : null}
-            <p className="text-center text-xs text-muted-foreground">{t.deskInviteOnly}</p>
           </CardContent>
         </Card>
       </main>

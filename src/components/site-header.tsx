@@ -102,8 +102,8 @@ export function SiteHeader({
                 <div className="my-3 border-t" />
                 {signedIn ? null : (
                   <SheetClose asChild>
-                    <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("desk")}>
-                      {t.deskTitle}
+                    <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("deskLogin")}>
+                      {meStrings[language].navSignIn}
                     </Button>
                   </SheetClose>
                 )}
@@ -162,51 +162,36 @@ export { guideLinks };
 function AccountButton({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const auth = useGoogleAuth();
   const t = meStrings[language];
-  if (!auth.clientId) return null;
-  if (auth.idToken) {
-    const displayName = auth.profile?.name || auth.profile?.displayName || auth.profile?.email;
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={t.navAccount}>
-            <span
-              className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
-              aria-hidden="true"
-            >
-              {(auth.profile?.name || auth.profile?.email || "?").slice(0, 1)}
-            </span>
-            <span className="hidden truncate sm:inline">{displayName}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="font-normal">
-            <span className="block truncate text-sm font-semibold">{auth.profile?.name || auth.profile?.displayName || t.navAccount}</span>
-            {auth.profile?.email ? <span className="block truncate text-xs text-muted-foreground">{auth.profile.email}</span> : null}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => navigate("me")}>
-            <UserRound />
-            {t.navAccount}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => auth.signOut()}>
-            <LogOut />
-            {t.signOut}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+  if (!auth.clientId || !auth.idToken) return null;
+  const displayName = auth.profile?.name || auth.profile?.displayName || auth.profile?.email;
   return (
-    <Button
-      type="button"
-      variant={auth.idToken ? "ghost" : "outline"}
-      size="sm"
-      className="min-h-11 h-auto"
-      aria-label={auth.idToken ? t.navAccount : t.navSignIn}
-      onClick={() => (auth.idToken ? navigate("me") : void auth.signIn())}
-    >
-      <UserRound aria-hidden="true" />
-      <span className="hidden sm:inline">{auth.idToken ? t.navAccount : t.navSignIn}</span>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={t.navAccount}>
+          <span
+            className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
+            aria-hidden="true"
+          >
+            {(auth.profile?.name || auth.profile?.email || "?").slice(0, 1)}
+          </span>
+          <span className="hidden truncate sm:inline">{displayName}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <span className="block truncate text-sm font-semibold">{auth.profile?.name || auth.profile?.displayName || t.navAccount}</span>
+          {auth.profile?.email ? <span className="block truncate text-xs text-muted-foreground">{auth.profile.email}</span> : null}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate("me")}>
+          <UserRound />
+          {t.navAccount}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => auth.signOut()}>
+          <LogOut />
+          {t.signOut}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
