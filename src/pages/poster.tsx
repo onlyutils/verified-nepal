@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, Share2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Download, Plus, Share2 } from "lucide-react";
 import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { downscaleImage } from "@/lib/image";
 import { apiErrorMessage } from "@/lib/api-error";
 import { getDashboard, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
+import { PosterGrid, posterEditPath } from "@/components/poster-grid";
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import { useGoogleAuth } from "@/lib/auth";
 import { uploadMedia } from "@/lib/media";
 import { EMPTY_POSTER, POSTER_LIMITS, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
@@ -63,6 +65,108 @@ function loadImage(src: string) {
     img.onerror = () => reject(new Error("image"));
     img.src = src;
   });
+}
+
+
+/** Pick one option from visual tiles instead of a dropdown. */
+function TileRadio<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { value: T; title: string; hint?: string; preview: ReactNode }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-medium leading-none">{label}</legend>
+      <div className="grid grid-cols-2 gap-3">
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(o.value)}
+              className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+              }`}
+            >
+              {o.preview}
+              <span className="text-sm font-medium">{o.title}</span>
+              {o.hint ? <span className="text-xs text-muted-foreground">{o.hint}</span> : null}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+/** Miniature of a poster template: background, headline bar, photo block, text lines. */
+function TemplateSwatch({ template, size }: { template: PosterInput["template"]; size: PosterInput["size"] }) {
+  const blue = template === "blue";
+  const bg = blue ? "bg-primary" : "bg-secondary";
+  const ink = blue ? "bg-primary-foreground" : "bg-foreground";
+  const head = blue ? "bg-primary-foreground" : "bg-destructive";
+  return (
+    <div className={`${bg} ${size === "story" ? "aspect-[9/16] w-10" : "aspect-square w-16"} flex flex-col gap-1 rounded-sm border p-1.5`} aria-hidden="true">
+      <div className={`${head} h-2 w-2/3 rounded-sm`} />
+      <div className={`${ink} h-0.5 w-1/4 opacity-60`} />
+      <div className={`flex-1 rounded-sm border ${blue ? "border-primary-foreground/60" : "border-foreground/30"}`} />
+      <div className={`${ink} h-0.5 w-full opacity-70`} />
+      <div className={`${ink} h-0.5 w-3/4 opacity-70`} />
+    </div>
+  );
+}
+
+/** /poster — every saved poster plus the create button. */
+export function PosterCatalogue({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
+  const t = posterStrings[language];
+  const auth = useGoogleAuth();
+  const [items, setItems] = useState<MyMissing[] | null>(null);
+
+  useEffect(() => {
+    if (!auth.idToken) return;
+    let cancelled = false;
+    getDashboard(auth.idToken)
+      .then((dash) => !cancelled && setItems([...dash.missing].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))))
+      .catch(() => !cancelled && setItems([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.idToken]);
+
+  const createButton = (
+    <Button type="button" size="lg" onClick={() => navigate("posterNew")}>
+      <Plus aria-hidden="true" />
+      {t.newPoster}
+    </Button>
+  );
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHeader eyebrow={t.eyebrow} title={t.catalogueTitle} description={t.catalogueIntro} actions={createButton} />
+      {!auth.idToken ? (
+        auth.loading ? (
+          <LoadingState label={t.loading} />
+        ) : (
+          <SignInNudge language={language} id="poster" title={t.catalogueSignedOutTitle} body={t.catalogueSignedOutBody} />
+        )
+      ) : items === null ? (
+        <LoadingState label={t.loading} />
+      ) : items.length === 0 ? (
+        <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
+      ) : (
+        <PosterGrid language={language} items={items} onChange={(fn) => setItems((list) => list && fn(list))} />
+      )}
+    </div>
+  );
 }
 
 export function PosterPage({ language, navigate, savedId }: { language: Language; navigate: (page: Page) => void; savedId?: string }) {
@@ -245,7 +349,16 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <PageHeader eyebrow={t.eyebrow} title={t.title} description={t.intro} />
+      <PageHeader
+        eyebrow={t.eyebrow}
+        title={savedId ? t.editTitle : t.title}
+        description={t.intro}
+        actions={
+          <Button asChild variant="outline">
+            <a href="/poster">{t.backToCatalogue}</a>
+          </Button>
+        }
+      />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>
           <CardContent className="space-y-5 p-5 sm:p-6">
@@ -403,25 +516,35 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
                   <NativeSelectOption value="ne">नेपाली</NativeSelectOption>
                 </NativeSelect>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="poster-template">{t.templateLabel}</Label>
-                <NativeSelect
-                  id="poster-template"
-                  value={input.template}
-                  onChange={(e) => set("template", e.target.value as PosterInput["template"])}
-                >
-                  <NativeSelectOption value="paper">{t.templatePaper}</NativeSelectOption>
-                  <NativeSelectOption value="blue">{t.templateBlue}</NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="poster-size">{t.sizeLabel}</Label>
-                <NativeSelect id="poster-size" value={input.size} onChange={(e) => set("size", e.target.value as PosterInput["size"])}>
-                  <NativeSelectOption value="feed">{t.sizeFeed}</NativeSelectOption>
-                  <NativeSelectOption value="story">{t.sizeStory}</NativeSelectOption>
-                </NativeSelect>
-              </div>
             </div>
+            <TileRadio
+              label={t.templateLabel}
+              value={input.template}
+              onChange={(v) => set("template", v)}
+              options={[
+                { value: "paper", title: t.templatePaper, preview: <TemplateSwatch template="paper" size={input.size} /> },
+                { value: "blue", title: t.templateBlue, preview: <TemplateSwatch template="blue" size={input.size} /> },
+              ]}
+            />
+            <TileRadio
+              label={t.sizeLabel}
+              value={input.size}
+              onChange={(v) => set("size", v)}
+              options={[
+                {
+                  value: "feed",
+                  title: t.sizeFeedTitle,
+                  hint: t.sizeFeedApps,
+                  preview: <div className="aspect-square w-12 rounded-sm border-2 border-current opacity-70" aria-hidden="true" />,
+                },
+                {
+                  value: "story",
+                  title: t.sizeStoryTitle,
+                  hint: t.sizeStoryApps,
+                  preview: <div className="aspect-[9/16] w-7 rounded-sm border-2 border-current opacity-70" aria-hidden="true" />,
+                },
+              ]}
+            />
           </CardContent>
         </Card>
 

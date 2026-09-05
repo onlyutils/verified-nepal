@@ -196,13 +196,13 @@ function ActionCard({ language, kind, navigate }: { language: Language; kind: Ac
       variant: "secondary" as const,
     },
     poster: {
-      title: posterStrings[language].title,
+      title: posterStrings[language].catalogueTitle,
       description: ts.posterCardDescription,
       cta: ts.posterCardCta,
       icon: ImageIcon,
       chip: "bg-destructive-soft text-destructive",
       card: "border-2 bg-background",
-      action: () => navigate("poster"),
+      action: () => navigate("posterNew"),
       variant: "secondary" as const,
     },
     need: {

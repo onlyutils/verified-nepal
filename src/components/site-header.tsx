@@ -142,7 +142,7 @@ function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
   if (page === "climate") return climateStrings[language].navLabel;
-  if (page === "poster") return posterStrings[language].title;
+  if (page === "poster") return posterStrings[language].catalogueTitle;
   return t[key] ?? page;
 }
 

@@ -30,6 +30,7 @@ const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.A
 const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
 const PosterPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterPage })));
+const PosterCatalogue = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterCatalogue })));
 const MePage = lazy(() => import("@/pages/me").then((m) => ({ default: m.MePage })));
 const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
 const ProjectsList = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsList })));
@@ -54,6 +55,7 @@ const pagePaths: Record<AppPage, string> = {
   search: "/search",
   missing: "/missing",
   poster: "/poster",
+  posterNew: "/poster/new",
   me: "/me",
   myArticles: "/me/articles",
   articleEdit: "/me/articles/:id/edit",
@@ -81,6 +83,12 @@ const pagePaths: Record<AppPage, string> = {
   reportIncident: "/report-incident",
 };
 
+/** "/poster/new" → undefined; "/poster/<id>" → id. */
+function posterIdFromPath(pathname: string) {
+  const id = decodeURIComponent(pathname.split("/")[2] ?? "");
+  return id && id !== "new" ? id : undefined;
+}
+
 function pageFromPath(pathname: string): AppPage {
   if (pathname.match(/^\/donation\/[^\/]+/)) return "donationStatus";
   if (pathname.startsWith("/register-organization")) return "registerOrg";
@@ -106,6 +114,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.startsWith("/search")) return "search";
   if (pathname === "/me" || pathname.startsWith("/me/")) return "me";
   if (pathname.startsWith("/missing")) return "missing";
+  if (pathname.startsWith("/poster/")) return "posterNew";
   if (pathname.startsWith("/poster")) return "poster";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
@@ -118,7 +127,8 @@ function pageTitle(page: AppPage, language: Language): string {
     dashboard: t.dashboard,
     search: t.search,
     missing: t.missingGuideTitle,
-    poster: posterStrings[language].title,
+    poster: posterStrings[language].catalogueTitle,
+    posterNew: posterStrings[language].title,
     me: meStrings[language].title,
     myArticles: articlesEditorStrings[language].listTitle,
     articleEdit: articlesEditorStrings[language].title,
@@ -262,11 +272,12 @@ export function App() {
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "poster" ? (
                 <ComponentErrorBoundary language={language}>
-                  <PosterPage
-                    language={language}
-                    navigate={navigate}
-                    savedId={new URLSearchParams(window.location.search).get("id") || undefined}
-                  />
+                  <PosterCatalogue language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "posterNew" ? (
+                <ComponentErrorBoundary language={language}>
+                  <PosterPage language={language} navigate={navigate} savedId={posterIdFromPath(window.location.pathname)} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "me" ? (
