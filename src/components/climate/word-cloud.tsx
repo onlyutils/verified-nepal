@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getClimateMessages } from "@/lib/api";
 import { climateSeriesColor } from "@/lib/climate-colors";
 import { drawWordCloud } from "@/lib/climate-share";
-import { messageWithEmoji } from "@/lib/climate-messages";
+import { messageText } from "@/lib/climate-messages";
 import { layoutWordCloud, type CloudWord, type PlacedWord } from "@/lib/word-cloud";
 import { interpolate } from "@/lib/format";
 import type { CountryClimate } from "@/lib/climate-data";
@@ -47,7 +47,7 @@ export function WordCloud({
         if (!active) return;
         const counts = new Map<string, number>();
         for (const item of response.items) counts.set(item.messageId, (counts.get(item.messageId) ?? 0) + item.count);
-        setWords([...counts.entries()].map(([messageId, weight]) => ({ text: messageWithEmoji(messageId), weight })));
+        setWords([...counts.entries()].map(([messageId, weight]) => ({ text: messageText(messageId), weight })));
         setTotal([...counts.values()].reduce((sum, count) => sum + count, 0));
       })
       .catch(() => {
@@ -74,8 +74,10 @@ export function WordCloud({
     return layoutWordCloud(words, {
       width: 960,
       height: 520,
-      minSize: 18,
-      maxSize: 72,
+      // Messages are full phrases (with an emoji prefix), not single words, so keep the
+      // top end modest — a 72px phrase can be nearly canvas-wide and starve everything else.
+      minSize: 12,
+      maxSize: 40,
       padding: 6,
       measure: (text, size) => {
         context.font = `700 ${size}px 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif, 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji'`;

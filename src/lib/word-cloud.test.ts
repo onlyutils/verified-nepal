@@ -30,3 +30,27 @@ test("drops a word wider than the canvas", () => {
   const placed = layoutWordCloud([{ text: "too-wide", weight: 1 }], { width: 20, height: 100, minSize: 20, maxSize: 20, measure });
   assert.deepEqual(placed, []);
 });
+
+test("every word is placed even when the round cloud shape is crowded", () => {
+  // Reproduces the real bug: ~36 distinct messages (a handful with a big weight lead,
+  // most tied at weight 1) crammed into the 960x520 circular word-cloud canvas used on
+  // /climate used to leave most of the low-weight words unplaced.
+  const words = [
+    { text: "Don't Melt Nepal", weight: 6 },
+    { text: "We Didn't Cause", weight: 4 },
+    { text: "Enough With Heating", weight: 3 },
+    { text: "Keep Mountains Frozen", weight: 3 },
+    { text: "We Deserve Better", weight: 3 },
+    { text: "You've Done Enough", weight: 3 },
+    ...Array.from({ length: 30 }, (_, index) => ({ text: `Message ${index}`, weight: 1 })),
+  ];
+  const placed = layoutWordCloud(words, {
+    width: 960,
+    height: 520,
+    minSize: 18,
+    maxSize: 72,
+    padding: 6,
+    measure,
+  });
+  assert.equal(placed.length, words.length);
+});

@@ -103,15 +103,5 @@ export function messageText(id: string) {
   return CLIMATE_MESSAGES.find((m) => m.id === id)?.text ?? id;
 }
 
-export function messageEmoji(id: string) {
-  return CLIMATE_MESSAGE_GROUPS.find((group) => group.messages.some((m) => m.id === id))?.emoji ?? "";
-}
-
-/** Text + its group's emoji, for display contexts (like the word cloud) that want the icon inline. */
-export function messageWithEmoji(id: string) {
-  const emoji = messageEmoji(id);
-  return emoji ? `${emoji} ${messageText(id)}` : messageText(id);
-}
-
 export type ClimateDownloadKind = "ranking" | "trend" | "composition" | "map" | "wordcloud" | "message";
 export const CLIMATE_DOWNLOAD_KINDS: ClimateDownloadKind[] = ["ranking", "trend", "composition", "map", "wordcloud", "message"];
