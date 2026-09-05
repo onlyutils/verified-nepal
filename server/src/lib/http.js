@@ -98,3 +98,13 @@ export function stripInternal(obj) {
   for (const k of ["updateCodeHash", "PK", "SK", "gsi1pk", "gsi1sk", "gsi2pk", "gsi2sk"]) delete clone[k];
   return clone;
 }
+
+// Route tuples are [method, regex, handler]; first match wins, capture groups become decoded handler params.
+export async function dispatch(routes, method, path, event, opts) {
+  for (const [m, re, handler] of routes) {
+    if (m !== method) continue;
+    const match = path.match(re);
+    if (match) return handler(event, opts, ...match.slice(1).map(decodeURIComponent));
+  }
+  return null;
+}
