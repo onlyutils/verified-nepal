@@ -35,6 +35,8 @@ pnpm build
 
 ## Routes
 
+Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`), not inside handlers: wrap the handler with `withAuth`, `withOptionalAuth`, or `withModAck` (moderator/admin + guidelines acknowledged) from `src/lib/middleware.js` and read `opts.auth`. Unwrapped handlers are public.
+
 - `GET /health` → `{ok:true}`
 - `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. OnlyUtils access tokens carry no email/name claims (`iss, sub, aud, exp, iat, jti, tid, cid, typ, scp, email_verified`). On first login (no `USER` item) fetches `GET ${AUTH_HOST}/userinfo` with the same Bearer token, uses `email ?? primary_email ?? emails[0]` and `name ?? display_name` from the userinfo response for the stored `USER` item and `ADMIN_EMAILS`/`MODERATOR_EMAILS` role bootstrap; userinfo failure returns `502 {error:'userinfo'}`. Existing users keep stored `email`/`role` without a userinfo call; missing fields are omitted from the stored item. Returns `{sub,email,name,role}`.
 - `POST /auth/exchange` → `{code, code_verifier, redirect_uri}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=authorization_code`, `client_id=OU_CLIENT_ID`, `client_secret` when set)
