@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ttlSeconds, toExpiresAt, maskName } from "../lib/format.js";
 import { PUBLIC_OFFER_STATUSES } from "../constants.js";
+import { err } from "../lib/http.js";
 
 export async function createOffer(ddb, tableName, { helperSub, helperName, org, categories, districts, description, phone, email, incidentId }) {
   const helperLabel = maskName(helperName);
@@ -37,6 +38,26 @@ export async function createOffer(ddb, tableName, { helperSub, helperName, org, 
   if (!item.email) delete item.email;
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   return { id };
+}
+
+export async function setOfferStatus(ddb, tableName, { offer, status, expectedStatus }) {
+  offer.status = status;
+  offer.gsi1pk = `OFFER#${offer.incidentId}#${offer.districts[0]}#${status}`;
+  offer.gsi1sk = offer.createdAt;
+  offer.gsi2pk = `OFFER#${status}`;
+  offer.gsi2sk = offer.createdAt;
+  const params = { TableName: tableName, Item: offer };
+  if (expectedStatus !== undefined) {
+    params.ConditionExpression = "#status = :expectedStatus";
+    params.ExpressionAttributeNames = { "#status": "status" };
+    params.ExpressionAttributeValues = { ":expectedStatus": expectedStatus };
+  }
+  try {
+    await ddb.send(new PutCommand(params));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(409, "offer_status_changed");
+    throw e;
+  }
 }
 
 export async function listPublicOffers(ddb, tableName, { incidentId, district, category }) {

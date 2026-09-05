@@ -172,6 +172,27 @@ export async function handleApproveIncident(event, opts, incidentId) {
   return json(200, { status: "active" });
 }
 
+export async function handleEditIncident(event, opts, incidentId) {
+  const auth = await requireAuth(event, opts);
+  requireAdmin(auth);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { edits } = body;
+  if (!edits || typeof edits !== "object") throw err(400, "edits required");
+  const incident = await getAdminIncident(auth, incidentId);
+  if (edits.name !== undefined) incident.name = validateString(edits.name, "edits.name", 2, 150);
+  if (edits.nameNe !== undefined) incident.nameNe = validateOptionalString(edits.nameNe, "edits.nameNe", 1, 150);
+  if (edits.kind !== undefined) incident.kind = validateString(edits.kind, "edits.kind", 1, 50);
+  if (edits.summary !== undefined) incident.summary = validateOptionalString(edits.summary, "edits.summary", 1, 2000);
+  if (edits.summaryNe !== undefined) incident.summaryNe = validateOptionalString(edits.summaryNe, "edits.summaryNe", 1, 2000);
+  if (edits.affectedDistricts !== undefined) incident.affectedDistricts = cleanAffectedDistricts(edits.affectedDistricts);
+  if (edits.startedAt !== undefined) incident.startedAt = cleanStartedAt(edits.startedAt);
+  if (edits.coverImageUrl !== undefined) incident.coverImageUrl = validateOptionalString(edits.coverImageUrl, "edits.coverImageUrl", 1, 2000);
+  await saveIncident(auth.ddb, auth.tableName, incident);
+  await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName: auth.user?.name || auth.payload.name || "", action: "edit", targetType: "INCIDENT", targetId: incidentId, targetLabel: incident.name });
+  return json(200, { status: incident.status });
+}
+
 export async function handleRejectIncident(event, opts, incidentId) {
   const auth = await requireAuth(event, opts);
   requireAdmin(auth);

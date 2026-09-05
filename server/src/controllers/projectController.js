@@ -224,15 +224,15 @@ export async function handlePostModerationProject(event, opts, projectId) {
   ensureGuidelinesAck(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { action, reason, status, fileId } = body;
-  const allowed = ["verify-committee", "publish", "reject", "set-status", "publish-photo", "reject-photo"];
+  const { action, reason, status, fileId, edits } = body;
+  const allowed = ["verify-committee", "publish", "reject", "set-status", "publish-photo", "reject-photo", "edit"];
   if (!allowed.includes(action)) throw err(400, `action must be one of ${allowed.join(",")}`);
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const proj = await getProjectById(ddb, tableName, projectId);
   if (!proj) throw err(404, "not found");
   if (isOutOfScope(auth.user, proj)) throw err(403, "out_of_scope");
-  const result = await moderateProject(ddb, tableName, { proj, action, reason, status, fileId });
+  const result = await moderateProject(ddb, tableName, { proj, action, reason, status, fileId, edits });
   const actorName = auth.user?.name || auth.payload.name || "";
   const targetLabel = getTargetLabelForAudit("PROJECT", proj);
   await recordAudit(ddb, tableName, {

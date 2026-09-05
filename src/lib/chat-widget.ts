@@ -84,6 +84,17 @@ const shadowCss = `
 }
 .vn-chat-credit a { color: #1C1B1A; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
+.vn-chat-disclaimer {
+  flex: none;
+  padding: 6px 12px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #938F8A;
+  border-top: 1px solid #E5E0D8;
+  background: #F7F5F0;
+}
+
 /* Lift the launcher above the back-to-top button and page controls on phones. */
 @media (max-width: 639px) {
   .ouc-launcher { bottom: 88px !important; }
@@ -108,6 +119,14 @@ function decorate(root: ShadowRoot) {
     wrap.innerHTML = '<img src="/brand/logo-mark.svg" alt="">';
     title.replaceWith(wrap);
     wrap.appendChild(title);
+  }
+
+  const composer = root.querySelector(".ouc-composer");
+  if (composer) {
+    const disclaimer = document.createElement("div");
+    disclaimer.className = "vn-chat-disclaimer";
+    disclaimer.textContent = "Do not include sensitive personal information in chat messages.";
+    composer.insertAdjacentElement("beforebegin", disclaimer);
   }
 
   const panel = root.querySelector(".ouc-panel");

@@ -22,6 +22,9 @@ function ProjectActions({ model, project }: { model: DeskModel; project: Moderat
       <Button size="sm" variant="outline" onClick={() => model.setVerifyProjectId(project.id)}>
         {model.t.deskProjectsVerify}
       </Button>
+      <Button size="sm" variant="outline" onClick={() => model.openEditProject(project)}>
+        {model.t.deskEdit}
+      </Button>
       <Button size="sm" onClick={() => model.handleProject(project.id, { action: "publish" })} disabled={!project.committee.verified}>
         {model.t.deskProjectsPublish}
       </Button>

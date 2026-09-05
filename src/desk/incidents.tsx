@@ -24,7 +24,7 @@ function originLabel(model: DeskModel, requestOrigin?: string) {
   return model.ds.deskIncidentsOriginAdmin;
 }
 
-function IncidentActions({ model, incident }: { model: DeskModel; incident: DeskModel["incidentsAdmin"][number] }) {
+function IncidentStatusActions({ model, incident }: { model: DeskModel; incident: DeskModel["incidentsAdmin"][number] }) {
   const loading = model.incidentActionLoading === incident.id;
 
   if (incident.status === "pending" && incident.requestOrigin === "community-request-inline") {
@@ -90,6 +90,17 @@ function IncidentActions({ model, incident }: { model: DeskModel; incident: Desk
   }
 
   return null;
+}
+
+function IncidentActions({ model, incident }: { model: DeskModel; incident: DeskModel["incidentsAdmin"][number] }) {
+  return (
+    <div className="space-y-2">
+      <Button size="sm" variant="outline" onClick={() => model.openEditIncident(incident)}>
+        {model.t.deskEdit}
+      </Button>
+      <IncidentStatusActions model={model} incident={incident} />
+    </div>
+  );
 }
 
 export function Incidents({ model }: { model: DeskModel }) {

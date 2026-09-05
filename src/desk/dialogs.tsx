@@ -5,7 +5,83 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { CATEGORIES } from "@/lib/api";
 import type { DeskModel } from "./use-desk";
+
+function EditField({ id, label, value, onChange, textarea }: { id: string; label: string; value: string; onChange: (v: string) => void; textarea?: boolean }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      {textarea ? (
+        <Textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} rows={3} />
+      ) : (
+        <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} />
+      )}
+    </div>
+  );
+}
+
+function EditDialogFields({ model }: { model: DeskModel }) {
+  const kind = model.editTarget?.kind;
+  const f = model.editFields;
+  const set = (key: string) => (value: string) => model.setEditFields((current) => ({ ...current, [key]: value }));
+  if (kind === "need") {
+    return (
+      <>
+        <EditField id="edit-description" label={model.ds.editFieldDescription} value={f.description || ""} onChange={set("description")} textarea />
+        <div className="space-y-2">
+          <Label htmlFor="edit-category">{model.ds.editFieldCategory}</Label>
+          <NativeSelect id="edit-category" value={f.category || ""} onChange={(event) => set("category")(event.target.value)}>
+            {CATEGORIES.map((c) => (
+              <NativeSelectOption key={c} value={c}>
+                {c}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </div>
+        <EditField id="edit-district" label={model.ds.editFieldDistrict} value={f.district || ""} onChange={set("district")} />
+        <EditField id="edit-ward" label={model.ds.editFieldWard} value={f.ward || ""} onChange={set("ward")} />
+        <EditField id="edit-name" label={model.ds.editFieldBeneficiaryName} value={f.name || ""} onChange={set("name")} />
+        <EditField id="edit-phone" label={model.ds.editFieldPhone} value={f.phone || ""} onChange={set("phone")} />
+      </>
+    );
+  }
+  if (kind === "offer") {
+    return (
+      <>
+        <EditField id="edit-description" label={model.ds.editFieldDescription} value={f.description || ""} onChange={set("description")} textarea />
+        <EditField id="edit-categories" label={model.ds.editFieldCategories} value={f.categories || ""} onChange={set("categories")} />
+        <EditField id="edit-districts" label={model.ds.editFieldDistricts} value={f.districts || ""} onChange={set("districts")} />
+      </>
+    );
+  }
+  if (kind === "project") {
+    return (
+      <>
+        <EditField id="edit-location" label={model.ds.deskProjectLocation} value={f.locationText || ""} onChange={set("locationText")} />
+        <EditField id="edit-cost" label={model.ds.editFieldCost} value={f.costEstimateNpr || ""} onChange={set("costEstimateNpr")} />
+        <EditField id="edit-district" label={model.ds.editFieldDistrict} value={f.district || ""} onChange={set("district")} />
+        <EditField id="edit-ward" label={model.ds.editFieldWard} value={f.ward || ""} onChange={set("ward")} />
+        <EditField id="edit-committee-name" label={model.ds.editFieldCommitteeName} value={f.committeeName || ""} onChange={set("committeeName")} />
+        <EditField id="edit-contact-name" label={model.ds.editFieldContactName} value={f.committeeContactName || ""} onChange={set("committeeContactName")} />
+        <EditField id="edit-committee-phone" label={model.ds.editFieldPhone} value={f.committeePhone || ""} onChange={set("committeePhone")} />
+        <EditField id="edit-committee-email" label={model.ds.editFieldEmail} value={f.committeeEmail || ""} onChange={set("committeeEmail")} />
+      </>
+    );
+  }
+  if (kind === "incident") {
+    return (
+      <>
+        <EditField id="edit-incident-name" label={model.ds.editFieldIncidentName} value={f.name || ""} onChange={set("name")} />
+        <EditField id="edit-incident-name-ne" label={model.ds.editFieldIncidentNameNe} value={f.nameNe || ""} onChange={set("nameNe")} />
+        <EditField id="edit-incident-kind" label={model.ds.editFieldKind} value={f.kind || ""} onChange={set("kind")} />
+        <EditField id="edit-incident-summary" label={model.ds.editFieldSummary} value={f.summary || ""} onChange={set("summary")} textarea />
+        <EditField id="edit-incident-districts" label={model.ds.editFieldAffectedDistricts} value={f.affectedDistricts || ""} onChange={set("affectedDistricts")} />
+      </>
+    );
+  }
+  return null;
+}
 
 function ReasonFields({
   model,
@@ -73,6 +149,7 @@ function ReasonFields({
 export function DeskDialogs({ model }: { model: DeskModel }) {
   const needName =
     model.publishedNeeds.find((need) => need.id === model.archiveId || need.id === model.fulfillId)?.maskedName || model.t.deskBoardsTitle;
+  const offerName = model.filteredOffers.find((offer) => offer.id === model.archiveOfferId)?.helperLabel || model.t.deskOffersTitle;
   return (
     <>
       <Dialog
@@ -190,6 +267,27 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
               {model.t.deskCancel}
             </Button>
             <Button variant="destructive" onClick={() => model.archiveId && model.handleNeedStatus(model.archiveId, "archived")}>
+              {model.t.deskArchive}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!model.archiveOfferId}
+        onOpenChange={(open) => {
+          if (!open) model.setArchiveOfferId(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{model.ds.offerArchiveConfirmTitle}</DialogTitle>
+            <DialogDescription>{model.ds.offerArchiveConfirmBody.replace("{name}", offerName)}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => model.setArchiveOfferId(null)}>
+              {model.t.deskCancel}
+            </Button>
+            <Button variant="destructive" onClick={() => model.archiveOfferId && model.handleOfferStatus(model.archiveOfferId, "archived")}>
               {model.t.deskArchive}
             </Button>
           </DialogFooter>
@@ -468,6 +566,35 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
               {model.t.deskCancel}
             </Button>
             <Button onClick={model.handleAdminSave}>{model.t.deskAdminSave}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!model.editTarget}
+        onOpenChange={(open) => {
+          if (!open) model.setEditTarget(null);
+        }}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{model.ds.editDialogTitle}</DialogTitle>
+            <DialogDescription>{model.ds.editDialogHint}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <EditDialogFields model={model} />
+          </div>
+          {model.editError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{model.editError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => model.setEditTarget(null)}>
+              {model.t.deskCancel}
+            </Button>
+            <Button disabled={model.editSaving} onClick={() => void model.handleEditSave()}>
+              {model.t.deskSave}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -16,6 +16,7 @@ import {
 } from "../models/need.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { putPointer } from "../models/mine.js";
+import { applyModerationEdits } from "../models/moderation.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
@@ -193,7 +194,7 @@ export async function handlePostNeedStatus(event, opts, needId) {
   if (!need) throw err(404, "not found");
   if (isOutOfScope(auth.user, need)) throw err(403, "out_of_scope");
   if (need.status === "pending" || need.status === "rejected") throw err(400, "need must be published before status update");
-  await setNeedStatus(ddb, tableName, { need, status, offerId });
+  await setNeedStatus(ddb, tableName, { need, status, offerId, expectedStatus: need.status });
   const actorName2 = auth.user?.name || auth.payload.name || "";
   const targetLabel2 = getTargetLabelForAudit("NEED", need);
   await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName: actorName2, action: `status:${status}`, targetType: "NEED", targetId: needId, targetLabel: targetLabel2 });
@@ -215,6 +216,29 @@ export async function handlePostNeedStatus(event, opts, needId) {
     return json(200, { status, contact });
   }
   return json(200, { status });
+}
+
+export async function handlePostNeedEdit(event, opts, needId) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { edits } = body;
+  if (!edits || typeof edits !== "object") throw err(400, "edits required");
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const need = await getNeedById(ddb, tableName, needId);
+  if (!need) throw err(404, "not found");
+  if (isOutOfScope(auth.user, need)) throw err(403, "out_of_scope");
+  if (need.status === "pending" || need.status === "rejected") throw err(400, "need must be published before edit");
+  const expectedStatus = need.status;
+  applyModerationEdits("NEED", need, edits);
+  await setNeedStatus(ddb, tableName, { need, status: need.status, expectedStatus });
+  const actorName = auth.user?.name || auth.payload.name || "";
+  const targetLabel = getTargetLabelForAudit("NEED", need);
+  await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "edit", targetType: "NEED", targetId: needId, targetLabel });
+  return json(200, { status: need.status });
 }
 
 export async function handlePostFlag(event, { getDdb, env }, needId) {

@@ -141,11 +141,15 @@ export class FakeDdb {
     const input = cmd.input;
     if (name === "GetCommand") {
       const k = this.key(input.Key.PK, input.Key.SK);
-      return { Item: this.store.get(k) };
+      const item = this.store.get(k);
+      return { Item: item ? JSON.parse(JSON.stringify(item)) : undefined };
     }
     if (name === "PutCommand") {
       const k = this.key(input.Item.PK, input.Item.SK);
-      if (input.ConditionExpression && this.store.has(k)) {
+      const existing = this.store.get(k);
+      const names = input.ExpressionAttributeNames || {};
+      const vals = input.ExpressionAttributeValues || {};
+      if (input.ConditionExpression && !evalCondition(input.ConditionExpression, existing || {}, names, vals)) {
         const e = new Error("ConditionalCheckFailed");
         e.name = "ConditionalCheckFailedException";
         throw e;

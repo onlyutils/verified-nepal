@@ -246,6 +246,14 @@ export function rejectIncident(token: string, id: string, reason: string): Promi
   });
 }
 
+export function editIncident(token: string, id: string, edits: Record<string, unknown>): Promise<{ status: string }> {
+  return request<{ status: string }>(`/admin/incidents/${encodeURIComponent(id)}/edit`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ edits }),
+  });
+}
+
 export interface RequestIncidentBody {
   name: string;
   kind: string;
@@ -505,6 +513,30 @@ export function updateNeedStatus(
     method: "POST",
     token,
     body: JSON.stringify(body),
+  });
+}
+
+export function updateOfferStatus(token: string, id: string, body: { status: "matched" | "fulfilled" | "archived" }): Promise<{ status: string }> {
+  return request<{ status: string }>(`/offers/${encodeURIComponent(id)}/status`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+}
+
+export function editNeed(token: string, id: string, edits: Record<string, unknown>): Promise<{ status: string }> {
+  return request<{ status: string }>(`/needs/${encodeURIComponent(id)}/edit`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ edits }),
+  });
+}
+
+export function editOffer(token: string, id: string, edits: Record<string, unknown>): Promise<{ status: string }> {
+  return request<{ status: string }>(`/offers/${encodeURIComponent(id)}/edit`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ edits }),
   });
 }
 
@@ -857,10 +889,11 @@ export function moderateProject(
   token: string,
   id: string,
   body: {
-    action: "verify-committee" | "publish" | "reject" | "set-status" | "publish-photo" | "reject-photo";
+    action: "verify-committee" | "publish" | "reject" | "set-status" | "publish-photo" | "reject-photo" | "edit";
     reason?: string;
     status?: ProjectStatus;
     fileId?: string;
+    edits?: Record<string, unknown>;
   },
 ): Promise<{ status: string }> {
   return request<{ status: string }>(`/moderation/projects/${encodeURIComponent(id)}`, {

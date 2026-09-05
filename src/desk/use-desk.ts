@@ -4,6 +4,9 @@ import {
   ackGuidelines,
   approveIncident,
   archiveIncident,
+  editIncident,
+  editNeed,
+  editOffer,
   setMyDistricts,
   claimQueueItem,
   getAdminClimate,
@@ -34,6 +37,7 @@ import {
   setAdminUserRole,
   syncClaims,
   updateNeedStatus,
+  updateOfferStatus,
   type AdminStatsResponse,
   type AdminClimateStats,
   type AdminIncident,
@@ -119,6 +123,11 @@ export function useDesk(language: Language) {
   const [selectedOfferId, setSelectedOfferId] = useState<Record<string, string>>({});
   const [matchedContact, setMatchedContact] = useState<Record<string, unknown>>({});
   const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [archiveOfferId, setArchiveOfferId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<{ kind: "need" | "offer" | "project" | "incident"; id: string } | null>(null);
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [fulfillId, setFulfillId] = useState<string | null>(null);
   const [redeemCode, setRedeemCode] = useState<string | null>(null);
   const [redeemNote, setRedeemNote] = useState("");
@@ -580,6 +589,94 @@ export function useDesk(language: Language) {
       setActionError(apiErrorMessage(error, language));
     }
   };
+  const handleOfferStatus = async (offerId: string, status: "matched" | "fulfilled" | "archived") => {
+    if (!auth.idToken) return;
+    clearFeedback();
+    try {
+      await updateOfferStatus(auth.idToken, offerId, { status });
+      success(t.deskActionSuccess);
+      setArchiveOfferId(null);
+      void loadBoards();
+    } catch (error) {
+      setActionError(apiErrorMessage(error, language));
+    }
+  };
+  const openEditNeed = (need: NeedPublic) => {
+    setEditTarget({ kind: "need", id: need.id });
+    setEditFields({ description: need.description, category: need.category, district: need.district, ward: String(need.ward ?? ""), name: "", phone: "" });
+    setEditError(null);
+  };
+  const openEditOffer = (offer: OfferPublic) => {
+    setEditTarget({ kind: "offer", id: offer.id });
+    setEditFields({ description: offer.description, categories: offer.categories.join(", "), districts: offer.districts.join(", ") });
+    setEditError(null);
+  };
+  const openEditProject = (project: ModerationProjectItem) => {
+    setEditTarget({ kind: "project", id: project.id });
+    setEditFields({
+      locationText: project.locationText,
+      costEstimateNpr: String(project.costEstimateNpr ?? ""),
+      district: project.district,
+      ward: String(project.ward ?? ""),
+      committeeName: project.committee.name,
+      committeeContactName: project.committee.contactName,
+      committeePhone: project.committee.phone,
+      committeeEmail: project.committee.email || "",
+    });
+    setEditError(null);
+  };
+  const openEditIncident = (incident: AdminIncident) => {
+    setEditTarget({ kind: "incident", id: incident.id });
+    setEditFields({
+      name: incident.name,
+      nameNe: incident.nameNe || "",
+      kind: incident.kind,
+      summary: incident.summary || "",
+      affectedDistricts: incident.affectedDistricts.join(", "),
+    });
+    setEditError(null);
+  };
+  const handleEditSave = async () => {
+    if (!auth.idToken || !editTarget) return;
+    setEditSaving(true);
+    setEditError(null);
+    const f = editFields;
+    const list = (value: string) => value.split(",").map((s) => s.trim()).filter(Boolean);
+    try {
+      if (editTarget.kind === "need") {
+        const edits: Record<string, unknown> = { description: f.description, category: f.category, district: f.district };
+        if (f.ward) edits.ward = Number(f.ward);
+        const beneficiary: Record<string, unknown> = {};
+        if (f.name) beneficiary.name = f.name;
+        if (f.phone) beneficiary.phone = f.phone;
+        if (Object.keys(beneficiary).length) edits.beneficiary = beneficiary;
+        await editNeed(auth.idToken, editTarget.id, edits);
+        void loadBoards();
+      } else if (editTarget.kind === "offer") {
+        await editOffer(auth.idToken, editTarget.id, { description: f.description, categories: list(f.categories), districts: list(f.districts) });
+        void loadBoards();
+      } else if (editTarget.kind === "project") {
+        const edits: Record<string, unknown> = { locationText: f.locationText, district: f.district };
+        if (f.costEstimateNpr) edits.costEstimateNpr = Number(f.costEstimateNpr);
+        if (f.ward) edits.ward = Number(f.ward);
+        edits.committee = { name: f.committeeName, contactName: f.committeeContactName, phone: f.committeePhone, email: f.committeeEmail || undefined };
+        await moderateProject(auth.idToken, editTarget.id, { action: "edit", edits });
+        void loadProjects();
+      } else if (editTarget.kind === "incident") {
+        const edits: Record<string, unknown> = { name: f.name, kind: f.kind, affectedDistricts: list(f.affectedDistricts) };
+        if (f.nameNe) edits.nameNe = f.nameNe;
+        if (f.summary) edits.summary = f.summary;
+        await editIncident(auth.idToken, editTarget.id, edits);
+        void loadIncidentsAdmin();
+      }
+      success(t.deskActionSuccess);
+      setEditTarget(null);
+    } catch (error) {
+      setEditError(apiErrorMessage(error, language));
+    } finally {
+      setEditSaving(false);
+    }
+  };
   const handleRedeem = async () => {
     if (!auth.idToken || !redeemCode) return;
     clearFeedback();
@@ -907,6 +1004,8 @@ export function useDesk(language: Language) {
     matchedContact,
     archiveId,
     setArchiveId,
+    archiveOfferId,
+    setArchiveOfferId,
     fulfillId,
     setFulfillId,
     redeemCode,
@@ -914,6 +1013,18 @@ export function useDesk(language: Language) {
     redeemNote,
     setRedeemNote,
     handleNeedStatus,
+    handleOfferStatus,
+    editTarget,
+    editFields,
+    setEditFields,
+    editSaving,
+    editError,
+    openEditNeed,
+    openEditOffer,
+    openEditProject,
+    openEditIncident,
+    handleEditSave,
+    setEditTarget,
     handleRedeem,
     projects: filteredProjects,
     projectsCount: projects.length,

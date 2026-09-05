@@ -461,3 +461,104 @@ describe("POST /needs/:id/status", () => {
     assert.ok(audits.length >= 3);
   });
 });
+
+describe("POST /offers/:id/status", () => {
+  it("moderator can archive a published offer; non-moderator and pre-publish are rejected", async () => {
+    clearJwksCache();
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const fetchJwks = async()=>({keys:[kp.jwk]});
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
+    const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
+    const helperTok = createToken(basePayload({sub:"h1", name:"Offer Helper"}), kp.privateKey);
+    let res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${helperTok}`}, body:{categories:["goods"], districts:["Gorkha"], description:"Offer description long enough for archive test case", phone:"+9779800000009", incidentId: TEST_INCIDENT_ID}}));
+    const {id:offerId} = JSON.parse(res.body);
+    // pending offer cannot be archived
+    res = await handler(makeEvent({method:"POST", path:`/offers/${offerId}/status`, headers:{authorization:`Bearer ${modTok}`}, body:{status:"archived"}}));
+    assert.equal(res.statusCode, 400);
+    await handler(makeEvent({method:"POST", path:`/moderation/${offerId}`, headers:{authorization:`Bearer ${modTok}`}, body:{action:"publish"}}));
+    // non-moderator cannot archive
+    const helperTok2 = createToken(basePayload({sub:"helper-2"}), kp.privateKey);
+    ddb.store.set("USER#helper-2|PROFILE", {PK:"USER#helper-2", SK:"PROFILE", sub:"helper-2", role:"helper"});
+    res = await handler(makeEvent({method:"POST", path:`/offers/${offerId}/status`, headers:{authorization:`Bearer ${helperTok2}`}, body:{status:"archived"}}));
+    assert.equal(res.statusCode, 403);
+    // moderator archives the published offer
+    res = await handler(makeEvent({method:"POST", path:`/offers/${offerId}/status`, headers:{authorization:`Bearer ${modTok}`}, body:{status:"archived"}}));
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).status, "archived");
+    assert.equal(ddb.store.get(`OFFER#${offerId}|META`).status, "archived");
+    const audits = Array.from(ddb.store.values()).filter(v=>v.PK && v.PK.startsWith("AUDIT#") && v.targetType === "OFFER");
+    assert.ok(audits.length >= 1);
+  });
+});
+
+describe("POST /needs/:id/edit and /offers/:id/edit", () => {
+  it("moderator can correct fields on a published need and offer; pre-publish and non-moderator are rejected", async () => {
+    clearJwksCache();
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const fetchJwks = async()=>({keys:[kp.jwk]});
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
+    const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
+
+    let res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"Benef Person", phone:"+9779800000001", district:"Gorkha", ward:3}, category:"goods", description:"Need description long enough for edit test case", language:"en", incidentId: TEST_INCIDENT_ID}}));
+    const {id:needId} = JSON.parse(res.body);
+    // pending need cannot be edited via this endpoint
+    res = await handler(makeEvent({method:"POST", path:`/needs/${needId}/edit`, headers:{authorization:`Bearer ${modTok}`}, body:{edits:{description:"A corrected description that is long enough"}}}));
+    assert.equal(res.statusCode, 400);
+    await handler(makeEvent({method:"POST", path:`/moderation/${needId}`, headers:{authorization:`Bearer ${modTok}`}, body:{action:"publish"}}));
+    const helperTok2 = createToken(basePayload({sub:"helper-3"}), kp.privateKey);
+    ddb.store.set("USER#helper-3|PROFILE", {PK:"USER#helper-3", SK:"PROFILE", sub:"helper-3", role:"helper"});
+    res = await handler(makeEvent({method:"POST", path:`/needs/${needId}/edit`, headers:{authorization:`Bearer ${helperTok2}`}, body:{edits:{description:"A corrected description that is long enough"}}}));
+    assert.equal(res.statusCode, 403);
+    res = await handler(makeEvent({method:"POST", path:`/needs/${needId}/edit`, headers:{authorization:`Bearer ${modTok}`}, body:{edits:{description:"A corrected description that is long enough", beneficiary:{ward:7}}}}));
+    assert.equal(res.statusCode, 200);
+    const savedNeed = ddb.store.get(`NEED#${needId}|META`);
+    assert.equal(savedNeed.description, "A corrected description that is long enough");
+    assert.equal(savedNeed.beneficiary.ward, 7);
+    assert.equal(savedNeed.status, "published");
+
+    const helperTok = createToken(basePayload({sub:"h1", name:"Offer Helper"}), kp.privateKey);
+    res = await handler(makeEvent({method:"POST", path:"/offers", headers:{authorization:`Bearer ${helperTok}`}, body:{categories:["goods"], districts:["Gorkha"], description:"Offer description long enough for edit test case", phone:"+9779800000009", incidentId: TEST_INCIDENT_ID}}));
+    const {id:offerId} = JSON.parse(res.body);
+    res = await handler(makeEvent({method:"POST", path:`/offers/${offerId}/edit`, headers:{authorization:`Bearer ${modTok}`}, body:{edits:{description:"A corrected offer description long enough"}}}));
+    assert.equal(res.statusCode, 400);
+    await handler(makeEvent({method:"POST", path:`/moderation/${offerId}`, headers:{authorization:`Bearer ${modTok}`}, body:{action:"publish"}}));
+    res = await handler(makeEvent({method:"POST", path:`/offers/${offerId}/edit`, headers:{authorization:`Bearer ${modTok}`}, body:{edits:{description:"A corrected offer description long enough", districts:["Nuwakot"]}}}));
+    assert.equal(res.statusCode, 200);
+    const savedOffer = ddb.store.get(`OFFER#${offerId}|META`);
+    assert.equal(savedOffer.description, "A corrected offer description long enough");
+    assert.deepEqual(savedOffer.districts, ["Nuwakot"]);
+    assert.equal(savedOffer.status, "published");
+    assert.equal(savedOffer.gsi1pk, `OFFER#${TEST_INCIDENT_ID}#Nuwakot#published`);
+  });
+});
+
+describe("POST /admin/incidents/:id/edit", () => {
+  it("admin can correct incident fields; moderator is rejected", async () => {
+    clearJwksCache();
+    const kp = makeKeyPair();
+    const ddb = testDdb();
+    const fetchJwks = async()=>({keys:[kp.jwk]});
+    const handler = createHandler({ env:{AUTH_ISSUER:"https://auth.onlyutils.com", TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks });
+    ddb.store.set("USER#admin-1|PROFILE", {PK:"USER#admin-1", SK:"PROFILE", sub:"admin-1", role:"admin"});
+    ddb.store.set("USER#mod-1|PROFILE", {PK:"USER#mod-1", SK:"PROFILE", sub:"mod-1", role:"moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: []});
+    const adminTok = createToken(basePayload({sub:"admin-1"}), kp.privateKey);
+    const modTok = createToken(basePayload({sub:"mod-1"}), kp.privateKey);
+
+    let res = await handler(makeEvent({method:"POST", path:"/admin/incidents", headers:{authorization:`Bearer ${adminTok}`}, body:{name:"Test Flood", kind:"flood", startedAt:"2026-08-01", affectedDistricts:["Gorkha"]}}));
+    assert.equal(res.statusCode, 201);
+    const {id:incidentId} = JSON.parse(res.body);
+
+    res = await handler(makeEvent({method:"POST", path:`/admin/incidents/${incidentId}/edit`, headers:{authorization:`Bearer ${modTok}`}, body:{edits:{name:"Corrected Flood Name"}}}));
+    assert.equal(res.statusCode, 403);
+
+    res = await handler(makeEvent({method:"POST", path:`/admin/incidents/${incidentId}/edit`, headers:{authorization:`Bearer ${adminTok}`}, body:{edits:{name:"Corrected Flood Name", affectedDistricts:["Gorkha","Nuwakot"]}}}));
+    assert.equal(res.statusCode, 200);
+    const saved = ddb.store.get(`INCIDENT#${incidentId}|META`);
+    assert.equal(saved.name, "Corrected Flood Name");
+    assert.deepEqual(saved.affectedDistricts, ["Gorkha","Nuwakot"]);
+  });
+});

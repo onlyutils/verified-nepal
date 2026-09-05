@@ -717,3 +717,39 @@ describe("masking test", () => {
     assert.equal(detailBody.updates.some(u=>u.id==="u-pending"), false);
   });
 });
+
+describe("POST /moderation/projects/:id edit action", () => {
+  beforeEach(() => { clearJwksCache(); if (__clearMediaTokenCache) __clearMediaTokenCache(); });
+
+  it("moderator can correct a published project's fields; non-moderator is rejected", async () => {
+    const kp = makeKeyPair();
+    const ddb = new FakeDdb();
+    const { handler } = makeHandler({ kp, ddb });
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [], gsi2pk: "USER#moderator", gsi2sk: "2026-01-01T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" });
+    const modTok = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
+    ddb.store.set("USER#helper-1|PROFILE", { PK: "USER#helper-1", SK: "PROFILE", sub: "helper-1", role: "helper" });
+    const helperTok = createToken(basePayload({ sub: "helper-1" }), kp.privateKey);
+
+    const r = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
+    const { id } = JSON.parse(r.body);
+    await handler(makeEvent({ method: "POST", path: `/moderation/projects/${id}`, headers: { authorization: `Bearer ${modTok}` }, body: { action: "verify-committee" } }));
+    await handler(makeEvent({ method: "POST", path: `/moderation/projects/${id}`, headers: { authorization: `Bearer ${modTok}` }, body: { action: "publish" } }));
+
+    let res = await handler(makeEvent({ method: "POST", path: `/moderation/projects/${id}`, headers: { authorization: `Bearer ${helperTok}` }, body: { action: "edit", edits: { locationText: "Corrected location text" } } }));
+    assert.equal(res.statusCode, 403);
+
+    res = await handler(makeEvent({
+      method: "POST",
+      path: `/moderation/projects/${id}`,
+      headers: { authorization: `Bearer ${modTok}` },
+      body: { action: "edit", edits: { locationText: "Corrected location text", district: "Kaski", committee: { phone: "+977-9811111111" } } },
+    }));
+    assert.equal(res.statusCode, 200);
+    const saved = ddb.store.get(`PROJECT#${id}|META`);
+    assert.equal(saved.locationText, "Corrected location text");
+    assert.equal(saved.district, "Kaski");
+    assert.equal(saved.committee.phone, "+977-9811111111");
+    assert.equal(saved.status, "published");
+    assert.equal(saved.gsi1pk, `PROJECT#${TEST_INCIDENT_ID}#Kaski#published`);
+  });
+});

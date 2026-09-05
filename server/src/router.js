@@ -5,13 +5,13 @@ import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleA
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
   handleGetIncidents, handleGetAdminIncidents, handlePostAdminIncident, handlePostIncidentRequest,
-  handlePublishIncident, handleArchiveIncident, handleApproveIncident, handleRejectIncident,
+  handlePublishIncident, handleArchiveIncident, handleApproveIncident, handleRejectIncident, handleEditIncident,
 } from "./controllers/incidentController.js";
 import {
   handlePostNeeds, handlePostNeedsMediaPresign, handleGetNeeds, handleGetStatus, handlePostRenew,
-  handlePostNeedStatus, handlePostFlag, handleGetFlags,
+  handlePostNeedStatus, handlePostNeedEdit, handlePostFlag, handleGetFlags,
 } from "./controllers/needController.js";
-import { handlePostOffers, handleGetOffers } from "./controllers/offerController.js";
+import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
   handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
@@ -98,6 +98,10 @@ export async function route(event, ctx) {
     if (parts[4] === "publish") return await handlePublishIncident(event, { fetchJwks, getDdb, env }, incidentId);
     return await handleArchiveIncident(event, { fetchJwks, getDdb, env }, incidentId);
   }
+  if (method === "POST" && /^\/admin\/incidents\/[^/]+\/edit$/.test(path)) {
+    const incidentId = decodeURIComponent(path.split("/")[3]);
+    return await handleEditIncident(event, { fetchJwks, getDdb, env }, incidentId);
+  }
   if (method === "POST" && /^\/admin\/incidents\/[^/]+\/(approve|reject)$/.test(path)) {
     const parts = path.split("/");
     const incidentId = decodeURIComponent(parts[3]);
@@ -121,6 +125,14 @@ export async function route(event, ctx) {
   }
   if (method === "POST" && path === "/offers") return await handlePostOffers(event, { fetchJwks, getDdb, env });
   if (method === "GET" && path === "/offers") return await handleGetOffers(event, { getDdb, env });
+  if (method === "POST" && /^\/offers\/[^\/]+\/status$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostOfferStatus(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/offers\/[^\/]+\/edit$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostOfferEdit(event, { fetchJwks, getDdb, env }, id);
+  }
   if (method === "GET" && path === "/moderation/queue") return await handleGetModerationQueue(event, { fetchJwks, getDdb, env });
   if (method === "POST" && /^\/moderation\/[^\/]+\/claim$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[2]);
@@ -137,6 +149,10 @@ export async function route(event, ctx) {
   if (method === "POST" && /^\/needs\/[^\/]+\/status$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[2]);
     return await handlePostNeedStatus(event, { fetchJwks, getDdb, env }, id);
+  }
+  if (method === "POST" && /^\/needs\/[^\/]+\/edit$/.test(path)) {
+    const id = decodeURIComponent(path.split("/")[2]);
+    return await handlePostNeedEdit(event, { fetchJwks, getDdb, env }, id);
   }
   if (method === "POST" && /^\/needs\/[^\/]+\/group$/.test(path)) {
     const id = decodeURIComponent(path.split("/")[2]);

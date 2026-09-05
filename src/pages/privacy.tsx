@@ -15,7 +15,7 @@ const enSections: Section[] = [
   {
     title: "1. Who operates this site",
     body: [
-      'verifiedNepal is a non-commercial, volunteer project maintained by a single private individual (the "Maintainer"). It is not a government website and is not affiliated with, endorsed by, or operated on behalf of the Government of Nepal, the National Disaster Risk Reduction and Management Authority (NDRRMA), or any other authority. It exists to make verified disaster-response and community-recovery information easier to read during the 2026 Rasuwa flash flood response, for a Nepal audience. The governing law is the law of Nepal, including the Individual Privacy Act, 2075 (2018).',
+      'verifiedNepal is a non-commercial, volunteer project maintained by a single private individual (the "Maintainer"). It is not a government website and is not affiliated with, endorsed by, or operated on behalf of the Government of Nepal, the National Disaster Risk Reduction and Management Authority (NDRRMA), or any other authority. It exists to make verified disaster-response and community-recovery information easier to read during the 2026 Rasuwa flash flood response, and for any other disaster in Nepal — from a household fire to a national calamity — for a Nepal audience. The governing law is the law of Nepal, including the Individual Privacy Act, 2075 (2018).',
     ],
   },
   {
@@ -39,7 +39,11 @@ const enSections: Section[] = [
       "• Offers (give-help): helper display name, phone, optional organisation name and contact, districts and categories you can help with, and description.",
       "• Projects (community infrastructure): title and description, type, district/ward/location text, cost estimate, committee name, contact person and phone, bank and digital-wallet details. Photos and updates you attach are stored as submitted.",
       "• Articles: title, block content, cover and media sources/captions, author display name, place, tags (up to 3), and language. Writing requires a Google sign-in; the author's email is the email on that Google account and is kept private. Sign-in session data lives in your browser's session storage / local storage; no other cookies are set.",
-      "• Helper, article-author and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role).",
+      "• Incidents (reporting a disaster — flood, fire, landslide, or any other event): disaster name and type, district, description, and at least one photo (an optional video may be added). Reporting requires a Google sign-in. A report stays pending until a moderator approves it; the submitted photo/video and any rejection note are visible only to moderators, never on the public board.",
+      "• Stories: a caption (up to 500 characters) and one photo or video, published with your display name and your role (recipient, helper, or organisation). Posting requires a Google sign-in and is only available from your account dashboard. Your account email is visible only to moderators reviewing the story, never on the public feed.",
+      "• Missing-person posters: name, nickname, age, gender, district, last-seen location and date, clothing description, a free-text account, one photo, and two contact phone numbers. The poster image is generated entirely in your browser — nothing is sent to us unless you sign in with Google to save it to your account dashboard. The phone numbers you enter are printed on the poster itself, so treat them as public once you share or download it.",
+      "• Organisations and drop centers: for an organisation — name, type, registration number (optional), contact name/phone/email, districts served, description, and website. For each drop center — name, district, ward, address, coordinates, hours, contact phone, and goods accepted. Goods-ledger entries (category, quantity, notes) are recorded by organisation members for internal stock tracking and are not published as personal data.",
+      "• Helper, article-author, incident-reporter, story-author and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role).",
       "We set no analytics trackers, no advertising trackers, and no cookies beyond sign-in session storage. Your language, selected district, and whether you dismissed the emergency banner are stored locally in your browser and never leave your device.",
     ],
   },
@@ -77,8 +81,9 @@ const enSections: Section[] = [
   {
     title: "9. Your rights — correction and removal",
     body: [
-      "You have the right under the Individual Privacy Act, 2075 to request correction or removal of your personal data held for needs, offers, projects, or articles.",
-      "Contact: verifiednepal01@gmail.com. Include your reference code or article/project ID and what to correct or remove. We target a response within 7 days.",
+      "You have the right under the Individual Privacy Act, 2075 to request correction or removal of your personal data held for needs, offers, projects, incidents, stories, missing-person posters, or organisation and drop-center records.",
+      "Articles, stories, and missing-person posters can be corrected or removed directly from your account dashboard at any time. For needs, offers, projects, and incidents — which do not yet have a self-service edit screen — contact us and a moderator will correct the record or take it down on your behalf.",
+      "Contact: verifiednepal01@gmail.com. Include your reference code or item ID and what to correct or remove. We target a response within 7 days.",
       "For the mirrored NDRRMA rescue and missing-person lists, corrections must be made at the official source; once the source updates, the mirror reflects it at the next sync. We will still handle courtesy takedown requests for the mirrored copy.",
     ],
   },
@@ -178,7 +183,7 @@ const neSections: Section[] = [
   {
     title: "१. यो साइट कसले चलाउँछ",
     body: [
-      "verifiedNepal एक गैर-व्यावसायिक, स्वयंसेवी परियोजना हो जुन एक निजी व्यक्ति (“सञ्चालक”) ले चलाउनु भएको छ। यो सरकारी वेबसाइट होइन र नेपाल सरकार, राष्ट्रिय विपद् जोखिम न्यूनीकरण तथा व्यवस्थापन प्राधिकरण (NDRRMA) वा अन्य कुनै निकायसँग आबद्ध, समर्थित वा तिनका तर्फबाट सञ्चालित होइन। यो २०२६ रसुवा आकस्मिक बाढीका बेला प्रमाणित सूचना पढ्न सजिलो बनाउन नेपालका पाठकका लागि बनाइएको हो। लागू कानून नेपालको कानून हो, व्यक्तिगत गोपनीयता ऐन २०७५ सहित।",
+      "verifiedNepal एक गैर-व्यावसायिक, स्वयंसेवी परियोजना हो जुन एक निजी व्यक्ति (“सञ्चालक”) ले चलाउनु भएको छ। यो सरकारी वेबसाइट होइन र नेपाल सरकार, राष्ट्रिय विपद् जोखिम न्यूनीकरण तथा व्यवस्थापन प्राधिकरण (NDRRMA) वा अन्य कुनै निकायसँग आबद्ध, समर्थित वा तिनका तर्फबाट सञ्चालित होइन। यो २०२६ रसुवा आकस्मिक बाढी तथा नेपालमा हुने अन्य कुनै पनि विपद् — घरायसी आगलागीदेखि राष्ट्रिय विपद्सम्मका — बेला प्रमाणित सूचना पढ्न सजिलो बनाउन नेपालका पाठकका लागि बनाइएको हो। लागू कानून नेपालको कानून हो, व्यक्तिगत गोपनीयता ऐन २०७५ सहित।",
     ],
   },
   {
@@ -201,8 +206,12 @@ const neSections: Section[] = [
       "• आवश्यकता (get-help): लाभग्राहीको नाम, वैकल्पिक फोन, जिल्ला/वडा, परिवार संख्या, श्रेणी र विवरण; अरूका लागि दर्ता गर्दा (उनीहरूको सहमतिमा) दर्ता गर्ने व्यक्तिको नाम/फोन र भाषा। दुरुपयोग रोक्न Turnstile टोकन (कन्फिगर भएमा)।",
       "• सहयोग प्रस्ताव (give-help): सहयोगीको नाम, फोन, वैकल्पिक संस्थाको नाम/सम्पर्क, सहयोग गर्न सक्ने जिल्ला/श्रेणी र विवरण।",
       "• परियोजना: शीर्षक/विवरण, प्रकार, जिल्ला/वडा/स्थान, लागत अनुमान, समितिको नाम, सम्पर्क व्यक्ति/फोन, बैंक र वालेट विवरण। जोडिएका तस्बिर/अपडेट पेश गरिएकै रूपमा भण्डारण हुन्छ।",
-      "• डिस्प्याच (लेख): शीर्षक, ब्लक सामग्री, कभर र मिडियाका स्रोत/क्याप्सन, लेखकको देखिने नाम, ठाउँ, ट्याग (३ सम्म) र भाषा। लेख लेख्न Google साइन-इन आवश्यक हुन्छ; लेखकको इमेल त्यही Google खाताको इमेल हो र निजी राखिन्छ। साइन-इन सत्र डेटा तपाईंको ब्राउजरको session storage / local storage मा रहन्छ; अरू कुनै कुकी छैन।",
-      "• सहयोगी, लेख-लेखक/सम्पादक र मोडरेटर साइन-इन: OnlyUtils प्रमाणीकरण सेवा मार्फत Google साइन-इन। साइटले सत्र टोकन र प्राप्त प्रोफाइल (इमेल, नाम, भूमिका) मात्र राख्छ।",
+      "• लेख: शीर्षक, ब्लक सामग्री, कभर र मिडियाका स्रोत/क्याप्सन, लेखकको देखिने नाम, ठाउँ, ट्याग (३ सम्म) र भाषा। लेख लेख्न Google साइन-इन आवश्यक हुन्छ; लेखकको इमेल त्यही Google खाताको इमेल हो र निजी राखिन्छ। साइन-इन सत्र डेटा तपाईंको ब्राउजरको session storage / local storage मा रहन्छ; अरू कुनै कुकी छैन।",
+      "• घटना प्रतिवेदन (बाढी, आगलागी, पहिरो वा अन्य कुनै विपद्): विपद्को नाम र प्रकार, जिल्ला, विवरण, र कम्तीमा एउटा तस्बिर (वैकल्पिक भिडियो पनि थप्न सकिन्छ)। प्रतिवेदन गर्न Google साइन-इन आवश्यक हुन्छ। मोडरेटरले स्वीकृत नगरेसम्म प्रतिवेदन बाँकी (pending) रहन्छ; पेश गरिएको तस्बिर/भिडियो र अस्वीकृतिको कारण मोडरेटरलाई मात्र देखिन्छ, सार्वजनिक बोर्डमा कहिल्यै देखिँदैन।",
+      "• कथा (Stories): क्याप्सन (५०० अक्षरसम्म) र एउटा तस्बिर वा भिडियो, तपाईंको देखिने नाम र भूमिका (सहयोग पाउने, सहयोगी, वा संस्था) सहित प्रकाशित हुन्छ। पोस्ट गर्न Google साइन-इन आवश्यक हुन्छ र यो तपाईंको खाता ड्यासबोर्डबाटै मात्र सम्भव छ। तपाईंको खाता इमेल कथा समीक्षा गर्ने मोडरेटरलाई मात्र देखिन्छ, सार्वजनिक फिडमा कहिल्यै देखिँदैन।",
+      "• हराएको व्यक्तिको पोस्टर: नाम, उपनाम, उमेर, लिङ्ग, जिल्ला, अन्तिम देखिएको स्थान र मिति, लगाएको पोशाकको विवरण, स्वतन्त्र विवरण, एउटा तस्बिर, र सम्पर्कका दुई फोन नम्बर। पोस्टर तस्बिर पूर्ण रूपमा तपाईंको ब्राउजरमै तयार हुन्छ — तपाईंले यसलाई आफ्नो खाता ड्यासबोर्डमा सुरक्षित राख्न Google साइन-इन नगरेसम्म हामीलाई केही पनि पठाइँदैन। तपाईंले भरेको फोन नम्बर पोस्टरमै छापिन्छ, त्यसैले सेयर वा डाउनलोड गरेपछि यो सार्वजनिक ठान्नुहोस्।",
+      "• संस्था र संकलन केन्द्र: संस्थाको लागि — नाम, प्रकार, दर्ता नम्बर (वैकल्पिक), सम्पर्क व्यक्तिको नाम/फोन/इमेल, सेवा दिने जिल्लाहरू, विवरण, र वेबसाइट। प्रत्येक संकलन केन्द्रको लागि — नाम, जिल्ला, वडा, ठेगाना, स्थान (coordinates), समय, सम्पर्क फोन, र स्वीकार गरिने सामग्री। सामग्री-लेजर प्रविष्टिहरू (श्रेणी, परिमाण, टिप्पणी) संस्थाका सदस्यहरूले आन्तरिक स्टक व्यवस्थापनका लागि राख्छन् र व्यक्तिगत डेटाका रूपमा प्रकाशित हुँदैनन्।",
+      "• सहयोगी, लेख-लेखक/सम्पादक, घटना-प्रतिवेदक, कथा-लेखक र मोडरेटर साइन-इन: OnlyUtils प्रमाणीकरण सेवा मार्फत Google साइन-इन। साइटले सत्र टोकन र प्राप्त प्रोफाइल (इमेल, नाम, भूमिका) मात्र राख्छ।",
       "हामी कुनै एनालिटिक्स वा विज्ञापन ट्र्याकर राख्दैनौं, र साइन-इन सत्रभन्दा बाहेक कुनै कुकी छैन। भाषा, रोजेको जिल्ला र आपतकालीन ब्यानर हटाएको अवस्था तपाईंको ब्राउजरमा मात्र रहन्छ, बाहिर जाँदैन।",
     ],
   },
@@ -240,8 +249,9 @@ const neSections: Section[] = [
   {
     title: "९. तपाईंका अधिकार — सच्याउने र हटाउने",
     body: [
-      "व्यक्तिगत गोपनीयता ऐन २०७५ बमोजिम तपाईंले आवश्यकता/प्रस्ताव/परियोजना/लेखमा रहेको आफ्नो व्यक्तिगत डेटा सच्याउन वा हटाउन अनुरोध गर्न सक्नुहुन्छ।",
-      "सम्पर्क: verifiednepal01@gmail.com । सन्दर्भ कोड वा लेख/परियोजना ID र के सच्याउने/हटाउने भन्ने खुलाउनुहोस्। हामी ७ दिनभित्र जवाफ दिने लक्ष्य राख्छौं।",
+      "व्यक्तिगत गोपनीयता ऐन २०७५ बमोजिम तपाईंले आवश्यकता, प्रस्ताव, परियोजना, घटना प्रतिवेदन, कथा, हराएको व्यक्तिको पोस्टर, वा संस्था/संकलन केन्द्र रेकर्डमा रहेको आफ्नो व्यक्तिगत डेटा सच्याउन वा हटाउन अनुरोध गर्न सक्नुहुन्छ।",
+      "लेख, कथा, र हराएको व्यक्तिको पोस्टर जुनसुकै बेला तपाईंको खाता ड्यासबोर्डबाटै सच्याउन वा हटाउन सकिन्छ। आवश्यकता, प्रस्ताव, परियोजना र घटना प्रतिवेदन — जसका लागि अझै स्व-सेवा सम्पादन स्क्रिन छैन — हामीलाई सम्पर्क गर्नुहोस्, मोडरेटरले तपाईंको तर्फबाट रेकर्ड सच्याउने वा हटाउने काम गर्नेछन्।",
+      "सम्पर्क: verifiednepal01@gmail.com । सन्दर्भ कोड वा वस्तु ID र के सच्याउने/हटाउने भन्ने खुलाउनुहोस्। हामी ७ दिनभित्र जवाफ दिने लक्ष्य राख्छौं।",
       "NDRRMA को उद्धार/बेपत्ता मिरर सूचीका लागि आधिकारिक स्रोतमा नै सच्याउनुपर्छ; स्रोत अपडेट भएपछि मिरर अर्को सिंकमा मिल्छ। मिरर प्रतिका लागि सद्भावपूर्ण हटाउने अनुरोध पनि हामी हेर्छौं।",
     ],
   },

@@ -3,6 +3,7 @@ import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { err } from "../lib/http.js";
 import { generateUpdateCode, hashUpdateCode } from "../lib/format.js";
 import { PUBLIC_PROJECT_STATUSES, PROJECT_ALL_STATUSES } from "../constants.js";
+import { validateString, validatePhone, validateOptionalEmail, validateDistrict, validateTitle, validateDescription } from "../lib/validate.js";
 
 export async function createProject(ddb, tableName, {
   titleObj, descObj, type, districtClean, ward, locationTextClean, costClean,
@@ -120,7 +121,38 @@ export async function listModerationProjects(ddb, tableName) {
   return all;
 }
 
-export async function moderateProject(ddb, tableName, { proj, action, reason, status, fileId }) {
+export function applyProjectEdits(proj, edits) {
+  if (edits.title !== undefined) proj.title = validateTitle(edits.title, "edits.title");
+  if (edits.description !== undefined) proj.description = validateDescription(edits.description, "edits.description");
+  if (edits.locationText !== undefined) proj.locationText = validateString(edits.locationText, "edits.locationText", 1, 500);
+  if (edits.costEstimateNpr !== undefined) {
+    if (typeof edits.costEstimateNpr !== "number" || !Number.isFinite(edits.costEstimateNpr) || edits.costEstimateNpr <= 0 || edits.costEstimateNpr > 1e12) {
+      throw err(400, "edits.costEstimateNpr must be positive number");
+    }
+    proj.costEstimateNpr = Math.floor(edits.costEstimateNpr);
+  }
+  if (edits.district !== undefined) proj.district = validateDistrict(edits.district, "edits.district");
+  if (edits.ward !== undefined) {
+    if (typeof edits.ward !== "number" || !Number.isInteger(edits.ward) || edits.ward < 1 || edits.ward > 33) throw err(400, "edits.ward must be 1-33");
+    proj.ward = edits.ward;
+  }
+  if (edits.committee && typeof edits.committee === "object") {
+    const c = edits.committee;
+    if (c.name !== undefined) proj.committee.name = validateString(c.name, "edits.committee.name", 1, 100);
+    if (c.contactName !== undefined) proj.committee.contactName = validateString(c.contactName, "edits.committee.contactName", 1, 100);
+    if (c.phone !== undefined) proj.committee.phone = validatePhone(c.phone, "edits.committee.phone");
+    if (c.email !== undefined) proj.committee.email = validateOptionalEmail(c.email, "edits.committee.email");
+    if (c.bank && typeof c.bank === "object") {
+      proj.committee.bank = proj.committee.bank || {};
+      if (c.bank.bankName !== undefined) proj.committee.bank.bankName = validateString(c.bank.bankName, "edits.committee.bank.bankName", 1, 100);
+      if (c.bank.accountName !== undefined) proj.committee.bank.accountName = validateString(c.bank.accountName, "edits.committee.bank.accountName", 1, 100);
+      if (c.bank.accountNumber !== undefined) proj.committee.bank.accountNumber = validateString(c.bank.accountNumber, "edits.committee.bank.accountNumber", 1, 100);
+    }
+  }
+  proj.gsi1pk = `PROJECT#${proj.incidentId}#${proj.district}#${proj.status}`;
+}
+
+export async function moderateProject(ddb, tableName, { proj, action, reason, status, fileId, edits }) {
   let auditAction = action;
   if (action === "verify-committee") {
     proj.committee.verified = true;
@@ -153,6 +185,10 @@ export async function moderateProject(ddb, tableName, { proj, action, reason, st
     proj.gsi2sk = proj.createdAt;
     await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
     auditAction = `set-status:${status}`;
+  } else if (action === "edit") {
+    if (!edits || typeof edits !== "object") throw err(400, "edits required");
+    applyProjectEdits(proj, edits);
+    await ddb.send(new PutCommand({ TableName: tableName, Item: proj }));
   } else if (action === "publish-photo") {
     if (!fileId || typeof fileId !== "string" || !fileId.trim()) throw err(400, "fileId required");
     const fid = fileId.trim();

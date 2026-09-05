@@ -113,7 +113,7 @@ export async function renewNeed(ddb, tableName, { ref, need }) {
   return newExpiresAt;
 }
 
-export async function setNeedStatus(ddb, tableName, { need, status, offerId }) {
+export async function setNeedStatus(ddb, tableName, { need, status, offerId, expectedStatus }) {
   need.status = status;
   const district = need.beneficiary?.district || need.district || "";
   need.gsi1pk = `NEED#${need.incidentId}#${district}#${status}`;
@@ -121,7 +121,18 @@ export async function setNeedStatus(ddb, tableName, { need, status, offerId }) {
   need.gsi2pk = `NEED#${status}`;
   need.gsi2sk = need.createdAt;
   if (offerId) need.matchedOfferId = offerId;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
+  const params = { TableName: tableName, Item: need };
+  if (expectedStatus !== undefined) {
+    params.ConditionExpression = "#status = :expectedStatus";
+    params.ExpressionAttributeNames = { "#status": "status" };
+    params.ExpressionAttributeValues = { ":expectedStatus": expectedStatus };
+  }
+  try {
+    await ddb.send(new PutCommand(params));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(409, "need_status_changed");
+    throw e;
+  }
   if (status === "archived" || status === "rejected") {
     try {
       await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: "FLAGGED", SK: need.id } }));

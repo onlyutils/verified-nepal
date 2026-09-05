@@ -1,10 +1,13 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
 import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
-import { requireAuth } from "../lib/auth.js";
-import { CATEGORIES } from "../constants.js";
-import { createOffer, listPublicOffers } from "../models/offer.js";
+import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { CATEGORIES, MOD_STATUS } from "../constants.js";
+import { createOffer, listPublicOffers, setOfferStatus } from "../models/offer.js";
 import { getIncidentById } from "../models/incident.js";
+import { getOfferById } from "../models/need.js";
 import { putPointer } from "../models/mine.js";
+import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
+import { applyModerationEdits } from "../models/moderation.js";
 import { toPublicOfferListItem } from "../views/offer.js";
 
 export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
@@ -40,6 +43,50 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
   });
   await putPointer(auth.ddb, auth.tableName, { sub: helperSub, type: "OFFER", id });
   return json(201, { id });
+}
+
+export async function handlePostOfferStatus(event, opts, offerId) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { status } = body;
+  if (!MOD_STATUS.includes(status)) throw err(400, `status must be one of ${MOD_STATUS.join(",")}`);
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const offer = await getOfferById(ddb, tableName, offerId);
+  if (!offer) throw err(404, "not found");
+  if (isOutOfScope(auth.user, offer)) throw err(403, "out_of_scope");
+  if (offer.status === "pending" || offer.status === "rejected") throw err(400, "offer must be published before status update");
+  await setOfferStatus(ddb, tableName, { offer, status, expectedStatus: offer.status });
+  const actorName = auth.user?.name || auth.payload.name || "";
+  const targetLabel = getTargetLabelForAudit("OFFER", offer);
+  await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: `status:${status}`, targetType: "OFFER", targetId: offerId, targetLabel });
+  return json(200, { status });
+}
+
+export async function handlePostOfferEdit(event, opts, offerId) {
+  const auth = await requireAuth(event, opts);
+  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
+  ensureGuidelinesAck(auth);
+  const body = parseBody(event);
+  if (!body || typeof body !== "object") throw err(400, "invalid body");
+  const { edits } = body;
+  if (!edits || typeof edits !== "object") throw err(400, "edits required");
+  const tableName = auth.tableName;
+  const ddb = auth.ddb;
+  const offer = await getOfferById(ddb, tableName, offerId);
+  if (!offer) throw err(404, "not found");
+  if (isOutOfScope(auth.user, offer)) throw err(403, "out_of_scope");
+  if (offer.status === "pending" || offer.status === "rejected") throw err(400, "offer must be published before edit");
+  const expectedStatus = offer.status;
+  applyModerationEdits("OFFER", offer, edits);
+  await setOfferStatus(ddb, tableName, { offer, status: offer.status, expectedStatus });
+  const actorName = auth.user?.name || auth.payload.name || "";
+  const targetLabel = getTargetLabelForAudit("OFFER", offer);
+  await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "edit", targetType: "OFFER", targetId: offerId, targetLabel });
+  return json(200, { status: offer.status });
 }
 
 export async function handleGetOffers(event, { getDdb, env }) {

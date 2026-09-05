@@ -14,7 +14,8 @@ function statusLabel(t: Record<string, string>, status: string) {
   return t[`deskStatus${status.charAt(0).toUpperCase()}${status.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`] ?? status;
 }
 
-function NeedActions({ model, needId, claimCode, status }: { model: DeskModel; needId: string; claimCode?: string; status: string }) {
+function NeedActions({ model, need, claimCode, status }: { model: DeskModel; need: DeskModel["filteredNeeds"][number]; claimCode?: string; status: string }) {
+  const needId = need.id;
   const selected = model.selectedOfferId[needId];
   return (
     <div className="space-y-3">
@@ -41,6 +42,9 @@ function NeedActions({ model, needId, claimCode, status }: { model: DeskModel; n
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => model.setFulfillId(needId)}>
           {model.t.deskFulfill}
+        </Button>
+        <Button variant="outline" onClick={() => model.openEditNeed(need)}>
+          {model.t.deskEdit}
         </Button>
         <Button variant="ghost" onClick={() => model.setArchiveId(needId)}>
           {model.t.deskArchive}
@@ -116,6 +120,9 @@ export function Boards({ model }: { model: DeskModel }) {
                         <Button size="sm" variant="outline" onClick={() => model.setFulfillId(need.id)}>
                           {model.t.deskFulfill}
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => model.openEditNeed(need)}>
+                          {model.t.deskEdit}
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => model.setArchiveId(need.id)}>
                           {model.t.deskArchive}
                         </Button>
@@ -149,13 +156,83 @@ export function Boards({ model }: { model: DeskModel }) {
                 <CardContent className="space-y-4">
                   <p className="whitespace-pre-wrap text-sm leading-6">{need.description}</p>
                   <Separator />
-                  <NeedActions model={model} needId={need.id} claimCode={need.claimCode} status={need.status} />
+                  <NeedActions model={model} need={need} claimCode={need.claimCode} status={need.status} />
                 </CardContent>
               </Card>
             ))}
           </div>
         </>
       )}
+      {model.filteredOffers.length > 0 ? (
+        <div className="mt-8 space-y-4">
+          <h3 className="text-lg font-semibold">{model.t.deskOffersTitle}</h3>
+          <div className="hidden overflow-x-auto rounded-xl border bg-background md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{model.ds.deskTableItem}</TableHead>
+                  <TableHead>{model.ds.deskTableStatus}</TableHead>
+                  <TableHead>{model.ds.deskTableLocation}</TableHead>
+                  <TableHead>{model.ds.deskTableCreated}</TableHead>
+                  <TableHead>{model.ds.deskTableActions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {model.filteredOffers.map((offer) => (
+                  <TableRow key={offer.id} className="align-top">
+                    <TableCell>
+                      <p className="font-semibold">{offer.helperLabel}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{offer.categories.join(", ")}</p>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(model.t, offer.status)}</StatusBadge>
+                    </TableCell>
+                    <TableCell>{offer.districts.join(", ")}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(offer.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => model.openEditOffer(offer)}>
+                          {model.t.deskEdit}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => model.setArchiveOfferId(offer.id)}>
+                          {model.t.deskArchive}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="grid gap-4 md:hidden">
+            {model.filteredOffers.map((offer) => (
+              <Card key={offer.id}>
+                <CardHeader className="gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <CardTitle>{offer.helperLabel}</CardTitle>
+                    <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(model.t, offer.status)}</StatusBadge>
+                  </div>
+                  <CardDescription>
+                    {offer.districts.join(", ")} · {new Date(offer.createdAt).toLocaleDateString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="whitespace-pre-wrap text-sm leading-6">{offer.description}</p>
+                  <Separator />
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => model.openEditOffer(offer)}>
+                      {model.t.deskEdit}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => model.setArchiveOfferId(offer.id)}>
+                      {model.t.deskArchive}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </SectionFrame>
   );
 }
