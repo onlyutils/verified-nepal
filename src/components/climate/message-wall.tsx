@@ -29,16 +29,27 @@ export function MessageWall({
     () => countries.filter((country) => country.iso3 !== "NPL").sort((a, b) => a.name.localeCompare(b.name)),
     [countries],
   );
+  const MAX_MESSAGES = 3;
   const [iso3, setIso3] = useState(facts.top.iso3);
-  const [messageId, setMessageId] = useState<string | null>(null);
+  const [messageIds, setMessageIds] = useState<string[]>([]);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [widgetKey, setWidgetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
-  const [sent, setSent] = useState<{ count: number; messageId: string; iso3: string } | null>(null);
+  const [sent, setSent] = useState<{ count: number; messageIds: string[]; iso3: string } | null>(null);
 
   const country = countries.find((item) => item.iso3 === iso3) ?? facts.top;
-  const canSubmit = Boolean(messageId) && !submitting && (!siteKey || Boolean(turnstileToken));
+  const canSubmit = messageIds.length > 0 && !submitting && (!siteKey || Boolean(turnstileToken));
+
+  const toggleMessage = (id: string) => {
+    setMessageIds((current) => {
+      if (current.includes(id)) return current.filter((existing) => existing !== id);
+      if (current.length >= MAX_MESSAGES) return current;
+      return [...current, id];
+    });
+    setSent(null);
+    setError(false);
+  };
 
   const resetToken = () => {
     setTurnstileToken("");
@@ -47,14 +58,17 @@ export function MessageWall({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!messageId || !canSubmit) return;
+    if (!messageIds.length || !canSubmit) return;
     setSubmitting(true);
     setError(false);
     setSent(null);
     try {
-      const result = await postClimateMessage({ iso3: country.iso3, messageId, turnstileToken });
-      setSent({ count: result.count, messageId, iso3: country.iso3 });
-      onSent(messageId, country.iso3);
+      const results = await Promise.all(
+        messageIds.map((messageId) => postClimateMessage({ iso3: country.iso3, messageId, turnstileToken })),
+      );
+      const lastCount = results[results.length - 1]?.count ?? 0;
+      setSent({ count: lastCount, messageIds, iso3: country.iso3 });
+      onSent(messageIds[0], country.iso3);
       resetToken();
     } catch {
       setError(true);
@@ -89,6 +103,7 @@ export function MessageWall({
         </NativeSelect>
       </div>
 
+      <p className="text-sm text-muted-foreground">{interpolate(t.messagesPickUpTo, { max: MAX_MESSAGES })}</p>
       <div className="space-y-4">
         {CLIMATE_MESSAGE_GROUPS.map((group) => (
           <fieldset key={group.id} className="space-y-2">
@@ -97,18 +112,16 @@ export function MessageWall({
             </legend>
             <div className="flex flex-wrap gap-2">
               {group.messages.map((item) => {
-                const selected = item.id === messageId;
+                const selected = messageIds.includes(item.id);
+                const disabled = !selected && messageIds.length >= MAX_MESSAGES;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     aria-pressed={selected}
-                    onClick={() => {
-                      setMessageId(item.id);
-                      setSent(null);
-                      setError(false);
-                    }}
-                    className={`min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                    disabled={disabled}
+                    onClick={() => toggleMessage(item.id)}
+                    className={`min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                       selected ? "border-primary bg-primary text-primary-foreground" : "bg-background text-foreground hover:bg-accent"
                     }`}
                   >
@@ -134,7 +147,7 @@ export function MessageWall({
             <AlertDescription>
               {interpolate(t.messagesSent, {
                 count: sent.count,
-                message: messageText(sent.messageId),
+                message: sent.messageIds.map((id) => messageText(id)).join(", "),
                 country: countries.find((item) => item.iso3 === sent.iso3)?.name ?? sent.iso3,
               })}
             </AlertDescription>
@@ -142,9 +155,9 @@ export function MessageWall({
           <ShareButton
             kind="message"
             filename={`verifiednepal-message-${sent.iso3}.png`}
-            headline={messageText(sent.messageId)}
+            headline={messageText(sent.messageIds[0])}
             subline={`${interpolate(t.cardTo, { country: country.name })} · ${t.cardFrom}`}
-            message={undefined}
+            message={sent.messageIds.slice(1).map((id) => messageText(id)).join("\n") || undefined}
             footnote={interpolate(t.cardStat, {
               nepalShare: facts.nepalShare,
               country: country.name,

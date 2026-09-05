@@ -1406,7 +1406,11 @@ export function postClimateMessage(body: {
 }
 
 export function getClimateMessages(country?: string): Promise<ClimateMessagesResponse> {
-  return request<ClimateMessagesResponse>(`/climate/messages${country ? `?country=${encodeURIComponent(country)}` : ""}`);
+  // no-store: the server sends Cache-Control: max-age=60, which would otherwise serve a stale
+  // browser-cached response right after the caller's own message is posted and the cloud refetches.
+  return request<ClimateMessagesResponse>(`/climate/messages${country ? `?country=${encodeURIComponent(country)}` : ""}`, {
+    cache: "no-store",
+  });
 }
 
 export function postClimateDownload(kind: ClimateDownloadKind): Promise<void> {

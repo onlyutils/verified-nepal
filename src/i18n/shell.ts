@@ -68,7 +68,7 @@ export const shellStrings = {
     footerMyOrganization: "My organization",
     footerNdrRma: "NDRRMA",
     footerReportIncident: "Report a local incident",
-    footerPmdrf: "Prime Minister Disaster Relief Fund",
+    footerPmdrf: "PM Disaster Relief Fund",
     footerContact: "Contact",
     footerUpdated: "Updated",
     footerPoweredBy: "Powered by",

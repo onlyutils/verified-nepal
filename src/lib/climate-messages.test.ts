@@ -4,10 +4,10 @@ import { CLIMATE_MESSAGES, CLIMATE_MESSAGE_GROUPS, CLIMATE_DOWNLOAD_KINDS } from
 import { CLIMATE_MESSAGE_IDS, CLIMATE_DOWNLOAD_KINDS as SERVER_KINDS } from "../../server/src/constants.js";
 
 describe("climate message catalogue", () => {
-  it("has 34 unique ids in 4 groups and matches the server list", () => {
+  it("has 54 unique ids in 4 groups and matches the server list", () => {
     assert.equal(CLIMATE_MESSAGE_GROUPS.length, 4);
-    assert.equal(CLIMATE_MESSAGES.length, 34);
-    assert.equal(new Set(CLIMATE_MESSAGES.map((m) => m.id)).size, 34);
+    assert.equal(CLIMATE_MESSAGES.length, 54);
+    assert.equal(new Set(CLIMATE_MESSAGES.map((m) => m.id)).size, 54);
     assert.deepEqual(CLIMATE_MESSAGES.map((m) => m.id), CLIMATE_MESSAGE_IDS);
     assert.deepEqual(CLIMATE_DOWNLOAD_KINDS, SERVER_KINDS);
   });

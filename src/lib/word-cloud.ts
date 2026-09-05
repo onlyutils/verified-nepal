@@ -11,6 +11,7 @@ export interface PlacedWord {
   size: number;
   width: number;
   height: number;
+  rotated: boolean;
 }
 
 export interface LayoutOptions {
@@ -55,12 +56,15 @@ export function layoutWordCloud(words: CloudWord[], opts: LayoutOptions): Placed
   const centerX = opts.width / 2;
   const centerY = opts.height / 2;
 
-  for (const word of sorted) {
+  sorted.forEach((word, index) => {
     const normalized = wMax === wMin ? 1 : Math.sqrt((word.weight - wMin) / (wMax - wMin));
     const size = opts.minSize + (opts.maxSize - opts.minSize) * normalized;
-    const dimensions = opts.measure(word.text, size);
-    if (!Number.isFinite(dimensions.width) || !Number.isFinite(dimensions.height) || dimensions.width <= 0 || dimensions.height <= 0)
-      continue;
+    const measured = opts.measure(word.text, size);
+    if (!Number.isFinite(measured.width) || !Number.isFinite(measured.height) || measured.width <= 0 || measured.height <= 0)
+      return;
+    // ponytail: every third word (after the top 2) goes vertical for visual variety, no smarter packing heuristic
+    const rotated = index > 1 && index % 3 === 0;
+    const dimensions = rotated ? { width: measured.height, height: measured.width } : measured;
 
     const withinBounds = (px: number, py: number) => {
       const nx = (px - centerX) / centerX;
@@ -101,9 +105,10 @@ export function layoutWordCloud(words: CloudWord[], opts: LayoutOptions): Placed
         size,
         width: dimensions.width,
         height: dimensions.height,
+        rotated,
       });
     }
-  }
+  });
 
   return placed;
 }

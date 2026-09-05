@@ -26,6 +26,11 @@ export const CLIMATE_MESSAGE_GROUPS: ClimateMessageGroup[] = [
       { id: "let-us-breathe", text: "Let Us Breathe" },
       { id: "give-us-air", text: "Give Us Air" },
       { id: "leave-our-glaciers", text: "Leave Our Glaciers" },
+      { id: "turn-down-the-heat", text: "Turn Down The Heat" },
+      { id: "cut-emissions-now", text: "Cut Emissions Now" },
+      { id: "cool-it-down", text: "Cool It Down" },
+      { id: "stop-the-warming", text: "Stop The Warming" },
+      { id: "ease-up-already", text: "Ease Up Already" },
     ],
   },
   {
@@ -41,6 +46,11 @@ export const CLIMATE_MESSAGE_GROUPS: ClimateMessageGroup[] = [
       { id: "dont-melt-nepal", text: "Don't Melt Nepal" },
       { id: "keep-mountains-frozen", text: "Keep Mountains Frozen" },
       { id: "save-our-mountains", text: "Save Our Mountains" },
+      { id: "our-rivers-are-drying", text: "Our Rivers Are Drying" },
+      { id: "our-villages-are-flooding", text: "Our Villages Are Flooding" },
+      { id: "spare-the-himalayas", text: "Spare The Himalayas" },
+      { id: "nepal-didnt-cause-this", text: "Nepal Didn't Cause This" },
+      { id: "our-ice-is-vanishing", text: "Our Ice Is Vanishing" },
     ],
   },
   {
@@ -58,6 +68,11 @@ export const CLIMATE_MESSAGE_GROUPS: ClimateMessageGroup[] = [
       { id: "not-cool-guys", text: "Not Cool, Guys" },
       { id: "thats-enough-guys", text: "That's Enough, Guys" },
       { id: "youve-done-enough", text: "You've Done Enough" },
+      { id: "great-work-really", text: "Great Work, Really" },
+      { id: "keep-it-up-not", text: "Keep It Up (Not)" },
+      { id: "so-generous-of-you", text: "So Generous Of You" },
+      { id: "bravo-more-carbon", text: "Bravo, More Carbon" },
+      { id: "impressive-emissions-truly", text: "Impressive Emissions, Truly" },
     ],
   },
   {
@@ -73,6 +88,11 @@ export const CLIMATE_MESSAGE_GROUPS: ClimateMessageGroup[] = [
       { id: "let-nepal-breathe", text: "Let Nepal Breathe" },
       { id: "dont-make-us", text: "Don't Make Us" },
       { id: "our-future-matters", text: "Our Future Matters" },
+      { id: "we-carry-your-cost", text: "We Carry Your Cost" },
+      { id: "our-kids-inherit-this", text: "Our Kids Inherit This" },
+      { id: "climate-debt-is-real", text: "Climate Debt Is Real" },
+      { id: "pay-what-you-owe", text: "Pay What You Owe" },
+      { id: "justice-not-charity", text: "Justice, Not Charity" },
     ],
   },
 ];
@@ -81,6 +101,16 @@ export const CLIMATE_MESSAGES: ClimateMessage[] = CLIMATE_MESSAGE_GROUPS.flatMap
 
 export function messageText(id: string) {
   return CLIMATE_MESSAGES.find((m) => m.id === id)?.text ?? id;
+}
+
+export function messageEmoji(id: string) {
+  return CLIMATE_MESSAGE_GROUPS.find((group) => group.messages.some((m) => m.id === id))?.emoji ?? "";
+}
+
+/** Text + its group's emoji, for display contexts (like the word cloud) that want the icon inline. */
+export function messageWithEmoji(id: string) {
+  const emoji = messageEmoji(id);
+  return emoji ? `${emoji} ${messageText(id)}` : messageText(id);
 }
 
 export type ClimateDownloadKind = "ranking" | "trend" | "composition" | "map" | "wordcloud" | "message";

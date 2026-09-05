@@ -4,7 +4,8 @@ import { token } from "./poster-draw.ts";
 import type { PlacedWord } from "./word-cloud.ts";
 
 const SIZE = 1080;
-const FAMILY = "'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif";
+const FAMILY =
+  "'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif, 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji'";
 
 export interface ShareCardInput {
   headline: string;
@@ -175,13 +176,20 @@ export function drawRankingBars(
   setText(ctx, muted, `400 20px ${FAMILY}`);
   ctx.fillText(data.unit, left, box.y + 2);
 
+  // Shrink the value label font to whatever the narrowest slot can hold, so labels never
+  // collide horizontally when many bars (e.g. top-15 + Nepal) are packed into the chart width.
+  setText(ctx, foreground, `400 20px ${FAMILY}`, "center");
+  const maxLabelWidth = Math.max(1, ...all.map((row) => ctx.measureText(`${row.warming_c.toFixed(3)}${data.unit}`).width));
+  const valueFontSize = Math.max(11, Math.min(20, 20 * ((slotW - 6) / maxLabelWidth)));
+  const valueOffset = valueFontSize + 8;
+
   all.forEach((row, index) => {
     const center = left + slotW * (index + 0.5) + (data.nepal && index === all.length - 1 ? nepalGap : 0);
     const barH = (Math.max(0, row.warming_c) / maxValue) * (chartH - 12);
     ctx.fillStyle = data.nepal && index === all.length - 1 ? brand : token("--secondary");
     ctx.fillRect(center - Math.min(34, slotW * 0.32), baseY - barH, Math.min(68, slotW * 0.64), barH);
-    setText(ctx, foreground, `400 20px ${FAMILY}`, "center");
-    ctx.fillText(`${row.warming_c.toFixed(3)}${data.unit}`, center, baseY - barH - 26);
+    setText(ctx, foreground, `400 ${valueFontSize}px ${FAMILY}`, "center");
+    ctx.fillText(`${row.warming_c.toFixed(3)}${data.unit}`, center, baseY - barH - valueOffset);
     const label = `${row.rank}. ${row.name}`;
     const fits = ctx.measureText(label).width <= slotW - 8;
     ctx.save();
@@ -435,7 +443,15 @@ export function drawWordCloud(
     ctx.textBaseline = "middle";
     ctx.font = `700 ${Math.max(1, word.size * scale)}px ${FAMILY}`;
     ctx.fillStyle = climateSeriesColor(index);
-    ctx.fillText(word.text, x, y);
+    if (word.rotated) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(word.text, 0, 0);
+      ctx.restore();
+    } else {
+      ctx.fillText(word.text, x, y);
+    }
   });
   ctx.textAlign = "left";
   ctx.textBaseline = "top";

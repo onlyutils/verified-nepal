@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getClimateMessages } from "@/lib/api";
 import { climateSeriesColor } from "@/lib/climate-colors";
 import { drawWordCloud } from "@/lib/climate-share";
-import { messageText } from "@/lib/climate-messages";
+import { messageWithEmoji } from "@/lib/climate-messages";
 import { layoutWordCloud, type CloudWord, type PlacedWord } from "@/lib/word-cloud";
 import { interpolate } from "@/lib/format";
 import type { CountryClimate } from "@/lib/climate-data";
@@ -47,7 +47,7 @@ export function WordCloud({
         if (!active) return;
         const counts = new Map<string, number>();
         for (const item of response.items) counts.set(item.messageId, (counts.get(item.messageId) ?? 0) + item.count);
-        setWords([...counts.entries()].map(([messageId, weight]) => ({ text: messageText(messageId), weight })));
+        setWords([...counts.entries()].map(([messageId, weight]) => ({ text: messageWithEmoji(messageId), weight })));
         setTotal([...counts.values()].reduce((sum, count) => sum + count, 0));
       })
       .catch(() => {
@@ -78,7 +78,7 @@ export function WordCloud({
       maxSize: 72,
       padding: 6,
       measure: (text, size) => {
-        context.font = `700 ${size}px 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif`;
+        context.font = `700 ${size}px 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif, 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji'`;
         return { width: context.measureText(text).width, height: size * 1.2 };
       },
     });
@@ -117,6 +117,7 @@ export function WordCloud({
               fontWeight="700"
               fontSize={word.size}
               fill={climateSeriesColor(index)}
+              transform={word.rotated ? `rotate(-90 ${word.x} ${word.y})` : undefined}
             >
               {word.text}
             </text>

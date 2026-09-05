@@ -131,7 +131,7 @@ describe("GET /admin/climate", () => {
     assert.equal(stats.downloadsByKind.length, 6);
     assert.equal(stats.downloadsByKind.find((item) => item.kind === "map").count, 1);
     assert.deepEqual(stats.topCountries, [{ iso3: "GBR", messages: 1 }, { iso3: "USA", messages: 1 }]);
-    assert.equal(stats.topMessages.length, 34);
+    assert.equal(stats.topMessages.length, 54);
     assert.deepEqual(stats.topMessages[0], { messageId: "stop-heating-us", count: 1 });
     assert.deepEqual(stats.topMessages[1], { messageId: "please-cool-down", count: 1 });
   });
