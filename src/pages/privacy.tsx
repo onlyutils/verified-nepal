@@ -1,13 +1,9 @@
 import { labels } from "@/i18n";
 import { formStrings } from "@/i18n/forms";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageHeader, SectionHeader } from "@/components/page-header";
 import type { Language } from "@/lib/types";
 
 const effectiveDate = "30 August 2026";
-
-const draftEn = "Draft — pending owner review";
-const draftNe = "मस्यौदा — सञ्चालक समीक्षा बाँकी";
 
 type Section = { title: string; body: string[] };
 
@@ -363,17 +359,6 @@ export function PrivacyPolicy({ language }: { language: Language }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <Alert role="note" className="border-warning bg-warning-soft text-warning">
-        <AlertDescription>
-          <span className="font-semibold">
-            {draftEn} · <span lang="ne">{draftNe}</span>
-          </span>
-          <br />
-          {language === "ne"
-            ? "यो नीति अझै मस्यौदा हो र सञ्चालकको अन्तिम समीक्षा बाँकी छ — अन्तिम मान्नु अघि पुष्टि गर्नुहोस्।"
-            : "This policy is a draft pending the owner's final review — do not treat it as the final published version."}
-        </AlertDescription>
-      </Alert>
       <PageHeader eyebrow={ts.privacyEyebrow} title={t.privacyTitle} description={`${t.effectiveDate}: ${effectiveDate}`} />
       <article className="space-y-8 text-base leading-relaxed text-foreground">
         <p className="border-l-2 border-primary pl-4 text-muted-foreground">
@@ -403,9 +388,6 @@ export function PrivacyPolicy({ language }: { language: Language }) {
             <p key={line}>{line}</p>
           ))}
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {draftNe} — {draftEn}
-        </p>
       </aside>
     </div>
   );
