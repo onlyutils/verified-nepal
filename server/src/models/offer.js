@@ -4,7 +4,7 @@ import { ttlSeconds, toExpiresAt, maskName } from "../lib/format.js";
 import { PUBLIC_OFFER_STATUSES } from "../constants.js";
 import { err } from "../lib/http.js";
 
-export async function createOffer(ddb, tableName, { helperSub, helperName, org, categories, districts, description, phone, email, incidentId }) {
+export async function createOffer(ddb, tableName, { helperSub, helperRole, helperName, org, categories, districts, description, phone, email, incidentId }) {
   const helperLabel = maskName(helperName);
   const id = randomUUID();
   const createdAt = new Date().toISOString();
@@ -18,6 +18,7 @@ export async function createOffer(ddb, tableName, { helperSub, helperName, org, 
     id,
     incidentId,
     helperSub,
+    helperRole,
     helperLabel,
     org,
     categories,

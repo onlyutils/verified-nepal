@@ -106,6 +106,8 @@ export function Desk({
       active={model.activeSection}
       onSelect={model.setActiveSection}
       user={{ name: auth.profile.displayName || auth.profile.name, email: auth.profile.email }}
+      onProfile={() => navigate("me")}
+      profileLabel={t.deskMyProfile}
       onSignOut={auth.signOut}
       signOutLabel={t.deskSignOut}
       language={language}

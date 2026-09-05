@@ -1,4 +1,4 @@
-import { PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, DeleteCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 export const MINE_TYPES = ["NEED", "OFFER", "MISSING", "GROUP", "ARTICLE", "STORY"];
 
@@ -9,6 +9,12 @@ export async function putPointer(ddb, tableName, { sub, type, id, createdAt }) {
     TableName: tableName,
     Item: { PK: `USER#${sub}`, SK: `${type}#${id}`, type: "MINE", kind: type, id, sub, createdAt: createdAt || new Date().toISOString() },
   }));
+}
+
+/** Did `sub` create this item? Used only to block a moderator from moderating their own submission. */
+export async function hasPointer(ddb, tableName, { sub, type, id }) {
+  const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `USER#${sub}`, SK: `${type}#${id}` } }));
+  return !!res.Item;
 }
 
 export async function deletePointer(ddb, tableName, { sub, type, id }) {

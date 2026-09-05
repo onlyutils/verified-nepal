@@ -6,6 +6,13 @@ import {
   getPendingItemByIdEitherType, applyModerationEdits, moderatePendingItem,
   claimPendingItem, releaseClaim,
 } from "../models/moderation.js";
+import { hasPointer } from "../models/mine.js";
+
+/** True if `sub` is the account that created this pending item — the pointer table is the only place a NEED's creator is recorded. */
+async function isOwnSubmission(ddb, tableName, { type, item, sub }) {
+  if (type === "OFFER") return item.helperSub === sub;
+  return hasPointer(ddb, tableName, { sub, type: "NEED", id: item.id });
+}
 
 export async function handleGetModerationQueue(event, opts) {
   const { auth } = opts;
@@ -18,6 +25,12 @@ export async function handleGetModerationQueue(event, opts) {
     needsAll = pending.filter((it) => it.PK.startsWith("NEED#"));
   }
   const enriched = enrichWithDupCandidates(pending, needsAll);
+  // Never expose who registered a NEED (privacy) — only whether *this* viewer is that person, so
+  // a self-registering moderator sees why they're blocked without other moderators seeing the identity.
+  for (const it of enriched) {
+    if (it.registeredByStaff) it.isOwnSubmission = await hasPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, type: "NEED", id: it.id });
+    else if (it.helperSub) it.isOwnSubmission = it.helperSub === auth.payload.sub;
+  }
   return json(200, { items: enriched.map(stripInternal) });
 }
 
@@ -37,6 +50,7 @@ export async function handlePostModeration(event, opts, id) {
   if (!item) throw err(404, "not found");
   if (isOutOfScope(auth.user, item)) throw err(403, "out_of_scope");
   if (item.status !== "pending") throw err(400, "only pending items can be moderated");
+  if (await isOwnSubmission(ddb, tableName, { type, item, sub: auth.payload.sub })) throw err(403, "self_verification_forbidden");
   if (edits && typeof edits === "object") applyModerationEdits(type, item, edits);
   const result = await moderatePendingItem(ddb, tableName, { id, type, item, action, reason, actorSub: auth.payload.sub });
   const actorName = auth.user?.name || auth.payload.name || "";
@@ -52,10 +66,11 @@ export async function handlePostModeration(event, opts, id) {
 
 export async function handlePostModerationClaim(event, opts, id) {
   const { auth } = opts;
-  const { item } = await getPendingItemByIdEitherType(auth.ddb, auth.tableName, id);
+  const { type, item } = await getPendingItemByIdEitherType(auth.ddb, auth.tableName, id);
   if (!item) throw err(404, "not found");
   if (isOutOfScope(auth.user, item)) throw err(403, "out_of_scope");
   if (item.status !== "pending") throw err(400, "only pending items can be claimed");
+  if (await isOwnSubmission(auth.ddb, auth.tableName, { type, item, sub: auth.payload.sub })) throw err(403, "self_verification_forbidden");
   const actorName = auth.user?.name || auth.payload.name || "";
   const result = await claimPendingItem(auth.ddb, auth.tableName, { item, actorSub: auth.payload.sub, actorName });
   return json(200, result);

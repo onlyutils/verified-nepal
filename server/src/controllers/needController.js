@@ -93,6 +93,7 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
     incidentId: resolvedIncidentId, district, ward, householdSize, category, description: desc, language, media: cleanMedia,
+    registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });

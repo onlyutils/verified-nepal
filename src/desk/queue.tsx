@@ -77,6 +77,8 @@ export function Queue({ model }: { model: DeskModel }) {
             const remainingMs = item.claimExpiresAt ? new Date(item.claimExpiresAt).getTime() - model.nowTick : 0;
             const isClaimed = !!item.claimedBy && remainingMs > 0;
             const isMine = isClaimed && item.claimedBy === model.myModeratorId;
+            const needsPeerReview = item.registeredByStaff || item.helperRole === "moderator" || item.helperRole === "admin";
+            const isSelfRegistered = !!item.isOwnSubmission;
             const remainingLabel = isClaimed
               ? `${Math.floor(remainingMs / 60000)}:${String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, "0")}`
               : null;
@@ -93,6 +95,7 @@ export function Queue({ model }: { model: DeskModel }) {
                           {flagCount} {t.deskFlagCount.replace("{count}", "")}
                         </Badge>
                       ) : null}
+                      {needsPeerReview ? <Badge variant="warning">{t.deskSelfRegisteredBadge}</Badge> : null}
                     </div>
                     <div className="flex items-center gap-2">
                       {isClaimed ? (
@@ -197,49 +200,57 @@ export function Queue({ model }: { model: DeskModel }) {
                       )}
                     </div>
                   </div>
-                  {isClaimed && !isMine ? null : (
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id={`publish-${item.id}`}
-                        checked={!!model.publishConfirmed[item.id]}
-                        onCheckedChange={(checked) => model.setPublishConfirmed((current) => ({ ...current, [item.id]: checked === true }))}
-                      />
-                      <Label htmlFor={`publish-${item.id}`} className="leading-6">
-                        {model.ds.publishConfirmLabel}
-                      </Label>
-                    </div>
+                  {isSelfRegistered ? (
+                    <Alert>
+                      <AlertDescription>{t.deskSelfVerificationBlocked}</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      {isClaimed && !isMine ? null : (
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id={`publish-${item.id}`}
+                            checked={!!model.publishConfirmed[item.id]}
+                            onCheckedChange={(checked) => model.setPublishConfirmed((current) => ({ ...current, [item.id]: checked === true }))}
+                          />
+                          <Label htmlFor={`publish-${item.id}`} className="leading-6">
+                            {model.ds.publishConfirmLabel}
+                          </Label>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {isClaimed && !isMine ? null : !isClaimed ? (
+                          <Button onClick={() => model.handleClaim(item.id)} disabled={model.claimActionLoading === item.id}>
+                            {t.deskClaim}
+                          </Button>
+                        ) : (
+                          <>
+                            <Button onClick={() => model.handlePublish(item.id)} disabled={!model.publishConfirmed[item.id]}>
+                              {t.deskPublish}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => {
+                                model.setRejectId(item.id);
+                                model.setRejectCode("");
+                                model.setRejectDetail("");
+                                model.setRejectError(null);
+                              }}
+                            >
+                              {t.deskReject}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => model.handleRelease(item.id)}
+                              disabled={model.claimActionLoading === item.id}
+                            >
+                              {t.deskRelease}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </>
                   )}
-                  <div className="flex flex-wrap gap-2">
-                    {isClaimed && !isMine ? null : !isClaimed ? (
-                      <Button onClick={() => model.handleClaim(item.id)} disabled={model.claimActionLoading === item.id}>
-                        {t.deskClaim}
-                      </Button>
-                    ) : (
-                      <>
-                        <Button onClick={() => model.handlePublish(item.id)} disabled={!model.publishConfirmed[item.id]}>
-                          {t.deskPublish}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => {
-                            model.setRejectId(item.id);
-                            model.setRejectCode("");
-                            model.setRejectDetail("");
-                            model.setRejectError(null);
-                          }}
-                        >
-                          {t.deskReject}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => model.handleRelease(item.id)}
-                          disabled={model.claimActionLoading === item.id}
-                        >
-                          {t.deskRelease}
-                        </Button>
-                      </>
-                    )}
-                  </div>
                 </CardContent>
               </Card>
             );

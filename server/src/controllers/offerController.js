@@ -37,7 +37,7 @@ export async function handlePostOffers(event, { auth }) {
   const helperSub = auth.payload.sub;
   const helperName = auth.user?.name || auth.payload.name || "Helper";
   const { id } = await createOffer(auth.ddb, auth.tableName, {
-    helperSub, helperName, org: cleanOrg, categories: cleanCategories, districts: cleanDistricts,
+    helperSub, helperRole: auth.role, helperName, org: cleanOrg, categories: cleanCategories, districts: cleanDistricts,
     description: desc, phone: cleanPhone, email: cleanEmail, incidentId: incident.id,
   });
   await putPointer(auth.ddb, auth.tableName, { sub: helperSub, type: "OFFER", id });

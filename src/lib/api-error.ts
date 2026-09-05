@@ -10,6 +10,7 @@ export function apiErrorMessage(err: unknown, language: Language): string {
     if (code === "out_of_scope") return t.errOutOfScope;
     if (code === "guidelines_not_acknowledged") return t.errGuidelinesNotAcknowledged;
     if (code === "story_not_eligible") return t.errStoryNotEligible;
+    if (code === "self_verification_forbidden") return t.errSelfVerificationForbidden;
     if (err.status === 0 || err.status === 502 || err.status === 503 || err.status === 504) return t.errOffline;
     if (err.status === 401) return t.errSignedOut;
     if (err.status === 429) return t.errRateLimited;

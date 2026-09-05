@@ -149,6 +149,10 @@ export interface ModerationQueueItem {
   beneficiary?: { name: string; phone?: string; email?: string; district: string; ward: number; householdSize?: number };
   registrant?: { name: string; phone: string; email?: string } | null;
   onBehalf?: boolean;
+  registeredByStaff?: boolean;
+  helperRole?: string;
+  /** Set only for the viewer who created this item — never reveals identity to anyone else. */
+  isOwnSubmission?: boolean;
   maskedName?: string;
   helperLabel?: string;
   org?: { name: string; contact: string };

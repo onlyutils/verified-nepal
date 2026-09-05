@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LogOut, Phone } from "lucide-react";
+import { LogOut, Phone, UserRound } from "lucide-react";
 import { AccessibilityBar } from "@/components/accessibility-bar";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,8 @@ export function AppShell<K extends string>({
   active,
   onSelect,
   user,
+  onProfile,
+  profileLabel,
   onSignOut,
   signOutLabel,
   language,
@@ -46,6 +48,8 @@ export function AppShell<K extends string>({
   active: K;
   onSelect: (key: K) => void;
   user?: { name?: string | null; email?: string | null } | null;
+  onProfile?: () => void;
+  profileLabel?: string;
   onSignOut?: () => void;
   signOutLabel: string;
   language: Language;
@@ -103,6 +107,12 @@ export function AppShell<K extends string>({
                     <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {onProfile ? (
+                    <DropdownMenuItem onSelect={onProfile}>
+                      <UserRound />
+                      {profileLabel}
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem onSelect={onSignOut}>
                     <LogOut />
                     {signOutLabel}
