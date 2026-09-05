@@ -189,8 +189,12 @@ Get help and Give help are the hero actions, not nav items.
 
 ### 5.2 Landing page (`src/pages/home.tsx`) — implement the Figma 1:1
 
-1. Hero: left column eyebrow "Rasuwa / Bhote Koshi Flash Flood · 2026", uppercase title "Independent mirror of official
-   NDRRMA data", lead paragraph. Right column four action cards: **Find someone** (blue filled, white button),
+1. Hero: left column eyebrow, uppercase title, lead paragraph — the original Figma copy was flood-
+   and NDRRMA-specific ("Rasuwa / Bhote Koshi Flash Flood · 2026" / "Independent mirror of official
+   NDRRMA data"); as of 2026-09-04 this is generic placeholder copy ("Disaster response across
+   Nepal" / "Community-verified disaster response for Nepal", `src/i18n/shell.ts`
+   `landingFloodName`/`landingTitle`) pending owner/content review, since the site now covers more
+   than one disaster. Right column four action cards: **Find someone** (blue filled, white button),
    **Report a missing person**, **I need help**, **I want to help** (white, `border-2`, icon chip, secondary button).
 2. **Current situation** band (`bg-secondary`): h2 + source/updated on the right; four `StatCard`s (rescued, missing in
    red, verified records, active relief locations); "View complete situation report →" and the disclaimer line.

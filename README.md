@@ -1,13 +1,20 @@
 # verifiedNepal
 
-An independent, volunteer-run public-service dashboard for the **2026 Rasuwa /
-Bhote Koshi flash flood** in Nepal. It mirrors official public data so that
-affected people, relatives, and donors get one fast, bilingual (English /
-नेपाली), mobile-first view of the response:
+An independent, volunteer-run disaster-response platform for Nepal, bilingual
+(English / नेपाली) and mobile-first. It started as a dashboard mirroring
+official data for the **2026 Rasuwa / Bhote Koshi flash flood**, then grew
+into a general mutual-aid platform spanning any number of disasters across
+all 77 districts — a **disaster** (flood, landslide, earthquake, fire, …) is
+now its own resource: reported by the public or an admin, approved by an
+admin, and every need/offer/project belongs to one. See
+`docs/FEATURES.md` for the full picture. The original flood dashboard still
+runs alongside it:
 
-- **Live figures** — rescued, missing, forces deployed — fetched in the
-  browser from NDRRMA's public API every 5 minutes, with a bundled snapshot
-  as offline fallback and a visible live/snapshot indicator.
+- **Live figures** — rescued, missing, forces deployed for the 2026 Bhote
+  Koshi flood specifically — fetched in the browser from NDRRMA's public API
+  every 5 minutes, with a bundled snapshot as offline fallback and a visible
+  live/snapshot indicator. This pipeline is unchanged and NDRRMA-specific;
+  it does not cover other disasters.
 - **Find a person** — name search (English or Devanagari, order-independent,
   diacritic-folded) across the officially verified rescued list *and* the
   missing-persons list.
@@ -21,12 +28,22 @@ affected people, relatives, and donors get one fast, bilingual (English /
   coordination stats and updates feed.
 - **AI assistant** — a chat widget grounded in the same live data (powered by
   [OnlyUtils](https://onlyutils.com)).
-- **Mutual-aid portal** — request help (`/get-help`) or offer help (`/give-help`) by category and district; moderators match needs to offers and issue claim codes. Redeemed claims appear on a public, masked ledger. Helpers can browse community projects (`/projects`) with photo updates and articles, while district-scoped moderators work a queue at `/desk` and every action is recorded in a public masked audit log (`/audit`).
+- **Mutual-aid portal** — request help (`/get-help`) or offer help
+  (`/give-help`) by category, district and disaster; moderators match needs
+  to offers and issue claim codes, or a verified organization takes a need
+  directly and delivers it. Redeemed claims and org deliveries appear on a
+  public, masked ledger. Helpers can split a big need into a group and each
+  claim a piece. Helpers can browse community projects (`/projects`) with
+  photo updates, read and write articles (`/articles`), and post a short
+  photo-or-video story about help they gave or received, while
+  district-scoped moderators work a queue at `/desk` and every action is
+  recorded in a public masked audit log (`/audit`). Disasters are approved
+  by an admin through the API today — there is no Desk tab for it yet.
 
 This is **not** a government website. It exists to make already-public
-disaster information easier to read. Verify individual records on the
-official pages linked throughout the site, and rely on official hotlines for
-any emergency decision.
+disaster information easier to read, and to coordinate volunteer relief
+around it. Verify individual records on the official pages linked throughout
+the site, and rely on official hotlines for any emergency decision.
 
 ## Data sources
 
@@ -69,9 +86,10 @@ src/components/*           app components: site header/footer, AppShell (dashboa
                            StatusBadge, EmptyState, CodeDisplay, Logo, relief map, error boundary
 src/pages/*                public pages: home, find-person, missing-guide, info-help, privacy, get-help,
                            give-help, projects, articles, ledger, audit, drop-centers, donation-status,
-                           register-organization
+                           register-organization, report-incident
 src/desk/*                 the Desk — moderator/admin dashboard at /desk (queue, boards, flags, projects,
-                           articles, organizations, print, paper sync, admin)
+                           articles, stories, organizations, print, paper sync, admin). Approving a disaster
+                           report has no Desk tab yet — only the `/admin/incidents` API (see TODO.md)
 src/org/*                  My organization — organization dashboard at /org (centers, goods ledger, team)
 src/i18n/*                 en/ne string dictionaries by area — every string has both languages
 src/lib/*                  api client, auth (OAuth + PKCE), live data, geo, formatting, helplines, chat

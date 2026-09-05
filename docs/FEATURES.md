@@ -25,18 +25,25 @@ flowchart TB
     org(("Organization"))
     mod(("Moderator / Admin"))
 
-    public -->|asks for help| need[Help request]
-    helper -->|offers help| offer[Offer to help]
+    public -->|asks for help, tied to a| need[Help request]
+    helper -->|offers help, tied to a| offer[Offer to help]
+    public -.reports a new.-> disaster[[Disaster]]
+    disaster -.scopes.-> need
+    disaster -.scopes.-> offer
     public -->|reports a| missing[Missing person poster]
     public -->|proposes a| project[Community rebuild project]
-    public -->|shares a| article[News / story article]
+    public -->|writes an| article[News article]
+    public -->|tells a| story[Short story:<br/>photo + caption]
     org -->|runs a| center[Drop center]
+    org -->|takes and delivers a| need
 
     need --> desk[The Desk<br/>moderation queue]
     offer --> desk
     project --> desk
     article --> desk
+    story --> desk
     org --> desk
+    disaster -.approved by.-> admin3[Admin]
 
     desk -->|approved by| mod
     mod -->|publishes| board[Public help board]
@@ -85,9 +92,42 @@ Two secret codes make this work without needing an account:
   out in the field. When help actually arrives, someone redeems the code, which marks the
   need "fulfilled" and writes a permanent line into the public ledger.
 
+Every need, offer, and project belongs to exactly one **disaster** — see the next section.
+
 ---
 
-## 2. Missing person posters
+## 2. More than one disaster
+
+The site no longer covers a single flood. Each need, offer, and community project is tagged
+with the disaster it belongs to, chosen from the full list of Nepal's 77 districts rather than
+a fixed few.
+
+- Someone filling in a need form can pick an already-listed disaster, or use "my emergency
+  isn't listed" if theirs isn't — a house fire, a landslide nobody's registered yet. That
+  inline report creates a new, unlisted disaster in the same submission, so an urgent request
+  is never blocked on waiting for a disaster to be pre-approved.
+- A disaster can also be reported on its own, with no attached need, by anyone signed in —
+  meant for a bystander, NGO scout, or journalist flagging something before anyone has asked
+  for help yet. This needs a photo as proof.
+- New disasters start **pending**. An admin reviews and approves or rejects them; approving the
+  need that references one activates the disaster in the same action. Only admins can approve
+  or reject a disaster — but there is no Desk tab for this yet, only the `/admin/incidents` API,
+  so an admin currently has to do it by hand rather than through the UI.
+
+```mermaid
+flowchart LR
+    A2[Reported: on the need form, or standalone] --> B2[pending]
+    B2 -->|admin approves| C2[active<br/>selectable on new needs/offers/projects]
+    B2 -->|admin rejects| R2[rejected]
+    C2 -->|admin archives when it's over| D2[archived]
+```
+
+A moderator's assigned districts still work the same across every disaster — district scope
+isn't reset per disaster.
+
+---
+
+## 3. Missing person posters
 
 Anyone can build a poster with no account: name, age, last-seen place and time, clothing,
 photo, and contact numbers. The site draws it live into a shareable image, ready to download
@@ -102,7 +142,7 @@ or send through WhatsApp or similar apps.
 
 ---
 
-## 3. Accounts (My Page)
+## 4. Accounts (My Page)
 
 Signing in uses Google, through a shared login service the site trusts — VerifiedNepal never
 sees your password.
@@ -115,7 +155,7 @@ but **offering help, running an organization, or managing a project always does.
 
 ---
 
-## 4. The Desk — where moderators work
+## 5. The Desk — where moderators work
 
 The Desk is the review room. Only moderators and admins can get in — everyone else is
 redirected elsewhere. It has one queue for pending needs and offers, plus tabs for projects,
@@ -140,7 +180,7 @@ nobody can be locked out forever.
 
 ---
 
-## 5. Organizations
+## 6. Organizations
 
 Any signed-in person can register an organization — its name, the districts it works in,
 contact details — at `/register-organization`. Like everything else, it starts pending until
@@ -154,6 +194,13 @@ Inside the org's own dashboard, the person who created it (the **owner**) can in
 teammates (**staff**) by email to help manage the organization, its centers, and its
 donations.
 
+A verified organization can also **take on a published need** directly from the Give-help
+board — a staff member claims it, sees the beneficiary's contact details in the org dashboard,
+and either marks it delivered (which writes the public ledger under the org's name, the same
+outcome as a claim-code redemption) or hands it back to the open pool. This is a second path to
+"fulfilled" alongside the claim-code system, sharing the same underlying code so a need can
+only ever be marked fulfilled once.
+
 *(Note: "group" is used two different ways in this codebase. An **organization** is a
 formally verified team. A **group**, described at the end of this document, is a much more
 casual cluster of neighbors helping with one specific request — they share a word, not a
@@ -161,7 +208,7 @@ concept.)*
 
 ---
 
-## 6. Drop centers and the goods ledger
+## 7. Drop centers and the goods ledger
 
 A **drop center** is a real, physical place — run by a verified organization — where relief
 goods are collected or handed out: an address, opening hours, and which kinds of goods it
@@ -186,7 +233,7 @@ instead of just trusting an organization's word.
 
 ---
 
-## 7. Community projects
+## 8. Community projects
 
 A **project** is a local rebuild effort after a disaster — a footbridge, a trail, a water
 system, a school. Anyone can register one, describing the work, its estimated cost, and a
@@ -200,12 +247,12 @@ It's a lightweight, honest paper trail rather than formal accounting.
 
 ---
 
-## 8. Articles — news and stories
+## 9. Articles — news and reporting
 
-An **article** is a short update from the ground: a situation report, a personal story, news
-about the relief effort, tagged by topic (floods, landslides, community stories, and so on).
-Writing requires a Google sign-in. Authors can save drafts, add a cover and sourced image or
-video blocks, return later to edit, and submit for moderator review. Published articles show
+An **article** is a short update from the ground: a situation report, a report from the field,
+news about the relief effort, tagged by topic (floods, landslides, community stories, and so
+on). Writing requires a Google sign-in. Authors can save drafts, add a cover and sourced image
+or video blocks, return later to edit, and submit for moderator review. Published articles show
 the author's display name and place, but never their account email. Readers can view, like and
 share published articles; the page keeps simple counters for each.
 
@@ -214,7 +261,21 @@ continue to render without a migration.
 
 ---
 
-## 9. Climate page
+## 10. Stories — a quick personal account
+
+A **story** is much smaller than an article: one photo or video plus a short caption, from
+someone whose own need was fulfilled, who helped as a volunteer, or who belongs to an
+organization that delivered aid through a drop center. There's no editor, no title, no tags —
+just proof and a sentence.
+
+Only people the site can already show *did* one of those three things are allowed to post one
+— the eligibility check runs against their own needs, offers, and org's deliveries, not a
+self-declared role. Stories go through the same moderation queue as everything else before
+appearing in the public strip on the home page.
+
+---
+
+## 11. Climate page
 
 An educational page showing which countries have historically contributed the most to global
 warming — a ranking, trend charts, and a breakdown by gas and by source. The numbers come
@@ -224,7 +285,7 @@ otherwise linked to the relief or donation systems.
 
 ---
 
-## 10. Donation status
+## 12. Donation status
 
 Lets a donor check on one specific gift using a short code or link: has it been received at
 its drop center yet, and how much of that type of goods has since gone back out to people who
@@ -232,7 +293,7 @@ need it. It's the thread connecting one person's donation to the shared public l
 
 ---
 
-## 11. Audit log
+## 13. Audit log
 
 A public, month-by-month record of every moderation decision on the site: every publish,
 every rejection, every organization verified, every request matched or fulfilled — who did
@@ -241,7 +302,7 @@ that moderators are accountable, not acting in the dark.
 
 ---
 
-## 12. Other pages
+## 14. Other pages
 
 - **Info & Help** — general information and emergency contact numbers.
 - **Privacy** — the site's privacy policy.
@@ -264,24 +325,26 @@ flowchart TB
 Alongside this, public names are always shown masked (for example "Ram K." instead of a full
 name), so the system can stay open and transparent without exposing anyone's identity.
 
-And every kind of public submission — needs, offers, organizations, articles, projects,
-project updates — follows the exact same pattern: **a contributor can submit it, nothing is
-public until a moderator approves it, and every approval is logged.** Once you understand this
-pattern once, you understand most of the site.
+And every kind of public submission — needs, offers, organizations, articles, stories,
+projects, project updates, and standalone disaster reports — follows the exact same pattern:
+**a contributor can submit it, nothing is public until a moderator or admin approves it, and
+every approval is logged.** Once you understand this pattern once, you understand most of the
+site.
 
 The whole interface is also fully bilingual: every piece of text exists in English and
 Nepali side by side, and a language switch just changes which set of text is shown.
 
 ---
 
-## Coming soon: Helper groups
+## 15. Helper groups
 
-A new feature currently in development: when one need is too big for a single volunteer —
-say, a family that lost their house needs shelter *and* food *and* transport — helpers will be
-able to split that need into smaller pieces and each take on one piece, coordinating as an
+When one need is too big for a single volunteer — say, a family that lost their house needs
+shelter *and* food *and* transport — a helper can split that published need into smaller
+pieces on the Give-help board, and other helpers each claim one piece, coordinating as an
 informal group. No custom group branding is allowed (this is disaster relief, not a
 marketplace), and it never changes how the original request gets marked "delivered" — that
-part still only happens through the claim-code system described above.
+part still only happens through the claim-code or org-fulfillment system described above.
+A helper who finishes their piece of a group counts as "helper" for the Stories feature.
 
 ---
 

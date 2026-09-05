@@ -18,7 +18,7 @@ How the portal is run, who can do what, and how the community keeps it honest.
 |------|----------------|-----------------|
 | Helper | Sign in with Google | Offer help, use claim codes |
 | Moderator | Invitation by an admin (see below) | Publish/reject needs, offers, projects, articles; redeem and sync claims; act only inside assigned districts if scoped |
-| Admin | Granted by another admin in DynamoDB | Everything a moderator can do, plus manage roles and district scope, view stats and the audit log |
+| Admin | Granted by another admin in DynamoDB | Everything a moderator can do, plus manage roles and district scope, approve/reject/archive disaster reports (API only, no Desk tab yet), view stats and the audit log |
 
 Helpers and moderators sign in with Google. Helpers are self-serve; moderation is invite-only — there is no application form.
 
@@ -40,7 +40,9 @@ Moderators may be assigned to specific districts (for example `["Rasuwa"]`). A s
 - gets a visible scope badge in the Desk,
 - receives `403 out_of_scope` if they try to act outside their districts.
 
-Articles are not district-scoped. An empty district list means "all districts".
+Articles are not district-scoped. An empty district list means "all districts". District scope
+is not per-disaster: the site now covers more than one disaster (see `docs/FEATURES.md`), and a
+moderator's district coverage carries across all of them unchanged.
 
 ## Moderation guidelines
 

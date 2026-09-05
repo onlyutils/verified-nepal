@@ -1,14 +1,26 @@
 # VerifiedNepal — UI/UX Redesign Brief
 
 **Audience:** the UI/UX designer redesigning verifiednepal.com from scratch.
-**Status:** 2026-09-02. Describes the product exactly as it ships today, so the redesign can cover every existing feature. Nothing here is a design decision for the new version unless marked **Constraint**.
+**Status:** written 2026-09-02, districts/branding notes updated 2026-09-05. Describes the
+product as it shipped up to that date. Four features shipped after and are **not** described
+in the section-by-section detail below — helper groups (splitting a need into pieces),
+stories (a short photo/video + caption from someone helped, who helped, or a delivering org),
+an org taking and delivering a need directly (not just via claim code), and the multi-disaster
+registry (a need/offer/project now picks a disaster from 77 districts instead of a fixed
+three) — see `docs/FEATURES.md` for what they do and `docs/TODO.md` for known UI gaps. Nothing
+here is a design decision for the new version unless marked **Constraint**.
 **Companion reading:** `README.md` (what the site is), `docs/GOVERNANCE.md` (roles, scoping, audit), `docs/MODERATION-GUIDELINES.md` (how moderators work), the five role guides in `public/guides/*.pdf` (end-user walkthroughs with screenshots), and `.impeccable/critique/2026-09-01T14-22-04Z__src-app-tsx.md` (last heuristic review, 15/40, with the priority list).
 
 ---
 
 ## 1. What the product is
 
-An independent, volunteer-run public-service site for the **2026 Rasuwa / Bhote Koshi flash flood** in Nepal. It does three jobs:
+An independent, volunteer-run public-service site, originally built for the **2026 Rasuwa /
+Bhote Koshi flash flood** and generalized 2026-09-04 to cover any number of disasters across
+Nepal's 77 districts (see `docs/FEATURES.md` § "More than one disaster"). Site-wide branding
+and the landing hero copy were genericized in the same pass — placeholder text pending
+owner/content review — but the home page's rescue-status widget (job 1 below) stays
+NDRRMA/Bhote-Koshi-specific since that data pipeline didn't change. It does three jobs:
 
 1. **Mirror official data** so affected people, relatives and donors get one fast, bilingual, mobile-first view: live rescue figures, person search, verified hotlines, relief map, official updates.
 2. **Run a moderated mutual-aid portal**: people post needs, helpers post offers, moderators verify and match them, redeemed aid appears on a public masked ledger.
@@ -97,7 +109,11 @@ Present on every page unless noted.
 Top of page. Text size A− / A / A+ (five steps, 100 to 150%), high-contrast toggle, language toggle EN | नेपाली. Persists per browser. On mobile it collapses to an "Aa" button plus the language toggle.
 
 ### 5.2 Masthead
-- Desktop: three columns. Left: district list "Nuwakot · Rasuwa · Sindhupalchok · flood name" and a small "Desk" link. Center: large wordmark in the current language with the other language beneath. Right: edition line "Edition · date · Day N of response · live/snapshot badge".
+- Desktop: three columns. Left: as of 2026-09-04 this reads a generic label ("Disaster response
+  across Nepal") instead of the three-district flood name, plus a small "Desk" link — this
+  section was district-list-and-flood-name only while the site covered one flood. Center: large
+  wordmark in the current language with the other language beneath. Right: edition line
+  "Edition · date · Day N of response · live/snapshot badge".
 - Mobile: one slim row: districts + Desk link, wordmark, live badge.
 - Desk (signed-in work surface) uses a compact single-row header: wordmark, "Desk" label, emergency 1234 link, then nav. No emergency strip.
 
@@ -154,7 +170,12 @@ Twenty-three numbered sections in both languages (operator, terms, third-party d
 
 Shared vocabulary for this whole section:
 
-- **Districts**: exactly three, Rasuwa, Nuwakot, Sindhupalchok. Wards are numbers only.
+- **Districts**: the full 77-district list as of 2026-09-04 (was a fixed three — Rasuwa,
+  Nuwakot, Sindhupalchok — before the multi-disaster generalization). Wards are numbers only.
+- **Disasters**: every need, offer and project now belongs to one. The need/offer form has a
+  disaster picker (active + pending disasters) with an "my emergency isn't listed" escape hatch
+  that registers a new one inline. No design pass has happened for this picker yet — it shipped
+  with placeholder UI; see `docs/FEATURES.md` § "More than one disaster".
 - **Categories** (six): Goods, Shelter, Transport, Medical, Skilled labor, Funds guidance.
 - **Turnstile** (Cloudflare human check) sits below forms when configured; otherwise a small grey "Verification may be required" line. It has no visible error state when a token expires.
 - **Masking is done by the server.** Public boards, ledger and audit show masked names such as "R. Gurung" and never real names, phones or addresses.
