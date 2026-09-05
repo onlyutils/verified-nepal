@@ -177,6 +177,33 @@ Before editing something, a moderator "claims" it — a 10-minute lock so two mo
 step on each other's work at the same time. The lock just quietly expires if it's not renewed;
 nobody can be locked out forever.
 
+The tabs, and what each is for:
+
+- **Queue** — pending needs and offers waiting for a verification call, before anything goes
+  public.
+- **Boards** — the published Give-help / Get-help boards. Match a need to an offer here, and
+  **redeem a single claim code** the moment help actually changes hands — this is the only
+  place a one-off redemption happens.
+- **Print** — pick a district and ward to generate a paper claim sheet with QR codes, for
+  handing out in the field where there's no signal.
+- **Sync** — reconciles a stack of paper sheets *after the fact*: paste every code that was
+  redeemed offline, one per line, and mark them all redeemed in a single pass instead of
+  looking each one up on Boards.
+- **Flags** — reports from the public that a listing looks fake, already resolved, or posted
+  twice; act on it here or jump to the item on Queue/Boards.
+- **Projects** — verify a rebuild committee before its project and progress updates go public
+  (see §8).
+- **Dispatches** — review community articles before they're published (see §9).
+- **Stories** — review photo/video stories, watching especially for anything that could
+  identify a beneficiary or a child (see §10).
+- **Organizations** — review new organization registrations and their verification evidence
+  (see §6).
+- **Disasters** *(admin only)* — approve, reject, or archive a disaster reported on its own,
+  with no attached need (see §2).
+- **Admin** *(admin only)* — manage who has moderator or admin access, and which districts
+  each moderator covers.
+- **Climate** *(admin only)* — usage stats for the public climate page (see §11).
+
 ---
 
 ## 6. Organizations
