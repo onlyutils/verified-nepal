@@ -77,4 +77,12 @@ Option 1 — keep the original display name exactly as typed, and add a derived,
 
 ---
 
+## Non-goal: automated need↔offer matching
+
+Matching a need to an offer (moderator "Match" action) and an org claiming a need are both deliberately manual — a person picks from a list, no scoring. This is documented in [FEATURES.md](FEATURES.md) and [DESIGN-BRIEF.md](DESIGN-BRIEF.md) as intentional, not a gap.
+
+**Do not build an automated matching/scoring engine for this.** So for a trust/safety-sensitive mutual-aid platform, keeping matching human isn't a gap to fix — building a scoring/geo-matching engine here would be solving a problem you explicitly decided not to have. Skip it. If you think automated matching is worth reconsidering, open an issue proposing it first — this is a deliberate design stance, not an oversight.
+
+---
+
 *SMS intake (a phone/shortcode gateway for people who cannot use the web) is also on the roadmap but is deferred for now — do not start it without checking with the maintainer.*
