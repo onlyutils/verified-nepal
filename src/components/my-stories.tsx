@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
@@ -77,7 +77,7 @@ export function MyStories({ language, token, eligible }: { language: Language; t
             <form onSubmit={(e) => void submit(e)} className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="story-media">{t.storyMedia}</Label>
-                <Input id="story-media" type="file" accept={ACCEPT} required onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                <FileInput id="story-media" language={language} accept={ACCEPT} required onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
                 <p className="text-xs text-muted-foreground">{t.storyMediaHint}</p>
               </div>
               <div className="space-y-1.5">

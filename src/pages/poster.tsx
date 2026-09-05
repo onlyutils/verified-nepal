@@ -16,6 +16,7 @@ import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -369,9 +370,9 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="poster-photo">{t.photoLabel}</Label>
-              <Input
+              <FileInput
                 id="poster-photo"
-                type="file"
+                language={language}
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => onPhoto(e.target.files?.[0])}
               />

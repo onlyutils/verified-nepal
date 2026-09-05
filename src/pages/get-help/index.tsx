@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -688,15 +689,14 @@ export function GetHelp({ language }: { language: Language }) {
               <Label htmlFor="need-media">
                 {ts.getHelpMediaLabel} {newIncidentMode ? "*" : ""}
               </Label>
-              <Input
+              <FileInput
                 id="need-media"
-                type="file"
+                language={language}
                 accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                 multiple
                 onChange={handleMediaChange}
                 disabled={submitting}
                 aria-describedby={mediaError ? "need-media-hint need-media-error" : "need-media-hint"}
-                className="h-auto min-h-11 py-2"
               />
               <p id="need-media-hint" className="text-sm text-muted-foreground">
                 {ts.getHelpMediaHint}

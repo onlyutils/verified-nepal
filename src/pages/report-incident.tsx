@@ -8,6 +8,7 @@ import type { Language } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -173,14 +174,13 @@ export function ReportIncident({ language }: { language: Language }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="incident-media">{t.reportIncidentPhoto}</Label>
-                <Input
+                <FileInput
                   id="incident-media"
-                  type="file"
+                  language={language}
                   accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                   multiple
                   onChange={handleMediaChange}
                   disabled={submitting || media.length >= 2}
-                  className="h-auto min-h-11 py-2"
                 />
                 <p className="text-sm text-muted-foreground">{t.reportIncidentMediaHint}</p>
                 {mediaError ? (

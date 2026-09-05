@@ -6,6 +6,7 @@ import { downscaleImage } from "@/lib/image";
 import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -149,9 +150,9 @@ export function ProjectUpdate({ language }: { language: Language }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="update-photos">{t.updatePhotos}</Label>
-              <Input
+              <FileInput
                 id="update-photos"
-                type="file"
+                language={language}
                 accept="image/jpeg,image/png,image/webp"
                 multiple
                 onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 5))}
