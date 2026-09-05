@@ -11,9 +11,10 @@ delivered a need counts as "org" for stories.
 Open: no notification to the beneficiary when an org takes their request; they see it on the
 status page ("Being handled by …") only when they check.
 
-## Multi-disaster generalization — backend done 2026-09-04, no Desk UI yet
-`incidentId` now threads through need/offer/project (`server/src/models/incident.js`,
-`incidentController.js`), and the public need form can pick an active/pending disaster or
-report a new one inline. There is no admin UI for the `/admin/incidents` queue (list pending,
-publish/approve/reject/archive) — an admin has to call the API directly today. Needs a Desk
-tab, probably next to Admin.
+## Multi-disaster generalization — done 2026-09-05
+`incidentId` threads through need/offer/project (`server/src/models/incident.js`,
+`incidentController.js`), the public need form can pick an active/pending disaster or report a
+new one inline, and admins manage the `/admin/incidents` queue (list/publish/approve/
+reject/archive) from a Desk tab next to Admin (`src/desk/incidents.tsx`). Incidents reported
+inline on a need form aren't actionable there by design — they activate automatically when a
+moderator publishes that need.

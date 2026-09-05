@@ -18,7 +18,7 @@ How the portal is run, who can do what, and how the community keeps it honest.
 |------|----------------|-----------------|
 | Helper | Sign in with Google | Offer help, use claim codes |
 | Moderator | Invitation by an admin (see below) | Publish/reject needs, offers, projects, articles; redeem and sync claims; act only inside assigned districts if scoped |
-| Admin | Granted by another admin in DynamoDB | Everything a moderator can do, plus manage roles and district scope, approve/reject/archive disaster reports (API only, no Desk tab yet), view stats and the audit log |
+| Admin | Granted by another admin in DynamoDB | Everything a moderator can do, plus manage roles and district scope, approve/reject/archive disaster reports (Desk → Disasters), view stats and the audit log |
 
 Helpers and moderators sign in with Google. Helpers are self-serve; moderation is invite-only — there is no application form.
 

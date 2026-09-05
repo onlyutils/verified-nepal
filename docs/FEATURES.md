@@ -109,10 +109,9 @@ a fixed few.
 - A disaster can also be reported on its own, with no attached need, by anyone signed in —
   meant for a bystander, NGO scout, or journalist flagging something before anyone has asked
   for help yet. This needs a photo as proof.
-- New disasters start **pending**. An admin reviews and approves or rejects them; approving the
-  need that references one activates the disaster in the same action. Only admins can approve
-  or reject a disaster — but there is no Desk tab for this yet, only the `/admin/incidents` API,
-  so an admin currently has to do it by hand rather than through the UI.
+- New disasters start **pending**. An admin reviews and approves or rejects them in a Desk tab
+  next to Admin; approving the need that references one activates the disaster in the same
+  action. Only admins can approve, reject, or archive a disaster.
 
 ```mermaid
 flowchart LR

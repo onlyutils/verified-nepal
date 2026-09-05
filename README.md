@@ -37,8 +37,8 @@ runs alongside it:
   photo updates, read and write articles (`/articles`), and post a short
   photo-or-video story about help they gave or received, while
   district-scoped moderators work a queue at `/desk` and every action is
-  recorded in a public masked audit log (`/audit`). Disasters are approved
-  by an admin through the API today — there is no Desk tab for it yet.
+  recorded in a public masked audit log (`/audit`), including an admin-only
+  Disasters tab for approving, rejecting or archiving reported disasters.
 
 This is **not** a government website. It exists to make already-public
 disaster information easier to read, and to coordinate volunteer relief
@@ -88,8 +88,7 @@ src/pages/*                public pages: home, find-person, missing-guide, info-
                            give-help, projects, articles, ledger, audit, drop-centers, donation-status,
                            register-organization, report-incident
 src/desk/*                 the Desk — moderator/admin dashboard at /desk (queue, boards, flags, projects,
-                           articles, stories, organizations, print, paper sync, admin). Approving a disaster
-                           report has no Desk tab yet — only the `/admin/incidents` API (see TODO.md)
+                           articles, stories, organizations, disasters, print, paper sync, admin)
 src/org/*                  My organization — organization dashboard at /org (centers, goods ledger, team)
 src/i18n/*                 en/ne string dictionaries by area — every string has both languages
 src/lib/*                  api client, auth (OAuth + PKCE), live data, geo, formatting, helplines, chat
