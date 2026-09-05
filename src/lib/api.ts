@@ -186,8 +186,9 @@ export class ApiError extends Error {
 async function request<T>(path: string, opts: RequestInit & { token?: string } = {}): Promise<T> {
   if (!API_BASE) throw new ApiError("API not configured", 0, null);
   const url = `${API_BASE}${path}`;
+  // Only requests with a body declare a content type: a bare GET then needs no CORS preflight.
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(opts.body ? { "Content-Type": "application/json" } : {}),
     ...((opts.headers as Record<string, string>) ?? {}),
   };
   if (opts.token) headers["Authorization"] = `Bearer ${opts.token}`;
