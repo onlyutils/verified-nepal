@@ -15,7 +15,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
     return { status: "already_redeemed", needId, redeemedAt: need.redeemedAt };
   }
   if (providedRedeemedAt && Number.isNaN(new Date(providedRedeemedAt).getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
-  const redeemedAt = await fulfilNeed(ddb, tableName, { need, redeemedAt: providedRedeemedAt, note, actorSub, actorName, reason: "redeem" });
+  const redeemedAt = await fulfilNeed(ddb, tableName, { need, redeemedAt: providedRedeemedAt, note, actorSub, actorName, reason: "redeem", expectedStatus: need.status });
   return { status: "redeemed", needId, redeemedAt };
 }
 
@@ -23,7 +23,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
  * The one place a need becomes "fulfilled": status + GSI keys, public ledger rows, audit.
  * Used by the moderator claim-code redeem and by organizations marking a need delivered.
  */
-export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName }) {
+export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName, expectedStatus }) {
   const at = redeemedAt || new Date().toISOString();
   const district = need.beneficiary?.district || need.district || "";
   const ward = need.beneficiary?.ward ?? need.ward;
@@ -34,7 +34,18 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   need.gsi1sk = need.createdAt;
   need.gsi2pk = "NEED#fulfilled";
   need.gsi2sk = need.createdAt;
-  await ddb.send(new PutCommand({ TableName: tableName, Item: need }));
+  const params = { TableName: tableName, Item: need };
+  if (expectedStatus !== undefined) {
+    params.ConditionExpression = "#status = :expectedStatus";
+    params.ExpressionAttributeNames = { "#status": "status" };
+    params.ExpressionAttributeValues = { ":expectedStatus": expectedStatus };
+  }
+  try {
+    await ddb.send(new PutCommand(params));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") throw err(409, "need_status_changed");
+    throw e;
+  }
   const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, redeemedAt: at };
   if (orgName) ledgerBase.orgName = orgName;
   if (note !== undefined && note !== null && String(note).trim() !== "") {

@@ -37,7 +37,10 @@ export async function handleOrgClaimNeed(event, opts, orgId, needId) {
   if (need.status !== "published") throw err(409, "need_not_available");
   const at = new Date().toISOString();
   need.handledBy = { orgId, orgName: org.name, bySub: auth.payload.sub, at };
-  await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched" });
+  await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched", expectedStatus: "published" }).catch((e) => {
+    if (e.status === 409) throw err(409, "need_not_available");
+    throw e;
+  });
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "matched", at });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.claim", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
   return json(200, contactView(need));
@@ -55,7 +58,10 @@ export async function handleOrgReleaseNeed(event, opts, orgId, needId) {
   const org = await requireVerifiedMember(auth, orgId);
   const need = await requireHandledByOrg(auth, orgId, needId);
   delete need.handledBy;
-  await setNeedStatus(auth.ddb, auth.tableName, { need, status: "published" });
+  await setNeedStatus(auth.ddb, auth.tableName, { need, status: "published", expectedStatus: "matched" }).catch((e) => {
+    if (e.status === 409) throw err(409, "need_not_handled_by_org");
+    throw e;
+  });
   await deleteOrgNeed(auth.ddb, auth.tableName, { orgId, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.release", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
   return json(200, { status: "published" });
@@ -67,7 +73,10 @@ export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
   const need = await requireHandledByOrg(auth, orgId, needId);
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
-  const at = await fulfilNeed(auth.ddb, auth.tableName, { need, note: body.note, ...actor(auth), reason: `org:${org.name}`, orgName: org.name });
+  const at = await fulfilNeed(auth.ddb, auth.tableName, { need, note: body.note, ...actor(auth), reason: `org:${org.name}`, orgName: org.name, expectedStatus: "matched" }).catch((e) => {
+    if (e.status === 409) throw err(409, "need_not_handled_by_org");
+    throw e;
+  });
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "fulfilled", at });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }
