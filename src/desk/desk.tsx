@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, Camera, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck } from "lucide-react";
+import { Building2, Camera, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck, Siren } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Dispatches } from "./dispatches";
 import { Stories } from "./stories";
 import { AuthGate, DistrictCheckboxes, DistrictGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
 import { Flags } from "./flags";
+import { Incidents } from "./incidents";
 import { Organizations } from "./orgs";
 import { PrintClaims } from "./print";
 import { Projects } from "./projects";
@@ -69,6 +70,7 @@ export function Desk({
     { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
     ...(auth.profile.role === "admin"
       ? [
+          { key: "incidents" as DeskSection, label: model.ds.deskIncidentsTab, icon: <Siren /> },
           { key: "admin" as DeskSection, label: t.deskAdminTab, icon: <ShieldCheck /> },
           { key: "climate" as DeskSection, label: model.ds.deskClimateTab, icon: <Globe /> },
         ]
@@ -132,6 +134,7 @@ export function Desk({
         {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
         {model.activeSection === "stories" ? <Stories model={model} /> : null}
         {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
+        {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
         {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
         {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
         <DeskDialogs model={model} />

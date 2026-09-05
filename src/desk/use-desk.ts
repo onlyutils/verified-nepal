@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   ackGuidelines,
+  approveIncident,
+  archiveIncident,
   setMyDistricts,
   claimQueueItem,
   getAdminClimate,
+  getAdminIncidents,
   getAdminStats,
   getAdminUsers,
   getClaimsPrint,
@@ -24,6 +27,8 @@ import {
   moderateOrg,
   moderateProject,
   moderateProjectUpdate,
+  publishIncident,
+  rejectIncident,
   redeemClaim,
   releaseQueueItem,
   setAdminUserRole,
@@ -31,6 +36,7 @@ import {
   updateNeedStatus,
   type AdminStatsResponse,
   type AdminClimateStats,
+  type AdminIncident,
   type AdminUser,
   type CenterFlagInboxItem,
   type ClaimPrintItem,
@@ -55,9 +61,9 @@ import { deskStrings } from "@/i18n/desk";
 import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
-export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "admin" | "climate";
+export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "incidents" | "admin" | "climate";
 
-const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "admin", "climate"]);
+const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "incidents", "admin", "climate"]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
@@ -157,6 +163,15 @@ export function useDesk(language: Language) {
   const [orgSuspendId, setOrgSuspendId] = useState<string | null>(null);
   const [orgSuspendReason, setOrgSuspendReason] = useState("");
   const [orgSuspendError, setOrgSuspendError] = useState<string | null>(null);
+
+  const [incidentsAdmin, setIncidentsAdmin] = useState<AdminIncident[]>([]);
+  const [incidentsAdminStatus, setIncidentsAdminStatus] = useState("pending");
+  const [incidentsAdminLoading, setIncidentsAdminLoading] = useState(false);
+  const [incidentsAdminError, setIncidentsAdminError] = useState<string | null>(null);
+  const [incidentActionLoading, setIncidentActionLoading] = useState<string | null>(null);
+  const [incidentRejectId, setIncidentRejectId] = useState<string | null>(null);
+  const [incidentRejectReason, setIncidentRejectReason] = useState("");
+  const [incidentRejectError, setIncidentRejectError] = useState<string | null>(null);
 
   const [flags, setFlags] = useState<FlagInboxItem[]>([]);
   const [flagsLoading, setFlagsLoading] = useState(false);
@@ -335,6 +350,18 @@ export function useDesk(language: Language) {
     },
     [auth.idToken, language, orgsStatus],
   );
+  const loadIncidentsAdmin = useCallback(async () => {
+    if (!auth.idToken) return;
+    setIncidentsAdminLoading(true);
+    setIncidentsAdminError(null);
+    try {
+      setIncidentsAdmin((await getAdminIncidents(auth.idToken, incidentsAdminStatus)).items);
+    } catch (error) {
+      setIncidentsAdminError(apiErrorMessage(error, language));
+    } finally {
+      setIncidentsAdminLoading(false);
+    }
+  }, [auth.idToken, incidentsAdminStatus, language]);
   const loadOrgCount = useCallback(async () => {
     if (!auth.idToken) return;
     try {
@@ -406,6 +433,7 @@ export function useDesk(language: Language) {
     if (activeSection === "dispatches") void loadDispatches();
     if (activeSection === "stories") void loadStories();
     if (activeSection === "orgs") void loadOrgs(orgsStatus);
+    if (activeSection === "incidents") void loadIncidentsAdmin();
     if (activeSection === "flags") {
       void loadFlags();
       void loadCenterFlags();
@@ -426,6 +454,7 @@ export function useDesk(language: Language) {
     loadDispatches,
     loadStories,
     loadFlags,
+    loadIncidentsAdmin,
     loadOrgs,
     loadProjects,
     orgsStatus,
@@ -619,6 +648,63 @@ export function useDesk(language: Language) {
       void loadStories();
     } catch (error) {
       setStoriesError(apiErrorMessage(error, language));
+    }
+  };
+  const handleIncidentPublish = async (id: string) => {
+    if (!auth.idToken) return;
+    setIncidentActionLoading(id);
+    try {
+      await publishIncident(auth.idToken, id);
+      success(t.deskActionSuccess);
+      void loadIncidentsAdmin();
+    } catch (error) {
+      setIncidentsAdminError(apiErrorMessage(error, language));
+    } finally {
+      setIncidentActionLoading(null);
+    }
+  };
+  const handleIncidentArchive = async (id: string) => {
+    if (!auth.idToken) return;
+    setIncidentActionLoading(id);
+    try {
+      await archiveIncident(auth.idToken, id);
+      success(t.deskActionSuccess);
+      void loadIncidentsAdmin();
+    } catch (error) {
+      setIncidentsAdminError(apiErrorMessage(error, language));
+    } finally {
+      setIncidentActionLoading(null);
+    }
+  };
+  const handleIncidentApprove = async (id: string) => {
+    if (!auth.idToken) return;
+    setIncidentActionLoading(id);
+    try {
+      await approveIncident(auth.idToken, id);
+      success(t.deskActionSuccess);
+      void loadIncidentsAdmin();
+    } catch (error) {
+      setIncidentsAdminError(apiErrorMessage(error, language));
+    } finally {
+      setIncidentActionLoading(null);
+    }
+  };
+  const handleIncidentReject = async () => {
+    if (!auth.idToken || !incidentRejectId) return;
+    if (!incidentRejectReason.trim()) {
+      setIncidentRejectError(ds.deskIncidentsRejectRequired);
+      return;
+    }
+    setIncidentActionLoading(incidentRejectId);
+    try {
+      await rejectIncident(auth.idToken, incidentRejectId, incidentRejectReason.trim());
+      success(t.deskActionSuccess);
+      setIncidentRejectId(null);
+      void loadIncidentsAdmin();
+    } catch (error) {
+      setIncidentRejectError(apiErrorMessage(error, language));
+    } finally {
+      setIncidentActionLoading(null);
     }
   };
   const handleDispatchReject = async () => {
@@ -900,6 +986,23 @@ export function useDesk(language: Language) {
     orgSuspendError,
     setOrgSuspendError,
     handleOrg,
+    incidentsAdmin,
+    incidentsAdminStatus,
+    setIncidentsAdminStatus,
+    incidentsAdminLoading,
+    incidentsAdminError,
+    loadIncidentsAdmin,
+    incidentActionLoading,
+    incidentRejectId,
+    setIncidentRejectId,
+    incidentRejectReason,
+    setIncidentRejectReason,
+    incidentRejectError,
+    setIncidentRejectError,
+    handleIncidentPublish,
+    handleIncidentArchive,
+    handleIncidentApprove,
+    handleIncidentReject,
     flags,
     flagsLoading,
     flagsError,

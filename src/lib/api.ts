@@ -86,6 +86,11 @@ export interface Incident {
   approvedAt?: string;
 }
 
+export interface AdminIncident extends Incident {
+  proofMedia?: NeedMediaItem[];
+  rejectionReason?: string;
+}
+
 export interface CreateNeedBody {
   onBehalf: boolean;
   registrant: { name: string; phone: string; email?: string } | null;
@@ -215,6 +220,30 @@ export function createNeed(body: CreateNeedBody, token?: string): Promise<Create
 
 export function listIncidents(status = "active,pending"): Promise<{ items: Incident[] }> {
   return request<{ items: Incident[] }>(`/incidents?status=${encodeURIComponent(status)}`);
+}
+
+export function getAdminIncidents(token: string, status = "pending"): Promise<{ items: AdminIncident[] }> {
+  return request<{ items: AdminIncident[] }>(`/admin/incidents?status=${encodeURIComponent(status)}`, { token });
+}
+
+export function publishIncident(token: string, id: string): Promise<{ status: string }> {
+  return request<{ status: string }>(`/admin/incidents/${encodeURIComponent(id)}/publish`, { method: "POST", token });
+}
+
+export function archiveIncident(token: string, id: string): Promise<{ status: string }> {
+  return request<{ status: string }>(`/admin/incidents/${encodeURIComponent(id)}/archive`, { method: "POST", token });
+}
+
+export function approveIncident(token: string, id: string): Promise<{ status: string }> {
+  return request<{ status: string }>(`/admin/incidents/${encodeURIComponent(id)}/approve`, { method: "POST", token });
+}
+
+export function rejectIncident(token: string, id: string, reason: string): Promise<{ status: string }> {
+  return request<{ status: string }>(`/admin/incidents/${encodeURIComponent(id)}/reject`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ reason }),
+  });
 }
 
 export interface RequestIncidentBody {
