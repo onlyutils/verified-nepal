@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 export async function getMissingById(ddb, tableName, id) {
   return (await ddb.send(new GetCommand({
@@ -16,4 +16,13 @@ export async function deleteMissing(ddb, tableName, id) {
     TableName: tableName,
     Key: { PK: `MISSING#${id}`, SK: "META" },
   }));
+}
+
+/** Newest first. ponytail: no pagination; add a cursor when one status passes ~1 MB of items. */
+export async function listMissingByStatus(ddb, tableName, status) {
+  const res = await ddb.send(new QueryCommand({
+    TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk",
+    ExpressionAttributeValues: { ":pk": `MISSING#${status}` }, ScanIndexForward: false,
+  }));
+  return res.Items || [];
 }

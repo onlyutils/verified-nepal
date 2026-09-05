@@ -14,7 +14,7 @@ import {
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
-  handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleDeleteMissing,
+  handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
 import {
   handleGetModerationQueue, handlePostModeration, handlePostModerationClaim, handlePostModerationRelease,
@@ -64,6 +64,7 @@ const routes = [
   ["GET", /^\/moderation\/stories$/, withModAck(handleGetModerationStories)],
   ["POST", /^\/moderation\/stories\/([^/]+)$/, withModAck(handlePostModerationStory)],
   ["POST", /^\/me\/needs\/claim$/, withAuth(handlePostNeedClaim)],
+  ["GET", /^\/missing$/, handleGetMissing],
   ["POST", /^\/me\/missing\/presign$/, withAuth(handlePostMissingPresign)],
   ["PUT", /^\/me\/missing\/([^/]+)$/, withAuth(handlePutMissing)],
   ["DELETE", /^\/me\/missing\/([^/]+)$/, withAuth(handleDeleteMissing)],

@@ -5,12 +5,19 @@ import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { downscaleImage } from "@/lib/image";
 import { apiErrorMessage } from "@/lib/api-error";
-import { getDashboard, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
-import { PosterGrid, posterEditPath } from "@/components/poster-grid";
+import {
+  getDashboard,
+  getMissing,
+  presignMissingPhoto,
+  putMissing,
+  type MissingBody,
+  type MissingListResponse,
+  type MyMissing,
+} from "@/lib/api";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { useGoogleAuth } from "@/lib/auth";
 import { uploadMedia } from "@/lib/media";
-import { EMPTY_POSTER, POSTER_LIMITS, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
+import { EMPTY_POSTER, POSTER_LIMITS, lastSeenLine, personLine, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
 import { drawPoster, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
 import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -23,6 +30,8 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { SignInNudge } from "@/components/sign-in-nudge";
+import { StatCard } from "@/components/stat-card";
+import { StatusBadge } from "@/components/status-badge";
 
 const DRAFT_KEY = "vn:poster-draft";
 type Draft = { input: PosterInput; photo: string | null };
@@ -67,7 +76,6 @@ function loadImage(src: string) {
     img.src = src;
   });
 }
-
 
 /** Pick one option from visual tiles instead of a dropdown. */
 function TileRadio<T extends string>({
@@ -116,7 +124,10 @@ function TemplateSwatch({ template, size }: { template: PosterInput["template"];
   const ink = blue ? "bg-primary-foreground" : "bg-foreground";
   const head = blue ? "bg-primary-foreground" : "bg-destructive";
   return (
-    <div className={`${bg} ${size === "story" ? "aspect-[9/16] w-10" : "aspect-square w-16"} flex flex-col gap-1 rounded-sm border p-1.5`} aria-hidden="true">
+    <div
+      className={`${bg} ${size === "story" ? "aspect-[9/16] w-10" : "aspect-square w-16"} flex flex-col gap-1 rounded-sm border p-1.5`}
+      aria-hidden="true"
+    >
       <div className={`${head} h-2 w-2/3 rounded-sm`} />
       <div className={`${ink} h-0.5 w-1/4 opacity-60`} />
       <div className={`flex-1 rounded-sm border ${blue ? "border-primary-foreground/60" : "border-foreground/30"}`} />
@@ -126,22 +137,64 @@ function TemplateSwatch({ template, size }: { template: PosterInput["template"];
   );
 }
 
-/** /poster — every saved poster plus the create button. */
+/** Plain text card: the poster's facts, not a copy of the picture. */
+function MissingCard({ item, language }: { item: MyMissing; language: Language }) {
+  const t = posterStrings[language];
+  const input = {
+    ...EMPTY_POSTER,
+    ...(item as unknown as PosterInput),
+    language,
+    phones: [(item.phones as string[])?.[0] ?? "", (item.phones as string[])?.[1] ?? ""] as [string, string],
+  };
+  const found = item.status === "found";
+  const lines = [lastSeenLine(input, t), input.clothing.trim(), input.story.trim()].filter(Boolean);
+  return (
+    <Card className={found ? "opacity-70" : ""}>
+      <CardContent className="flex gap-4 p-4">
+        {item.photo ? (
+          <img src={item.photo.url} alt="" className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
+        ) : (
+          <div className="h-20 w-20 shrink-0 rounded-md bg-muted" aria-hidden="true" />
+        )}
+        <div className="min-w-0 space-y-1 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold">{personLine(input, t)}</span>
+            <StatusBadge tone={found ? "success" : "danger"}>{found ? t.headlineFound : t.headlineMissing}</StatusBadge>
+          </div>
+          {lines.map((line) => (
+            <p key={line} className="text-muted-foreground">
+              {line}
+            </p>
+          ))}
+          <p>
+            {t.contact}:{" "}
+            {input.phones.filter(Boolean).map((p, i) => (
+              <a key={p} href={`tel:${p}`} className="font-medium underline-offset-4 hover:underline">
+                {i > 0 ? ", " : ""}
+                {p}
+              </a>
+            ))}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** /poster — public board of every saved poster, missing first, plus the create button. */
 export function PosterCatalogue({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = posterStrings[language];
-  const auth = useGoogleAuth();
-  const [items, setItems] = useState<MyMissing[] | null>(null);
+  const [data, setData] = useState<MissingListResponse | null | "error">(null);
 
   useEffect(() => {
-    if (!auth.idToken) return;
     let cancelled = false;
-    getDashboard(auth.idToken)
-      .then((dash) => !cancelled && setItems([...dash.missing].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))))
-      .catch(() => !cancelled && setItems([]));
+    getMissing()
+      .then((res) => !cancelled && setData(res))
+      .catch(() => !cancelled && setData("error"));
     return () => {
       cancelled = true;
     };
-  }, [auth.idToken]);
+  }, []);
 
   const createButton = (
     <Button type="button" size="lg" onClick={() => navigate("posterNew")}>
@@ -153,18 +206,28 @@ export function PosterCatalogue({ language, navigate }: { language: Language; na
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <PageHeader eyebrow={t.eyebrow} title={t.catalogueTitle} description={t.catalogueIntro} actions={createButton} />
-      {!auth.idToken ? (
-        auth.loading ? (
-          <LoadingState label={t.loading} />
-        ) : (
-          <SignInNudge language={language} id="poster" title={t.catalogueSignedOutTitle} body={t.catalogueSignedOutBody} />
-        )
-      ) : items === null ? (
+      {data === null ? (
         <LoadingState label={t.loading} />
-      ) : items.length === 0 ? (
-        <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
+      ) : data === "error" ? (
+        <Alert variant="destructive">
+          <AlertDescription>{t.catalogueError}</AlertDescription>
+        </Alert>
       ) : (
-        <PosterGrid language={language} items={items} onChange={(fn) => setItems((list) => list && fn(list))} />
+        <>
+          <div className="grid grid-cols-2 gap-4 sm:max-w-md">
+            <StatCard value={data.counts.missing} label={t.kpiMissing} tone="danger" />
+            <StatCard value={data.counts.found} label={t.kpiFound} />
+          </div>
+          {data.items.length === 0 ? (
+            <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {data.items.map((m) => (
+                <MissingCard key={m.id} item={m} language={language} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

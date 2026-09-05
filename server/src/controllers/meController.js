@@ -5,7 +5,7 @@ import { ALLOWED_PHOTO_TYPES, LANGUAGES, MAX_PHOTO_SIZE } from "../constants.js"
 import { getRefPointer } from "../models/need.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
-import { deleteMissing, getMissingById, putMissing } from "../models/missing.js";
+import { deleteMissing, getMissingById, listMissingByStatus, putMissing } from "../models/missing.js";
 import { toMyMissing, toMyNeed, toMyOffer, toMyGroup } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 
@@ -101,6 +101,8 @@ export async function handlePutMissing(event, opts, id) {
     createdBy: auth.payload.sub,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
+    gsi2pk: `MISSING#${data.status}`,
+    gsi2sk: now,
   };
   if (!item.photo) delete item.photo;
   await putMissing(auth.ddb, auth.tableName, item);
@@ -124,6 +126,15 @@ export async function handleDeleteMissing(event, opts, id) {
   await deleteMissing(auth.ddb, auth.tableName, id);
   await deletePointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, type: "MISSING", id });
   return { statusCode: 204, headers: {}, body: "" };
+}
+
+/** Public board of every saved poster, with missing/found counts for the KPI row. */
+export async function handleGetMissing(event, { getDdb, env }) {
+  if (!env.TABLE_NAME) throw err(500, "TABLE_NAME not configured");
+  const ddb = getDdb();
+  const [missing, found] = await Promise.all(["missing", "found"].map((s) => listMissingByStatus(ddb, env.TABLE_NAME, s)));
+  const body = { items: [...missing, ...found].map(toMyMissing), counts: { missing: missing.length, found: found.length } };
+  return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
 }
 
 export async function handlePostMissingPresign(event, opts) {

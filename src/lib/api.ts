@@ -404,6 +404,16 @@ export function putMissing(token: string, id: string, body: MissingBody): Promis
   });
 }
 
+export interface MissingListResponse {
+  items: MyMissing[];
+  counts: { missing: number; found: number };
+}
+
+/** Public board of every saved poster. */
+export function getMissing(): Promise<MissingListResponse> {
+  return request<MissingListResponse>("/missing");
+}
+
 export function deleteMissing(token: string, id: string): Promise<void> {
   return request<void>(`/me/missing/${encodeURIComponent(id)}`, { method: "DELETE", token });
 }
