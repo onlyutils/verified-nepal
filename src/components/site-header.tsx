@@ -152,7 +152,7 @@ function guideLinks(language: Language) {
     ["/guides/VerifiedNepal-Seeking-Help-Guide.pdf", t.guideSeekingHelp],
     ["/guides/VerifiedNepal-Providing-Help-Guide.pdf", t.guideProvidingHelp],
     ["/guides/VerifiedNepal-Organization-Guide.pdf", t.guideOrganization],
-    ["/guides/VerifiedNepal-Writing-a-Dispatch-Guide.pdf", t.guideDispatch],
+    ["/guides/VerifiedNepal-Writing-an-Article-Guide.pdf", t.guideDispatch],
     ["/guides/VerifiedNepal-Moderator-Guide.pdf", t.guideModerator],
   ] as const;
 }

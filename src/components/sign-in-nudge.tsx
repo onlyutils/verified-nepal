@@ -67,6 +67,9 @@ export function SignInNudge({ language, title, body, id }: { language: Language;
           >
             {t.nudgeDismiss}
           </Button>
+          <Button type="button" variant="ghost" asChild>
+            <a href="/">{t.nudgeGoToLanding}</a>
+          </Button>
         </div>
       </CardContent>
     </Card>

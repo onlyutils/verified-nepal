@@ -23,6 +23,7 @@ export const uiStrings = {
     nudgeContinueWithGoogle: "Continue with Google",
     nudgeDismiss: "Not now",
     nudgePrivacy: "Your request stays anonymous. Sign-in only lets you find it again.",
+    nudgeGoToLanding: "Go to home page",
   },
   ne: {
     projectTypeTuin: "टुइन",
@@ -46,5 +47,6 @@ export const uiStrings = {
     nudgeContinueWithGoogle: "Google बाट जारी राख्नुहोस्",
     nudgeDismiss: "अहिले होइन",
     nudgePrivacy: "तपाईंको अनुरोध गुमनाम नै रहन्छ। साइन इनले तपाईंलाई यो फेरि भेट्न मात्र मद्दत गर्छ।",
+    nudgeGoToLanding: "गृहपृष्ठमा जानुहोस्",
   },
 } satisfies Record<Language, Record<string, string>>;

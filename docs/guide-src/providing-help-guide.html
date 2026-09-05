@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VerifiedNepal — Providing Help Guide</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --crimson: #C8102E; --navy: #1F3B8B; --ink: #1a2333; --muted: #5b6472; --rule: #e5e7eb; }
+  body { font-family: Arial, Helvetica, sans-serif; color: var(--ink); }
+  .watermark {
+    position: fixed; top: 50%; left: 50%; width: 420px; height: 420px;
+    transform: translate(-50%, -46%); opacity: 0.05; z-index: 0;
+  }
+  .watermark svg { width: 100%; height: 100%; }
+  .page { position: relative; width: 210mm; min-height: 297mm; padding: 16mm 20mm; page-break-after: always; z-index: 1; }
+  .page:last-child { page-break-after: auto; }
+
+  /* Cover */
+  .cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .flagbar { width: 160px; height: 7px; display: flex; margin-bottom: 26px; }
+  .flagbar .r { flex: 1; background: var(--crimson); }
+  .flagbar .b { flex: 1; background: var(--navy); }
+  .brand { color: var(--crimson); font-weight: bold; letter-spacing: 0.35em; font-size: 17px; margin-bottom: 28px; }
+  .cover h1 { color: var(--ink); font-size: 40px; line-height: 1.25; margin-bottom: 26px; }
+  .cover .sub { color: var(--muted); font-size: 17px; line-height: 1.6; max-width: 460px; }
+
+  /* Content */
+  .kicker { display: inline-block; background: #eef1e6; color: #5a6b3b; font-size: 11px; font-weight: bold; letter-spacing: 0.18em; padding: 5px 12px; border-radius: 12px; margin-bottom: 22px; }
+  h2 { color: var(--navy); font-size: 24px; margin-bottom: 8px; padding-bottom: 10px; border-bottom: 2px solid var(--crimson); }
+  section { margin-bottom: 24px; }
+  p.body, li { color: var(--muted); font-size: 13.5px; line-height: 1.65; }
+  section > p.body { margin-top: 12px; }
+  strong { color: var(--ink); }
+
+  ol.steps { list-style: none; margin-top: 16px; }
+  ol.steps li { position: relative; padding-left: 34px; margin-bottom: 11px; }
+  ol.steps li::before {
+    content: attr(data-n); position: absolute; left: 0; top: 1px;
+    width: 21px; height: 21px; border-radius: 50%; background: var(--navy); color: #fff;
+    font-size: 11px; font-weight: bold; text-align: center; line-height: 21px;
+  }
+  ul.checks { list-style: none; margin-top: 14px; }
+  ul.checks li { position: relative; padding-left: 24px; margin-bottom: 10px; }
+  ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--crimson); font-weight: bold; }
+
+  .callout { border-left: 4px solid var(--navy); background: #f4f6fa; padding: 13px 16px; margin-top: 8px; }
+  .callout p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  .foot { text-align: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .foot p { color: var(--muted); font-size: 13.5px; margin-bottom: 12px; }
+  .foot .url { color: var(--crimson); font-weight: bold; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="watermark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="65.4 65.4 226.6 226.6" role="img" aria-label="">
+  <circle cx="178.707" cy="178.586" r="113.293" fill="#111111"/>
+  <circle cx="178.707" cy="178.586" r="103.5" fill="#111111"/>
+  <path fill="#FFFFFF" fill-rule="evenodd" clip-rule="evenodd" d="M129.212 193.327C129.2 206.317 133.08 219.013 140.352 229.777C118.044 219.994 101.897 197.002 99.5506 171.629C99.3561 173.894 99.2568 176.185 99.2568 178.5C99.2568 222.265 134.735 257.744 178.5 257.744C186.613 257.744 194.44 256.525 201.81 254.26L203.899 239.375L187.434 235.168L197.872 221.769L185.705 209.898L201.442 203.511L196.871 187.153L213.696 189.491L217.903 173.025L231.302 183.463L243.169 171.296L249.573 187.033L257.495 184.82C257.66 182.735 257.744 180.628 257.744 178.5C257.744 134.736 222.265 99.257 178.5 99.257C176.721 99.257 174.955 99.3157 173.205 99.4312C198.032 101.18 219.213 115.946 229.841 136.866C219.511 130.743 207.72 127.523 195.712 127.545C158.983 127.545 129.212 156.997 129.212 193.327ZM250.788 196.81C252.203 197.877 253.507 199.07 254.687 200.371C249.396 218.835 237.575 234.54 221.882 244.825C218.393 243.193 215.259 240.855 212.688 237.94C209.009 233.768 206.647 228.601 205.899 223.089C205.152 217.578 206.053 211.968 208.488 206.967C210.923 201.967 214.784 197.798 219.584 194.988C224.384 192.178 229.909 190.851 235.462 191.175C241.014 191.5 246.347 193.46 250.788 196.81Z"/>
+</svg>
+</div>
+
+<div class="page cover">
+  <div class="flagbar"><div class="r"></div><div class="b"></div></div>
+  <div class="brand">VERIFIEDNEPAL</div>
+  <h1>Want to Help?<br>Here's How</h1>
+  <p class="sub">A simple guide to offering help — what you'll need, how matching works, and how handovers stay safe.</p>
+</div>
+
+<div class="page">
+  <span class="kicker">PROVIDING HELP</span>
+
+  <section>
+    <h2>Browse real, checked needs</h2>
+    <p class="body">Every request you see has already been checked by a moderator, so you know it's genuine. You can filter by disaster, district or the kind of help needed — Goods, Shelter, Transport, Medical, Skilled labour, or Funds/guidance. To protect people's privacy, listings show only a general area, not a full name or contact details.</p>
+  </section>
+
+  <section>
+    <h2>How to offer help</h2>
+    <ol class="steps">
+      <li data-n="1"><strong>Sign in with Google.</strong> A quick, one-time step so your offer can be tracked reliably.</li>
+      <li data-n="2"><strong>Fill in a short form.</strong> What you can offer, and which district(s) you can help in. Helping on behalf of a group or organization? You can note that too.</li>
+      <li data-n="3"><strong>Submit it.</strong> You'll get a reference code confirming your offer has been received.</li>
+      <li data-n="4"><strong>A moderator matches you.</strong> They'll pair your offer with a verified request that fits what you can give.</li>
+      <li data-n="5"><strong>Handover happens safely, in person.</strong> A moderator checks a claim code at the point of handover — so you're never just handing things to a stranger with no verification.</li>
+    </ol>
+  </section>
+
+  <div class="callout">
+    <p><strong>Helping through a verified organization?</strong> Staff of a verified organization can also claim a published need directly from the board and arrange the handover themselves, without waiting for a moderator match. See the Organization guide.</p>
+  </div>
+
+  <section>
+    <h2>See something wrong?</h2>
+    <ul class="checks">
+      <li><strong>Report it directly</strong> — every listing has a "Report a problem" option: already received aid, not a real need, or other. No sign-in required.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="body"><strong>Safety built in.</strong> All handovers of aid go through a moderator check, so you're never asked to exchange personal contact details directly with someone you can't verify.</p>
+  </section>
+
+  <div class="foot">
+    <p>Ready to offer help, or want to browse first?</p>
+    <p class="url">verifiednepal.com</p>
+  </div>
+</div>
+
+</body>
+</html>
