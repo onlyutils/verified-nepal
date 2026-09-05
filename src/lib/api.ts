@@ -1396,10 +1396,10 @@ export interface ClimateMessagesResponse {
 
 export function postClimateMessage(body: {
   iso3: string;
-  messageId: string;
+  messageIds: string[];
   turnstileToken: string;
-}): Promise<{ ok: boolean; count: number }> {
-  return request<{ ok: boolean; count: number }>("/climate/messages", {
+}): Promise<{ ok: boolean; counts: Record<string, number> }> {
+  return request<{ ok: boolean; counts: Record<string, number> }>("/climate/messages", {
     method: "POST",
     body: JSON.stringify(body),
   });

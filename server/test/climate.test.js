@@ -24,7 +24,7 @@ describe("climate message and download routes", () => {
     }));
 
     assert.equal(res.statusCode, 201);
-    assert.deepEqual(bodyOf(res), { ok: true, count: 1 });
+    assert.deepEqual(bodyOf(res), { ok: true, count: 1, counts: { "stop-heating-us": 1 } });
     assert.equal(ddb.store.get("CLIMATE#MSG|USA#stop-heating-us").count, 1);
     assert.equal(ddb.store.get("CLIMATE#STATS|TOTAL").messages, 1);
     assert.equal(ddb.store.get(`CLIMATE#STATS|DAY#${new Date().toISOString().slice(0, 10)}`).messages, 1);
@@ -36,6 +36,33 @@ describe("climate message and download routes", () => {
     let res = await handler(makeEvent({ method: "POST", path: "/climate/messages", body: { iso3: "USA", messageId: "not-a-message" } }));
     assert.equal(res.statusCode, 400);
     res = await handler(makeEvent({ method: "POST", path: "/climate/messages", body: { iso3: "NPL", messageId: CLIMATE_MESSAGE_IDS[0] } }));
+    assert.equal(res.statusCode, 400);
+  });
+
+  it("submits a batch of messageIds with a single Turnstile check and records each one", async () => {
+    const ddb = new FakeDdb();
+    const handler = createHandler({ env, ddbClient: ddb });
+    const ids = [CLIMATE_MESSAGE_IDS[0], CLIMATE_MESSAGE_IDS[1], CLIMATE_MESSAGE_IDS[2]];
+    const res = await handler(makeEvent({
+      method: "POST",
+      path: "/climate/messages",
+      body: { iso3: "USA", messageIds: ids, turnstileToken: "one-token-for-the-whole-batch" },
+    }));
+
+    assert.equal(res.statusCode, 201);
+    const body = bodyOf(res);
+    assert.equal(body.ok, true);
+    for (const id of ids) assert.equal(body.counts[id], 1);
+    assert.equal(ddb.store.get("CLIMATE#STATS|TOTAL").messages, 3);
+  });
+
+  it("rejects more than 3 messageIds in one submission", async () => {
+    const handler = createHandler({ env, ddbClient: new FakeDdb() });
+    const res = await handler(makeEvent({
+      method: "POST",
+      path: "/climate/messages",
+      body: { iso3: "USA", messageIds: CLIMATE_MESSAGE_IDS.slice(0, 4) },
+    }));
     assert.equal(res.statusCode, 400);
   });
 

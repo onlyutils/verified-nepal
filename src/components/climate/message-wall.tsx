@@ -63,10 +63,10 @@ export function MessageWall({
     setError(false);
     setSent(null);
     try {
-      const results = await Promise.all(
-        messageIds.map((messageId) => postClimateMessage({ iso3: country.iso3, messageId, turnstileToken })),
-      );
-      const lastCount = results[results.length - 1]?.count ?? 0;
+      // One request for the whole batch: a Turnstile token is single-use, so verifying it
+      // once per selected message would fail every submission after the first.
+      const result = await postClimateMessage({ iso3: country.iso3, messageIds, turnstileToken });
+      const lastCount = result.counts[messageIds[messageIds.length - 1]] ?? 0;
       setSent({ count: lastCount, messageIds, iso3: country.iso3 });
       onSent(messageIds[0], country.iso3);
       resetToken();
