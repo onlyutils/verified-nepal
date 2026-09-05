@@ -5,9 +5,11 @@ import {
   coverRect,
   disasterLine,
   EMPTY_POSTER,
+  isPosterResolved,
   lastSeenLine,
   personLine,
   posterFilename,
+  posterHeadline,
   validatePoster,
   wrapText,
   type PosterStrings,
@@ -16,14 +18,19 @@ import {
 const t: PosterStrings = {
   headlineMissing: "MISSING",
   headlineFound: "FOUND",
+  headlineSafe: "SAFE",
   since: "Missing since the {disaster}",
   sinceFound: "Reported missing after the {disaster}",
   lastSeen: "Last seen",
   age: "Age",
+  gender: "Gender",
+  marks: "Marks",
   contact: "Contact",
   nickname: "also called",
   woman: "Woman",
   man: "Man",
+  girl: "Girl",
+  boy: "Boy",
   other: "Other",
   brandUrl: "verifiednepal.com",
 };
@@ -48,6 +55,14 @@ test("person line joins name, nickname, age and gender", () => {
 test("last seen line joins place, district and time", () => {
   assert.equal(lastSeenLine({ ...base, lastSeenAt: "2026-08-26T14:30" }, t), "Last seen: Betrawati, Rasuwa · 26 Aug 2026, 14:30");
   assert.equal(lastSeenLine(base, t), "Last seen: Betrawati, Rasuwa");
+  assert.equal(lastSeenLine(base, t, false), "Betrawati, Rasuwa");
+});
+
+test("found and safe both resolve the search; missing does not", () => {
+  assert.equal(isPosterResolved("missing"), false);
+  assert.equal(isPosterResolved("found"), true);
+  assert.equal(isPosterResolved("safe"), true);
+  assert.equal(posterHeadline("safe", t), "SAFE");
 });
 
 test("wrapText breaks on words, caps lines and adds an ellipsis", () => {

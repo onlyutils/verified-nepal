@@ -32,12 +32,16 @@ describe("saved missing-person posters", () => {
     const res = await handler(makeEvent({ method: "GET", path: "/missing" }));
     assert.equal(res.statusCode, 200);
     const out = JSON.parse(res.body);
-    assert.deepEqual(out.counts, { missing: 2, found: 1 });
+    assert.deepEqual(out.counts, { missing: 2, found: 1, safe: 0 });
     assert.deepEqual(out.items.map((m) => m.id).sort(), ["p1", "p2", "p3"]);
     assert.ok(out.items.every((m) => m.createdBy === undefined && m.gsi2pk === undefined && m.phones.length === 1));
     // Marking found moves the record between the two lists.
     await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body: { ...body, status: "found" }, headers: a }));
-    assert.deepEqual(JSON.parse((await handler(makeEvent({ method: "GET", path: "/missing" }))).body).counts, { missing: 1, found: 2 });
+    assert.deepEqual(JSON.parse((await handler(makeEvent({ method: "GET", path: "/missing" }))).body).counts, {
+      missing: 1,
+      found: 2,
+      safe: 0,
+    });
   });
 
   it("PUT creates, updates, and refuses another owner", async () => {

@@ -12,10 +12,10 @@ export function StatCard({
   value: ReactNode;
   label: ReactNode;
   hint?: ReactNode;
-  tone?: "default" | "primary" | "danger";
+  tone?: "default" | "primary" | "danger" | "success";
   className?: string;
 }) {
-  const number = { default: "text-foreground", primary: "text-primary", danger: "text-destructive" }[tone];
+  const number = { default: "text-foreground", primary: "text-primary", danger: "text-destructive", success: "text-success" }[tone];
   const border = tone === "danger" ? "border-destructive/30" : "";
   return (
     <Card className={`p-5 ${border} ${className}`}>

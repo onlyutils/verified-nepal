@@ -43,8 +43,8 @@ export async function handlePostNeedClaim(event, opts) {
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const PHONE = /^[0-9]{7,15}$/;
 const ENUMS = {
-  gender: ["", "woman", "man", "other"],
-  status: ["missing", "found"],
+  gender: ["", "woman", "man", "girl", "boy", "other"],
+  status: ["missing", "found", "safe"],
   template: ["paper", "blue"],
   size: ["feed", "story"],
 };
@@ -128,12 +128,15 @@ export async function handleDeleteMissing(event, opts, id) {
   return { statusCode: 204, headers: {}, body: "" };
 }
 
-/** Public board of every saved poster, with missing/found counts for the KPI row. */
+const BOARD_STATUSES = ["missing", "found", "safe"];
+
+/** Public board of every saved poster, with per-status counts for the KPI row. */
 export async function handleGetMissing(event, { getDdb, env }) {
   if (!env.TABLE_NAME) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const [missing, found] = await Promise.all(["missing", "found"].map((s) => listMissingByStatus(ddb, env.TABLE_NAME, s)));
-  const body = { items: [...missing, ...found].map(toMyMissing), counts: { missing: missing.length, found: found.length } };
+  const lists = await Promise.all(BOARD_STATUSES.map((s) => listMissingByStatus(ddb, env.TABLE_NAME, s)));
+  const counts = Object.fromEntries(BOARD_STATUSES.map((s, i) => [s, lists[i].length]));
+  const body = { items: lists.flat().map(toMyMissing), counts };
   return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
 }
 

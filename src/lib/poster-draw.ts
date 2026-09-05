@@ -2,8 +2,10 @@ import { CURRENT_DISASTER } from "./disasters.ts";
 import {
   coverRect,
   disasterLine,
+  isPosterResolved,
   lastSeenLine,
-  personLine,
+  posterHeadline,
+  posterNameLine,
   POSTER_SIZES,
   wrapText,
   type PosterInput,
@@ -25,37 +27,43 @@ export function token(name: string, alpha = 1) {
 
 interface Palette {
   background: string;
-  headline: string;
-  headlineFound: string;
+  /** Full-bleed top/bottom bars. On "blue" this equals background, so the bar disappears. */
+  bannerBg: string;
+  bannerText: string;
+  /** The name line and rules: the status colour on "paper", white on the flat "blue" card. */
+  accent: string;
   text: string;
   muted: string;
-  rule: string;
   photoFrame: string;
   brand: string;
 }
 
-function palette(template: PosterTemplateId): Palette {
+/** "paper" colours the banner by outcome; "blue" stays one flat colour regardless of status. */
+function palette(template: PosterTemplateId, resolved: boolean): Palette {
   if (template === "blue") {
+    const background = token("--primary");
+    const bannerText = token("--primary-foreground");
     return {
-      background: token("--primary"),
-      headline: token("--primary-foreground"),
-      headlineFound: token("--primary-foreground"),
-      text: token("--primary-foreground"),
+      background,
+      bannerBg: background,
+      bannerText,
+      accent: bannerText,
+      text: bannerText,
       muted: token("--primary-foreground", 0.78),
-      rule: token("--primary-foreground", 0.35),
-      photoFrame: token("--primary-foreground"),
+      photoFrame: bannerText,
       brand: token("--primary-foreground", 0.9),
     };
   }
+  const bannerBg = resolved ? token("--success") : token("--destructive");
   return {
     background: token("--secondary"),
-    headline: token("--destructive"),
-    headlineFound: token("--success"),
+    bannerBg,
+    bannerText: resolved ? token("--success-foreground") : token("--destructive-foreground"),
+    accent: bannerBg,
     text: token("--foreground"),
     muted: token("--muted-foreground"),
-    rule: token("--primary"),
     photoFrame: token("--border"),
-    brand: token("--primary"),
+    brand: token("--muted-foreground"),
   };
 }
 
@@ -110,98 +118,143 @@ function measure(ctx: CanvasRenderingContext2D) {
   return (s: string) => ctx.measureText(s).width;
 }
 
+/** A label above a bold value; returns the y position after the value. */
+function drawField(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  w: number,
+  labelColor: string,
+  valueColor: string,
+) {
+  ctx.fillStyle = labelColor;
+  ctx.font = `600 22px ${FAMILY}`;
+  ctx.fillText(label.toUpperCase(), x, y);
+  ctx.fillStyle = valueColor;
+  ctx.font = `700 34px ${FAMILY}`;
+  return drawLines(ctx, wrapText(measure(ctx), value, w, 2), x, y + 32, 40);
+}
+
 export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets: PosterAssets, t: PosterStrings): void {
   const { width, height } = POSTER_SIZES[input.size];
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const p = palette(input.template);
+  const story = input.size === "story";
+  const resolved = isPosterResolved(input.status);
+  const p = palette(input.template, resolved);
   const margin = 72;
   const contentW = width - margin * 2;
-  const found = input.status === "found";
 
   ctx.fillStyle = p.background;
   ctx.fillRect(0, 0, width, height);
   ctx.textBaseline = "top";
 
-  // Headline
-  ctx.fillStyle = found ? p.headlineFound : p.headline;
-  ctx.font = `700 ${input.size === "story" ? 120 : 96}px ${FAMILY}`;
-  ctx.fillText(found ? t.headlineFound : t.headlineMissing, margin, margin);
-  let y = margin + (input.size === "story" ? 140 : 112);
+  // Status banner, full-bleed.
+  const bannerH = story ? 190 : 150;
+  ctx.fillStyle = p.bannerBg;
+  ctx.fillRect(0, 0, width, bannerH);
+  ctx.fillStyle = p.bannerText;
+  ctx.font = `700 ${story ? 88 : 72}px ${FAMILY}`;
+  ctx.textAlign = "center";
+  ctx.fillText(posterHeadline(input.status, t), width / 2, bannerH / 2 - (story ? 44 : 36));
 
-  // Disaster line
+  // Name, centred, below the banner.
+  ctx.fillStyle = p.accent;
+  ctx.font = `700 ${story ? 56 : 44}px ${FAMILY}`;
+  let y = bannerH + 36;
+  const nameLines = wrapText(measure(ctx), posterNameLine(input), contentW, 2);
+  for (const line of nameLines) {
+    ctx.fillText(line, width / 2, y);
+    y += story ? 66 : 54;
+  }
+  ctx.textAlign = "left";
+
+  // Disaster context, small and centred.
   ctx.fillStyle = p.muted;
-  ctx.font = `600 30px ${FAMILY}`;
-  y = drawLines(
-    ctx,
-    wrapText(measure(ctx), disasterLine(CURRENT_DISASTER, input.district, input.language, t, input.status), contentW, 2),
-    margin,
-    y,
-    40,
-  );
-  y += 16;
-  ctx.fillStyle = p.rule;
-  ctx.fillRect(margin, y, 120, 6);
-  y += 40;
+  ctx.font = `600 24px ${FAMILY}`;
+  ctx.textAlign = "center";
+  y += 4;
+  for (const line of wrapText(measure(ctx), disasterLine(CURRENT_DISASTER, input.district, input.language, t, input.status), contentW, 2)) {
+    ctx.fillText(line, width / 2, y);
+    y += 32;
+  }
+  ctx.textAlign = "left";
+  y += 20;
+  ctx.fillStyle = p.accent;
+  ctx.fillRect(margin, y, contentW, 4);
+  y += 32;
 
-  // Photo + details
-  let textX = margin;
-  let textW = contentW;
-  if (input.size === "feed") {
-    const photoW = 400;
+  // Photo (left on a feed post, on top for a story) + labelled fact rows.
+  let detailX = margin;
+  let detailW = contentW;
+  let detailY = y;
+  let photoBottom: number;
+  if (!story) {
+    const photoW = Math.round(contentW * 0.42);
     const photoH = 480;
     drawPhoto(ctx, assets.photo, margin, y, photoW, photoH, p.photoFrame);
-    textX = margin + photoW + 48;
-    textW = contentW - photoW - 48;
+    detailX = margin + photoW + 40;
+    detailW = contentW - photoW - 40;
+    photoBottom = y + photoH;
   } else {
-    const photoH = 900;
+    const photoH = 620;
     drawPhoto(ctx, assets.photo, margin, y, contentW, photoH, p.photoFrame);
-    y += photoH + 48;
+    detailY = y + photoH + 32;
+    photoBottom = detailY;
   }
-  let ty = y;
 
-  ctx.fillStyle = p.text;
-  ctx.font = `700 ${input.size === "story" ? 64 : 52}px ${FAMILY}`;
-  ty = drawLines(ctx, wrapText(measure(ctx), personLine(input, t), textW, 2), textX, ty, input.size === "story" ? 78 : 64);
-  ty += 20;
-
-  ctx.font = `400 34px ${FAMILY}`;
-  ty = drawLines(ctx, wrapText(measure(ctx), lastSeenLine(input, t), textW, 3), textX, ty, 46);
+  let fy = detailY;
+  if (input.age.trim() || input.gender) {
+    const half = (detailW - 32) / 2;
+    const ageBottom = drawField(ctx, t.age, input.age.trim() || "—", detailX, fy, half, p.muted, p.text);
+    const genderBottom = drawField(ctx, t.gender, input.gender ? t[input.gender] : "—", detailX + half + 32, fy, half, p.muted, p.text);
+    fy = Math.max(ageBottom, genderBottom) + 16;
+    ctx.fillStyle = p.accent;
+    ctx.fillRect(detailX, fy, detailW, 2);
+    fy += 24;
+  }
+  const lastSeen = lastSeenLine(input, t, false);
+  if (lastSeen) {
+    fy = drawField(ctx, t.lastSeen, lastSeen, detailX, fy, detailW, p.muted, p.text) + 16;
+    ctx.fillStyle = p.accent;
+    ctx.fillRect(detailX, fy, detailW, 2);
+    fy += 24;
+  }
   if (input.clothing.trim()) {
-    ty += 8;
-    ty = drawLines(ctx, wrapText(measure(ctx), input.clothing.trim(), textW, 2), textX, ty, 46);
-  }
-  if (input.story.trim()) {
-    ty += 20;
-    ctx.fillStyle = p.muted;
-    ctx.font = `400 32px ${FAMILY}`;
-    ty = drawLines(ctx, wrapText(measure(ctx), input.story.trim(), textW, input.size === "story" ? 6 : 3), textX, ty, 44);
+    fy = drawField(ctx, t.marks, input.clothing.trim(), detailX, fy, detailW, p.muted, p.text) + 16;
   }
 
-  // Contact block sits above the footer regardless of how much text there was.
+  // Short message, plain text under the photo/details block.
+  let sy = Math.max(fy, photoBottom + 32) + 8;
+  if (input.story.trim()) {
+    ctx.fillStyle = p.text;
+    ctx.font = `400 28px ${FAMILY}`;
+    sy = drawLines(ctx, wrapText(measure(ctx), input.story.trim(), contentW, story ? 5 : 2), margin, sy, 38);
+  }
+
+  // Footer: full-bleed phone bar, then the brand line beneath it.
   const footerH = 110;
-  const contactY = height - footerH - 130;
+  const footerY = height - footerH - 60;
   const phones = input.phones
     .map((s) => s.trim())
     .filter(Boolean)
     .join("  ·  ");
-  ctx.fillStyle = p.muted;
-  ctx.font = `600 28px ${FAMILY}`;
-  ctx.fillText(t.contact.toUpperCase(), margin, contactY);
-  ctx.fillStyle = p.text;
-  ctx.font = `700 56px ${FAMILY}`;
-  ctx.fillText(phones, margin, contactY + 38);
-
-  // Footer brand: the domain only, small, centred, underlined.
-  const brandY = height - 72;
-  ctx.fillStyle = p.brand;
-  ctx.font = `600 26px ${FAMILY}`;
+  ctx.fillStyle = p.accent;
+  ctx.fillRect(margin, footerY - 24, contentW, 2);
+  ctx.fillStyle = p.bannerBg;
+  ctx.fillRect(0, footerY, width, footerH);
+  ctx.fillStyle = p.bannerText;
+  ctx.font = `700 44px ${FAMILY}`;
   ctx.textAlign = "center";
-  const label = t.brandUrl;
-  const labelW = ctx.measureText(label).width;
-  ctx.fillText(label, width / 2, brandY);
-  ctx.fillRect(width / 2 - labelW / 2, brandY + 34, labelW, 2);
+  ctx.fillText(phones, width / 2, footerY + footerH / 2 - 22);
+
+  const brandY = height - 48;
+  ctx.fillStyle = p.brand;
+  ctx.font = `600 24px ${FAMILY}`;
+  ctx.fillText(t.brandUrl, width / 2, brandY);
   ctx.textAlign = "left";
 }

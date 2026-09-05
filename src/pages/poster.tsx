@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Download, Plus, Share2 } from "lucide-react";
+import { Check, Download, ExternalLink, Phone, Plus, Search, Share2 } from "lucide-react";
 import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -17,12 +17,25 @@ import {
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { useGoogleAuth } from "@/lib/auth";
 import { uploadMedia } from "@/lib/media";
-import { EMPTY_POSTER, POSTER_LIMITS, lastSeenLine, personLine, posterFilename, validatePoster, type PosterInput } from "@/lib/poster";
+import {
+  EMPTY_POSTER,
+  lastSeenLine,
+  posterFilename,
+  posterHeadline,
+  posterNameLine,
+  POSTER_LIMITS,
+  POSTER_SIZES,
+  validatePoster,
+  type PosterInput,
+  type PosterStatus,
+} from "@/lib/poster";
 import { drawPoster, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
 import type { Language, Page } from "@/lib/types";
+import { opmcmMissingPersonUrl } from "@/lib/urls";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +44,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { StatCard } from "@/components/stat-card";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge, type StatusTone } from "@/components/status-badge";
 
 const DRAFT_KEY = "vn:poster-draft";
 type Draft = { input: PosterInput; photo: string | null };
@@ -77,21 +90,215 @@ function loadImage(src: string) {
   });
 }
 
-/** Pick one option from visual tiles instead of a dropdown. */
-function TileRadio<T extends string>({
-  label,
+/** A saved record, read back as the poster form shape the drawing code and card text expect. */
+function toPosterInput(item: MyMissing, language: Language): PosterInput {
+  const phones = Array.isArray(item.phones) ? (item.phones as string[]) : [];
+  return {
+    ...EMPTY_POSTER,
+    ...(item as unknown as PosterInput),
+    language,
+    phones: [phones[0] ?? "", phones[1] ?? ""],
+  };
+}
+
+const POSTER_TONE: Record<PosterStatus, StatusTone> = { missing: "danger", found: "info", safe: "success" };
+
+async function renderPosterBlob(item: MyMissing, language: Language): Promise<{ blob: Blob; filename: string } | null> {
+  const input = toPosterInput(item, language);
+  const t = posterStrings[input.language];
+  await loadPosterFonts();
+  const photo = item.photo ? await loadImage(item.photo.url).catch(() => null) : null;
+  const canvas = document.createElement("canvas");
+  drawPoster(canvas, input, { photo }, t);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  return blob ? { blob, filename: posterFilename(input) } : null;
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** One-tap share of the rendered poster picture, falling back to a download. */
+async function sharePosterImage(item: MyMissing, language: Language) {
+  const rendered = await renderPosterBlob(item, language);
+  if (!rendered) return;
+  const file = new File([rendered.blob], rendered.filename, { type: "image/png" });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch {
+      return;
+    }
+  }
+  downloadBlob(rendered.blob, rendered.filename);
+}
+
+/** Status as a row of pills; the active pill fills with that status's own colour. */
+const STATUS_ACTIVE_CLASS: Record<PosterStatus, string> = {
+  missing: "border-destructive bg-destructive text-destructive-foreground",
+  found: "border-primary bg-primary text-primary-foreground",
+  safe: "border-success bg-success text-success-foreground",
+};
+
+function StatusPicker({
   value,
-  options,
   onChange,
+  t,
 }: {
-  label: string;
-  value: T;
-  options: { value: T; title: string; hint?: string; preview: ReactNode }[];
-  onChange: (value: T) => void;
+  value: PosterStatus;
+  onChange: (v: PosterStatus) => void;
+  t: (typeof posterStrings)["en"];
 }) {
+  const options: { value: PosterStatus; label: string }[] = [
+    { value: "missing", label: t.statusMissing },
+    { value: "found", label: t.statusFound },
+    { value: "safe", label: t.statusSafe },
+  ];
+  return (
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t.statusLabel}>
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(o.value)}
+            className={`inline-flex h-10 items-center rounded-full border-2 px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              active ? STATUS_ACTIVE_CLASS[o.value] : "border-input bg-background text-foreground hover:bg-accent"
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function LanguagePicker({ value, onChange }: { value: Language; onChange: (v: Language) => void }) {
+  const options: { value: Language; label: string }[] = [
+    { value: "en", label: "English" },
+    { value: "ne", label: "नेपाली" },
+  ];
+  return (
+    <div className="inline-flex rounded-full border p-1" role="radiogroup">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(o.value)}
+            className={`h-8 rounded-full px-4 text-sm font-medium transition-colors ${
+              active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A tile previewing the poster's colour scheme, with a checkmark badge when selected. */
+function TemplatePicker({
+  value,
+  onChange,
+  t,
+}: {
+  value: PosterInput["template"];
+  onChange: (v: PosterInput["template"]) => void;
+  t: (typeof posterStrings)["en"];
+}) {
+  const options: { value: PosterInput["template"]; label: string; hint: string }[] = [
+    { value: "paper", label: t.templatePaper, hint: t.templatePaperHint },
+    { value: "blue", label: t.templateBlue, hint: t.templateBlueHint },
+  ];
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium leading-none">{label}</legend>
+      <legend className="text-sm font-medium leading-none">{t.templateLabel}</legend>
+      <div className="grid grid-cols-2 gap-3">
+        {options.map((o) => {
+          const active = o.value === value;
+          const blue = o.value === "blue";
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(o.value)}
+              className={`relative rounded-lg border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+              }`}
+            >
+              <div
+                className={`flex aspect-[2/1] w-full flex-col gap-1.5 overflow-hidden rounded-md p-2 ${blue ? "bg-primary" : "bg-secondary"}`}
+                aria-hidden="true"
+              >
+                <div className={`h-2.5 w-3/4 rounded-sm ${blue ? "bg-primary-foreground" : "bg-destructive"}`} />
+                <div className={`h-1.5 w-1/2 rounded-sm ${blue ? "bg-primary-foreground/80" : "bg-destructive/70"}`} />
+                <div className="mt-auto space-y-1">
+                  <div className={`h-1 w-full rounded-sm ${blue ? "bg-primary-foreground/50" : "bg-muted-foreground/40"}`} />
+                  <div className={`h-1 w-2/3 rounded-sm ${blue ? "bg-primary-foreground/50" : "bg-muted-foreground/40"}`} />
+                </div>
+              </div>
+              <p className="mt-2 text-sm font-semibold">{o.label}</p>
+              <p className="text-xs text-muted-foreground">{o.hint}</p>
+              <span
+                aria-hidden="true"
+                className={`absolute bottom-3 right-3 flex size-5 items-center justify-center rounded-full border-2 ${
+                  active ? "border-primary bg-primary text-primary-foreground" : "border-input"
+                }`}
+              >
+                {active ? <Check className="size-3" /> : null}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+/** A row tile: outline icon on the left, title + platform hint on the right. */
+function SizePicker({
+  value,
+  onChange,
+  t,
+}: {
+  value: PosterInput["size"];
+  onChange: (v: PosterInput["size"]) => void;
+  t: (typeof posterStrings)["en"];
+}) {
+  const options: { value: PosterInput["size"]; label: string; hint: string; icon: ReactNode }[] = [
+    {
+      value: "feed",
+      label: t.sizeFeedTitle,
+      hint: t.sizeFeedApps,
+      icon: <span className="block size-6 shrink-0 rounded-[3px] border-2 border-current" aria-hidden="true" />,
+    },
+    {
+      value: "story",
+      label: t.sizeStoryTitle,
+      hint: t.sizeStoryApps,
+      icon: <span className="block h-7 w-4 shrink-0 rounded-[4px] border-2 border-current" aria-hidden="true" />,
+    },
+  ];
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-medium leading-none">{t.sizeLabel}</legend>
       <div className="grid grid-cols-2 gap-3">
         {options.map((o) => {
           const active = o.value === value;
@@ -102,13 +309,15 @@ function TileRadio<T extends string>({
               role="radio"
               aria-checked={active}
               onClick={() => onChange(o.value)}
-              className={`flex flex-col items-center gap-2 rounded-lg border-2 p-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
               }`}
             >
-              {o.preview}
-              <span className="text-sm font-medium">{o.title}</span>
-              {o.hint ? <span className="text-xs text-muted-foreground">{o.hint}</span> : null}
+              {o.icon}
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">{o.label}</span>
+                <span className="block text-xs text-muted-foreground">{o.hint}</span>
+              </span>
             </button>
           );
         })}
@@ -117,67 +326,145 @@ function TileRadio<T extends string>({
   );
 }
 
-/** Miniature of a poster template: background, headline bar, photo block, text lines. */
-function TemplateSwatch({ template, size }: { template: PosterInput["template"]; size: PosterInput["size"] }) {
-  const blue = template === "blue";
-  const bg = blue ? "bg-primary" : "bg-secondary";
-  const ink = blue ? "bg-primary-foreground" : "bg-foreground";
-  const head = blue ? "bg-primary-foreground" : "bg-destructive";
+/** A numbered card: "01 Status", "02 Photo" … matching the Figma section layout. */
+function SectionCard({ number, title, hint, children }: { number: string; title: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
-    <div
-      className={`${bg} ${size === "story" ? "aspect-[9/16] w-10" : "aspect-square w-16"} flex flex-col gap-1 rounded-sm border p-1.5`}
-      aria-hidden="true"
-    >
-      <div className={`${head} h-2 w-2/3 rounded-sm`} />
-      <div className={`${ink} h-0.5 w-1/4 opacity-60`} />
-      <div className={`flex-1 rounded-sm border ${blue ? "border-primary-foreground/60" : "border-foreground/30"}`} />
-      <div className={`${ink} h-0.5 w-full opacity-70`} />
-      <div className={`${ink} h-0.5 w-3/4 opacity-70`} />
-    </div>
+    <Card>
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div>
+          <p className="text-xs font-semibold text-subtle">{number}</p>
+          <h2 className="text-lg font-bold text-foreground">{title}</h2>
+          {hint ? <p className="mt-1 text-sm text-muted-foreground">{hint}</p> : null}
+        </div>
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
-/** Plain text card: the poster's facts, not a copy of the picture. */
-function MissingCard({ item, language }: { item: MyMissing; language: Language }) {
+/** Board card: summary text plus Open (view the poster picture) and Share (send it directly). */
+function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language: Language; onOpen: () => void }) {
   const t = posterStrings[language];
-  const input = {
-    ...EMPTY_POSTER,
-    ...(item as unknown as PosterInput),
-    language,
-    phones: [(item.phones as string[])?.[0] ?? "", (item.phones as string[])?.[1] ?? ""] as [string, string],
-  };
-  const found = item.status === "found";
-  const lines = [lastSeenLine(input, t), input.clothing.trim(), input.story.trim()].filter(Boolean);
+  const input = toPosterInput(item, language);
+  const phone = input.phones.find((p) => p.trim());
+
   return (
-    <Card className={found ? "opacity-70" : ""}>
+    <Card>
       <CardContent className="flex gap-4 p-4">
         {item.photo ? (
           <img src={item.photo.url} alt="" className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
         ) : (
-          <div className="h-20 w-20 shrink-0 rounded-md bg-muted" aria-hidden="true" />
-        )}
-        <div className="min-w-0 space-y-1 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold">{personLine(input, t)}</span>
-            <StatusBadge tone={found ? "success" : "danger"}>{found ? t.headlineFound : t.headlineMissing}</StatusBadge>
+          <div
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] text-muted-foreground"
+            aria-hidden="true"
+          >
+            photo
           </div>
-          {lines.map((line) => (
-            <p key={line} className="text-muted-foreground">
-              {line}
-            </p>
-          ))}
-          <p>
-            {t.contact}:{" "}
-            {input.phones.filter(Boolean).map((p, i) => (
-              <a key={p} href={`tel:${p}`} className="font-medium underline-offset-4 hover:underline">
-                {i > 0 ? ", " : ""}
-                {p}
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold">{posterNameLine(input)}</span>
+            <StatusBadge tone={POSTER_TONE[input.status]}>{posterHeadline(input.status, t)}</StatusBadge>
+          </div>
+          <p className="text-muted-foreground">{lastSeenLine(input, t)}</p>
+          {input.story.trim() ? <p className="truncate text-muted-foreground">{input.story.trim()}</p> : null}
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-t pt-2">
+            {phone ? (
+              <a href={`tel:${phone}`} className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline">
+                <Phone aria-hidden="true" className="size-3.5" />
+                {phone}
               </a>
-            ))}
-          </p>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <Button type="button" size="sm" variant="outline" className="h-8 rounded-full px-3" onClick={onOpen}>
+                {t.cardOpen}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 rounded-full px-3"
+                onClick={() => sharePosterImage(item, language)}
+              >
+                {t.cardShare}
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/** Renders the actual poster picture for a saved record, with download/share — reuses the same drawing code as the creator. */
+function PosterViewDialog({
+  item,
+  language,
+  onOpenChange,
+}: {
+  item: MyMissing | null;
+  language: Language;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = posterStrings[language];
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [assets, setAssets] = useState<PosterAssets>({ photo: null });
+  const input = useMemo(() => (item ? toPosterInput(item, language) : null), [item, language]);
+
+  useEffect(() => {
+    if (!item) return;
+    let cancelled = false;
+    Promise.all([loadPosterFonts(), item.photo ? loadImage(item.photo.url).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
+      if (!cancelled) setAssets({ photo });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item]);
+
+  useEffect(() => {
+    if (!input || !canvasRef.current) return;
+    drawPoster(canvasRef.current, input, assets, posterStrings[input.language]);
+  }, [input, assets]);
+
+  const canShare = typeof navigator !== "undefined" && typeof navigator.canShare === "function";
+
+  return (
+    <Dialog open={item !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        {item && input ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{posterNameLine(input)}</DialogTitle>
+            </DialogHeader>
+            <canvas
+              ref={canvasRef}
+              className={`w-full rounded-lg border ${input.size === "story" ? "max-w-xs" : ""}`}
+              aria-label={t.previewLabel}
+              role="img"
+            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={() => renderPosterBlob(item, language).then((r) => r && downloadBlob(r.blob, r.filename))}
+              >
+                <Download aria-hidden="true" />
+                {t.download}
+              </Button>
+              {canShare ? (
+                <Button type="button" variant="secondary" className="flex-1" onClick={() => sharePosterImage(item, language)}>
+                  <Share2 aria-hidden="true" />
+                  {t.cardShare}
+                </Button>
+              ) : null}
+            </div>
+          </>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -185,6 +472,9 @@ function MissingCard({ item, language }: { item: MyMissing; language: Language }
 export function PosterCatalogue({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = posterStrings[language];
   const [data, setData] = useState<MissingListResponse | null | "error">(null);
+  const [filter, setFilter] = useState<"all" | PosterStatus>("all");
+  const [query, setQuery] = useState("");
+  const [openItem, setOpenItem] = useState<MyMissing | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,32 +493,109 @@ export function PosterCatalogue({ language, navigate }: { language: Language; na
     </Button>
   );
 
+  const items = data && data !== "error" ? data.items : [];
+  const missingDistricts = useMemo(
+    () => new Set(items.filter((m) => m.status === "missing" && m.district).map((m) => m.district)).size,
+    [items],
+  );
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((m) => {
+      if (filter !== "all" && m.status !== filter) return false;
+      if (!q) return true;
+      const phones = Array.isArray(m.phones) ? (m.phones as string[]) : [];
+      return [m.name, m.district, ...phones].join(" ").toLowerCase().includes(q);
+    });
+  }, [items, filter, query]);
+
+  const filterOptions: { value: "all" | PosterStatus; label: string }[] = [
+    { value: "all", label: t.filterAll },
+    { value: "missing", label: t.filterMissing },
+    { value: "found", label: t.filterFound },
+    { value: "safe", label: t.filterSafe },
+  ];
+  const filtering = filter !== "all" || query.trim().length > 0;
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <PageHeader eyebrow={t.eyebrow} title={t.catalogueTitle} description={t.catalogueIntro} actions={createButton} />
+      <aside className="border-l-2 border-primary pl-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="font-semibold text-primary">{t.disclaimerTitle}</p>
+        <p className="mt-1">{t.disclaimerBody}</p>
+        <Button asChild variant="outline" size="sm" className="mt-3">
+          <a href={opmcmMissingPersonUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink aria-hidden="true" />
+            {t.disclaimerLink}
+          </a>
+        </Button>
+      </aside>
       {data === null ? (
         <LoadingState label={t.loading} />
       ) : data === "error" ? (
         <Alert variant="destructive">
           <AlertDescription>{t.catalogueError}</AlertDescription>
         </Alert>
+      ) : items.length === 0 ? (
+        <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:max-w-md">
-            <StatCard value={data.counts.missing} label={t.kpiMissing} tone="danger" />
-            <StatCard value={data.counts.found} label={t.kpiFound} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard
+              value={data.counts.missing}
+              label={t.kpiMissing}
+              hint={t.kpiMissingHint.replace("{n}", String(missingDistricts))}
+              tone="danger"
+            />
+            <StatCard value={data.counts.found} label={t.kpiFound} hint={t.kpiFoundHint} tone="primary" />
+            <StatCard value={data.counts.safe} label={t.kpiSafe} hint={t.kpiSafeHint} tone="success" />
           </div>
-          {data.items.length === 0 ? (
-            <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {data.items.map((m) => (
-                <MissingCard key={m.id} item={m} language={language} />
-              ))}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t.filterAll}>
+                {filterOptions.map((o) => {
+                  const active = o.value === filter;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setFilter(o.value)}
+                      className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        active ? "border-foreground bg-foreground text-background" : "border-input bg-background hover:bg-accent"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.searchPlaceholder} className="pl-9" />
+              </div>
             </div>
-          )}
+            <p className="text-sm text-muted-foreground">
+              {filtering
+                ? t.showingFiltered.replace("{n}", String(filtered.length)).replace("{m}", String(items.length))
+                : t.showingAll.replace("{n}", String(items.length))}
+            </p>
+            {filtered.length === 0 ? (
+              <EmptyState icon={Search} title={t.noResultsTitle} description={t.noResultsBody} />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.map((m) => (
+                  <PosterBoardCard key={m.id} item={m} language={language} onOpen={() => setOpenItem(m)} />
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
+      <PosterViewDialog item={openItem} language={language} onOpenChange={(open) => !open && setOpenItem(null)} />
     </div>
   );
 }
@@ -337,12 +704,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
       setExportError(true);
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = posterFilename(input);
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, posterFilename(input));
     setDownloaded(true);
   };
 
@@ -410,6 +772,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
   const errorCount = Object.keys(errors).length;
   const fieldError = (key: keyof PosterInput, message: string) =>
     errors[key] ? <p className="text-sm text-destructive">{message}</p> : null;
+  const size = POSTER_SIZES[input.size];
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -423,25 +786,30 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
           </Button>
         }
       />
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card>
-          <CardContent className="space-y-5 p-5 sm:p-6">
-            {errorCount ? (
-              <Alert variant="destructive">
-                <AlertDescription>{t.validationSummary.replace("{n}", String(errorCount))}</AlertDescription>
-              </Alert>
-            ) : null}
-            <div className="space-y-2">
-              <Label htmlFor="poster-photo">{t.photoLabel}</Label>
-              <FileInput
-                id="poster-photo"
-                language={language}
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => onPhoto(e.target.files?.[0])}
-              />
-              <p className="text-sm text-muted-foreground">{t.photoHint}</p>
-              {photoError ? <p className="text-sm text-destructive">{t.photoError}</p> : null}
-            </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="space-y-6">
+          {errorCount ? (
+            <Alert variant="destructive">
+              <AlertDescription>{t.validationSummary.replace("{n}", String(errorCount))}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          <SectionCard number="01" title={t.sectionStatus} hint={t.statusHint}>
+            <StatusPicker value={input.status} onChange={(v) => set("status", v)} t={t} />
+          </SectionCard>
+
+          <SectionCard number="02" title={t.sectionPhoto}>
+            <FileInput
+              id="poster-photo"
+              language={language}
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => onPhoto(e.target.files?.[0])}
+            />
+            <p className="text-sm text-muted-foreground">{t.photoHint}</p>
+            {photoError ? <p className="text-sm text-destructive">{t.photoError}</p> : null}
+          </SectionCard>
+
+          <SectionCard number="03" title={t.sectionPerson}>
             <div className="space-y-2">
               <Label htmlFor="poster-name">{t.nameLabel}</Label>
               <Input id="poster-name" value={input.name} maxLength={POSTER_LIMITS.name} onChange={(e) => set("name", e.target.value)} />
@@ -479,6 +847,8 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
                   <NativeSelectOption value="">{t.genderUnset}</NativeSelectOption>
                   <NativeSelectOption value="woman">{t.woman}</NativeSelectOption>
                   <NativeSelectOption value="man">{t.man}</NativeSelectOption>
+                  <NativeSelectOption value="girl">{t.girl}</NativeSelectOption>
+                  <NativeSelectOption value="boy">{t.boy}</NativeSelectOption>
                   <NativeSelectOption value="other">{t.other}</NativeSelectOption>
                 </NativeSelect>
               </div>
@@ -527,7 +897,12 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="poster-story">{t.storyLabel}</Label>
+              <div className="flex items-baseline justify-between">
+                <Label htmlFor="poster-story">{t.storyLabel}</Label>
+                <span className="text-xs text-subtle">
+                  {input.story.length}/{POSTER_LIMITS.story}
+                </span>
+              </div>
               <Textarea
                 id="poster-story"
                 rows={3}
@@ -537,6 +912,9 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
               />
               <p className="text-sm text-muted-foreground">{t.storyHint}</p>
             </div>
+          </SectionCard>
+
+          <SectionCard number="04" title={t.sectionContact}>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="poster-phones">{t.phoneLabel}</Label>
@@ -560,60 +938,24 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
                 />
               </div>
             </div>
-            <p className="text-sm text-destructive">{t.phoneWarning}</p>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="poster-status">{t.statusLabel}</Label>
-                <NativeSelect
-                  id="poster-status"
-                  value={input.status}
-                  onChange={(e) => set("status", e.target.value as PosterInput["status"])}
-                >
-                  <NativeSelectOption value="missing">{t.statusMissing}</NativeSelectOption>
-                  <NativeSelectOption value="found">{t.statusFound}</NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="poster-language">{t.languageLabel}</Label>
-                <NativeSelect id="poster-language" value={input.language} onChange={(e) => set("language", e.target.value as Language)}>
-                  <NativeSelectOption value="en">English</NativeSelectOption>
-                  <NativeSelectOption value="ne">नेपाली</NativeSelectOption>
-                </NativeSelect>
-              </div>
+            <p className="border-l-2 border-destructive pl-3 text-sm text-destructive">{t.phoneWarning}</p>
+          </SectionCard>
+
+          <SectionCard number="05" title={t.sectionPoster}>
+            <div className="space-y-2">
+              <Label>{t.languageLabel}</Label>
+              <LanguagePicker value={input.language} onChange={(v) => set("language", v)} />
             </div>
-            <TileRadio
-              label={t.templateLabel}
-              value={input.template}
-              onChange={(v) => set("template", v)}
-              options={[
-                { value: "paper", title: t.templatePaper, preview: <TemplateSwatch template="paper" size={input.size} /> },
-                { value: "blue", title: t.templateBlue, preview: <TemplateSwatch template="blue" size={input.size} /> },
-              ]}
-            />
-            <TileRadio
-              label={t.sizeLabel}
-              value={input.size}
-              onChange={(v) => set("size", v)}
-              options={[
-                {
-                  value: "feed",
-                  title: t.sizeFeedTitle,
-                  hint: t.sizeFeedApps,
-                  preview: <div className="aspect-square w-12 rounded-sm border-2 border-current opacity-70" aria-hidden="true" />,
-                },
-                {
-                  value: "story",
-                  title: t.sizeStoryTitle,
-                  hint: t.sizeStoryApps,
-                  preview: <div className="aspect-[9/16] w-7 rounded-sm border-2 border-current opacity-70" aria-hidden="true" />,
-                },
-              ]}
-            />
-          </CardContent>
-        </Card>
+            <TemplatePicker value={input.template} onChange={(v) => set("template", v)} t={t} />
+            <SizePicker value={input.size} onChange={(v) => set("size", v)} t={t} />
+          </SectionCard>
+        </div>
 
         <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-subtle">{t.previewLabel}</p>
+          <div className="flex items-baseline justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-subtle">{t.previewLabel}</p>
+            <p className="text-xs text-subtle">{t.dimensions.replace("{w}", String(size.width)).replace("{h}", String(size.height))}</p>
+          </div>
           <canvas
             ref={canvasRef}
             className={`w-full rounded-xl border ${input.size === "story" ? "max-w-sm" : ""}`}

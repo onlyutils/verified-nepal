@@ -306,7 +306,7 @@ export interface MyOffer {
 
 export interface MyMissing {
   id: string;
-  status: "missing" | "found";
+  status: "missing" | "found" | "safe";
   name: string;
   district: string;
   photo?: { fileId: string; url: string };
@@ -390,8 +390,16 @@ export function listStories(cursor?: string): Promise<{ items: StoryPublicItem[]
 export function getModerationStories(token: string): Promise<{ items: ModerationStoryItem[] }> {
   return request<{ items: ModerationStoryItem[] }>("/moderation/stories", { token });
 }
-export function moderateStory(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: StoryStatus }> {
-  return request<{ status: StoryStatus }>(`/moderation/stories/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+export function moderateStory(
+  token: string,
+  id: string,
+  body: { action: "publish" | "reject"; reason?: string },
+): Promise<{ status: StoryStatus }> {
+  return request<{ status: StoryStatus }>(`/moderation/stories/${encodeURIComponent(id)}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
 }
 
 export function presignMissingPhoto(
@@ -411,7 +419,7 @@ export function putMissing(token: string, id: string, body: MissingBody): Promis
 
 export interface MissingListResponse {
   items: MyMissing[];
-  counts: { missing: number; found: number };
+  counts: { missing: number; found: number; safe: number };
 }
 
 /** Public board of every saved poster. */
@@ -464,11 +472,19 @@ export function joinGroupApi(token: string, needId: string): Promise<{ ok: boole
   return request(`/needs/${encodeURIComponent(needId)}/group/join`, { method: "POST", token });
 }
 
-export function addGroupItem(token: string, needId: string, description: string): Promise<{ itemId: string; status: "open"; createdAt: string }> {
+export function addGroupItem(
+  token: string,
+  needId: string,
+  description: string,
+): Promise<{ itemId: string; status: "open"; createdAt: string }> {
   return request(`/needs/${encodeURIComponent(needId)}/group/items`, { method: "POST", body: JSON.stringify({ description }), token });
 }
 
-export function claimGroupItem(token: string, needId: string, itemId: string): Promise<{ claimedBy: string; claimedByName: string; claimedAt: string }> {
+export function claimGroupItem(
+  token: string,
+  needId: string,
+  itemId: string,
+): Promise<{ claimedBy: string; claimedByName: string; claimedAt: string }> {
   return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/claim`, { method: "POST", token });
 }
 
@@ -508,10 +524,7 @@ export function moderateNeed(
   });
 }
 
-export function claimQueueItem(
-  token: string,
-  id: string,
-): Promise<{ claimedBy: string; claimedByName?: string; claimExpiresAt: string }> {
+export function claimQueueItem(token: string, id: string): Promise<{ claimedBy: string; claimedByName?: string; claimExpiresAt: string }> {
   return request(`/moderation/${encodeURIComponent(id)}/claim`, { method: "POST", token, body: JSON.stringify({}) });
 }
 
@@ -531,7 +544,11 @@ export function updateNeedStatus(
   });
 }
 
-export function updateOfferStatus(token: string, id: string, body: { status: "matched" | "fulfilled" | "archived" }): Promise<{ status: string }> {
+export function updateOfferStatus(
+  token: string,
+  id: string,
+  body: { status: "matched" | "fulfilled" | "archived" },
+): Promise<{ status: string }> {
   return request<{ status: string }>(`/offers/${encodeURIComponent(id)}/status`, {
     method: "POST",
     token,
@@ -1275,8 +1292,17 @@ export function orgClaimNeed(token: string, orgId: string, needId: string): Prom
 export function orgReleaseNeed(token: string, orgId: string, needId: string): Promise<{ status: string }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
 }
-export function orgDeliverNeed(token: string, orgId: string, needId: string, note?: string): Promise<{ status: string; redeemedAt: string }> {
-  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+export function orgDeliverNeed(
+  token: string,
+  orgId: string,
+  needId: string,
+  note?: string,
+): Promise<{ status: string; redeemedAt: string }> {
+  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, {
+    method: "POST",
+    token,
+    body: JSON.stringify(note ? { note } : {}),
+  });
 }
 export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { token });

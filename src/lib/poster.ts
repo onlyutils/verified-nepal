@@ -4,8 +4,8 @@ import { disasterDateLabel, type Disaster } from "./disasters.ts";
 
 export type PosterTemplateId = "paper" | "blue";
 export type PosterSize = "feed" | "story";
-export type PosterStatus = "missing" | "found";
-export type PosterGender = "" | "woman" | "man" | "other";
+export type PosterStatus = "missing" | "found" | "safe";
+export type PosterGender = "" | "woman" | "man" | "girl" | "boy" | "other";
 
 export interface PosterInput {
   name: string;
@@ -27,16 +27,30 @@ export interface PosterInput {
 export interface PosterStrings {
   headlineMissing: string;
   headlineFound: string;
+  headlineSafe: string;
   since: string;
   sinceFound: string;
   lastSeen: string;
   age: string;
+  gender: string;
+  marks: string;
   contact: string;
   nickname: string;
   woman: string;
   man: string;
+  girl: string;
+  boy: string;
   other: string;
   brandUrl: string;
+}
+
+/** A person is still being looked for under "missing"; "found" and "safe" both close the search. */
+export function isPosterResolved(status: PosterStatus): boolean {
+  return status === "found" || status === "safe";
+}
+
+export function posterHeadline(status: PosterStatus, t: PosterStrings): string {
+  return { missing: t.headlineMissing, found: t.headlineFound, safe: t.headlineSafe }[status];
 }
 
 export const EMPTY_POSTER: PosterInput = {
@@ -69,15 +83,20 @@ function districtLabel(district: string, language: Language) {
 }
 
 export function disasterLine(disaster: Disaster, district: string, language: Language, t: PosterStrings, status: PosterStatus = "missing") {
-  const template = status === "found" ? t.sinceFound : t.since;
+  const template = isPosterResolved(status) ? t.sinceFound : t.since;
   const parts = [template.replace("{disaster}", disaster.name[language]), disasterDateLabel(disaster, language)];
   if (district) parts.push(districtLabel(district as DistrictName, language));
   return parts.join(" · ");
 }
 
+/** "Full name (Nickname)" — no age or gender, those are shown as separate fields on the poster. */
+export function posterNameLine(input: PosterInput) {
+  const name = input.name.trim();
+  return input.nickname.trim() ? `${name} (${input.nickname.trim()})` : name;
+}
+
 export function personLine(input: PosterInput, t: PosterStrings) {
-  const name = input.nickname.trim() ? `${input.name.trim()} (${input.nickname.trim()})` : input.name.trim();
-  const parts = [name];
+  const parts = [posterNameLine(input)];
   if (input.age.trim()) parts.push(`${t.age} ${input.age.trim()}`);
   if (input.gender) parts.push(t[input.gender]);
   return parts.join(" · ");
@@ -96,10 +115,11 @@ function formatLastSeen(value: string, language: Language) {
   }).format(date);
 }
 
-export function lastSeenLine(input: PosterInput, t: PosterStrings) {
+export function lastSeenLine(input: PosterInput, t: PosterStrings, withLabel = true) {
   const where = [input.place.trim(), input.district ? districtLabel(input.district, input.language) : ""].filter(Boolean).join(", ");
   const when = input.lastSeenAt ? formatLastSeen(input.lastSeenAt, input.language) : "";
-  return `${t.lastSeen}: ${[where, when].filter(Boolean).join(" · ")}`;
+  const value = [where, when].filter(Boolean).join(" · ");
+  return withLabel ? `${t.lastSeen}: ${value}` : value;
 }
 
 /** Greedy word wrap; the last allowed line gets an ellipsis when text remains. */
