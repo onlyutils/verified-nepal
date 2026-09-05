@@ -4,14 +4,9 @@
 // falls back to the untouched page. Wrangler picks this folder up automatically
 // on `pages deploy` (see infra/deploy.sh).
 import { dispatchMeta } from "../../src/lib/og-meta";
+import { apiBase, applyMeta } from "../_shared/meta";
 
 type Ctx = { request: Request; params: { id: string }; next: () => Promise<Response> };
-
-function apiBase(hostname: string): string {
-  return hostname === "verifiednepal.com" || hostname === "www.verifiednepal.com"
-    ? "https://api.prod.verifiednepal.com"
-    : "https://api.dev.verifiednepal.com";
-}
 
 export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Response> => {
   const page = await next();
@@ -29,21 +24,5 @@ export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Resp
   }
   const meta = dispatchMeta(item);
   const canonical = `${url.origin}/articles/${encodeURIComponent(params.id)}`;
-  const set = (attr: string, value: string) => ({ element: (e: Element) => e.setAttribute(attr, value) });
-  const rewriter = new HTMLRewriter()
-    .on("title", { element: (e: Element) => e.setInnerContent(meta.title) })
-    .on('meta[property="og:title"], meta[name="twitter:title"]', set("content", meta.title))
-    .on('meta[name="description"], meta[property="og:description"], meta[name="twitter:description"]', set("content", meta.description))
-    .on('meta[property="og:url"]', set("content", canonical))
-    .on('meta[property="og:type"]', set("content", "article"))
-    .on('link[rel="canonical"]', set("href", canonical));
-  if (meta.image) {
-    rewriter
-      .on('meta[property="og:image"]', set("content", meta.image))
-      .on('meta[property="og:image:alt"]', set("content", meta.imageAlt || meta.title))
-      .on('meta[name="twitter:image"]', set("content", meta.image))
-      .on('meta[name="twitter:card"]', set("content", "summary_large_image"))
-      .on('meta[property="og:image:width"], meta[property="og:image:height"]', { element: (e: Element) => e.remove() });
-  }
-  return rewriter.transform(page);
+  return applyMeta(page, meta, canonical, "article");
 };

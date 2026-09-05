@@ -13,6 +13,18 @@ export interface DispatchLike {
   cover?: { url?: string; caption?: string };
 }
 
+export interface ProjectLike {
+  title: Localized;
+  description: Localized;
+  photos?: Array<{ url: string; caption?: string; status: "pending" | "published" }>;
+}
+
+export interface CenterLike {
+  name: string;
+  district: string;
+  status: "open" | "paused" | "closed";
+}
+
 export interface ShareMeta {
   title: string;
   description: string;
@@ -35,6 +47,57 @@ export function dispatchMeta(item: DispatchLike): ShareMeta {
     ? { title: `${title} · verifiedNepal`, description, image, imageAlt: item.cover?.caption?.trim() || title }
     : { title: `${title} · verifiedNepal`, description };
 }
+
+export function projectMeta(project: ProjectLike): ShareMeta {
+  const title = text(project.title).trim() || "Community project";
+  const description = text(project.description).replace(/\s+/g, " ").trim().slice(0, 200);
+  const cover = project.photos?.find((photo) => photo.status === "published" && photo.url?.trim());
+  return cover
+    ? { title: `${title} · verifiedNepal`, description, image: cover.url.trim(), imageAlt: cover.caption?.trim() || title }
+    : { title: `${title} · verifiedNepal`, description };
+}
+
+export function centerMeta(center: CenterLike): ShareMeta {
+  const statusWord = center.status === "open" ? "Open" : center.status === "paused" ? "Paused" : "Closed";
+  return {
+    title: `${center.name} · verifiedNepal`,
+    description: `${statusWord} drop center in ${center.district}. See live stock and recent activity, or bring goods to donate.`,
+  };
+}
+
+/** Static per-page share cards for public pages with no per-request data. Image paths are site-relative. */
+export const STATIC_PAGE_META: Record<string, ShareMeta> = {
+  poster: {
+    title: "Missing-person posters · verifiedNepal",
+    description: "Make a bilingual missing-person poster in minutes and share it — or browse posters and call if you recognise someone.",
+    image: "/brand/og-poster.png",
+  },
+  missing: {
+    title: "Someone missing? Do this first · verifiedNepal",
+    description: "A volunteer-written guide to the official channels and helplines, in the order that helps most.",
+    image: "/brand/og-missing.png",
+  },
+  getHelp: {
+    title: "Get help — register a need · verifiedNepal",
+    description: "Register a need in minutes — a moderator reviews it before anything goes public. Your name stays masked.",
+    image: "/brand/og-get-help.png",
+  },
+  giveHelp: {
+    title: "Give help · verifiedNepal",
+    description: "Verified requests with masked identities — respond to a need or register an offer, connected through a moderator.",
+    image: "/brand/og-give-help.png",
+  },
+  dropCenters: {
+    title: "Drop centers · verifiedNepal",
+    description: "Live stock and activity from independent relief centers across Nepal — food, water and shelter goods, logged in the open.",
+    image: "/brand/og-drop-centers.png",
+  },
+  projects: {
+    title: "Community projects · verifiedNepal",
+    description: "Verified infrastructure projects — tuin, bridges, trails, water and schools. Money goes straight to local committees.",
+    image: "/brand/og-projects.png",
+  },
+};
 
 export function climateMeta(): ShareMeta {
   const countryList = countries as typeof countries &
