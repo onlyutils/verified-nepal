@@ -2,7 +2,7 @@ import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../l
 import { validateString, validatePhone, validateOptionalEmail, validateDistrict, validateNeedMedia } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { requireAuth, optionalAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { requireAuth, optionalAuth, isOutOfScope } from "../lib/auth.js";
 import {
   CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS,
   ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE,
@@ -178,9 +178,7 @@ export async function handlePostRenew(event, { getDdb, env }, refCode) {
 }
 
 export async function handlePostNeedStatus(event, opts, needId) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { status, offerId } = body;
@@ -219,9 +217,7 @@ export async function handlePostNeedStatus(event, opts, needId) {
 }
 
 export async function handlePostNeedEdit(event, opts, needId) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { edits } = body;
@@ -268,9 +264,7 @@ export async function handlePostFlag(event, { getDdb, env }, needId) {
 }
 
 export async function handleGetFlags(event, opts) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const pointers = await listFlaggedPointers(ddb, tableName);

@@ -1,6 +1,6 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
 import { validateString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
-import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { isOutOfScope } from "../lib/auth.js";
 import { CATEGORIES, MOD_STATUS } from "../constants.js";
 import { createOffer, listPublicOffers, setOfferStatus } from "../models/offer.js";
 import { getIncidentById } from "../models/incident.js";
@@ -10,8 +10,7 @@ import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { applyModerationEdits } from "../models/moderation.js";
 import { toPublicOfferListItem } from "../views/offer.js";
 
-export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
-  const auth = await requireAuth(event, { fetchJwks, getDdb, env });
+export async function handlePostOffers(event, { auth }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { org, categories, districts, description, phone, email, incidentId } = body;
@@ -46,9 +45,7 @@ export async function handlePostOffers(event, { fetchJwks, getDdb, env }) {
 }
 
 export async function handlePostOfferStatus(event, opts, offerId) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { status } = body;
@@ -67,9 +64,7 @@ export async function handlePostOfferStatus(event, opts, offerId) {
 }
 
 export async function handlePostOfferEdit(event, opts, offerId) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { edits } = body;

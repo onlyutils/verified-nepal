@@ -1,6 +1,6 @@
 import { verifyIdToken } from "../verify.js";
 import { json, err, getAuthToken, parseBody } from "../lib/http.js";
-import { requireAuth, logAuthFail } from "../lib/auth.js";
+import { logAuthFail } from "../lib/auth.js";
 import { getUserProfile, createUserProfile, createEmailPointer, ensureUserBackfill, saveUserProfile } from "../models/user.js";
 import { validateDistrict } from "../lib/validate.js";
 import { toMeView } from "../views/user.js";
@@ -87,7 +87,7 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
 }
 
 export async function handleAckGuidelines(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const pk = `USER#${auth.payload.sub}`;
@@ -106,7 +106,7 @@ export async function handleAckGuidelines(event, opts) {
 }
 
 export async function handleSetMyDistricts(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "moderator") throw err(403, "moderators_only");
   const body = parseBody(event);
   if (!body || !Array.isArray(body.districts)) throw err(400, "districts must be array");

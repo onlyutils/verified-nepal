@@ -1,14 +1,12 @@
 import { json, err, getQuery, parseBody } from "../lib/http.js";
-import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { isOutOfScope } from "../lib/auth.js";
 import { performRedeem, queryLedger } from "../models/claim.js";
 import { listNeedsByDistrictStatuses } from "../models/need.js";
 import { toClaimPrintItem } from "../views/need.js";
 import { toLedgerItem, toLedgerCsv } from "../views/ledger.js";
 
 export async function handleRedeem(event, opts, code) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event) || {};
   let note;
   if (body.note !== undefined && body.note !== null) {
@@ -31,9 +29,7 @@ export async function handleRedeem(event, opts, code) {
 }
 
 export async function handleSync(event, opts) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object" || !Array.isArray(body.redemptions)) throw err(400, "redemptions must be array");
   const redemptions = body.redemptions;
@@ -71,9 +67,7 @@ export async function handleSync(event, opts) {
 }
 
 export async function handlePrint(event, opts) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
   const wardRaw = q.ward ? String(q.ward).trim() : "";

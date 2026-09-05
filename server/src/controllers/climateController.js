@@ -1,5 +1,4 @@
 import { json, err, getQuery, parseBody } from "../lib/http.js";
-import { requireAuth } from "../lib/auth.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { CLIMATE_DOWNLOAD_KINDS, CLIMATE_MESSAGE_IDS } from "../constants.js";
 import { getClimateAdminStats, listMessageCounts, recordDownload, recordMessage } from "../models/climate.js";
@@ -39,7 +38,7 @@ export async function handlePostClimateDownload(event, { getDdb, env }) {
 }
 
 export async function handleGetAdminClimate(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   const stats = await getClimateAdminStats(auth.ddb, auth.tableName);
   return json(200, stats);

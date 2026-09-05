@@ -1,5 +1,4 @@
 import { json, err, parseBody } from "../lib/http.js";
-import { requireAuth } from "../lib/auth.js";
 import { validateString } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { getNeedById } from "../models/need.js";
@@ -15,7 +14,7 @@ async function loadNeedWithGroup(ddb, tableName, needId) {
 }
 
 export async function handlePostGroup(event, opts, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
   if (need.status !== "published") throw err(400, "need must be published to form a group");
@@ -27,7 +26,7 @@ export async function handlePostGroup(event, opts, needId) {
 }
 
 export async function handlePostGroupJoin(event, opts, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
   if (!need.group) throw err(400, "no_group");
@@ -38,7 +37,7 @@ export async function handlePostGroupJoin(event, opts, needId) {
 }
 
 export async function handlePostGroupItem(event, opts, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
@@ -51,7 +50,7 @@ export async function handlePostGroupItem(event, opts, needId) {
 }
 
 export async function handlePostGroupItemClaim(event, opts, needId, itemId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
   if (!need.group) throw err(400, "no_group");
@@ -63,7 +62,7 @@ export async function handlePostGroupItemClaim(event, opts, needId, itemId) {
 }
 
 export async function handlePostGroupItemRelease(event, opts, needId, itemId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
   if (!need.group) throw err(400, "no_group");
@@ -73,7 +72,7 @@ export async function handlePostGroupItemRelease(event, opts, needId, itemId) {
 }
 
 export async function handlePostGroupItemDone(event, opts, needId, itemId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
   if (!need.group) throw err(400, "no_group");

@@ -1,14 +1,13 @@
 import { json, err, getQuery, parseBody, decodeCursor, encodeCursor } from "../lib/http.js";
 import { validateString } from "../lib/validate.js";
 import { maskEmail } from "../lib/format.js";
-import { requireAuth } from "../lib/auth.js";
 import { listUsersByRoles, getEmailPointer, getUserProfile, setUserRole } from "../models/user.js";
 import { getAdminStats } from "../models/stats.js";
 import { recordAudit } from "../models/audit.js";
 import { toAdminUserView } from "../views/user.js";
 
 export async function handleAdminUsersList(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   const q = getQuery(event);
   const roleFilter = q.role ? String(q.role).trim() : "";
@@ -37,7 +36,7 @@ export async function handleAdminUsersList(event, opts) {
 }
 
 export async function handleAdminUsersLookup(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   const q = getQuery(event);
   const emailRaw = q.email ? String(q.email).trim() : "";
@@ -54,7 +53,7 @@ export async function handleAdminUsersLookup(event, opts) {
 }
 
 export async function handleAdminUsersRole(event, opts, targetSub) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   if (auth.payload.sub === targetSub) {
     const bodyTmp = parseBody(event) || {};
@@ -81,7 +80,7 @@ export async function handleAdminUsersRole(event, opts, targetSub) {
 }
 
 export async function handleAdminStats(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   const stats = await getAdminStats(auth.ddb, auth.tableName);
   return json(200, stats);

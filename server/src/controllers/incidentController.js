@@ -1,6 +1,5 @@
 import { json, err, getQuery, parseBody, stripInternal } from "../lib/http.js";
 import { validateString, validateOptionalString, validateDistrict, validateNeedMedia } from "../lib/validate.js";
-import { requireAuth } from "../lib/auth.js";
 import { recordAudit } from "../models/audit.js";
 import { createIncident, getIncidentById, saveIncident, listIncidentsByStatus } from "../models/incident.js";
 
@@ -80,7 +79,7 @@ export async function handleGetIncidents(event, { getDdb, env }) {
 }
 
 export async function handleGetAdminIncidents(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const q = getQuery(event);
   const statuses = parseStatuses(q.status, INCIDENT_STATUSES, "pending");
@@ -88,7 +87,7 @@ export async function handleGetAdminIncidents(event, opts) {
 }
 
 export async function handlePostAdminIncident(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object" || Array.isArray(body)) throw err(400, "invalid body");
@@ -100,7 +99,7 @@ export async function handlePostAdminIncident(event, opts) {
 }
 
 export async function handlePostIncidentRequest(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object" || Array.isArray(body)) throw err(400, "invalid body");
   const name = validateString(body.name, "name", 2, 150);
@@ -130,7 +129,7 @@ async function getAdminIncident(auth, incidentId) {
 }
 
 export async function handlePublishIncident(event, opts, incidentId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const incident = await getAdminIncident(auth, incidentId);
   if (incident.status !== "draft") throw err(400, "only draft incidents can be published");
@@ -143,7 +142,7 @@ export async function handlePublishIncident(event, opts, incidentId) {
 }
 
 export async function handleArchiveIncident(event, opts, incidentId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const incident = await getAdminIncident(auth, incidentId);
   if (incident.status !== "active") throw err(400, "only active incidents can be archived");
@@ -156,7 +155,7 @@ export async function handleArchiveIncident(event, opts, incidentId) {
 }
 
 export async function handleApproveIncident(event, opts, incidentId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const incident = await getAdminIncident(auth, incidentId);
   if (incident.requestOrigin !== "community-request") throw err(400, "only footer-flow incidents can be approved");
@@ -173,7 +172,7 @@ export async function handleApproveIncident(event, opts, incidentId) {
 }
 
 export async function handleEditIncident(event, opts, incidentId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
@@ -194,7 +193,7 @@ export async function handleEditIncident(event, opts, incidentId) {
 }
 
 export async function handleRejectIncident(event, opts, incidentId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   requireAdmin(auth);
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");

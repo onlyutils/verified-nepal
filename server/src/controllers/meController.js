@@ -1,6 +1,5 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { json, err, parseBody } from "../lib/http.js";
-import { requireAuth } from "../lib/auth.js";
 import { validateString, validateOptionalString, validateDistrict } from "../lib/validate.js";
 import { ALLOWED_PHOTO_TYPES, LANGUAGES, MAX_PHOTO_SIZE } from "../constants.js";
 import { getRefPointer } from "../models/need.js";
@@ -11,7 +10,7 @@ import { toMyMissing, toMyNeed, toMyOffer, toMyGroup } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 
 export async function handleGetDashboard(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const { ddb, tableName, payload } = auth;
   const pointers = await listPointers(ddb, tableName, payload.sub);
   const out = { missing: [], needs: [], offers: [], groups: [] };
@@ -31,7 +30,7 @@ export async function handleGetDashboard(event, opts) {
 }
 
 export async function handlePostNeedClaim(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const refCode = validateString(body.refCode, "refCode", 1, 32).toUpperCase();
@@ -87,7 +86,7 @@ function validateMissingBody(body) {
 }
 
 export async function handlePutMissing(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (!ID.test(id)) throw err(400, "invalid id");
   const data = validateMissingBody(parseBody(event));
   const existing = await getMissingById(auth.ddb, auth.tableName, id);
@@ -117,7 +116,7 @@ export async function handlePutMissing(event, opts, id) {
 }
 
 export async function handleDeleteMissing(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (!ID.test(id)) throw err(400, "invalid id");
   const existing = await getMissingById(auth.ddb, auth.tableName, id);
   if (!existing) throw err(404, "not found");
@@ -129,7 +128,6 @@ export async function handleDeleteMissing(event, opts, id) {
 
 export async function handlePostMissingPresign(event, opts) {
   const { env, fetchImpl } = opts;
-  await requireAuth(event, opts);
   if (!env.OU_MEDIA_CLIENT_ID || !env.OU_MEDIA_CLIENT_SECRET) {
     return json(503, { error: "media_not_configured" });
   }

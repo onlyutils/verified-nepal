@@ -139,7 +139,7 @@ export async function handleGetCenter(event, opts, centerId) {
 }
 
 export async function handleUpdateCenter(event, opts, centerId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const center = await getCenter(ddb, tableName, centerId);
@@ -208,7 +208,7 @@ export async function handleListEntries(event, opts, centerId) {
 }
 
 export async function handleCreateEntry(event, opts, centerId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const center = await getCenter(ddb, tableName, centerId);
@@ -453,7 +453,7 @@ export async function handleGoodsLedger(event, opts) {
 }
 
 export async function handleInbound(event, opts, centerId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const center = await getCenter(ddb, tableName, centerId);
@@ -475,7 +475,7 @@ export async function handleInbound(event, opts, centerId) {
 }
 
 export async function handleReceive(event, opts, transferId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const meta = await getTransferMeta(ddb, tableName, transferId);
@@ -711,7 +711,7 @@ export async function handleGetDonation(event, opts, ref) {
 }
 
 export async function handleListDonations(event, opts, centerId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const center = await getCenter(ddb, tableName, centerId);
@@ -743,7 +743,7 @@ export async function handleListDonations(event, opts, centerId) {
 }
 
 export async function handleConfirmDonation(event, opts, ref) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const donation = await getDonation(ddb, tableName, ref);

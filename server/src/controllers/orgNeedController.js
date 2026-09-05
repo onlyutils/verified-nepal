@@ -1,5 +1,4 @@
 import { json, err, parseBody } from "../lib/http.js";
-import { requireAuth } from "../lib/auth.js";
 import { getOrg, getMembership } from "../models/org.js";
 import { getNeedById, setNeedStatus } from "../models/need.js";
 import { fulfilNeed } from "../models/claim.js";
@@ -30,7 +29,7 @@ function contactView(need) {
 }
 
 export async function handleOrgClaimNeed(event, opts, orgId, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireVerifiedMember(auth, orgId);
   const need = await getNeedById(auth.ddb, auth.tableName, needId);
   if (!need) throw err(404, "not found");
@@ -54,7 +53,7 @@ async function requireHandledByOrg(auth, orgId, needId) {
 }
 
 export async function handleOrgReleaseNeed(event, opts, orgId, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireVerifiedMember(auth, orgId);
   const need = await requireHandledByOrg(auth, orgId, needId);
   delete need.handledBy;
@@ -68,7 +67,7 @@ export async function handleOrgReleaseNeed(event, opts, orgId, needId) {
 }
 
 export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireVerifiedMember(auth, orgId);
   const need = await requireHandledByOrg(auth, orgId, needId);
   const body = parseBody(event) || {};
@@ -82,7 +81,7 @@ export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
 }
 
 export async function handleListOrgNeeds(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await getOrg(auth.ddb, auth.tableName, orgId);
   if (!org) throw err(404, "not found");
   if (!(await getMembership(auth.ddb, auth.tableName, auth.payload.sub, orgId))) throw err(403, "Forbidden");

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, stripInternal } from "../lib/http.js";
-import { requireAuth, requireModAuth, ensureGuidelinesAck } from "../lib/auth.js";
 import { validateString, validateArticleUrl } from "../lib/validate.js";
 import { listPointers } from "../models/mine.js";
 import { recordAudit } from "../models/audit.js";
@@ -20,7 +19,7 @@ function toMyStory(s) {
 
 /** A story is one photo or video plus a short caption, from someone who received or gave help. */
 export async function handlePostStory(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const caption = validateString(body.caption, "caption", 1, 500);
@@ -44,7 +43,7 @@ export async function handlePostStory(event, opts) {
 }
 
 export async function handleGetMyStories(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const items = [];
   for (const p of (await listPointers(auth.ddb, auth.tableName, auth.payload.sub)).filter((p) => p.kind === "STORY")) {
     const s = await getStory(auth.ddb, auth.tableName, p.id);
@@ -54,7 +53,7 @@ export async function handleGetMyStories(event, opts) {
 }
 
 export async function handleDeleteStory(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   if (!ID.test(id)) throw err(400, "invalid id");
   const s = await getStory(auth.ddb, auth.tableName, id);
   if (!s) throw err(404, "not found");
@@ -75,13 +74,13 @@ export async function handleGetStories(event, { getDdb, env }) {
 }
 
 export async function handleGetModerationStories(event, opts) {
-  const auth = await requireModAuth(event, opts); ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const { items } = await listStoriesByStatus(auth.ddb, auth.tableName, "pending");
   return json(200, { items: items.map(stripInternal) });
 }
 
 export async function handlePostModerationStory(event, opts, id) {
-  const auth = await requireModAuth(event, opts); ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action } = body;

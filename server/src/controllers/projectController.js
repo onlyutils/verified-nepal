@@ -1,7 +1,7 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, stripInternal } from "../lib/http.js";
 import { validateString, validatePhone, validateOptionalEmail, validateTitle, validateDescription, validateDistrict } from "../lib/validate.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { requireModAuth, ensureGuidelinesAck, isOutOfScope, verifyCommitteeAuth, authorizeProjectWrite } from "../lib/auth.js";
+import { isOutOfScope, verifyCommitteeAuth, authorizeProjectWrite } from "../lib/auth.js";
 import { PROJECT_TYPES, ALLOWED_PHOTO_TYPES, MAX_PHOTO_SIZE } from "../constants.js";
 import {
   createProject, getProjectById, listPublicProjects, listProjectUpdates,
@@ -203,8 +203,7 @@ export async function handlePostUpdate(event, opts, projectId) {
 }
 
 export async function handleGetModerationProjects(event, opts) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   let all = await listModerationProjects(auth.ddb, auth.tableName);
   if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
     all = all.filter((proj) => !isOutOfScope(auth.user, proj));
@@ -220,8 +219,7 @@ export async function handleGetModerationProjects(event, opts) {
 }
 
 export async function handlePostModerationProject(event, opts, projectId) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason, status, fileId, edits } = body;
@@ -243,8 +241,7 @@ export async function handlePostModerationProject(event, opts, projectId) {
 }
 
 export async function handlePostModerationUpdate(event, opts, projectId, updateId) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason } = body;

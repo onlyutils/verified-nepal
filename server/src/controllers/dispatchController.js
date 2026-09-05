@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, stripInternal } from "../lib/http.js";
-import { requireAuth, optionalAuth, requireModAuth, ensureGuidelinesAck } from "../lib/auth.js";
 import { validateArticleBlocks, validateArticleCover, validateArticleTags, validateArticleTitle } from "../lib/validate.js";
 import { ALLOWED_ARTICLE_MEDIA_TYPES, DISPATCH_TAGS, LANGUAGES, MAX_ARTICLE_IMAGE_SIZE, MAX_ARTICLE_VIDEO_SIZE } from "../constants.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
@@ -69,7 +68,7 @@ function strictMissing(item) {
 }
 
 export async function handlePostArticle(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object" || !LANGUAGES.includes(body.language)) throw err(400, 'language must be "en" or "ne"');
   const id = randomUUID();
@@ -86,7 +85,7 @@ export async function handlePostArticle(event, opts) {
 }
 
 export async function handleGetMyArticles(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const pointers = (await listPointers(auth.ddb, auth.tableName, auth.payload.sub)).filter((p) => p.kind === "ARTICLE");
   const items = [];
   for (const pointer of pointers) {
@@ -98,12 +97,12 @@ export async function handleGetMyArticles(event, opts) {
 }
 
 export async function handleGetMyArticle(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   return json(200, articleDetailView(await getOwnedArticle(auth, id)));
 }
 
 export async function handlePutArticle(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const item = await getOwnedArticle(auth, id);
   if (!["draft", "rejected"].includes(item.status)) throw err(409, "article cannot be edited in its current status");
   const body = parseBody(event);
@@ -135,7 +134,7 @@ export async function handlePutArticle(event, opts, id) {
 }
 
 export async function handleSubmitArticle(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const item = await getOwnedArticle(auth, id);
   if (!["draft", "rejected"].includes(item.status)) throw err(409, "article cannot be submitted in its current status");
   const missing = strictMissing(item);
@@ -148,7 +147,7 @@ export async function handleSubmitArticle(event, opts, id) {
 }
 
 export async function handleDeleteArticle(event, opts, id) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const item = await getOwnedArticle(auth, id);
   if (!["draft", "rejected", "pending"].includes(item.status)) throw err(409, "article cannot be deleted in its current status");
   await auth.ddb.send(new DeleteCommand({ TableName: auth.tableName, Key: { PK: item.PK, SK: item.SK } }));
@@ -157,7 +156,6 @@ export async function handleDeleteArticle(event, opts, id) {
 }
 
 export async function handlePostArticlePresign(event, opts) {
-  await requireAuth(event, opts);
   const env = envOf(opts);
   if (!env.OU_MEDIA_CLIENT_ID || !env.OU_MEDIA_CLIENT_SECRET) return json(503, { error: "media_not_configured" });
   const body = parseBody(event);
@@ -207,7 +205,7 @@ export async function handlePostArticleShare(event, opts, id) {
 }
 
 export async function handlePostArticleLike(event, opts, id) {
-  const auth = await optionalAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth?.ddb || opts.getDdb();
   const tableName = auth?.tableName || envOf(opts).TABLE_NAME;
   const item = await requirePublished(ddb, tableName, id);
@@ -250,12 +248,12 @@ export async function handleGetDispatch(event, { getDdb, env }, id) {
 }
 
 export async function handleGetModerationDispatches(event, opts) {
-  const auth = await requireModAuth(event, opts); ensureGuidelinesAck(auth);
+  const { auth } = opts;
   return json(200, { items: (await listPendingDispatches(auth.ddb, auth.tableName)).map(stripInternal) });
 }
 
 export async function handlePostModerationDispatch(event, opts, id) {
-  const auth = await requireModAuth(event, opts); ensureGuidelinesAck(auth); const body = parseBody(event);
+  const { auth } = opts; const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason } = body;
   if (!["publish", "reject"].includes(action)) throw err(400, 'action must be "publish" or "reject"');

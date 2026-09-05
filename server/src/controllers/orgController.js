@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { json, err, getQuery, parseBody } from "../lib/http.js";
-import { requireAuth, requireModAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { isOutOfScope } from "../lib/auth.js";
 import { validateString, validateOptionalString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
 import { maskEmail } from "../lib/format.js";
 import { isGoodsCategory } from "../lib/goods-taxonomy.js";
@@ -148,7 +148,7 @@ async function requireMember(auth, orgId, { ownerOnly }) {
 }
 
 export async function handleCreateOrg(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const validated = validateOrgBody(body, false);
@@ -188,7 +188,7 @@ export async function handleCreateOrg(event, opts) {
 }
 
 export async function handleListMyOrgs(event, opts) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const emailRaw = auth.user?.email || auth.payload.email || "";
   const lower = String(emailRaw).toLowerCase().trim();
   // Surface pending invitations for the user to accept/decline explicitly — do NOT
@@ -215,7 +215,7 @@ export async function handleListMyOrgs(event, opts) {
 }
 
 export async function handleGetOrg(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireMember(auth, orgId, { ownerOnly: false });
   const membership = await getMembership(auth.ddb, auth.tableName, auth.payload.sub, orgId);
   if (!membership && !["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
@@ -224,7 +224,7 @@ export async function handleGetOrg(event, opts, orgId) {
 }
 
 export async function handleUpdateOrg(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireMember(auth, orgId, { ownerOnly: true });
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
@@ -255,7 +255,7 @@ export async function handleUpdateOrg(event, opts, orgId) {
 }
 
 export async function handleCreateCenter(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const org = await requireMember(auth, orgId, { ownerOnly: true });
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
@@ -299,7 +299,7 @@ export async function handleCreateCenter(event, opts, orgId) {
 }
 
 export async function handleListOrgCenters(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   await requireMember(auth, orgId, { ownerOnly: false });
   const pointers = await listOrgCenterPointers(auth.ddb, auth.tableName, orgId);
   const items = [];
@@ -312,8 +312,7 @@ export async function handleListOrgCenters(event, opts, orgId) {
 }
 
 export async function handleModerationOrgs(event, opts) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const q = getQuery(event);
   const statusRaw = q.status ? String(q.status).trim() : "pending";
   if (!["pending", "verified", "rejected", "suspended"].includes(statusRaw)) throw err(400, "invalid status");
@@ -329,8 +328,7 @@ export async function handleModerationOrgs(event, opts) {
 }
 
 export async function handleModerateOrg(event, opts, orgId) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const action = body.action ? String(body.action).trim() : "";
@@ -410,7 +408,7 @@ export async function handleModerateOrg(event, opts, orgId) {
 }
 
 export async function handleVouch(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const target = await getOrg(ddb, tableName, orgId);
@@ -445,7 +443,7 @@ export async function handleVouch(event, opts, orgId) {
 
 
 export async function handleInviteMember(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   await requireMember(auth, orgId, { ownerOnly: true });
   const org = await getOrg(auth.ddb, auth.tableName, orgId);
   if (!org) throw err(404, "not found");
@@ -483,7 +481,7 @@ export async function handleInviteMember(event, opts, orgId) {
 }
 
 export async function handleAcceptInvite(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const lower = String(auth.user?.email || auth.payload.email || "").toLowerCase().trim();
   if (!lower) throw err(400, "no email on account");
   const invite = (await getInviteForEmail(auth.ddb, auth.tableName, lower, orgId)) || (await getInviteForOrg(auth.ddb, auth.tableName, orgId, lower));
@@ -503,7 +501,7 @@ export async function handleAcceptInvite(event, opts, orgId) {
 }
 
 export async function handleDeclineInvite(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   const lower = String(auth.user?.email || auth.payload.email || "").toLowerCase().trim();
   if (!lower) throw err(400, "no email on account");
   await deleteInvite(auth.ddb, auth.tableName, lower, orgId);
@@ -511,7 +509,7 @@ export async function handleDeclineInvite(event, opts, orgId) {
 }
 
 export async function handleListMembers(event, opts, orgId) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   await requireMember(auth, orgId, { ownerOnly: true });
   const members = await listOrgMembers(auth.ddb, auth.tableName, orgId);
   const invites = await listInvitesForOrg(auth.ddb, auth.tableName, orgId);
@@ -533,7 +531,7 @@ export async function handleListMembers(event, opts, orgId) {
 }
 
 export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
-  const auth = await requireAuth(event, opts);
+  const { auth } = opts;
   await requireMember(auth, orgId, { ownerOnly: true });
   const param = subOrEmail;
   const ddb = auth.ddb;
@@ -594,8 +592,7 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
 }
 
 export async function handleCenterFlags(event, opts) {
-  const auth = await requireModAuth(event, opts);
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const pointers = await listFlaggedCenterPointers(ddb, tableName);

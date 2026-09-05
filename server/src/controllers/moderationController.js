@@ -1,5 +1,5 @@
 import { json, err, parseBody, stripInternal } from "../lib/http.js";
-import { requireAuth, ensureGuidelinesAck, isOutOfScope } from "../lib/auth.js";
+import { isOutOfScope } from "../lib/auth.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import {
   listPendingNeedsAndOffers, listAllNeedsAllStatuses, enrichWithDupCandidates,
@@ -8,9 +8,7 @@ import {
 } from "../models/moderation.js";
 
 export async function handleGetModerationQueue(event, opts) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   let pending = await listPendingNeedsAndOffers(auth.ddb, auth.tableName);
   if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
     pending = pending.filter((it) => !isOutOfScope(auth.user, it));
@@ -24,9 +22,7 @@ export async function handleGetModerationQueue(event, opts) {
 }
 
 export async function handlePostModeration(event, opts, id) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { action, reason, edits } = body;
@@ -55,9 +51,7 @@ export async function handlePostModeration(event, opts, id) {
 }
 
 export async function handlePostModerationClaim(event, opts, id) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const { item } = await getPendingItemByIdEitherType(auth.ddb, auth.tableName, id);
   if (!item) throw err(404, "not found");
   if (isOutOfScope(auth.user, item)) throw err(403, "out_of_scope");
@@ -68,9 +62,7 @@ export async function handlePostModerationClaim(event, opts, id) {
 }
 
 export async function handlePostModerationRelease(event, opts, id) {
-  const auth = await requireAuth(event, opts);
-  if (!["moderator", "admin"].includes(auth.role)) throw err(403, "Forbidden");
-  ensureGuidelinesAck(auth);
+  const { auth } = opts;
   const { item } = await getPendingItemByIdEitherType(auth.ddb, auth.tableName, id);
   if (!item) throw err(404, "not found");
   await releaseClaim(auth.ddb, auth.tableName, { item, actorSub: auth.payload.sub });
