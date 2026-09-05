@@ -425,26 +425,18 @@ export function drawWordCloud(
   data: { words: PlacedWord[]; width: number; height: number },
 ): void {
   if (!data.words.length || data.width <= 0 || data.height <= 0) return;
-  const muted = token("--muted-foreground");
-  const minWeight = Math.min(...data.words.map((word) => word.weight));
-  const maxWeight = Math.max(...data.words.map((word) => word.weight));
   const scale = Math.min(box.w / data.width, box.h / data.height);
   const scaleX = box.w / data.width;
   const scaleY = box.h / data.height;
-  for (const word of data.words) {
-    const mix = maxWeight === minWeight ? 1 : (word.weight - minWeight) / (maxWeight - minWeight);
+  data.words.forEach((word, index) => {
     const x = box.x + word.x * scaleX;
     const y = box.y + word.y * scaleY;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `700 ${Math.max(1, word.size * scale)}px ${FAMILY}`;
-    ctx.fillStyle = muted;
+    ctx.fillStyle = climateSeriesColor(index);
     ctx.fillText(word.text, x, y);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = token("--primary", mix);
-    ctx.fillText(word.text, x, y);
-    ctx.globalAlpha = 1;
-  }
+  });
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 }

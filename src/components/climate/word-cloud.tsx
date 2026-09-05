@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getClimateMessages } from "@/lib/api";
+import { climateSeriesColor } from "@/lib/climate-colors";
 import { drawWordCloud } from "@/lib/climate-share";
 import { messageText } from "@/lib/climate-messages";
 import { layoutWordCloud, type CloudWord, type PlacedWord } from "@/lib/word-cloud";
@@ -83,8 +84,6 @@ export function WordCloud({
     });
   }, [canvasReady, words]);
 
-  const minWeight = Math.min(...placed.map((word) => word.weight), 0);
-  const maxWeight = Math.max(...placed.map((word) => word.weight), 1);
   const cloudSubline = activeCountry ? interpolate(t.cloudCountry, { country: activeCountry.name }) : t.cloudAll;
 
   return (
@@ -108,25 +107,20 @@ export function WordCloud({
       {!loading && !placed.length ? <p className="text-sm text-muted-foreground">{t.cloudEmpty}</p> : null}
       {placed.length ? (
         <svg viewBox="0 0 960 520" className="h-auto w-full" role="img" aria-label={t.cloudTitle}>
-          {placed.map((word) => {
-            const weight = maxWeight === minWeight ? 1 : (word.weight - minWeight) / (maxWeight - minWeight);
-            return (
-              <text
-                key={word.text}
-                x={word.x}
-                y={word.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontWeight="700"
-                fontSize={word.size}
-                fill="currentColor"
-                fillOpacity={0.45 + weight * 0.55}
-                className="text-primary"
-              >
-                {word.text}
-              </text>
-            );
-          })}
+          {placed.map((word, index) => (
+            <text
+              key={word.text}
+              x={word.x}
+              y={word.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontWeight="700"
+              fontSize={word.size}
+              fill={climateSeriesColor(index)}
+            >
+              {word.text}
+            </text>
+          ))}
         </svg>
       ) : null}
       <p className="text-sm text-muted-foreground">{interpolate(t.cloudCount, { count: total })}</p>

@@ -62,9 +62,20 @@ export function layoutWordCloud(words: CloudWord[], opts: LayoutOptions): Placed
     if (!Number.isFinite(dimensions.width) || !Number.isFinite(dimensions.height) || dimensions.width <= 0 || dimensions.height <= 0)
       continue;
 
+    const withinBounds = (px: number, py: number) => {
+      const nx = (px - centerX) / centerX;
+      const ny = (py - centerY) / centerY;
+      return nx * nx + ny * ny <= 1;
+    };
     const fits = (x: number, y: number) => {
       const box = paddedBox(x, y, dimensions.width, dimensions.height, padding);
-      if (box.left < 0 || box.top < 0 || box.right > opts.width || box.bottom > opts.height) return false;
+      if (
+        !withinBounds(box.left, box.top) ||
+        !withinBounds(box.right, box.top) ||
+        !withinBounds(box.left, box.bottom) ||
+        !withinBounds(box.right, box.bottom)
+      )
+        return false;
       return !boxes.some((other) => intersects(box, other));
     };
     let found: { x: number; y: number } | undefined;
