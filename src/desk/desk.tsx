@@ -143,7 +143,12 @@ export function Desk({
             <DialogHeader>
               <DialogTitle>{model.ds.deskScopeEdit}</DialogTitle>
             </DialogHeader>
-            <DistrictCheckboxes selected={districtEditDraft} onChange={setDistrictEditDraft} language={language} />
+            <DistrictCheckboxes
+              selected={districtEditDraft}
+              onChange={setDistrictEditDraft}
+              language={language}
+              searchPlaceholder={model.ds.deskDistrictSearchPlaceholder}
+            />
             {model.districtError ? (
               <Alert variant="destructive">
                 <AlertDescription>{model.districtError}</AlertDescription>

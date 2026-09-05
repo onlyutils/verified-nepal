@@ -593,7 +593,7 @@ export const labels = {
 
     // Phase 5 - governance, guidelines gate, admin, audit, scope
     deskGuidelinesGateTitle: "Moderation guidelines — read before you moderate",
-    deskGuidelinesGateLead: "Please read the moderation guidelines and acknowledge them to continue. Admins skip this gate.",
+    deskGuidelinesGateLead: "Please read the full guide below and accept at the bottom to continue. Admins skip this gate.",
     deskGuidelinesAckButton: "I have read and will follow these",
     deskGuidelinesAcking: "Acknowledging…",
     deskGuidelinesAckError: "Could not acknowledge. Try again.",
@@ -1243,7 +1243,7 @@ export const labels = {
     projectsPaymentPending: "सम्पादकले समिति प्रमाणित गरेपछि भुक्तानी विवरण देखिनेछ।",
 
     deskGuidelinesGateTitle: "मोडरेसन निर्देशिका — मोडरेसन गर्नु अघि पढ्नुहोस्",
-    deskGuidelinesGateLead: "कृपया मोडरेसन निर्देशिका पढ्नुहोस् र जारी राख्न स्वीकार गर्नुहोस्। प्रशासकहरूलाई यो आवश्यक छैन।",
+    deskGuidelinesGateLead: "कृपया तलको पूरा निर्देशिका पढ्नुहोस् र जारी राख्न पुछारमा स्वीकार गर्नुहोस्। प्रशासकहरूलाई यो आवश्यक छैन।",
     deskGuidelinesAckButton: "मैले पढें र पालना गर्नेछु",
     deskGuidelinesAcking: "स्वीकार गर्दै…",
     deskGuidelinesAckError: "स्वीकार गर्न सकिएन। पुनः प्रयास गर्नुहोस्।",

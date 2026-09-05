@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -14,24 +15,41 @@ export function DistrictCheckboxes({
   selected,
   onChange,
   language,
+  searchPlaceholder,
 }: {
   selected: string[];
   onChange: (districts: string[]) => void;
   language: Language;
+  searchPlaceholder?: string;
 }) {
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+  const visible = query
+    ? districtNames.filter((district) => districtLabels[district][language].toLowerCase().includes(query))
+    : districtNames;
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
-      {districtNames.map((district) => (
-        <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
-          <Checkbox
-            checked={selected.includes(district)}
-            onCheckedChange={(checked) =>
-              onChange(checked ? [...selected, district] : selected.filter((value) => value !== district))
-            }
-          />
-          {districtLabels[district][language]}
-        </Label>
-      ))}
+    <div className="space-y-3">
+      {searchPlaceholder ? (
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+        />
+      ) : null}
+      <div className="grid gap-2 sm:grid-cols-3">
+        {visible.map((district) => (
+          <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
+            <Checkbox
+              checked={selected.includes(district)}
+              onCheckedChange={(checked) =>
+                onChange(checked ? [...selected, district] : selected.filter((value) => value !== district))
+              }
+            />
+            {districtLabels[district][language]}
+          </Label>
+        ))}
+      </div>
     </div>
   );
 }
@@ -189,6 +207,86 @@ export function UnauthorizedGate({
   );
 }
 
+function renderGuidelinesInline(text: string): React.ReactNode {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("`") && part.endsWith("`"))
+      return (
+        <code key={i} className="rounded bg-secondary px-1 py-0.5 text-[0.85em]">
+          {part.slice(1, -1)}
+        </code>
+      );
+    return part;
+  });
+}
+
+// ponytail: hand-rolled parser for the small subset of Markdown the guidelines doc actually
+// uses (h1/h2, hr, bullets, bold, inline code) — swap for a real parser if the doc grows richer syntax.
+function renderGuidelinesMarkdown(markdown: string): React.ReactNode[] {
+  const blocks: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  let paragraph: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      blocks.push(
+        <p key={blocks.length} className="mb-4 leading-7">
+          {renderGuidelinesInline(paragraph.join(" "))}
+        </p>,
+      );
+      paragraph = [];
+    }
+  };
+  const flushList = () => {
+    if (listItems.length) {
+      blocks.push(
+        <ul key={blocks.length} className="mb-4 ml-6 list-disc space-y-1">
+          {listItems.map((item, i) => (
+            <li key={i}>{renderGuidelinesInline(item)}</li>
+          ))}
+        </ul>,
+      );
+      listItems = [];
+    }
+  };
+
+  for (const raw of markdown.split("\n")) {
+    const line = raw.trim();
+    if (line === "") {
+      flushParagraph();
+    } else if (line === "---") {
+      flushParagraph();
+      flushList();
+      blocks.push(<hr key={blocks.length} className="my-6 border-border" />);
+    } else if (line.startsWith("## ")) {
+      flushParagraph();
+      flushList();
+      blocks.push(
+        <h2 key={blocks.length} className="mt-8 mb-3 text-xl font-semibold">
+          {renderGuidelinesInline(line.slice(3))}
+        </h2>,
+      );
+    } else if (line.startsWith("# ")) {
+      flushParagraph();
+      flushList();
+      blocks.push(
+        <h1 key={blocks.length} className="mb-4 text-2xl font-bold">
+          {renderGuidelinesInline(line.slice(2))}
+        </h1>,
+      );
+    } else if (line.startsWith("- ")) {
+      flushParagraph();
+      listItems.push(line.slice(2));
+    } else {
+      flushList();
+      paragraph.push(line);
+    }
+  }
+  flushParagraph();
+  flushList();
+  return blocks;
+}
+
 export function GuidelinesGate({
   model,
   language,
@@ -216,10 +314,8 @@ export function GuidelinesGate({
             <CardTitle>{model.t.deskGuidelinesGateTitle}</CardTitle>
             <CardDescription>{model.t.deskGuidelinesGateLead}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="max-h-[50vh] overflow-y-auto rounded-lg border bg-secondary p-4 text-sm leading-6 whitespace-pre-wrap">
-              {guidelinesRaw}
-            </div>
+          <CardContent className="space-y-6">
+            <article className="text-sm">{renderGuidelinesMarkdown(guidelinesRaw)}</article>
             {model.ackError ? (
               <Alert variant="destructive">
                 <AlertDescription>{model.ackError}</AlertDescription>
@@ -265,7 +361,12 @@ export function DistrictGate({
           <CardDescription>{model.ds.deskDistrictGateLead}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <DistrictCheckboxes selected={selected} onChange={setSelected} language={language} />
+          <DistrictCheckboxes
+            selected={selected}
+            onChange={setSelected}
+            language={language}
+            searchPlaceholder={model.ds.deskDistrictSearchPlaceholder}
+          />
           {model.districtError ? (
             <Alert variant="destructive">
               <AlertDescription>{model.districtError}</AlertDescription>
