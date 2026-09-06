@@ -116,6 +116,30 @@ Stats labels ("Oldest pending age: h", trailing colons); "Role updated." shown t
 
 The dev dataset reads as real content. Identify records by the ids in `dev-dataset.json` and by the `*-beta-tester@verifiednepal.com` owner emails; wave-1 fixtures are listed at the end of each `findings/*.md`. The account `throwaway-beta-tester@verifiednepal.com` remains a helper account. The dataset inventory contains the reference codes, claim codes, update codes and donation codes.
 
-## 8. Wave 2 (populated environment) — appended when the runs complete
+## 8. Wave 2 — populated environment (night of 2026-09-06)
 
-_Pending: Desk at volume (queue filters, match → claim code → print sheet PDF → redeem → ledger, sync, flags, project verify + photo publish, org verify), helper/org flows (helper groups, project update code, org team/centers/goods ledger/take-deliver, drop centers, donation status, poster save/edit/found, status/renew), and the populated-state visual pass._
+Three runs on smaller models against the populated dataset: Desk at volume ([findings/wave2-desk.md](findings/wave2-desk.md)), helper/org/public-with-codes ([findings/wave2-helper.md](findings/wave2-helper.md)), and a read-only visual pass of 20 pages × EN/NE × mobile/desktop ([findings/wave2-visual.md](findings/wave2-visual.md)).
+
+**What now passes end to end that wave 1 could not reach:** publish/reject/release at a 50-item queue with district and text filters; scope enforcement (hidden in UI, 403 via API); need ↔ offer match; claim-code redemption via Paper Sync → fulfilled → masked `/ledger`; the printed claim sheet (desktop, mobile, PDF — QR codes, masked names, checkboxes); project committee verify → publish, update and photo approval with the photo served from the CDN; organization verify with trust tier and reject with reason; article reject with the reason visible to the author; admin disaster approval; non-zero admin/climate stats; audit masking across every target type; helper groups (form → items → join → claim → done, reflected on both helpers' `/me`); project updates via update code held pending; org take → private contact → deliver → ledger line, and hand back; center stock intake → transfer → receive with public stock and goods ledger updating; team invite accept/decline; drop-center pages; donation status pages; poster save with photo → edit → mark Found; status check for pending/published/fulfilled and renew; article like/share. With data loaded, every page still has zero horizontal overflow, zero console errors and zero failed requests.
+
+**New defects found only with data:**
+
+| ID | Sev | Issue | Where |
+|---|---|---|---|
+| VN-36 | P1 | Missing-person poster photos never render on the board or in the generated poster (empty placeholder). | wave2-visual |
+| VN-40 | P1 | Boards "Match" (need ↔ offer) exists only in the mobile card markup; the desktop table has no way to match. | wave2-desk |
+| VN-41 | P1 | Boards "Redeem a claim code" never renders: the public needs list omits `claimCode` (correctly), so the Desk has no moderator-only source for it. | wave2-desk |
+| VN-45 | P1 | Stale cache on `/give-help`: after group actions a reload can show the pre-action state until the browser cache is cleared (API cache headers / service-worker strategy). | wave2-helper |
+| VN-37 | P2 | "Sent to Sent to {destination}" on every transfer-out entry of public center pages (template used as its own fallback). | wave2-visual, wave2-helper |
+| VN-38 | P2 | Donation status result panel titled "Look up another code". | wave2-visual |
+| VN-39 | P2 | "Renew for 30 days" offered (and accepted by the API) on fulfilled needs. | wave2-visual, wave2-helper |
+| VN-42 | P2 | Flags tab has no resolve action and no link from a need flag to the item. | wave2-desk |
+| VN-43 | P2 | Org rejection writes the literal reason "reject" to the audit log. | wave2-desk |
+| VN-44 | P2 | "Vouched for" tier on an org without vouches fails with the generic server error. | wave2-desk |
+| VN-46 | P2 | Center edit fails whenever the stored phone has a leading "+". | wave2-helper |
+| VN-47 | P2 | `/org#needs` deep-link/reload falls back to Overview. | wave2-helper |
+| nits | — | `/ledger?district=` ignored; one green tone for open and done states; `/poster/:id` opens the editor; article share count not optimistic; anonymous visitors see live group buttons that no-op; "Form a group" and org take not mutually exclusive; declined invites vanish; NE numerals inconsistent; reject-article dialog reuses need copy; mobile print sheet clips Category; dataset media reuse one watermarked stock photo. | all three |
+
+## 9. Fixes applied overnight
+
+_Filled in at the end of the overnight run — see the commit list and the per-VN status table below._
