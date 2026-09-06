@@ -1,0 +1,40 @@
+name: deploy-backend-prod
+
+on: workflow_dispatch
+
+permissions: {}
+
+concurrency:
+  group: deploy-backend-prod
+
+jobs:
+  deploy:
+    # Dispatch already needs write access; this pins prod to the owner even
+    # if collaborators are ever added.
+    if: github.actor == 'laxmanpokhrel'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: server
+      - run: pnpm build
+        working-directory: server
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_LAMBDA_PROD_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_LAMBDA_PROD_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+      # Deploy user is scoped to lambda:UpdateFunctionCode/GetFunction on this
+      # one function only (see verified-nepal-infra for the Terraform-managed
+      # infra this code runs on).
+      - run: |
+          aws lambda update-function-code \
+            --function-name verifiednepal-prod-api \
+            --zip-file fileb://server/dist/lambda.zip
+          aws lambda wait function-updated-v2 --function-name verifiednepal-prod-api
