@@ -73,6 +73,11 @@ export function MyStories({ language, token, eligible }: { language: Language; t
       <Card>
         <CardContent className="space-y-4 p-6">
           <p className="text-sm text-muted-foreground">{eligible ? t.storyEligibleBody : t.storyIneligibleBody}</p>
+          {!eligible ? (
+            <Button asChild variant="outline">
+              <a href="/give-help">{t.storyEligibilityCta}</a>
+            </Button>
+          ) : null}
           {eligible ? (
             <form onSubmit={(e) => void submit(e)} className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">

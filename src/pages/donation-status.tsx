@@ -108,7 +108,7 @@ export function DonationStatusPage({
       {data ? (
         <Card>
           <CardContent className="space-y-6 pt-6">
-            <CodeDisplay code={data.ref} kind="ref" label={t.donationLookup} />
+            <CodeDisplay code={data.ref} kind="ref" label={t.donationCodeLabel} />
             <StatusBadge tone={toneForStatus(data.status === "not_received" ? "not_received" : data.status)}>
               {statusText(data, language)}
             </StatusBadge>

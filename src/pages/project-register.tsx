@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, createProject, PROJECT_TYPES, type ProjectType } from "@/lib/api";
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { communityStrings } from "@/i18n/community";
 import { disasterStrings } from "@/i18n/disasters";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -58,6 +58,8 @@ export function ProjectRegister({ language }: { language: Language }) {
   const [esewaId, setEsewaId] = useState("");
   const [khaltiId, setKhaltiId] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; updateCode: string } | null>(null);
@@ -71,6 +73,7 @@ export function ProjectRegister({ language }: { language: Language }) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setTurnstileError(false);
     if (
       !titleEn.trim() ||
       !descEn.trim() ||
@@ -123,7 +126,13 @@ export function ProjectRegister({ language }: { language: Language }) {
       });
       setResult(response);
     } catch (cause) {
-      setError((cause as ApiError).status === 0 ? t.offline : apiErrorMessage(cause, language));
+      if (isTurnstileError(cause)) {
+        setTurnstileError(true);
+        setTurnstileToken("");
+        setTurnstileResetKey((key) => key + 1);
+      } else {
+        setError((cause as ApiError).status === 0 ? t.offline : apiErrorMessage(cause, language));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -360,16 +369,23 @@ export function ProjectRegister({ language }: { language: Language }) {
           </CardContent>
         </Card>
         {TURNSTILE_KEY ? (
-          <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
-        ) : (
-          <p className="text-sm text-muted-foreground">{t.turnstileHint}</p>
-        )}
+          <TurnstileWidget
+            siteKey={TURNSTILE_KEY}
+            language={language}
+            onToken={(token) => {
+              setTurnstileToken(token);
+              setTurnstileError(false);
+            }}
+            verificationError={turnstileError}
+            resetKey={turnstileResetKey}
+          />
+        ) : null}
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
-        <Button type="submit" size="lg" disabled={submitting} className="w-full">
+        <Button type="submit" size="lg" disabled={submitting || Boolean(TURNSTILE_KEY && !turnstileToken)} className="w-full">
           {submitting ? t.submittingProject : t.submitProject}
         </Button>
       </form>

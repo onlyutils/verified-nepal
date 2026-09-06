@@ -20,3 +20,9 @@ export function apiErrorMessage(err: unknown, language: Language): string {
   if (err instanceof TypeError) return t.errOffline;
   return t.errGeneric;
 }
+
+export function isTurnstileError(err: unknown): boolean {
+  if (!(err instanceof ApiError) || err.status !== 400) return false;
+  const bodyError = (err.body as { error?: unknown } | null)?.error;
+  return [err.message, typeof bodyError === "string" ? bodyError : ""].some((value) => value.toLowerCase().includes("turnstile"));
+}

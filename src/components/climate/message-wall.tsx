@@ -5,6 +5,7 @@ import type { ClimateFacts, CountryClimate } from "@/lib/climate-data";
 import { interpolate } from "@/lib/format";
 import type { Language } from "@/lib/types";
 import { TurnstileWidget } from "@/components/turnstile";
+import { isTurnstileError } from "@/lib/api-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ export function MessageWall({
   const [widgetKey, setWidgetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const [turnstileError, setTurnstileError] = useState(false);
   const [sent, setSent] = useState<{ count: number; messageIds: string[]; iso3: string } | null>(null);
 
   const country = countries.find((item) => item.iso3 === iso3) ?? facts.top;
@@ -45,6 +47,7 @@ export function MessageWall({
     );
     setSent(null);
     setError(false);
+    setTurnstileError(false);
   };
 
   const resetToken = () => {
@@ -66,8 +69,9 @@ export function MessageWall({
       setSent({ count: lastCount, messageIds, iso3: country.iso3 });
       onSent(messageIds[0], country.iso3);
       resetToken();
-    } catch {
+    } catch (cause) {
       setError(true);
+      setTurnstileError(isTurnstileError(cause));
       resetToken();
     } finally {
       setSubmitting(false);
@@ -128,8 +132,18 @@ export function MessageWall({
         ))}
       </div>
 
-      {siteKey ? <TurnstileWidget key={widgetKey} siteKey={siteKey} onToken={setTurnstileToken} /> : null}
-      {siteKey && !turnstileToken ? <p className="text-sm text-muted-foreground">{t.messagesHumanCheck}</p> : null}
+      {siteKey ? (
+        <TurnstileWidget
+          key={widgetKey}
+          siteKey={siteKey}
+          language={language}
+          onToken={(token) => {
+            setTurnstileToken(token);
+            setTurnstileError(false);
+          }}
+          verificationError={turnstileError}
+        />
+      ) : null}
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{t.messagesError}</AlertDescription>

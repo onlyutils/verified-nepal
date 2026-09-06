@@ -11,7 +11,7 @@ import {
   type NeedMediaItem,
   type StatusResponse,
 } from "@/lib/api";
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { useIncidents } from "@/lib/incidents";
@@ -39,6 +39,19 @@ import { SignInNudge } from "@/components/sign-in-nudge";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
+const SESSION_KEY = "vn:need-session";
+
+function getSessionMarker() {
+  try {
+    const existing = sessionStorage.getItem(SESSION_KEY);
+    if (existing) return existing;
+    const marker = crypto.randomUUID();
+    sessionStorage.setItem(SESSION_KEY, marker);
+    return marker;
+  } catch {
+    return "memory-session";
+  }
+}
 const MAX_NEED_MEDIA_ITEMS = 4; // Keep in sync with server MAX_NEED_MEDIA_ITEMS.
 const MAX_NEED_PHOTO_SIZE = 8 * 1024 * 1024; // Keep in sync with server MAX_PHOTO_SIZE.
 const MAX_NEED_VIDEO_SIZE = 50 * 1024 * 1024; // Keep in sync with server MAX_VIDEO_SIZE.
@@ -134,6 +147,9 @@ export function GetHelp({ language }: { language: Language }) {
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [success, setSuccess] = useState<{ id: string; refCode: string } | null>(null);
   const [draftTime, setDraftTime] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const sessionMarkerRef = useRef(getSessionMarker());
 
   useEffect(() => {
     if (!auth.idToken) return;
@@ -174,7 +190,8 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.newIncidentKind === "string") setNewIncidentKind(draft.newIncidentKind);
       if (typeof draft.newIncidentDistrict === "string") setNewIncidentDistrict(draft.newIncidentDistrict);
       if (typeof draft.newIncidentDescription === "string") setNewIncidentDescription(draft.newIncidentDescription);
-      if (typeof draft.savedAt === "string") setDraftTime(new Date(draft.savedAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US"));
+      if (typeof draft.savedAt === "string" && draft.sessionMarker !== sessionMarkerRef.current)
+        setDraftTime(new Date(draft.savedAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US"));
     } catch {
       /* an unreadable draft should not block the form */
     }
@@ -202,6 +219,7 @@ export function GetHelp({ language }: { language: Language }) {
       newIncidentDistrict,
       newIncidentDescription,
       savedAt: new Date().toISOString(),
+      sessionMarker: sessionMarkerRef.current,
     };
     if (
       !registrantName &&
@@ -338,8 +356,12 @@ export function GetHelp({ language }: { language: Language }) {
           const item: NeedMediaItem = { fileId: presign.fileId, type: presign.mediaType, originalUrl: presign.publicUrl };
           setMediaItems((current) => [...current, item]);
           setMediaNames((current) => ({ ...current, [item.fileId]: file.name }));
-        } catch {
-          setMediaError(ts.getHelpMediaUploadError);
+        } catch (cause) {
+          if (isTurnstileError(cause)) {
+            setTurnstileError(true);
+            setTurnstileToken("");
+            setTurnstileResetKey((key) => key + 1);
+          } else setMediaError(ts.getHelpMediaUploadError);
         } finally {
           setUploadingFiles((current) => {
             const next = { ...current };
@@ -363,6 +385,7 @@ export function GetHelp({ language }: { language: Language }) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setTurnstileError(false);
     const next: Partial<Record<FieldKey, string>> = {};
     if (newIncidentMode) {
       if (!newIncidentName.trim()) next.newIncidentName = disaster.reportIncidentRequired;
@@ -454,7 +477,11 @@ export function GetHelp({ language }: { language: Language }) {
         /* ignore */
       }
     } catch (err) {
-      setError(apiErrorMessage(err, language));
+      if (isTurnstileError(err)) {
+        setTurnstileError(true);
+        setTurnstileToken("");
+        setTurnstileResetKey((key) => key + 1);
+      } else setError(apiErrorMessage(err, language));
     } finally {
       setSubmitting(false);
     }
@@ -780,13 +807,16 @@ export function GetHelp({ language }: { language: Language }) {
             )}
             {TURNSTILE_KEY ? (
               <div>
-                <p className="mb-2 text-sm text-muted-foreground">{t.getHelpTurnstileHint}</p>
                 <TurnstileWidget
                   siteKey={TURNSTILE_KEY}
+                  language={language}
                   onToken={(tok) => {
                     turnstileTokenRef.current = tok;
                     setTurnstileToken(tok);
+                    setTurnstileError(false);
                   }}
+                  verificationError={turnstileError}
+                  resetKey={turnstileResetKey}
                 />
               </div>
             ) : null}
@@ -800,7 +830,12 @@ export function GetHelp({ language }: { language: Language }) {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : null}
-            <Button type="submit" size="lg" disabled={submitting || Object.keys(uploadingFiles).length > 0} className="w-full">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting || Object.keys(uploadingFiles).length > 0 || Boolean(TURNSTILE_KEY && !turnstileToken)}
+              className="w-full"
+            >
               {submitting ? t.getHelpSubmitting : t.getHelpSubmit}
             </Button>
           </CardContent>
@@ -1031,9 +1066,11 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               {new Date(result.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")} →{" "}
               {new Date(result.expiresAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
             </p>
-            <Button type="button" variant="outline" size="sm" onClick={renew} disabled={renewing}>
-              {renewDone ? t.getHelpStatusRenewed : renewing ? ts.renewing : t.getHelpStatusRenew}
-            </Button>
+            {!(["fulfilled", "rejected", "expired", "matched"] as string[]).includes(result.status) ? (
+              <Button type="button" variant="outline" size="sm" onClick={renew} disabled={renewing}>
+                {renewDone ? t.getHelpStatusRenewed : renewing ? ts.renewing : t.getHelpStatusRenew}
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </CardContent>

@@ -166,7 +166,7 @@ export function ProjectsList({ language }: { language: Language }) {
           </AlertDescription>
         </Alert>
       ) : null}
-      {!loading && !error && items.length === 0 ? <EmptyState title={t.projectsEmpty} description={t.offline} /> : null}
+      {!loading && !error && items.length === 0 ? <EmptyState title={t.projectsEmpty} description={offline ? t.offline : t.projectsNoItems} /> : null}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((project) => {
           const cover = coverUrl(project);

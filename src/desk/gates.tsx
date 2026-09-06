@@ -176,30 +176,30 @@ export function UnauthorizedGate({
   language,
   setLanguage,
   onHome,
+  onMe,
   onOrg,
 }: {
   model: DeskModel;
   language: Language;
   setLanguage: (language: Language) => void;
   onHome: () => void;
+  onMe: () => void;
   onOrg: () => void;
 }) {
   return (
     <GateLayout model={model} language={language} setLanguage={setLanguage} onHome={onHome}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>{model.t.deskNotAuthorizedTitle}</CardTitle>
-          <CardDescription>{model.t.deskNotAuthorizedBody}</CardDescription>
+          <CardTitle>{model.t.deskHelperTitle}</CardTitle>
+          <CardDescription>{model.t.deskHelperBody}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           <p className="text-sm text-muted-foreground">
             {model.auth.profile?.email ? model.t.deskWelcome.replace("{name}", model.auth.profile.email) : ""}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button onClick={onOrg}>{model.ds.deskGoToOrg}</Button>
-            <Button variant="outline" onClick={model.auth.signOut}>
-              {model.t.deskSignOut}
-            </Button>
+            <Button onClick={onMe}>{model.t.deskGoToMe}</Button>
+            <Button variant="outline" onClick={onOrg}>{model.ds.deskGoToOrg}</Button>
           </div>
         </CardContent>
       </Card>

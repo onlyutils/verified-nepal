@@ -79,12 +79,13 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
   }, [id, language]);
 
   useEffect(() => {
-    if (!item) return;
+    if (!item || item.id !== id) return;
     setLikeCount(item.likes ?? 0);
     setLiked(!auth.idToken && readAnonymousLike(item.id));
   }, [auth.idToken, item]);
 
   useEffect(() => {
+    if (!item) return;
     const key = storageKey("view", id);
     try {
       if (sessionStorage.getItem(key) === "1") return;
@@ -93,7 +94,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       return;
     }
     void postArticleView(id).catch(() => {});
-  }, [id]);
+  }, [id, item]);
 
   if (loading) return <LoadingState label={t.loading} />;
   if (error)

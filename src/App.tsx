@@ -20,7 +20,7 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import type { Language, Page } from "@/lib/types";
 
 type ArticlePage = "myArticles" | "articleEdit";
-type AppPage = Page | ArticlePage;
+type AppPage = Page | ArticlePage | "posterView";
 
 const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
 const DeskLogin = lazy(() => import("@/desk/login").then((m) => ({ default: m.DeskLogin })));
@@ -32,6 +32,7 @@ const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ defau
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
 const PosterPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterPage })));
 const PosterCatalogue = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterCatalogue })));
+const PosterRecordPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterRecordPage })));
 const MePage = lazy(() => import("@/pages/me").then((m) => ({ default: m.MePage })));
 const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
 const ProjectsList = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsList })));
@@ -58,6 +59,7 @@ const pagePaths: Record<AppPage, string> = {
   missing: "/missing",
   poster: "/poster",
   posterNew: "/poster/new",
+  posterView: "/poster/:id",
   me: "/me",
   myArticles: "/me/articles",
   articleEdit: "/me/articles/:id/edit",
@@ -119,7 +121,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.startsWith("/search")) return "search";
   if (pathname === "/me" || pathname.startsWith("/me/")) return "me";
   if (pathname.startsWith("/missing")) return "missing";
-  if (pathname.startsWith("/poster/")) return "posterNew";
+  if (pathname.startsWith("/poster/")) return new URLSearchParams(window.location.search).get("edit") === "1" ? "posterNew" : "posterView";
   if (pathname.startsWith("/poster")) return "poster";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
@@ -134,6 +136,7 @@ function pageTitle(page: AppPage, language: Language): string {
     missing: t.missingGuideTitle,
     poster: posterStrings[language].catalogueTitle,
     posterNew: posterStrings[language].title,
+    posterView: posterStrings[language].catalogueTitle,
     me: meStrings[language].title,
     myArticles: articlesEditorStrings[language].listTitle,
     articleEdit: articlesEditorStrings[language].title,
@@ -285,6 +288,11 @@ export function App() {
               {page === "posterNew" ? (
                 <ComponentErrorBoundary language={language}>
                   <PosterPage language={language} navigate={navigate} savedId={posterIdFromPath(window.location.pathname)} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "posterView" ? (
+                <ComponentErrorBoundary language={language}>
+                  <PosterRecordPage language={language} navigate={navigate} id={posterIdFromPath(window.location.pathname) ?? ""} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "me" ? (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiError, declareDonation, flagCenter, getCenter, type CenterDetailResponse } from "@/lib/api";
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { communityStrings } from "@/i18n/community";
 import { centerStrings } from "@/i18n/centers";
 import { districtLabels } from "@/lib/geo";
@@ -33,7 +33,7 @@ function entryLabel(entry: CenterDetailResponse["recent"][number], language: Lan
   if (entry.entryType === "intake") return s.activityIntake;
   if (entry.entryType === "distribution") return s.activityDistribution;
   if (entry.entryType === "transfer_out")
-    return fillTemplate(s.activityTransferOut, { destination: entry.destinationLabel || s.activityTransferOut });
+    return fillTemplate(s.activityTransferOut, { destination: entry.destinationLabel || s.activityUnknownDestination });
   if (entry.entryType === "transfer_in") return fillTemplate(s.activityTransferIn, { source: entry.sourceLabel || s.activityTransferIn });
   return communityStrings[language].centerCorrection;
 }
@@ -56,6 +56,8 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   const [dropError, setDropError] = useState<string | null>(null);
   const [dropSubmitting, setDropSubmitting] = useState(false);
   const [dropToken, setDropToken] = useState("");
+  const [dropTurnstileError, setDropTurnstileError] = useState(false);
+  const [dropTurnstileResetKey, setDropTurnstileResetKey] = useState(0);
   const [flagOpen, setFlagOpen] = useState(false);
   const [flagReason, setFlagReason] = useState("");
   const [flagDetails, setFlagDetails] = useState("");
@@ -63,6 +65,8 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
   const [flagSuccess, setFlagSuccess] = useState(false);
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [flagToken, setFlagToken] = useState("");
+  const [flagTurnstileError, setFlagTurnstileError] = useState(false);
+  const [flagTurnstileResetKey, setFlagTurnstileResetKey] = useState(0);
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -99,6 +103,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
     }
     setDropSubmitting(true);
     setDropError(null);
+    setDropTurnstileError(false);
     try {
       const result = await declareDonation(id, {
         category: dropCategory,
@@ -108,7 +113,11 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
       });
       setDropRef(result.ref);
     } catch (cause) {
-      setDropError(apiErrorMessage(cause, language));
+      if (isTurnstileError(cause)) {
+        setDropTurnstileError(true);
+        setDropToken("");
+        setDropTurnstileResetKey((key) => key + 1);
+      } else setDropError(apiErrorMessage(cause, language));
     } finally {
       setDropSubmitting(false);
     }
@@ -121,6 +130,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
     }
     setFlagSubmitting(true);
     setFlagError(null);
+    setFlagTurnstileError(false);
     try {
       await flagCenter(id, {
         reason: flagReason as "not_real" | "closed" | "misuse" | "other",
@@ -130,7 +140,11 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
       setFlagSuccess(true);
       setFlagOpen(false);
     } catch (cause) {
-      setFlagError(apiErrorMessage(cause, language));
+      if (isTurnstileError(cause)) {
+        setFlagTurnstileError(true);
+        setFlagToken("");
+        setFlagTurnstileResetKey((key) => key + 1);
+      } else setFlagError(apiErrorMessage(cause, language));
     } finally {
       setFlagSubmitting(false);
     }
@@ -303,14 +317,25 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                   rows={4}
                 />
               </div>
-              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setFlagToken} /> : null}
+              {TURNSTILE_KEY ? (
+                <TurnstileWidget
+                  siteKey={TURNSTILE_KEY}
+                  language={language}
+                  onToken={(token) => {
+                    setFlagToken(token);
+                    setFlagTurnstileError(false);
+                  }}
+                  verificationError={flagTurnstileError}
+                  resetKey={flagTurnstileResetKey}
+                />
+              ) : null}
               {flagError ? (
                 <Alert variant="destructive">
                   <AlertDescription>{flagError}</AlertDescription>
                 </Alert>
               ) : null}
               <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={flagSubmitting}>
+                <Button type="submit" disabled={flagSubmitting || Boolean(TURNSTILE_KEY && !flagToken)}>
                   {flagSubmitting ? s.reportSubmitting : t.centerReportSubmit}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setFlagOpen(false)}>
@@ -378,7 +403,18 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                 <Label htmlFor="drop-note">{s.dropNoteLabel}</Label>
                 <Textarea id="drop-note" value={dropNote} onChange={(e) => setDropNote(e.target.value)} maxLength={500} rows={3} />
               </div>
-              {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setDropToken} /> : null}
+              {TURNSTILE_KEY ? (
+                <TurnstileWidget
+                  siteKey={TURNSTILE_KEY}
+                  language={language}
+                  onToken={(token) => {
+                    setDropToken(token);
+                    setDropTurnstileError(false);
+                  }}
+                  verificationError={dropTurnstileError}
+                  resetKey={dropTurnstileResetKey}
+                />
+              ) : null}
               {dropError ? (
                 <Alert variant="destructive">
                   <AlertDescription>{dropError}</AlertDescription>
@@ -388,7 +424,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                 <Button type="button" variant="outline" onClick={() => setDropOpen(false)}>
                   {s.dropCancel}
                 </Button>
-                <Button type="submit" disabled={dropSubmitting}>
+                <Button type="submit" disabled={dropSubmitting || Boolean(TURNSTILE_KEY && !dropToken)}>
                   {dropSubmitting ? s.dropSubmitting : s.dropSubmit}
                 </Button>
               </DialogFooter>

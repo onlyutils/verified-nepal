@@ -37,11 +37,6 @@ export function Desk({
   const onHome = () => navigate("dashboard");
   const isModerator = auth.profile?.role === "moderator" || auth.profile?.role === "admin";
 
-  // Helpers (organization accounts) have no business on the Desk: send them to My organization.
-  useEffect(() => {
-    if (auth.idToken && auth.profile && !auth.error && !isModerator) navigate("org");
-  }, [auth.idToken, auth.profile, auth.error, isModerator, navigate]);
-
   // Signed out: the login page owns the Google button.
   useEffect(() => {
     const returningFromOAuth = new URLSearchParams(window.location.search).has("code");
@@ -52,7 +47,16 @@ export function Desk({
   if (!auth.idToken) return <SignedOutGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.error || !auth.profile) return <AuthGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.profile.role !== "moderator" && auth.profile.role !== "admin")
-    return <UnauthorizedGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} onOrg={() => navigate("org")} />;
+    return (
+      <UnauthorizedGate
+        model={model}
+        language={language}
+        setLanguage={setLanguage}
+        onHome={onHome}
+        onMe={() => navigate("me")}
+        onOrg={() => navigate("org")}
+      />
+    );
   if (auth.profile.role === "moderator" && !model.ackedNow && !auth.profile.guidelinesAckAt)
     return <GuidelinesGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
   if (auth.profile.role === "moderator" && (auth.profile.districts?.length ?? 0) === 0)

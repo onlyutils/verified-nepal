@@ -20,7 +20,7 @@ import {
   type NeedPublic,
   type OfferPublic,
 } from "@/lib/api";
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { GENERAL_INCIDENT_ID, useIncidents } from "@/lib/incidents";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -92,6 +92,8 @@ function FlagDialog({
   const [reason, setReason] = useState<"already_received" | "not_real" | "other">("already_received");
   const [details, setDetails] = useState("");
   const [token, setToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -100,6 +102,7 @@ function FlagDialog({
       setReason("already_received");
       setDetails("");
       setToken("");
+      setTurnstileError(false);
       setError(null);
       setDone(false);
     }
@@ -116,7 +119,11 @@ function FlagDialog({
       await flagNeed(needId, { reason, details: details.trim() || undefined, turnstileToken: token || undefined });
       setDone(true);
     } catch (err) {
-      setError(apiErrorMessage(err, language));
+      if (isTurnstileError(err)) {
+        setTurnstileError(true);
+        setToken("");
+        setTurnstileResetKey((key) => key + 1);
+      } else setError(apiErrorMessage(err, language));
     } finally {
       setSubmitting(false);
     }
@@ -167,10 +174,17 @@ function FlagDialog({
               <p className="text-sm text-muted-foreground">{details.length}/500</p>
             </div>
             {TURNSTILE_KEY ? (
-              <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setToken} />
-            ) : (
-              <p className="text-sm text-muted-foreground">{t.flagTurnstileHint}</p>
-            )}
+              <TurnstileWidget
+                siteKey={TURNSTILE_KEY}
+                language={language}
+                onToken={(value) => {
+                  setToken(value);
+                  setTurnstileError(false);
+                }}
+                verificationError={turnstileError}
+                resetKey={turnstileResetKey}
+              />
+            ) : null}
             {error ? (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -180,7 +194,7 @@ function FlagDialog({
               <Button variant="outline" onClick={onClose}>
                 {t.deskCancel}
               </Button>
-              <Button onClick={submit} disabled={submitting}>
+              <Button onClick={submit} disabled={submitting || Boolean(TURNSTILE_KEY && !token)}>
                 {submitting ? t.flagSubmitting : t.flagSubmit}
               </Button>
             </DialogFooter>
@@ -269,7 +283,7 @@ function OfferDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{ts.giveHelpOfferDialogTitle}</DialogTitle>
-          <DialogDescription>{t.giveHelpOfferLead}</DialogDescription>
+          <DialogDescription>{auth.idToken ? t.giveHelpOfferLeadSignedIn : t.giveHelpOfferLead}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-5">
           <div className="flex items-center gap-3">
@@ -575,7 +589,7 @@ export function GiveHelp({ language }: { language: Language }) {
         <Card className="mx-auto max-w-md">
           <CardHeader className="text-center">
             <CardTitle>{t.giveHelpOfferTitle}</CardTitle>
-            <CardDescription>{t.giveHelpOfferLead}</CardDescription>
+            <CardDescription>{auth.idToken ? t.giveHelpOfferLeadSignedIn : t.giveHelpOfferLead}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             {!auth.idToken ? (

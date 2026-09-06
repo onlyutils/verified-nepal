@@ -165,7 +165,15 @@ function ArticleRow({
           ) : null}
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
-              <a href={`/me/articles/${encodeURIComponent(item.id)}/edit`}>{t.edit}</a>
+              <a
+                href={
+                  item.status === "draft" || item.status === "rejected"
+                    ? `/me/articles/${encodeURIComponent(item.id)}/edit`
+                    : `/articles/${encodeURIComponent(item.id)}`
+                }
+              >
+                {item.status === "draft" || item.status === "rejected" ? t.edit : t.view}
+              </a>
             </Button>
             {item.status !== "published" ? (
               <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={onDelete}>

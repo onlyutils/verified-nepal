@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TurnstileWidget } from "@/components/turnstile";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function dateLabel(value: string, language: Language) {
@@ -22,13 +23,17 @@ function dateLabel(value: string, language: Language) {
 
 export function Ledger({ language }: { language: Language }) {
   const t = communityStrings[language];
-  const [district, setDistrict] = useState<string>(districtNames[0] ?? "Rasuwa");
-  const [ward, setWard] = useState("");
+  const [district, setDistrict] = useState<string>(() => {
+    const value = new URLSearchParams(window.location.search).get("district");
+    return value && districtNames.includes(value as (typeof districtNames)[number]) ? value : districtNames[0] ?? "Rasuwa";
+  });
+  const [ward, setWard] = useState(() => new URLSearchParams(window.location.search).get("ward") ?? "");
   const [items, setItems] = useState<LedgerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [csvOpen, setCsvOpen] = useState(false);
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -45,6 +50,13 @@ export function Ledger({ language }: { language: Language }) {
   };
   useEffect(() => {
     void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [district, ward]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("district", district);
+    if (ward) params.set("ward", ward);
+    else params.delete("ward");
+    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
   }, [district, ward]);
   const districtLabel = districtLabels[district as keyof typeof districtLabels]?.[language] ?? district;
   const csvUrl = getLedgerCsvUrl(district, ward ? Number(ward) : undefined, turnstileToken);
@@ -74,26 +86,43 @@ export function Ledger({ language }: { language: Language }) {
               ))}
             </NativeSelect>
           </div>
-          {TURNSTILE_KEY ? (
-            <div className="sm:col-span-2 lg:col-span-2">
-              <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
-            </div>
-          ) : null}
           <div className="flex flex-wrap items-end gap-2 lg:col-span-5">
             <Button variant="outline" onClick={() => window.print()}>
               {t.ledgerPrint}
             </Button>
-            {csvUrl ? (
-              <Button asChild variant="secondary">
-                <a href={csvUrl} download>
-                  {t.ledgerCsv}
-                </a>
-              </Button>
-            ) : null}
+            <Button variant="secondary" onClick={() => setCsvOpen(true)}>
+              {t.ledgerCsv}
+            </Button>
             <span className="text-sm text-muted-foreground">{t.ledgerCsvHint}</span>
           </div>
         </CardContent>
       </Card>
+      <Dialog
+        open={csvOpen}
+        onOpenChange={(open) => {
+          setCsvOpen(open);
+          if (!open) setTurnstileToken("");
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.ledgerCsv}</DialogTitle>
+            <DialogDescription>{t.ledgerCsvHint}</DialogDescription>
+          </DialogHeader>
+          {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} language={language} onToken={setTurnstileToken} /> : null}
+          <DialogFooter>
+            {csvUrl && (!TURNSTILE_KEY || turnstileToken) ? (
+              <Button asChild>
+                <a href={csvUrl} download onClick={() => setCsvOpen(false)}>
+                  {t.ledgerCsv}
+                </a>
+              </Button>
+            ) : (
+              <Button disabled>{t.ledgerCsv}</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <p className="hidden text-sm print:block">
         {districtLabel}
         {ward ? ` · ${t.ledgerWard} ${ward}` : ""}

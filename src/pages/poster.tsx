@@ -101,13 +101,23 @@ function toPosterInput(item: MyMissing, language: Language): PosterInput {
   };
 }
 
+function posterPhoto(item: MyMissing): { fileId: string; url: string } | null {
+  const photo = item.photo as unknown;
+  if (typeof photo === "string" && photo) return { fileId: "", url: photo };
+  if (photo && typeof photo === "object" && "url" in photo && typeof photo.url === "string" && photo.url) {
+    return { fileId: "fileId" in photo && typeof photo.fileId === "string" ? photo.fileId : "", url: photo.url };
+  }
+  return null;
+}
+
 const POSTER_TONE: Record<PosterStatus, StatusTone> = { missing: "danger", found: "info", safe: "success" };
 
 async function renderPosterBlob(item: MyMissing, language: Language): Promise<{ blob: Blob; filename: string } | null> {
   const input = toPosterInput(item, language);
   const t = posterStrings[input.language];
   await loadPosterFonts();
-  const photo = item.photo ? await loadImage(item.photo.url).catch(() => null) : null;
+  const savedPhoto = posterPhoto(item);
+  const photo = savedPhoto ? await loadImage(savedPhoto.url).catch(() => null) : null;
   const canvas = document.createElement("canvas");
   drawPoster(canvas, input, { photo }, t);
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
@@ -347,18 +357,19 @@ function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language
   const t = posterStrings[language];
   const input = toPosterInput(item, language);
   const phone = input.phones.find((p) => p.trim());
+  const photo = posterPhoto(item);
 
   return (
     <Card>
       <CardContent className="flex gap-4 p-4">
-        {item.photo ? (
-          <img src={item.photo.url} alt={item.name} className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
+        {photo ? (
+          <img src={photo.url} alt={item.name} className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
         ) : (
           <div
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] text-muted-foreground"
             aria-hidden="true"
           >
-            photo
+            {t.photoPlaceholder}
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
@@ -406,10 +417,12 @@ function PosterViewDialog({
   item,
   language,
   onOpenChange,
+  canEdit = false,
 }: {
   item: MyMissing | null;
   language: Language;
   onOpenChange: (open: boolean) => void;
+  canEdit?: boolean;
 }) {
   const t = posterStrings[language];
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -419,7 +432,8 @@ function PosterViewDialog({
   useEffect(() => {
     if (!item) return;
     let cancelled = false;
-    Promise.all([loadPosterFonts(), item.photo ? loadImage(item.photo.url).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
+    const savedPhoto = posterPhoto(item);
+    Promise.all([loadPosterFonts(), savedPhoto ? loadImage(savedPhoto.url).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
       if (!cancelled) setAssets({ photo });
     });
     return () => {
@@ -449,6 +463,11 @@ function PosterViewDialog({
               role="img"
             />
             <div className="flex gap-2">
+              {canEdit ? (
+                <Button asChild type="button" variant="outline" className="flex-1">
+                  <a href={`/poster/${encodeURIComponent(item.id)}?edit=1`}>{t.editTitle}</a>
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 className="flex-1"
@@ -603,6 +622,50 @@ export function PosterCatalogue({ language, navigate }: { language: Language; na
   );
 }
 
+export function PosterRecordPage({ language, navigate, id }: { language: Language; navigate: (page: Page) => void; id: string }) {
+  const auth = useGoogleAuth();
+  const [item, setItem] = useState<MyMissing | null>(null);
+  const [owner, setOwner] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      getMissing(),
+      auth.idToken ? getDashboard(auth.idToken).catch(() => null) : Promise.resolve(null),
+    ]).then(([publicData, dashboard]) => {
+      if (cancelled) return;
+      const found = publicData.items.find((candidate) => candidate.id === id) ?? null;
+      setItem(found);
+      setOwner(Boolean(dashboard?.missing.some((candidate) => candidate.id === id)));
+      setNotFound(!found);
+    }).catch(() => {
+      if (!cancelled) setNotFound(true);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.idToken, id]);
+
+  if (loading) return <LoadingState label={posterStrings[language].loading} />;
+  if (notFound || !item)
+    return <EmptyState title={posterStrings[language].catalogueEmpty} action={<Button onClick={() => navigate("poster")}>{posterStrings[language].backToCatalogue}</Button>} />;
+  return (
+    <PosterViewDialog
+      item={item}
+      language={language}
+      canEdit={owner}
+      onOpenChange={(open) => {
+        if (!open) navigate("poster");
+      }}
+    />
+  );
+}
+
 export function PosterPage({ language, navigate, savedId }: { language: Language; navigate: (page: Page) => void; savedId?: string }) {
   const t = posterStrings[language];
   const tl = labels[language];
@@ -639,9 +702,10 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
         const { photo, id, createdAt, updatedAt, ...fields } = item as MyMissing & MissingBody;
         setInput({ ...EMPTY_POSTER, ...fields, phones: [fields.phones[0] ?? "", fields.phones[1] ?? ""] });
         setRecordId(id);
-        if (photo) {
-          setPhotoRemote(photo);
-          setPhotoUrl(photo.url);
+        const savedPhoto = posterPhoto(item);
+        if (savedPhoto) {
+          setPhotoRemote(savedPhoto);
+          setPhotoUrl(savedPhoto.url);
         }
       })
       .catch(() => {});

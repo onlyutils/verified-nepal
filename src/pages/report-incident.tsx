@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { requestIncident, presignNeedMedia, type NeedMediaItem } from "@/lib/api";
-import { apiErrorMessage } from "@/lib/api-error";
+import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { disasterStrings } from "@/i18n/disasters";
 import { districtLabels, districtNames, type DistrictName } from "@/lib/geo";
@@ -40,6 +40,8 @@ export function ReportIncident({ language }: { language: Language }) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   // Files are only validated and staged here; the actual presign+upload happens on submit,
   // by which point the Turnstile challenge has had time to solve (it doesn't on file select).
@@ -72,6 +74,7 @@ export function ReportIncident({ language }: { language: Language }) {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setTurnstileError(false);
     if (!auth.idToken) {
       setError(t.reportIncidentSignIn);
       return;
@@ -105,7 +108,13 @@ export function ReportIncident({ language }: { language: Language }) {
           if (!upload.ok) throw new Error("upload");
           media.push({ fileId: presign.fileId, type: presign.mediaType, originalUrl: presign.publicUrl });
         }
-      } catch {
+      } catch (cause) {
+        if (isTurnstileError(cause)) {
+          setTurnstileError(true);
+          setTurnstileToken("");
+          setTurnstileResetKey((key) => key + 1);
+          return;
+        }
         setError(t.reportIncidentMediaUploadError);
         return;
       }
@@ -115,7 +124,11 @@ export function ReportIncident({ language }: { language: Language }) {
       );
       setSuccess(response.id);
     } catch (cause) {
-      setError(apiErrorMessage(cause, language));
+      if (isTurnstileError(cause)) {
+        setTurnstileError(true);
+        setTurnstileToken("");
+        setTurnstileResetKey((key) => key + 1);
+      } else setError(apiErrorMessage(cause, language));
     } finally {
       setSubmitting(false);
     }
@@ -220,8 +233,16 @@ export function ReportIncident({ language }: { language: Language }) {
               </div>
               {TURNSTILE_KEY ? (
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">{t.reportIncidentTurnstileHint}</p>
-                  <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_KEY}
+                    language={language}
+                    onToken={(token) => {
+                      setTurnstileToken(token);
+                      setTurnstileError(false);
+                    }}
+                    verificationError={turnstileError}
+                    resetKey={turnstileResetKey}
+                  />
                 </div>
               ) : null}
             </CardContent>
@@ -231,7 +252,7 @@ export function ReportIncident({ language }: { language: Language }) {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
-          <Button type="submit" size="lg" disabled={submitting} className="w-full">
+          <Button type="submit" size="lg" disabled={submitting || Boolean(TURNSTILE_KEY && !turnstileToken)} className="w-full">
             {submitting ? t.reportIncidentSubmitting : t.reportIncidentSubmit}
           </Button>
         </form>
