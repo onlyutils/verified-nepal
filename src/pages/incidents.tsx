@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Share2 } from "lucide-react";
+import { Search, Share2 } from "lucide-react";
 import { listIncidents, type Incident } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { disasterStrings } from "@/i18n/disasters";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, LoadingState } from "@/components/empty-state";
@@ -103,6 +104,7 @@ export function IncidentsPage({ language }: { language: Language }) {
   const t = disasterStrings[language];
   const [items, setItems] = useState<Incident[]>([]);
   const [selectedDistricts, setSelectedDistricts] = useState<DistrictName[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,16 +127,38 @@ export function IncidentsPage({ language }: { language: Language }) {
     };
   }, [language]);
 
-  const filtered = selectedDistricts.length
-    ? items.filter((incident) => incident.affectedDistricts.some((district) => selectedDistricts.includes(district)))
-    : items;
+  const query = search.trim().toLowerCase();
+  const visibleDistricts = query ? districtNames.filter((district) => districtLabels[district][language].toLowerCase().includes(query)) : districtNames;
+  const filtered = items
+    .filter((incident) => !selectedDistricts.length || incident.affectedDistricts.some((district) => selectedDistricts.includes(district)))
+    .filter((incident) => {
+      if (!query) return true;
+      const name = (language === "ne" && incident.nameNe ? incident.nameNe : incident.name).toLowerCase();
+      const districtMatch = incident.affectedDistricts.some((district) => districtLabels[district][language].toLowerCase().includes(query));
+      return name.includes(query) || districtMatch;
+    });
   const sorted = [...filtered].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <PageHeader eyebrow={t.incidentsPublicEyebrow} title={t.incidentsPublicTitle} description={t.incidentsPublicLead} />
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="space-y-4 pt-6">
+          <div className="space-y-2">
+            <Label htmlFor="incidents-search">{t.incidentsPublicSearchLabel}</Label>
+            <div className="relative">
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="incidents-search"
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t.incidentsPublicSearchPlaceholder}
+                autoComplete="off"
+                className="min-h-11 pl-10"
+              />
+            </div>
+          </div>
           <fieldset className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <legend className="text-sm font-medium">{t.incidentsPublicFilterLabel}</legend>
@@ -148,7 +172,7 @@ export function IncidentsPage({ language }: { language: Language }) {
               </div>
             </div>
             <div className="grid max-h-72 gap-2 overflow-y-auto sm:grid-cols-3">
-              {districtNames.map((district) => (
+              {visibleDistricts.map((district) => (
                 <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
                   <Checkbox
                     checked={selectedDistricts.includes(district)}
@@ -172,7 +196,7 @@ export function IncidentsPage({ language }: { language: Language }) {
         </Alert>
       ) : null}
       {!loading && !error && !sorted.length ? (
-        <EmptyState title={selectedDistricts.length ? t.incidentsPublicEmptyFiltered : t.incidentsPublicEmptyAll} />
+        <EmptyState title={selectedDistricts.length || query ? t.incidentsPublicEmptyFiltered : t.incidentsPublicEmptyAll} />
       ) : null}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sorted.map((incident) => (
