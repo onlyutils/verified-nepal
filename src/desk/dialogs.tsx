@@ -524,6 +524,7 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
             </Button>
             <Button
               variant="destructive"
+              disabled={!model.orgRejectReason.trim()}
               onClick={() => {
                 if (!model.orgRejectId) return;
                 if (model.orgRejectReason.trim().length < 5) model.setOrgRejectError(model.dos.orgReasonRequired);

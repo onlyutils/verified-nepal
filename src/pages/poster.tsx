@@ -80,10 +80,10 @@ function fileToDataUrl(file: File) {
   });
 }
 
-function loadImage(src: string) {
+function loadImage(src: string, crossOrigin = true) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
-    if (src.startsWith("http")) img.crossOrigin = "anonymous";
+    if (crossOrigin && src.startsWith("http")) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error("image"));
     img.src = src;
@@ -433,9 +433,11 @@ function PosterViewDialog({
     if (!item) return;
     let cancelled = false;
     const savedPhoto = posterPhoto(item);
-    Promise.all([loadPosterFonts(), savedPhoto ? loadImage(savedPhoto.url).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
-      if (!cancelled) setAssets({ photo });
-    });
+    Promise.all([loadPosterFonts(), savedPhoto ? loadImage(savedPhoto.url, false).catch(() => null) : Promise.resolve(null)]).then(
+      ([, photo]) => {
+        if (!cancelled) setAssets({ photo });
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -716,7 +718,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([loadPosterFonts(), photoUrl ? loadImage(photoUrl).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
+    Promise.all([loadPosterFonts(), photoUrl ? loadImage(photoUrl, false).catch(() => null) : Promise.resolve(null)]).then(([, photo]) => {
       if (!cancelled) setAssets({ photo });
     });
     return () => {

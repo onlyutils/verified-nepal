@@ -22,7 +22,7 @@
   --muted-foreground: 90 87 84; /* #5A5754 secondary text */
   --accent: 240 237 232; /* #F0EDE8 icon chips, hover */
   --accent-foreground: 28 27 26;
-  --subtle: 147 143 138; /* #938F8A tertiary text: captions, timestamps */
+  --subtle: 90 87 84; /* #5A5754 tertiary text: captions, timestamps */
   --faint: 184 180 173; /* #B8B4AD placeholder, footer text on dark */
   --border: 229 224 216; /* #E5E0D8 */
   --input: 229 224 216;

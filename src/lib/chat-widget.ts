@@ -79,7 +79,7 @@ const shadowCss = `
   text-align: center;
   font-size: 11px;
   line-height: 1.4;
-  color: #938F8A;
+  color: #5A5754;
   border-top: 1px solid #E5E0D8;
 }
 .vn-chat-credit a { color: #1C1B1A; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
@@ -90,7 +90,7 @@ const shadowCss = `
   text-align: center;
   font-size: 11px;
   line-height: 1.4;
-  color: #938F8A;
+  color: #5A5754;
   border-top: 1px solid #E5E0D8;
   background: #F7F5F0;
 }

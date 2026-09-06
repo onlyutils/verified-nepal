@@ -15,9 +15,18 @@ function statusLabel(t: Record<string, string>, status: string) {
   return t[`deskStatus${status.charAt(0).toUpperCase()}${status.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`] ?? status;
 }
 
+function contactLine(parts: Array<string | number | null | undefined>) {
+  return parts.filter((part) => part !== null && part !== undefined && String(part).trim()).join(" · ");
+}
+
 function NeedActions({ model, need, claimCode, status }: { model: DeskModel; need: DeskModel["filteredNeeds"][number]; claimCode?: string; status: string }) {
   const needId = need.id;
   const selected = model.selectedOfferId[needId];
+  const contact = model.matchedContact[needId] as {
+    beneficiary?: { name?: string; phone?: string | null; district?: string; ward?: number };
+    registrant?: { name?: string; phone?: string } | null;
+    offer?: { phone?: string; helperLabel?: string; districts?: string[] } | null;
+  } | undefined;
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -55,18 +64,30 @@ function NeedActions({ model, need, claimCode, status }: { model: DeskModel; nee
         ) : null}
       </div>
       {model.filteredOffers.length === 0 ? <p className="text-sm text-muted-foreground">{model.t.deskNoOffersHint}</p> : null}
-      {model.matchedContact[needId] ? (
+      {contact ? (
         <div className="rounded-lg border bg-primary-soft p-4">
           <p className="font-semibold text-primary">{model.t.deskMatchedContactTitle}</p>
           <dl className="mt-3 grid gap-2 text-sm">
-            {Object.entries(model.matchedContact[needId] as Record<string, unknown>)
-              .filter(([, value]) => value !== null && value !== undefined && String(value).trim())
-              .map(([key, value]) => (
-                <div key={key} className="grid gap-1 sm:grid-cols-[8rem_1fr]">
-                  <dt className="font-semibold capitalize text-muted-foreground">{key}</dt>
-                  <dd className="break-words">{String(value)}</dd>
-                </div>
-              ))}
+            {contact.beneficiary ? (
+              <div className="grid gap-1 sm:grid-cols-[8rem_1fr]">
+                <dt className="font-semibold text-muted-foreground">{model.t.deskQueueBeneficiary}</dt>
+                <dd className="break-words">
+                  {contactLine([contact.beneficiary.name, contact.beneficiary.phone, contact.beneficiary.district, contact.beneficiary.ward ? `W${contact.beneficiary.ward}` : null])}
+                </dd>
+              </div>
+            ) : null}
+            {contact.registrant ? (
+              <div className="grid gap-1 sm:grid-cols-[8rem_1fr]">
+                <dt className="font-semibold text-muted-foreground">{model.t.deskQueueRegistrant}</dt>
+                <dd className="break-words">{contactLine([contact.registrant.name, contact.registrant.phone])}</dd>
+              </div>
+            ) : null}
+            {contact.offer ? (
+              <div className="grid gap-1 sm:grid-cols-[8rem_1fr]">
+                <dt className="font-semibold text-muted-foreground">{model.t.deskOfferLabel}</dt>
+                <dd className="break-words">{contactLine([contact.offer.helperLabel, contact.offer.phone, contact.offer.districts?.join(", ")])}</dd>
+              </div>
+            ) : null}
           </dl>
         </div>
       ) : null}

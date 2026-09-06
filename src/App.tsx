@@ -18,9 +18,9 @@ import { climateStrings } from "@/i18n/climate";
 import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import type { Language, Page } from "@/lib/types";
+import { pageFromPath, type AppPage } from "@/lib/page-routing";
 
-type ArticlePage = "myArticles" | "articleEdit";
-type AppPage = Page | ArticlePage | "posterView";
+export { pageFromPath } from "@/lib/page-routing";
 
 const Desk = lazy(() => import("@/desk/desk").then((m) => ({ default: m.Desk })));
 const DeskLogin = lazy(() => import("@/desk/login").then((m) => ({ default: m.DeskLogin })));
@@ -95,39 +95,6 @@ function posterIdFromPath(pathname: string) {
   return id && id !== "new" ? id : undefined;
 }
 
-function pageFromPath(pathname: string): AppPage {
-  if (pathname.match(/^\/donation\/[^\/]+/)) return "donationStatus";
-  if (pathname.startsWith("/register-organization")) return "registerOrg";
-  if (pathname.startsWith("/org")) return "org";
-  if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
-  if (pathname.startsWith("/drop-centers")) return "dropCenters";
-  if (pathname.startsWith("/climate")) return "climate";
-  if (pathname.startsWith("/report-incident")) return "reportIncident";
-  if (pathname.startsWith("/incidents")) return "incidents";
-  if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
-  if (pathname.startsWith("/articles")) return "dispatches";
-  if (pathname.match(/^\/me\/articles\/[^\/]+\/edit/)) return "articleEdit";
-  if (pathname.startsWith("/me/articles")) return "myArticles";
-  if (pathname.startsWith("/projects/register")) return "projectRegister";
-  if (pathname.startsWith("/projects/update")) return "projectUpdate";
-  if (pathname.match(/^\/projects\/[^\/]+/)) return "projectDetail";
-  if (pathname.startsWith("/projects")) return "projects";
-  if (pathname.startsWith("/get-help")) return "getHelp";
-  if (pathname.startsWith("/give-help")) return "giveHelp";
-  if (pathname.startsWith("/audit")) return "audit";
-  if (pathname.startsWith("/ledger")) return "ledger";
-  if (pathname.startsWith("/desk/login")) return "deskLogin";
-  if (pathname === "/desk" || pathname.startsWith("/desk/")) return "desk";
-  if (pathname.startsWith("/search")) return "search";
-  if (pathname === "/me" || pathname.startsWith("/me/")) return "me";
-  if (pathname.startsWith("/missing")) return "missing";
-  if (pathname.startsWith("/poster/")) return new URLSearchParams(window.location.search).get("edit") === "1" ? "posterNew" : "posterView";
-  if (pathname.startsWith("/poster")) return "poster";
-  if (pathname.startsWith("/info")) return "info";
-  if (pathname.startsWith("/privacy")) return "privacy";
-  return "notFound";
-}
-
 function pageTitle(page: AppPage, language: Language): string {
   const t = labels[language] as Record<string, string>;
   const map: Record<AppPage, string> = {
@@ -181,7 +148,7 @@ export function App() {
     const stored = localStorage.getItem("verifiednepal:language");
     return stored === "ne" ? "ne" : "en";
   });
-  const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname));
+  const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname + window.location.search));
 
   useEffect(() => {
     localStorage.setItem("verifiednepal:language", language);
@@ -195,7 +162,7 @@ export function App() {
 
   useEffect(() => {
     const onPopState = () => {
-      const next = pageFromPath(window.location.pathname);
+      const next = pageFromPath(window.location.pathname + window.location.search);
       setPage(next);
       requestAnimationFrame(() => {
         document.title = `${pageTitle(next, language)} · verifiedNepal`;

@@ -1,5 +1,5 @@
 import type { Language, MessageItem, PersonRecord } from "@/lib/types";
-export { formatDateTime, formatNumber } from "./format-date";
+export { formatDateTime, formatNumber } from "./format-date.ts";
 
 const officialRescueUrl = "https://ndrrma.gov.np/en/rescue";
 
