@@ -413,6 +413,7 @@ describe("orgs Phase1", () => {
     res = await call(routeOrgs, "POST", `/moderation/orgs/${orgId2}`, { body: { action: "reject", reason: "Not a real org" }, token: modToken }, opts);
     assert.equal(res.status, 200);
     assert.equal(fake.store.get(`ORG#${orgId2}|META`).status, "rejected");
+    assert.ok(Array.from(fake.store.values()).some((item) => item.action === "reject" && item.targetId === orgId2 && item.reason === "Not a real org"));
     assert.equal(fake.store.get(`CENTER#${cid2}|META`).gsi2pk, "CENTER#hidden");
     res = await call(routeOrgs, "POST", `/moderation/orgs/${orgId2}`, { body: { action: "verify", tier: "self_declared", note: "try verify rejected" }, token: modToken }, opts);
     assert.equal(res.status, 400);

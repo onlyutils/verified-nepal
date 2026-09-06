@@ -2,15 +2,15 @@ import { ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { StatCard } from "@/components/stat-card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { districtLabels, districtNames } from "@/lib/geo";
+import { DistrictPicker } from "@/components/district-picker";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime, formatNumber } from "@/lib/format-date";
 
 export function Admin({ model }: { model: DeskModel }) {
   return (
@@ -75,19 +75,13 @@ export function Admin({ model }: { model: DeskModel }) {
                 </div>
                 <fieldset>
                   <legend className="text-sm font-medium">{model.t.deskAdminDistrictsLabel}</legend>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {districtNames.map((district) => (
-                      <div key={district} className="flex items-center gap-3">
-                        <Checkbox
-                          id={`admin-${district}`}
-                          checked={!!model.adminDistricts[district]}
-                          onCheckedChange={(checked) =>
-                            model.setAdminDistricts((current) => ({ ...current, [district]: checked === true }))
-                          }
-                        />
-                        <Label htmlFor={`admin-${district}`}>{districtLabels[district][model.language]}</Label>
-                      </div>
-                    ))}
+                  <div className="mt-3">
+                    <DistrictPicker
+                      selected={Object.keys(model.adminDistricts).filter((district) => model.adminDistricts[district])}
+                      onChange={(districts) => model.setAdminDistricts(Object.fromEntries(districts.map((district) => [district, true])))}
+                      language={model.language}
+                      searchPlaceholder={model.ds.deskDistrictSearchPlaceholder}
+                    />
                   </div>
                 </fieldset>
                 {model.adminSaveError ? (
@@ -118,20 +112,20 @@ export function Admin({ model }: { model: DeskModel }) {
               ) : model.adminStats ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <StatCard
-                    value={model.adminStats.needs.pending}
+                    value={formatNumber(model.adminStats.needs.pending, model.language)}
                     label={model.t.deskAdminStatsPendingNeeds.replace("{n}", "")}
                     tone="primary"
                   />
-                  <StatCard value={model.adminStats.needs.published} label={model.t.deskAdminStatsPublishedNeeds.replace("{n}", "")} />
-                  <StatCard value={model.adminStats.offers.pending} label={model.t.deskAdminStatsPendingOffers.replace("{n}", "")} />
-                  <StatCard value={model.adminStats.projects.pending} label={model.t.deskAdminStatsPendingProjects.replace("{n}", "")} />
+                  <StatCard value={formatNumber(model.adminStats.needs.published, model.language)} label={model.t.deskAdminStatsPublishedNeeds.replace("{n}", "")} />
+                  <StatCard value={formatNumber(model.adminStats.offers.pending, model.language)} label={model.t.deskAdminStatsPendingOffers.replace("{n}", "")} />
+                  <StatCard value={formatNumber(model.adminStats.projects.pending, model.language)} label={model.t.deskAdminStatsPendingProjects.replace("{n}", "")} />
                   <StatCard
-                    value={`${model.adminStats.oldestPendingAgeHours}h`}
-                    label={model.t.deskAdminStatsOldestPending.replace("{hours}", "")}
+                    value={`${formatNumber(model.adminStats.oldestPendingAgeHours, model.language)} h`}
+                    label={model.t.deskAdminStatsOldestPending}
                     tone={model.adminStats.oldestPendingAgeHours > 48 ? "danger" : "default"}
                     hint={model.adminStats.oldestPendingAgeHours > 48 ? model.t.deskAdminStatsOld : undefined}
                   />
-                  <StatCard value={model.adminStats.moderators} label={model.t.deskAdminStatsModerators.replace("{n}", "")} />
+                  <StatCard value={formatNumber(model.adminStats.moderators, model.language)} label={model.t.deskAdminStatsModerators.replace("{n}", "")} />
                 </div>
               ) : (
                 <SectionEmpty icon={ShieldCheck} title={model.t.deskAdminStatsError} />
@@ -168,7 +162,7 @@ export function Admin({ model }: { model: DeskModel }) {
                       <TableCell>{moderator.name || model.t.unavailable}</TableCell>
                       <TableCell>{moderator.role}</TableCell>
                       <TableCell>{moderator.districts.join(", ") || model.t.deskScopeAll}</TableCell>
-                      <TableCell>{new Date(moderator.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDateTime(moderator.createdAt, model.language)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

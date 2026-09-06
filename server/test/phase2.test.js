@@ -385,6 +385,11 @@ describe("flags", () => {
     assert.equal(flagsBody.items[0].needId, id);
     assert.equal(flagsBody.items[0].flagCount, 2);
     assert.equal(flagsBody.items[0].flags.length, 2);
+    const resolveFlag = await handler(makeEvent({method:"POST", path:`/moderation/flags/${encodeURIComponent(flagsBody.items[0].flags[0].id)}/resolve`, headers:{authorization:`Bearer ${modTok}`}, body:{note:"reviewed"}}));
+    assert.equal(resolveFlag.statusCode, 200);
+    res = await handler(makeEvent({method:"GET", path:"/moderation/flags", headers:{authorization:`Bearer ${modTok}`}}));
+    assert.equal(JSON.parse(res.body).items[0].flags.length, 1);
+    assert.ok(Array.from(ddb.store.values()).some((item) => item.action === "flag.resolve" && item.targetType === "NEED"));
     // most-flagged first ordering
     const {id:id2} = await createNeed(handler, { district:"Gorkha", ward:3, name:"Second Flagged" });
     await handler(makeEvent({method:"POST", path:`/needs/${id2}/flag`, body:{reason:"other"}}));
@@ -403,6 +408,8 @@ describe("flags", () => {
       assert.equal("flagCount" in it, false);
       assert.equal("flags" in it, false);
     }
+    const moderatorItems = JSON.parse((await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`, headers:{authorization:`Bearer ${modTok}`}}))).body).items;
+    assert.ok(moderatorItems.some((it) => it.id === id && it.claimCode), "acknowledged moderators may receive claim codes");
     // 404 for unknown need
     res = await handler(makeEvent({method:"POST", path:"/needs/UNKNOWN/flag", body:{reason:"other"}}));
     assert.equal(res.statusCode, 404);

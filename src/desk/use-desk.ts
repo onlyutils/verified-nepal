@@ -19,6 +19,8 @@ import {
   getModerationStories,
   moderateStory,
   getModerationFlags,
+  resolveModerationCenterFlag,
+  resolveModerationFlag,
   getModerationOrgs,
   getModerationProjects,
   getModerationQueue,
@@ -66,15 +68,26 @@ import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
 export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "incidents" | "admin" | "climate";
+export type DeskConfirmAction =
+  | { kind: "incident"; action: "approve" | "archive"; id: string }
+  | { kind: "dispatch" | "story"; action: "publish"; id: string }
+  | { kind: "flag"; action: "resolve"; id: string; center: boolean };
 
 const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "incidents", "admin", "climate"]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
-    const value = window.location.hash.slice(1) as DeskSection;
-    if (sections.has(value)) return value;
+    const value = window.location.pathname.split("/")[2] || "";
+    const legacyHash = window.location.hash.slice(1) as DeskSection;
+    const section = value === "articles" ? "dispatches" : value === "disasters" ? "incidents" : value;
+    if (sections.has(section as DeskSection)) return section as DeskSection;
+    if (sections.has(legacyHash)) return legacyHash;
   }
   return "queue";
+}
+
+function sectionPath(section: DeskSection) {
+  return section === "dispatches" ? "articles" : section === "incidents" ? "disasters" : section;
 }
 
 function rejectReason(code: string, detail: string) {
@@ -95,6 +108,10 @@ export function useDesk(language: Language) {
   const dos = deskOrgStrings[language] as Record<string, string>;
 
   const [activeSection, setActiveSectionState] = useState<DeskSection>(initialSection);
+  const [highlightNeedId, setHighlightNeedId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("need"),
+  );
+  const [confirmAction, setConfirmAction] = useState<DeskConfirmAction | null>(null);
   const [ackedNow, setAckedNow] = useState(false);
   const [guidelinesChecked, setGuidelinesChecked] = useState(false);
   const [ackLoading, setAckLoading] = useState(false);
@@ -245,9 +262,22 @@ export function useDesk(language: Language) {
 
   const setActiveSection = useCallback((section: DeskSection) => {
     setActiveSectionState(section);
-    if (typeof window !== "undefined")
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${section}`);
+    if (typeof window !== "undefined") window.history.pushState(null, "", `/desk/${sectionPath(section)}${window.location.search}`);
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveSectionState(initialSection());
+      setHighlightNeedId(new URLSearchParams(window.location.search).get("need"));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (activeSection !== "boards" || !highlightNeedId || !publishedNeeds.some((need) => need.id === highlightNeedId)) return;
+    requestAnimationFrame(() => document.getElementById(`board-need-${highlightNeedId}`)?.scrollIntoView({ block: "center" }));
+  }, [activeSection, highlightNeedId, publishedNeeds]);
 
   const loadQueue = useCallback(async () => {
     if (!auth.idToken) return;
@@ -902,7 +932,6 @@ export function useDesk(language: Language) {
         districts: Object.keys(adminDistricts).filter((district) => adminDistricts[district]),
       });
       setAdminSaveMsg(t.deskAdminSaveSuccess);
-      success(t.deskAdminSaveSuccess);
       setAdminConfirmOpen(false);
       void loadAdminModerators();
       void loadAdminStats();
@@ -944,6 +973,35 @@ export function useDesk(language: Language) {
       setDistrictSaving(false);
     }
   };
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    const action = confirmAction;
+    setConfirmAction(null);
+    if (action.kind === "incident") {
+      if (action.action === "approve") await handleIncidentApprove(action.id);
+      else await handleIncidentArchive(action.id);
+    } else if (action.kind === "dispatch") await handleDispatchPublish(action.id);
+    else if (action.kind === "story") await handleStoryModerate(action.id, "publish");
+    else if (action.kind === "flag" && action.center) {
+      if (auth.idToken) {
+        try {
+          await resolveModerationCenterFlag(auth.idToken, action.id);
+          success(t.deskActionSuccess);
+          void loadCenterFlags();
+        } catch (error) {
+          setActionError(apiErrorMessage(error, language));
+        }
+      }
+    } else if (action.kind === "flag" && auth.idToken) {
+      try {
+        await resolveModerationFlag(auth.idToken, action.id);
+        success(t.deskActionSuccess);
+        void loadFlags();
+      } catch (error) {
+        setActionError(apiErrorMessage(error, language));
+      }
+    }
+  };
 
   return {
     auth,
@@ -953,6 +1011,9 @@ export function useDesk(language: Language) {
     language,
     activeSection,
     setActiveSection,
+    confirmAction,
+    setConfirmAction,
+    handleConfirmAction,
     ackedNow,
     guidelinesChecked,
     setGuidelinesChecked,
@@ -996,6 +1057,7 @@ export function useDesk(language: Language) {
     publishedNeeds,
     filteredNeeds,
     filteredOffers,
+    highlightNeedId,
     boardsLoading,
     boardsError,
     loadBoards,

@@ -204,7 +204,7 @@ export async function listFlaggedPointers(ddb, tableName) {
   return pointers.filter((p) => !(typeof p.SK === "string" && p.SK.startsWith("CENTER#")));
 }
 
-export async function listFlagsForNeed(ddb, tableName, needId) {
+export async function listFlagsForNeed(ddb, tableName, needId, status = "open") {
   const flagRes = await ddb.send(
     new QueryCommand({
       TableName: tableName,
@@ -213,7 +213,8 @@ export async function listFlagsForNeed(ddb, tableName, needId) {
     }),
   );
   return (flagRes.Items || [])
-    .map((f) => ({ reason: f.reason, details: f.details, createdAt: f.createdAt }))
+    .filter((f) => status === "resolved" ? f.status === "resolved" : f.status !== "resolved")
+    .map((f) => ({ id: `${needId}|${f.SK}`, reason: f.reason, details: f.details, createdAt: f.createdAt, status: f.status }))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 

@@ -11,7 +11,7 @@ import { recordAudit } from "../models/audit.js";
 import { toPrivateOrgView, toModerationOrgView, toMyOrgView } from "../views/org.js";
 import { toPrivateCenterView } from "../views/center.js";
 import { pingIndexNow } from "../lib/indexnow.js";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 const ORG_TYPES = ["ngo", "community", "company", "religious", "government", "other"];
 const TIERS = ["known", "vouched", "self_declared"];
 
@@ -377,7 +377,7 @@ export async function handleModerateOrg(event, opts, orgId) {
     delete org.verificationNote;
     await saveOrg(auth.ddb, auth.tableName, org);
     await refreshCentersForOrg(auth.ddb, auth.tableName, org);
-    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "reject", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason: "reject" });
+    await recordAudit(auth.ddb, auth.tableName, { actorSub, actorName, action: "reject", targetType: "ORG", targetId: orgId, targetLabel: org.name, reason });
     return json(200, { status: "rejected" });
   }
   if (action === "suspend") {
@@ -595,6 +595,7 @@ export async function handleRemoveMember(event, opts, orgId, subOrEmail) {
 
 export async function handleCenterFlags(event, opts) {
   const { auth } = opts;
+  const status = getQuery(event).status === "resolved" ? "resolved" : "open";
   const ddb = auth.ddb;
   const tableName = auth.tableName;
   const pointers = await listFlaggedCenterPointers(ddb, tableName);
@@ -603,7 +604,8 @@ export async function handleCenterFlags(event, opts) {
     const cid = p.centerId || String(p.SK).replace(/^CENTER#/, "");
     const center = await getCenter(ddb, tableName, cid);
     if (!center) continue;
-    const reasons = await listCenterFlags(ddb, tableName, cid);
+    const reasons = await listCenterFlags(ddb, tableName, cid, status);
+    if (!reasons.length) continue;
     items.push({
       centerId: cid,
       name: center.name,
@@ -614,4 +616,31 @@ export async function handleCenterFlags(event, opts) {
     });
   }
   return json(200, { items });
+}
+
+export async function handleResolveCenterFlag(event, opts, flagId) {
+  const { auth } = opts;
+  const body = parseBody(event) || {};
+  if (typeof body !== "object") throw err(400, "invalid body");
+  const note = body.note === undefined || body.note === null ? undefined : String(body.note).trim();
+  if (note && note.length > 500) throw err(400, "note too long");
+  const separator = String(flagId).indexOf("|");
+  if (separator < 1) throw err(400, "invalid flag");
+  const centerId = String(flagId).slice(0, separator);
+  const sk = String(flagId).slice(separator + 1);
+  const center = await getCenter(auth.ddb, auth.tableName, centerId);
+  if (!center) throw err(404, "not found");
+  const result = await auth.ddb.send(new GetCommand({ TableName: auth.tableName, Key: { PK: `CENTER#${centerId}`, SK: sk } }));
+  const flag = result.Item;
+  if (!flag || flag.type !== "CENTERFLAG") throw err(404, "not found");
+  if (flag.status !== "resolved") {
+    flag.status = "resolved";
+    flag.resolvedAt = new Date().toISOString();
+    flag.resolvedBy = auth.payload.sub;
+    if (note) flag.resolutionNote = note;
+    await auth.ddb.send(new PutCommand({ TableName: auth.tableName, Item: flag }));
+    const actorName = auth.user?.name || auth.payload.name || "";
+    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "flag.resolve", targetType: "CENTER", targetId: centerId, targetLabel: center.name, reason: note });
+  }
+  return json(200, { status: "resolved" });
 }

@@ -128,6 +128,9 @@ html[data-contrast="high"] a {
 }
 
 /* No assistant launcher on the sign-in page. */
+html[data-page="desk"] #onyutils-chat-widget {
+  display: none !important;
+}
 html[data-page="deskLogin"] #onyutils-chat-widget {
   display: none !important;
 }

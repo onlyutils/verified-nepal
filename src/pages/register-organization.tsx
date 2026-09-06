@@ -4,7 +4,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { orgStrings } from "@/i18n/orgs";
 import { communityStrings } from "@/i18n/community";
-import { districtLabels, districtNames } from "@/lib/geo";
+import { districtNames } from "@/lib/geo";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader } from "@/components/page-header";
+import { DistrictPicker } from "@/components/district-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { fillTemplate } from "@/lib/edition";
+import { formatDateTime } from "@/lib/format-date";
 
 const DRAFT_KEY = "vn:org-draft";
 type FieldKey =
@@ -67,8 +68,8 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
       if (typeof draft.website === "string") setWebsite(draft.website);
       setDraftTime(
         typeof draft.savedAt === "string"
-          ? new Date(draft.savedAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")
-          : new Date().toLocaleString(language === "ne" ? "ne-NP" : "en-US"),
+          ? formatDateTime(draft.savedAt, language)
+          : formatDateTime(new Date(), language),
       );
     } catch {
       /* ignore malformed drafts */
@@ -365,20 +366,7 @@ export function RegisterOrganization({ language, navigate }: { language: Languag
             )}
             <fieldset id="org-districts" tabIndex={-1} className="space-y-3">
               <legend className="text-sm font-medium">{t.registerOrgDistrictsLabel} *</legend>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {districtNames.map((district) => (
-                  <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
-                    <Checkbox
-                      checked={districts.includes(district)}
-                      onCheckedChange={(checked) => {
-                        setDistricts((current) => (checked ? [...current, district] : current.filter((value) => value !== district)));
-                        clearError("districts");
-                      }}
-                    />
-                    {districtLabels[district][language]}
-                  </Label>
-                ))}
-              </div>
+              <DistrictPicker selected={districts} onChange={(value) => { setDistricts(value); clearError("districts"); }} language={language} searchPlaceholder={t.registerOrgDistrictsLabel} />
               {errors.districts ? (
                 <p className="text-sm text-destructive" role="alert">
                   {errors.districts}

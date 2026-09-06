@@ -6,6 +6,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime } from "@/lib/format-date";
 import type { ModerationProjectItem } from "@/lib/api";
 
 function localized(value: { en: string; ne?: string }, language: "en" | "ne") {
@@ -188,7 +189,7 @@ export function Projects({ model }: { model: DeskModel }) {
                     <TableCell>
                       {project.district} · W{project.ward}
                     </TableCell>
-                    <TableCell>{new Date(project.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDateTime(project.createdAt, model.language)}</TableCell>
                     <TableCell>
                       <ProjectActions model={model} project={project} />
                     </TableCell>

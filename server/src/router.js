@@ -10,7 +10,7 @@ import {
 } from "./controllers/incidentController.js";
 import {
   handlePostNeeds, handlePostNeedsMediaPresign, handleGetNeeds, handleGetStatus, handlePostRenew,
-  handlePostNeedStatus, handlePostNeedEdit, handlePostFlag, handleGetFlags,
+  handlePostNeedStatus, handlePostNeedEdit, handlePostFlag, handleGetFlags, handleResolveFlag,
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
@@ -84,7 +84,7 @@ const routes = [
   ["GET", /^\/audit$/, handleGetAudit],
   ["POST", /^\/needs\/media\/presign$/, handlePostNeedsMediaPresign],
   ["POST", /^\/needs$/, handlePostNeeds],
-  ["GET", /^\/needs$/, handleGetNeeds],
+  ["GET", /^\/needs$/, withOptionalAuth(handleGetNeeds)],
   ["GET", /^\/status\/(.*)$/, (event, opts, ref) => {
     if (!ref) throw err(400, "refCode required");
     return handleGetStatus(event, opts, ref);
@@ -112,6 +112,7 @@ const routes = [
   ["GET", /^\/ledger$/, handleLedger],
   ["POST", /^\/needs\/([^/]+)\/flag$/, handlePostFlag],
   ["GET", /^\/moderation\/flags$/, withModAck(handleGetFlags)],
+  ["POST", /^\/moderation\/flags\/([^/]+)\/resolve$/, withModAck(handleResolveFlag)],
   ["POST", /^\/projects$/, handlePostProject],
   ["GET", /^\/projects$/, handleGetProjects],
   ["GET", /^\/projects\/([^/]+)$/, handleGetProject],

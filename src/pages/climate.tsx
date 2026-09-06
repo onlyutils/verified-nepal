@@ -18,6 +18,7 @@ import { MultiLineChart } from "@/components/climate/line-chart";
 import { DonutChart } from "@/components/climate/donut-chart";
 import { ShareButton } from "@/components/share-button";
 import { WordCloud } from "@/components/climate/word-cloud";
+import { formatDateTime } from "@/lib/format-date";
 
 const MAX_COMPARE = 6;
 const DEFAULT_COMPARE = ["NPL", "USA", "CHN"];
@@ -46,7 +47,6 @@ export function ClimatePage({ language }: { language: Language }) {
 
   const byIso3 = useMemo(() => new Map(countries.map((c) => [c.iso3, c])), [countries]);
   const sortedByName = useMemo(() => [...countries].sort((a, b) => a.name.localeCompare(b.name)), [countries]);
-  const dateLocale = language === "ne" ? "ne-NP" : "en-GB";
   const pageMessage = selectedMessageId ? messageText(selectedMessageId) : undefined;
 
   const handleSelect = (iso3: string) => {
@@ -378,7 +378,7 @@ export function ClimatePage({ language }: { language: Language }) {
             ), {t.licenseNote}
           </p>
           <p>
-            {t.lastUpdatedLabel}: {new Date(meta.synced_at).toLocaleDateString(dateLocale, { dateStyle: "medium" })}
+            {t.lastUpdatedLabel}: {formatDateTime(meta.synced_at, language)}
           </p>
         </CardContent>
       </Card>

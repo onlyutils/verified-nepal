@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { LogOut, Phone, UserRound } from "lucide-react";
 import { AccessibilityBar } from "@/components/accessibility-bar";
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Language } from "@/lib/types";
+import { formatNumber } from "@/lib/format-date";
 
 export interface AppShellNavItem<K extends string = string> {
   key: K;
@@ -61,6 +63,10 @@ export function AppShell<K extends string>({
   children: ReactNode;
 }) {
   const otherLanguage = language === "en" ? deskStrings[language].deskNepali : deskStrings[language].deskEnglish;
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current?.querySelector<HTMLElement>(`[data-nav-key="${active}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [active]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -129,6 +135,7 @@ export function AppShell<K extends string>({
 
       <div className="mx-auto flex w-full max-w-[90rem] flex-1 flex-col lg:flex-row">
         <nav
+          ref={navRef}
           aria-label={title}
           className="border-b bg-background lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r"
         >
@@ -136,13 +143,14 @@ export function AppShell<K extends string>({
             <p className="text-base font-bold text-foreground">{title}</p>
             {aside ? <div className="mt-2">{aside}</div> : null}
           </div>
-          <ul className="flex overflow-x-auto px-2 lg:flex-col lg:gap-0.5 lg:px-3 lg:py-3">
+          <ul className="flex overflow-x-auto px-2 pr-10 lg:flex-col lg:gap-0.5 lg:px-3 lg:py-3">
             {nav.map((item) => {
               const isActive = item.key === active;
               return (
                 <li key={item.key} className="shrink-0">
                   <button
                     type="button"
+                    data-nav-key={item.key}
                     onClick={() => onSelect(item.key)}
                     aria-current={isActive ? "page" : undefined}
                     className={`flex min-h-11 w-full items-center gap-2.5 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
@@ -159,7 +167,7 @@ export function AppShell<K extends string>({
                       <span
                         className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${isActive ? "bg-primary text-primary-foreground" : "bg-accent text-foreground"}`}
                       >
-                        {item.count}
+                        {formatNumber(item.count, language)}
                       </span>
                     ) : null}
                   </button>
@@ -167,6 +175,7 @@ export function AppShell<K extends string>({
               );
             })}
           </ul>
+          <div aria-hidden="true" className="pointer-events-none absolute right-0 top-0 h-14 w-10 bg-gradient-to-l from-background to-transparent lg:hidden" />
           {aside ? <div className="px-4 pb-3 lg:hidden">{aside}</div> : null}
         </nav>
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 focus:outline-none sm:p-6 lg:p-8">

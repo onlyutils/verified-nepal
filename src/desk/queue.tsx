@@ -10,6 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SectionEmpty, SectionError, SectionLoading, SectionFrame } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime } from "@/lib/format-date";
 import { districtNames } from "@/lib/geo";
 import { useIncidents } from "@/lib/incidents";
 
@@ -109,7 +110,7 @@ export function Queue({ model }: { model: DeskModel }) {
                     </div>
                   </div>
                   <CardDescription>
-                    {district} · W{item.ward ?? "—"} · {new Date(item.createdAt).toLocaleString()}
+                    {district}{item.ward != null ? ` · W${item.ward}` : ""} · {formatDateTime(item.createdAt, model.language)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -118,7 +119,7 @@ export function Queue({ model }: { model: DeskModel }) {
                       <p className="text-xs font-semibold text-primary">{t.deskQueuePublicPreview}</p>
                       <p className="mt-3 font-semibold">{item.maskedName || item.helperLabel || "—"}</p>
                       <p className="text-sm text-muted-foreground">
-                        {district} · W{item.ward ?? "—"} · {categoryLabel(t, category)}
+                        {district}{item.ward != null ? ` · W${item.ward}` : ""} · {categoryLabel(t, category)}
                       </p>
                       <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{item.description}</p>
                     </div>

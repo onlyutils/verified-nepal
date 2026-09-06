@@ -2,57 +2,15 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
-import { districtLabels, districtNames } from "@/lib/geo";
+import { DistrictPicker as SharedDistrictPicker } from "@/components/district-picker";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type { DeskModel } from "./use-desk";
 import type { Language } from "@/lib/types";
 import guidelinesRaw from "../../docs/MODERATION-GUIDELINES.md?raw";
 
-export function DistrictCheckboxes({
-  selected,
-  onChange,
-  language,
-  searchPlaceholder,
-}: {
-  selected: string[];
-  onChange: (districts: string[]) => void;
-  language: Language;
-  searchPlaceholder?: string;
-}) {
-  const [search, setSearch] = useState("");
-  const query = search.trim().toLowerCase();
-  const visible = query
-    ? districtNames.filter((district) => districtLabels[district][language].toLowerCase().includes(query))
-    : districtNames;
-  return (
-    <div className="space-y-3">
-      {searchPlaceholder ? (
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
-        />
-      ) : null}
-      <div className="grid gap-2 sm:grid-cols-3">
-        {visible.map((district) => (
-          <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
-            <Checkbox
-              checked={selected.includes(district)}
-              onCheckedChange={(checked) =>
-                onChange(checked ? [...selected, district] : selected.filter((value) => value !== district))
-              }
-            />
-            {districtLabels[district][language]}
-          </Label>
-        ))}
-      </div>
-    </div>
-  );
-}
+export const DistrictCheckboxes = SharedDistrictPicker;
 
 function GateLayout({
   model,

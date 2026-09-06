@@ -17,6 +17,7 @@ import {
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { putPointer } from "../models/mine.js";
 import { applyModerationEdits } from "../models/moderation.js";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
@@ -130,7 +131,7 @@ export async function handlePostNeedsMediaPresign(event, { env, fetchImpl }) {
   }
 }
 
-export async function handleGetNeeds(event, { getDdb, env }) {
+export async function handleGetNeeds(event, { getDdb, env, auth }) {
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
   const category = q.category ? String(q.category).trim() : "";
@@ -151,7 +152,8 @@ export async function handleGetNeeds(event, { getDdb, env }) {
   }
   const limit = 20;
   const sliced = items.slice(start, start + limit);
-  const publicItems = sliced.map(toPublicNeedListItem);
+  const includeClaimCode = Boolean(auth && ["moderator", "admin"].includes(auth.role) && (auth.role === "admin" || auth.user?.guidelinesAckAt));
+  const publicItems = sliced.map((item) => toPublicNeedListItem(item, { includeClaimCode }));
   const body = { items: publicItems };
   if (start + limit < items.length) {
     const last = sliced[sliced.length - 1];
@@ -271,19 +273,48 @@ export async function handlePostFlag(event, { getDdb, env }, needId) {
 
 export async function handleGetFlags(event, opts) {
   const { auth } = opts;
+  const status = getQuery(event).status === "resolved" ? "resolved" : "open";
   const tableName = auth.tableName;
   const ddb = auth.ddb;
   const pointers = await listFlaggedPointers(ddb, tableName);
   const out = [];
   for (const p of pointers) {
     const needId = p.needId || p.SK;
-    const flags = await listFlagsForNeed(ddb, tableName, needId);
+    const flags = await listFlagsForNeed(ddb, tableName, needId, status);
     out.push(toFlagListItem(p, flags));
   }
-  let filtered = out;
+  let filtered = out.filter((item) => item.flags.length > 0);
   if (auth.role === "moderator" && Array.isArray(auth.user?.districts) && auth.user.districts.length > 0) {
     filtered = out.filter((it) => !isOutOfScope(auth.user, it.district));
   }
   filtered.sort((a, b) => b.flagCount - a.flagCount || a.maskedName.localeCompare(b.maskedName));
   return json(200, { items: filtered });
+}
+
+export async function handleResolveFlag(event, opts, flagId) {
+  const { auth } = opts;
+  const body = parseBody(event) || {};
+  if (typeof body !== "object") throw err(400, "invalid body");
+  const note = body.note === undefined || body.note === null ? undefined : String(body.note).trim();
+  if (note && note.length > 500) throw err(400, "note too long");
+  const separator = String(flagId).indexOf("|");
+  if (separator < 1) throw err(400, "invalid flag");
+  const needId = String(flagId).slice(0, separator);
+  const sk = String(flagId).slice(separator + 1);
+  const need = await getNeedById(auth.ddb, auth.tableName, needId);
+  if (!need) throw err(404, "not found");
+  if (isOutOfScope(auth.user, need)) throw err(403, "out_of_scope");
+  const result = await auth.ddb.send(new GetCommand({ TableName: auth.tableName, Key: { PK: `NEED#${needId}`, SK: sk } }));
+  const flag = result.Item;
+  if (!flag || flag.type !== "FLAG") throw err(404, "not found");
+  if (flag.status !== "resolved") {
+    flag.status = "resolved";
+    flag.resolvedAt = new Date().toISOString();
+    flag.resolvedBy = auth.payload.sub;
+    if (note) flag.resolutionNote = note;
+    await auth.ddb.send(new PutCommand({ TableName: auth.tableName, Item: flag }));
+    const actorName = auth.user?.name || auth.payload.name || "";
+    await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "flag.resolve", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: note });
+  }
+  return json(200, { status: "resolved" });
 }

@@ -16,9 +16,10 @@ import { CodeDisplay } from "@/components/code-display";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatDateTime, formatNumber } from "@/lib/format-date";
 
 function dateLabel(value: string, language: Language) {
-  return new Date(value).toLocaleString(language === "ne" ? "ne-NP" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+  return formatDateTime(value, language);
 }
 function statusText(data: DonationStatus, language: Language) {
   const t = communityStrings[language];
@@ -127,7 +128,7 @@ export function DonationStatusPage({
               <div className="grid gap-1 px-4 py-3 sm:grid-cols-3">
                 <dt className="text-sm text-muted-foreground">{t.donationQuantity}</dt>
                 <dd className="sm:col-span-2">
-                  {data.qty} {unitLabel(data.unit, language)}
+                  {formatNumber(data.qty, language)} {unitLabel(data.unit, language)}
                 </dd>
               </div>
               <div className="grid gap-1 px-4 py-3 sm:grid-cols-3">

@@ -91,14 +91,17 @@ export async function listFlaggedCenterPointers(ddb, tableName) {
   return res.Items || [];
 }
 
-export async function listCenterFlags(ddb, tableName, centerId) {
+export async function listCenterFlags(ddb, tableName, centerId, status = "open") {
   const res = await ddb.send(new QueryCommand({
     TableName: tableName,
     KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
     ExpressionAttributeValues: { ":pk": `CENTER#${centerId}`, ":prefix": "FLAG#" },
   }));
   const items = res.Items || [];
-  return items.map((f) => ({ reason: f.reason, details: f.details, createdAt: f.createdAt })).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return items
+    .filter((f) => status === "resolved" ? f.status === "resolved" : f.status !== "resolved")
+    .map((f) => ({ id: `${centerId}|${f.SK}`, reason: f.reason, details: f.details, createdAt: f.createdAt, status: f.status }))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 export async function refreshCentersForOrg(ddb, tableName, org) {

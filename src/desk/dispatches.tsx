@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime } from "@/lib/format-date";
 
 function localized(value: string | { en: string; ne?: string }, language: "en" | "ne") {
   return typeof value === "string" ? value : value[language] || value.en;
@@ -76,10 +77,10 @@ export function Dispatches({ model }: { model: DeskModel }) {
                     <TableCell>
                       <StatusBadge tone={toneForStatus(dispatch.status)}>{statusLabel(model.t, dispatch.status)}</StatusBadge>
                     </TableCell>
-                    <TableCell>{new Date(dispatch.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDateTime(dispatch.createdAt, model.language)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" onClick={() => model.handleDispatchPublish(dispatch.id)}>
+                        <Button size="sm" onClick={() => model.setConfirmAction({ kind: "dispatch", action: "publish", id: dispatch.id })}>
                           {model.t.deskDispatchesPublish}
                         </Button>
                         <Button
@@ -110,7 +111,7 @@ export function Dispatches({ model }: { model: DeskModel }) {
                   </div>
                   <CardDescription>
                     {model.t.dispatchMetaBy} {dispatch.author.displayName}
-                    {dispatch.author.place ? ` · ${dispatch.author.place}` : ""} · {new Date(dispatch.createdAt).toLocaleString()} ·{" "}
+                    {dispatch.author.place ? ` · ${dispatch.author.place}` : ""} · {formatDateTime(dispatch.createdAt, model.language)} ·{" "}
                     {dispatch.tags.join(", ")}
                   </CardDescription>
                 </CardHeader>
@@ -124,7 +125,7 @@ export function Dispatches({ model }: { model: DeskModel }) {
                     <p className="mt-1 text-xs text-muted-foreground">{model.t.dispatchWriteEmailHint}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => model.handleDispatchPublish(dispatch.id)}>{model.t.deskDispatchesPublish}</Button>
+                    <Button onClick={() => model.setConfirmAction({ kind: "dispatch", action: "publish", id: dispatch.id })}>{model.t.deskDispatchesPublish}</Button>
                     <Button
                       variant="destructive"
                       onClick={() => {

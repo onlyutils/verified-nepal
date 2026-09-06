@@ -17,6 +17,7 @@ import { districtLabels, districtNames } from "@/lib/geo";
 import { useIncidents } from "@/lib/incidents";
 import { saveSelectedIncidentId } from "@/lib/incidents";
 import { labels } from "@/i18n";
+import { formatDateTime } from "@/lib/format-date";
 import { disasterStrings } from "@/i18n/disasters";
 import { formStrings } from "@/i18n/forms";
 import { meStrings } from "@/i18n/me";
@@ -191,7 +192,7 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.newIncidentDistrict === "string") setNewIncidentDistrict(draft.newIncidentDistrict);
       if (typeof draft.newIncidentDescription === "string") setNewIncidentDescription(draft.newIncidentDescription);
       if (typeof draft.savedAt === "string" && draft.sessionMarker !== sessionMarkerRef.current)
-        setDraftTime(new Date(draft.savedAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US"));
+        setDraftTime(formatDateTime(draft.savedAt, language));
     } catch {
       /* an unreadable draft should not block the form */
     }
@@ -1063,8 +1064,8 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               />
             ) : null}
             <p className="text-sm text-muted-foreground">
-              {new Date(result.createdAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")} →{" "}
-              {new Date(result.expiresAt).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
+              {formatDateTime(result.createdAt, language)} →{" "}
+              {formatDateTime(result.expiresAt, language)}
             </p>
             {!(["fulfilled", "rejected", "expired", "matched"] as string[]).includes(result.status) ? (
               <Button type="button" variant="outline" size="sm" onClick={renew} disabled={renewing}>

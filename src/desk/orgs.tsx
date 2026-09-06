@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
 import type { OrgStatus } from "@/lib/api";
+import { formatDateTime } from "@/lib/format-date";
 
 function statusLabel(model: DeskModel, status: OrgStatus) {
   return model.ds[`orgsStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`] ?? status;
@@ -77,7 +78,7 @@ function OrgCard({ model, org }: { model: DeskModel; org: DeskModel["orgs"][numb
         </div>
         <CardDescription>
           {orgTypeLabel(model, org.orgType)} · {org.registrationNumber || model.t.unavailable} ·{" "}
-          {new Date(org.createdAt).toLocaleDateString()} · {model.dos.orgCentersCount.replace("{count}", String(org.centersCount))}
+          {formatDateTime(org.createdAt, model.language)} · {model.dos.orgCentersCount.replace("{count}", String(org.centersCount))}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,7 +121,7 @@ function OrgCard({ model, org }: { model: DeskModel; org: DeskModel["orgs"][numb
             <ul className="mt-2 list-disc pl-5 text-sm">
               {org.vouches.map((vouch) => (
                 <li key={vouch.orgId}>
-                  {model.dos.orgVouchFrom.replace("{name}", vouch.orgName)} · {new Date(vouch.at).toLocaleDateString()}
+                  {model.dos.orgVouchFrom.replace("{name}", vouch.orgName)} · {formatDateTime(vouch.at, model.language)}
                 </li>
               ))}
             </ul>
@@ -216,7 +217,7 @@ export function Organizations({ model }: { model: DeskModel }) {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell>{new Date(org.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDateTime(org.createdAt, model.language)}</TableCell>
                     <TableCell>
                       <OrgActions model={model} status={org.status} id={org.id} />
                     </TableCell>

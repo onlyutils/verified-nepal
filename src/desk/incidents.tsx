@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Siren } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime } from "@/lib/format-date";
 
 const statuses = ["pending", "active", "draft", "archived", "rejected"] as const;
 
@@ -22,6 +24,12 @@ function originLabel(model: DeskModel, requestOrigin?: string) {
   if (requestOrigin === "community-request") return model.ds.deskIncidentsOriginCommunity;
   if (requestOrigin === "community-request-inline") return model.ds.deskIncidentsOriginInline;
   return model.ds.deskIncidentsOriginAdmin;
+}
+
+function ProofImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <div role="img" aria-label={alt} className="mt-2 flex aspect-video items-center justify-center rounded-lg border border-dashed bg-secondary p-4 text-center text-sm text-muted-foreground">{alt}</div>;
+  return <img src={src} alt={alt} onError={() => setFailed(true)} className="mt-2 aspect-video w-full rounded-lg object-cover" />;
 }
 
 function IncidentStatusActions({ model, incident }: { model: DeskModel; incident: DeskModel["incidentsAdmin"][number] }) {
@@ -43,7 +51,7 @@ function IncidentStatusActions({ model, incident }: { model: DeskModel; incident
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" disabled={loading} onClick={() => void model.handleIncidentApprove(incident.id)}>
+          <Button size="sm" disabled={loading} onClick={() => model.setConfirmAction({ kind: "incident", action: "approve", id: incident.id })}>
             {model.ds.deskIncidentsApprove}
           </Button>
           <Button
@@ -83,7 +91,7 @@ function IncidentStatusActions({ model, incident }: { model: DeskModel; incident
 
   if (incident.status === "active") {
     return (
-      <Button size="sm" variant="destructive" disabled={loading} onClick={() => void model.handleIncidentArchive(incident.id)}>
+      <Button size="sm" variant="destructive" disabled={loading} onClick={() => model.setConfirmAction({ kind: "incident", action: "archive", id: incident.id })}>
         {model.ds.deskIncidentsArchive}
       </Button>
     );
@@ -141,7 +149,7 @@ export function Incidents({ model }: { model: DeskModel }) {
                     <StatusBadge tone={toneForStatus(incident.status)}>{statusLabel(model, incident.status)}</StatusBadge>
                   </div>
                   <CardDescription>
-                    {incident.kind} · {incident.startedAt}
+                    {incident.kind} · {formatDateTime(incident.startedAt, model.language)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-3">
@@ -156,7 +164,7 @@ export function Incidents({ model }: { model: DeskModel }) {
                       {proof.type === "video" ? (
                         <video src={proof.originalUrl} controls preload="metadata" className="mt-2 aspect-video w-full rounded-lg bg-black object-contain" />
                       ) : (
-                        <img src={proof.originalUrl} alt="" className="mt-2 aspect-video w-full rounded-lg object-cover" />
+                        <ProofImage src={proof.originalUrl} alt={model.ds.deskIncidentsProof} />
                       )}
                     </div>
                   ) : null}

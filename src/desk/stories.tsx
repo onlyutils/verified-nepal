@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime } from "@/lib/format-date";
 
 export function Stories({ model }: { model: DeskModel }) {
   const [reasons, setReasons] = useState<Record<string, string>>({});
@@ -28,7 +29,7 @@ export function Stories({ model }: { model: DeskModel }) {
                   <Badge variant="outline">{storyRoleLabel(story.role, model.language)}</Badge>
                 </div>
                 <CardDescription>
-                  {new Date(story.createdAt).toLocaleString()}
+                  {formatDateTime(story.createdAt, model.language)}
                   {story.author.email ? ` · ${story.author.email}` : ""}
                 </CardDescription>
               </CardHeader>
@@ -47,7 +48,7 @@ export function Stories({ model }: { model: DeskModel }) {
                     maxLength={500}
                   />
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => void model.handleStoryModerate(story.id, "publish")}>
+                    <Button size="sm" onClick={() => model.setConfirmAction({ kind: "story", action: "publish", id: story.id })}>
                       {model.t.deskDispatchesPublish}
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => void model.handleStoryModerate(story.id, "reject", reasons[story.id]?.trim() || undefined)}>

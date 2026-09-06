@@ -5,21 +5,23 @@ import { Badge } from "@/components/ui/badge";
  * One status idiom for the whole site. Every status is colour + text, never colour alone,
  * so it survives grayscale and high-contrast mode.
  *
- *   success  open · verified · published · fulfilled · completed · received
+ *   success  open · verified · published · active
  *   info     matched · in progress · live
  *   warning  pending · limited · awaiting
  *   danger   missing · rejected · suspended · closed · flagged
- *   neutral  archived · draft · snapshot
+ *   done     fulfilled · completed · delivered · received · archived
+ *   neutral  draft · snapshot
  */
-export type StatusTone = "success" | "info" | "warning" | "danger" | "neutral";
+export type StatusTone = "success" | "info" | "warning" | "danger" | "neutral" | "done";
 
 const toneByStatus: Record<string, StatusTone> = {
   open: "success",
   verified: "success",
   published: "success",
-  fulfilled: "success",
-  completed: "success",
-  received: "success",
+  fulfilled: "done",
+  completed: "done",
+  delivered: "done",
+  received: "done",
   active: "success",
   live: "info",
   matched: "info",
@@ -34,7 +36,7 @@ const toneByStatus: Record<string, StatusTone> = {
   closed: "danger",
   flagged: "danger",
   not_received: "danger",
-  archived: "neutral",
+  archived: "done",
   draft: "neutral",
   snapshot: "neutral",
 };
@@ -44,13 +46,14 @@ export function toneForStatus(status: string): StatusTone {
   return toneByStatus[status] ?? "neutral";
 }
 
-const variantByTone = { success: "success", info: "info", warning: "warning", danger: "danger", neutral: "secondary" } as const;
+const variantByTone = { success: "success", info: "info", warning: "warning", danger: "danger", neutral: "secondary", done: "secondary" } as const;
 const dotByTone = {
   success: "bg-success",
   info: "bg-primary",
   warning: "bg-warning",
   danger: "bg-destructive",
   neutral: "bg-subtle",
+  done: "bg-subtle",
 } as const;
 
 export function StatusBadge({ tone, children, className = "" }: { tone: StatusTone; children: ReactNode; className?: string }) {

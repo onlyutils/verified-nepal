@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
+import { formatDateTime, formatNumber } from "@/lib/format-date";
 
 export function Flags({ model }: { model: DeskModel }) {
   return (
@@ -34,6 +35,7 @@ export function Flags({ model }: { model: DeskModel }) {
                     <TableHead>{model.ds.deskTableStatus}</TableHead>
                     <TableHead>{model.ds.deskTableLocation}</TableHead>
                     <TableHead>{model.ds.deskTableCreated}</TableHead>
+                    <TableHead>{model.ds.deskTableActions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -47,13 +49,23 @@ export function Flags({ model }: { model: DeskModel }) {
                       </TableCell>
                       <TableCell>
                         <Badge variant="danger">
-                          {item.flagCount} {model.t.deskFlagCount.replace("{count}", "")}
+                          {formatNumber(item.flagCount, model.language)} {model.t.deskFlagCount.replace("{count}", "")}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {item.district} · W{item.ward}
                       </TableCell>
-                      <TableCell>{new Date(item.flags[0]?.createdAt ?? Date.now()).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDateTime(item.flags[0]?.createdAt ?? Date.now(), model.language)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => item.flags[0] && model.setConfirmAction({ kind: "flag", action: "resolve", id: item.flags[0].id, center: false })}>
+                            {model.t.deskResolve}
+                          </Button>
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={`/desk/boards?need=${encodeURIComponent(item.needId)}`}>{model.t.deskFlagOpen}</a>
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -68,7 +80,7 @@ export function Flags({ model }: { model: DeskModel }) {
                         {item.maskedName} · W{item.ward}
                       </CardTitle>
                       <Badge variant="danger">
-                        {item.flagCount} {model.t.deskFlagCount.replace("{count}", "")}
+                        {formatNumber(item.flagCount, model.language)} {model.t.deskFlagCount.replace("{count}", "")}
                       </Badge>
                     </div>
                     <CardDescription>
@@ -81,7 +93,15 @@ export function Flags({ model }: { model: DeskModel }) {
                         <li key={`${flag.createdAt}-${index}`} className="rounded-lg border bg-secondary p-3">
                           <p className="text-sm font-semibold">{flag.reason}</p>
                           {flag.details ? <p className="mt-1 text-sm leading-6">{flag.details}</p> : null}
-                          <p className="mt-1 text-xs text-muted-foreground">{new Date(flag.createdAt).toLocaleString()}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(flag.createdAt, model.language)}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" onClick={() => model.setConfirmAction({ kind: "flag", action: "resolve", id: flag.id, center: false })}>
+                              {model.t.deskResolve}
+                            </Button>
+                            <Button size="sm" variant="link" asChild>
+                              <a href={`/desk/boards?need=${encodeURIComponent(item.needId)}`}>{model.t.deskFlagOpen}</a>
+                            </Button>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -122,16 +142,21 @@ export function Flags({ model }: { model: DeskModel }) {
                         <p className="text-xs text-muted-foreground">{center.orgName}</p>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="danger">{center.flagCount}</Badge>
+                        <Badge variant="danger">{formatNumber(center.flagCount, model.language)}</Badge>
                       </TableCell>
                       <TableCell>{center.district}</TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={`/drop-centers/${center.centerId}`} target="_blank" rel="noreferrer">
-                            <ExternalLink aria-hidden="true" />
-                            {model.dos.centerFlagsViewPublic}
-                          </a>
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => center.reasons[0] && model.setConfirmAction({ kind: "flag", action: "resolve", id: center.reasons[0].id, center: true })}>
+                            {model.t.deskResolve}
+                          </Button>
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={`/drop-centers/${center.centerId}`} target="_blank" rel="noreferrer">
+                              <ExternalLink aria-hidden="true" />
+                              {model.dos.centerFlagsViewPublic}
+                            </a>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -144,7 +169,7 @@ export function Flags({ model }: { model: DeskModel }) {
                   <CardHeader>
                     <div className="flex justify-between gap-2">
                       <CardTitle>{center.name}</CardTitle>
-                      <Badge variant="danger">{center.flagCount}</Badge>
+                      <Badge variant="danger">{formatNumber(center.flagCount, model.language)}</Badge>
                     </div>
                     <CardDescription>
                       {center.orgName} · {center.district}
@@ -162,7 +187,10 @@ export function Flags({ model }: { model: DeskModel }) {
                         <li key={`${reason.createdAt}-${index}`} className="rounded-lg border bg-secondary p-3 text-sm">
                           <p className="font-semibold">{reason.reason}</p>
                           {reason.details ? <p className="mt-1">{reason.details}</p> : null}
-                          <p className="mt-1 text-xs text-muted-foreground">{new Date(reason.createdAt).toLocaleString()}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(reason.createdAt, model.language)}</p>
+                          <Button size="sm" variant="outline" className="mt-2" onClick={() => model.setConfirmAction({ kind: "flag", action: "resolve", id: reason.id, center: true })}>
+                            {model.t.deskResolve}
+                          </Button>
                         </li>
                       ))}
                     </ul>

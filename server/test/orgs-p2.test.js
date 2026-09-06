@@ -350,6 +350,13 @@ describe("orgs Phase2", () => {
     assert.ok(found);
     assert.equal(found.flagCount, 1);
     assert.ok(found.reasons.some((r) => r.reason === "closed"));
+    const resolved = await call(routeOrgs, "POST", `/moderation/center-flags/${encodeURIComponent(found.reasons[0].id)}/resolve`, { body: { note: "reviewed" }, token: tokenMod }, opts);
+    assert.equal(resolved.status, 200);
+    const activeFlags = await call(routeOrgs, "GET", "/moderation/center-flags", { token: tokenMod }, opts);
+    assert.equal(activeFlags.body.items.some((it) => it.centerId === aId), false);
+    const resolvedFlags = await call(routeOrgs, "GET", "/moderation/center-flags?status=resolved", { token: tokenMod }, opts);
+    assert.equal(resolvedFlags.body.items.find((it) => it.centerId === aId).reasons.length, 1);
+    assert.ok(Array.from(fake.store.values()).some((item) => item.action === "flag.resolve" && item.targetType === "CENTER"));
     // invalid reason → 400
     const bad = await call(routeOrgs, "POST", `/centers/${aId}/flag`, { body: { reason: "invalid" } }, opts);
     assert.equal(bad.status, 400);

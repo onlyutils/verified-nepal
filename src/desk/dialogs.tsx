@@ -91,6 +91,7 @@ function ReasonFields({
   detail,
   setDetail,
   error,
+  helper,
 }: {
   model: DeskModel;
   id: string;
@@ -99,6 +100,7 @@ function ReasonFields({
   detail: string;
   setDetail: (value: string) => void;
   error: string | null;
+  helper?: string;
 }) {
   return (
     <div className="space-y-3">
@@ -136,7 +138,7 @@ function ReasonFields({
           rows={3}
         />
       </div>
-      <p className="text-sm text-muted-foreground">{model.ds.rejectReasonHelper}</p>
+      <p className="text-sm text-muted-foreground">{helper || model.ds.rejectReasonHelper}</p>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -150,6 +152,28 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
   const needName =
     model.publishedNeeds.find((need) => need.id === model.archiveId || need.id === model.fulfillId)?.maskedName || model.t.deskBoardsTitle;
   const offerName = model.filteredOffers.find((offer) => offer.id === model.archiveOfferId)?.helperLabel || model.t.deskOffersTitle;
+  const confirmation = model.confirmAction;
+  const confirmationBody = confirmation
+    ? confirmation.kind === "incident"
+      ? confirmation.action === "approve"
+        ? model.ds.deskConfirmDisasterApprove
+        : model.ds.deskConfirmDisasterArchive
+      : confirmation.kind === "dispatch"
+        ? model.ds.deskConfirmArticlePublish
+        : confirmation.kind === "story"
+          ? model.ds.deskConfirmStoryPublish
+          : model.ds.deskConfirmFlagResolve
+    : "";
+  const confirmationLabel = confirmation
+    ? confirmation.kind === "incident"
+      ? confirmation.action === "approve"
+        ? model.ds.deskIncidentsApprove
+        : model.ds.deskIncidentsArchive
+      : confirmation.kind === "flag"
+        ? model.t.deskResolve
+        : model.t.deskDispatchesPublish
+    : "";
+  const verifyingOrg = model.orgs.find((org) => org.id === model.orgVerifyId);
   return (
     <>
       <Dialog
@@ -179,7 +203,7 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
             <Button variant="outline" onClick={() => model.setRejectId(null)}>
               {model.t.deskCancel}
             </Button>
-            <Button variant="destructive" onClick={model.handleReject}>
+            <Button variant="destructive" onClick={model.handleReject} disabled={!model.rejectCode}>
               {model.t.deskRejectConfirm}
             </Button>
           </DialogFooter>
@@ -207,6 +231,7 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
             detail={model.projectRejectDetail}
             setDetail={model.setProjectRejectDetail}
             error={model.projectRejectError}
+            helper={model.ds.projectRejectReasonHelper}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => model.setProjectRejectId(null)}>
@@ -240,6 +265,7 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
             detail={model.dispatchRejectDetail}
             setDetail={model.setDispatchRejectDetail}
             error={model.dispatchRejectError}
+            helper={model.ds.articleRejectReasonHelper}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => model.setDispatchRejectId(null)}>
@@ -248,6 +274,18 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
             <Button variant="destructive" onClick={model.handleDispatchReject}>
               {model.t.deskDispatchesRejectConfirm}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!confirmation} onOpenChange={(open) => { if (!open) model.setConfirmAction(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{model.ds.deskConfirmTitle}</DialogTitle>
+            <DialogDescription>{confirmationBody} {model.ds.deskConfirmAudit}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => model.setConfirmAction(null)}>{model.t.deskCancel}</Button>
+            <Button onClick={() => void model.handleConfirmAction()}>{confirmationLabel}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -410,7 +448,7 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
                 onChange={(event) => model.setOrgVerifyTier(event.target.value as "known" | "vouched" | "self_declared")}
               >
                 <NativeSelectOption value="known">{model.dos.orgTierKnown}</NativeSelectOption>
-                <NativeSelectOption value="vouched">{model.dos.orgTierVouched}</NativeSelectOption>
+                {verifyingOrg?.vouches?.length ? <NativeSelectOption value="vouched">{model.dos.orgTierVouched}</NativeSelectOption> : null}
                 <NativeSelectOption value="self_declared">{model.dos.orgTierSelfDeclared}</NativeSelectOption>
               </NativeSelect>
             </div>

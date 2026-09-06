@@ -7,6 +7,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatDateTime } from "@/lib/format-date";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
 
@@ -102,11 +103,11 @@ export function Boards({ model }: { model: DeskModel }) {
               </TableHeader>
               <TableBody>
                 {model.filteredNeeds.map((need) => (
-                  <TableRow key={need.id} className="align-top">
+                  <TableRow key={need.id} id={`board-need-${need.id}`} className={`align-top ${model.highlightNeedId === need.id ? "bg-primary-soft" : ""}`}>
                     <TableCell>
                       <p className="font-semibold">{need.maskedName}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{need.category}</p>
-                      {need.claimCode ? <p className="mt-2 font-mono text-xs tracking-widest">{need.claimCode}</p> : null}
+                      {need.claimCode ? <CodeDisplay code={need.claimCode} kind="claim" label={model.t.deskClaimCode} hint={model.t.deskClaimCodeHint} /> : null}
                     </TableCell>
                     <TableCell>
                       <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(model.t, need.status)}</StatusBadge>
@@ -114,25 +115,8 @@ export function Boards({ model }: { model: DeskModel }) {
                     <TableCell>
                       {need.district} · W{need.ward}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(need.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => model.setFulfillId(need.id)}>
-                          {model.t.deskFulfill}
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => model.openEditNeed(need)}>
-                          {model.t.deskEdit}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => model.setArchiveId(need.id)}>
-                          {model.t.deskArchive}
-                        </Button>
-                        {need.claimCode && (need.status === "published" || need.status === "matched") ? (
-                          <Button size="sm" onClick={() => model.setRedeemCode(need.claimCode as string)}>
-                            {model.t.deskRedeem}
-                          </Button>
-                        ) : null}
-                      </div>
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{formatDateTime(need.createdAt, model.language)}</TableCell>
+                    <TableCell><NeedActions model={model} need={need} claimCode={need.claimCode} status={need.status} /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -147,7 +131,7 @@ export function Boards({ model }: { model: DeskModel }) {
                     <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(model.t, need.status)}</StatusBadge>
                   </div>
                   <CardDescription>
-                    {need.district} · W{need.ward} · {new Date(need.createdAt).toLocaleDateString()}
+                    {need.district}{need.ward != null ? ` · W${need.ward}` : ""} · {formatDateTime(need.createdAt, model.language)}
                   </CardDescription>
                   {need.claimCode ? (
                     <CodeDisplay code={need.claimCode} kind="claim" label={model.t.deskClaimCode} hint={model.t.deskClaimCodeHint} />
@@ -188,7 +172,7 @@ export function Boards({ model }: { model: DeskModel }) {
                       <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(model.t, offer.status)}</StatusBadge>
                     </TableCell>
                     <TableCell>{offer.districts.join(", ")}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(offer.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDateTime(offer.createdAt, model.language)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={() => model.openEditOffer(offer)}>
@@ -213,7 +197,7 @@ export function Boards({ model }: { model: DeskModel }) {
                     <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(model.t, offer.status)}</StatusBadge>
                   </div>
                   <CardDescription>
-                    {offer.districts.join(", ")} · {new Date(offer.createdAt).toLocaleDateString()}
+                    {offer.districts.length ? `${offer.districts.join(", ")} · ` : ""}{formatDateTime(offer.createdAt, model.language)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

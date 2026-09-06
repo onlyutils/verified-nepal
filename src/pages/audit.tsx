@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatDateTime, formatMonth } from "@/lib/format-date";
 
 function months() {
   const result: string[] = [];
@@ -23,17 +24,20 @@ function months() {
 }
 function monthLabel(value: string, language: Language) {
   const [year, month] = value.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  return formatMonth(new Date(Date.UTC(year, month - 1, 1)), language);
 }
 function actionLabel(action: string, language: Language) {
   const t = communityStrings[language];
+  const statusAction = action.match(/^status:(.+)$/)?.[1];
+  if (statusAction) {
+    const statusLabels: Record<string, string> = { matched: t.actionMatch, fulfilled: t.actionFulfill, archived: t.actionArchive };
+    return statusLabels[statusAction] ?? action;
+  }
   return (
     (
       {
         publish: t.actionPublish,
+        approve: t.actionApprove,
         reject: t.actionReject,
         match: t.actionMatch,
         fulfill: t.actionFulfill,
@@ -42,11 +46,21 @@ function actionLabel(action: string, language: Language) {
         suspend: t.actionSuspend,
         reinstate: t.actionReinstate,
         update: t.actionUpdate,
+        edit: t.actionEdited,
+        "role.set": t.actionRoleChanged,
+        "org.create": t.actionOrganizationCreated,
+        "publish-photo": t.actionPhotoPublished,
+        "reject-photo": t.actionPhotoRejected,
+        "publish-update": t.actionUpdatePublished,
+        "reject-update": t.actionUpdateRejected,
+        "update:publish": t.actionUpdatePublished,
+        "update:reject": t.actionUpdateRejected,
+        "flag.resolve": t.actionFlagResolved,
         create: t.actionCreate,
         archive: t.actionArchive,
         "set-status": t.actionSetStatus,
       } as Record<string, string>
-    )[action] ?? t.actionUpdate
+    )[action] ?? action
   );
 }
 function targetLabel(type: string, language: Language) {
@@ -55,13 +69,18 @@ function targetLabel(type: string, language: Language) {
     (
       {
         need: t.targetNeed,
+        offer: t.targetOffer,
+        disaster: t.targetDisaster,
+        story: t.targetStory,
         project: t.targetProject,
         dispatch: t.targetDispatch,
+        article: t.targetDispatch,
         organization: t.targetOrganization,
+        org: t.targetOrganization,
         center: t.targetCenter,
         user: t.targetUser,
       } as Record<string, string>
-    )[type] ?? t.targetUser
+    )[type.toLowerCase()] ?? type
   );
 }
 
@@ -135,7 +154,7 @@ export function AuditPage({ language }: { language: Language }) {
                 </p>
                 <p className="text-sm">{item.targetLabel}</p>
                 <p className="text-sm text-muted-foreground">
-                  {item.actorName} · {new Date(item.ts).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
+                  {item.actorName} · {formatDateTime(item.ts, language)}
                 </p>
                 {item.reason ? <p className="text-sm text-muted-foreground">{item.reason}</p> : null}
               </div>
@@ -156,7 +175,7 @@ export function AuditPage({ language }: { language: Language }) {
                 {items.map((item, index) => (
                   <TableRow key={`${item.ts}-${index}`} className="print:break-inside-avoid print:border-black">
                     <TableCell className="whitespace-nowrap">
-                      {new Date(item.ts).toLocaleString(language === "ne" ? "ne-NP" : "en-US")}
+                      {formatDateTime(item.ts, language)}
                     </TableCell>
                     <TableCell>{item.actorName}</TableCell>
                     <TableCell>{actionLabel(item.action, language)}</TableCell>

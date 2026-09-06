@@ -19,8 +19,8 @@ export function toPublicGroup(need) {
   };
 }
 
-export function toPublicNeedListItem(it) {
-  return {
+export function toPublicNeedListItem(it, { includeClaimCode = false } = {}) {
+  const out = {
     id: it.id,
     maskedName: maskName(it.beneficiary?.name || it.name || ""),
     district: it.beneficiary?.district || it.district || "",
@@ -32,6 +32,8 @@ export function toPublicNeedListItem(it) {
     group: toPublicGroup(it),
     ...(it.handledBy?.orgName ? { handledBy: it.handledBy.orgName } : {}),
   };
+  if (includeClaimCode && it.claimCode && ["published", "matched", "fulfilled"].includes(it.status)) out.claimCode = it.claimCode;
+  return out;
 }
 
 export function toStatusView(need) {

@@ -8,7 +8,6 @@ import type { Language } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
@@ -16,13 +15,15 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import { ShareButton } from "@/components/share-button";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DistrictPicker } from "@/components/district-picker";
+import { formatDateTime } from "@/lib/format-date";
 
 function IncidentCard({ incident, language }: { incident: Incident; language: Language }) {
   const t = disasterStrings[language];
   const displayName = language === "ne" && incident.nameNe ? incident.nameNe : incident.name;
   const displaySummary = language === "ne" && incident.summaryNe ? incident.summaryNe : incident.summary;
   const districtLabelsList = incident.affectedDistricts.map((district) => districtLabels[district][language]);
-  const startedLabel = new Date(incident.startedAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US", { dateStyle: "medium" });
+  const startedLabel = formatDateTime(incident.startedAt, language);
   const shareUrl = `${window.location.origin}/incidents`;
   const shareText = `${displayName} — ${t.incidentsPublicShareTag} ${shareUrl}`;
   const statusLabels = {
@@ -128,7 +129,6 @@ export function IncidentsPage({ language }: { language: Language }) {
   }, [language]);
 
   const query = search.trim().toLowerCase();
-  const visibleDistricts = query ? districtNames.filter((district) => districtLabels[district][language].toLowerCase().includes(query)) : districtNames;
   const filtered = items
     .filter((incident) => !selectedDistricts.length || incident.affectedDistricts.some((district) => selectedDistricts.includes(district)))
     .filter((incident) => {
@@ -171,21 +171,7 @@ export function IncidentsPage({ language }: { language: Language }) {
                 </Button>
               </div>
             </div>
-            <div className="grid max-h-72 gap-2 overflow-y-auto sm:grid-cols-3">
-              {visibleDistricts.map((district) => (
-                <Label key={district} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3">
-                  <Checkbox
-                    checked={selectedDistricts.includes(district)}
-                    onCheckedChange={(checked) =>
-                      setSelectedDistricts((current) =>
-                        checked ? [...current, district] : current.filter((value) => value !== district),
-                      )
-                    }
-                  />
-                  {districtLabels[district][language]}
-                </Label>
-              ))}
-            </div>
+            <DistrictPicker selected={selectedDistricts} onChange={(value) => setSelectedDistricts(value as DistrictName[])} language={language} searchPlaceholder={t.incidentsPublicSearchPlaceholder} />
           </fieldset>
         </CardContent>
       </Card>

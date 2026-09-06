@@ -15,10 +15,11 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TurnstileWidget } from "@/components/turnstile";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDateTime } from "@/lib/format-date";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function dateLabel(value: string, language: Language) {
-  return new Date(value).toLocaleDateString(language === "ne" ? "ne-NP" : "en-GB", { dateStyle: "medium" });
+  return formatDateTime(value, language);
 }
 
 export function Ledger({ language }: { language: Language }) {

@@ -22,6 +22,7 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import { CodeDisplay } from "@/components/code-display";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TurnstileWidget } from "@/components/turnstile";
+import { formatDateTime, formatNumber } from "@/lib/format-date";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function statusLabel(status: CenterDetailResponse["status"], language: Language) {
@@ -38,7 +39,7 @@ function entryLabel(entry: CenterDetailResponse["recent"][number], language: Lan
   return communityStrings[language].centerCorrection;
 }
 function dateLabel(value: string, language: Language) {
-  return new Date(value).toLocaleString(language === "ne" ? "ne-NP" : "en-US");
+  return formatDateTime(value, language);
 }
 
 export function DropCenterDetail({ language, navigate, id }: { language: Language; navigate: (page: Page) => void; id: string }) {
@@ -232,7 +233,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                     <TableRow key={item.category}>
                       <TableCell>{goodsLabel(item.category, language)}</TableCell>
                       <TableCell>
-                        {item.qty} {unitLabel(item.unit, language)}
+                        {formatNumber(item.qty, language)} {unitLabel(item.unit, language)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -259,7 +260,7 @@ export function DropCenterDetail({ language, navigate, id }: { language: Languag
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{entryLabel(entry, language)}</span>
                       <span className="text-sm">
-                        {goodsLabel(entry.category, language)} · {entry.qty} {unitLabel(entry.unit, language)}
+                        {goodsLabel(entry.category, language)} · {formatNumber(entry.qty, language)} {unitLabel(entry.unit, language)}
                       </span>
                       {entry.correctedByEntryId ? <Badge variant="outline">{t.centerCorrected}</Badge> : null}
                       {entry.discrepancy ? (

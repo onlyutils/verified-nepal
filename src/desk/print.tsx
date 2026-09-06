@@ -91,7 +91,8 @@ export function PrintClaims({ model }: { model: DeskModel }) {
                 </h3>
                 <p className="text-sm text-muted-foreground">{model.ds.deskPrintSheetLabel}</p>
               </div>
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[42rem]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>{model.t.deskPrintTick}</TableHead>
@@ -119,6 +120,7 @@ export function PrintClaims({ model }: { model: DeskModel }) {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </div>
           ) : null}
         </CardContent>

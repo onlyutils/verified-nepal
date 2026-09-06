@@ -25,6 +25,7 @@ import { useGoogleAuth } from "@/lib/auth";
 import { GENERAL_INCIDENT_ID, useIncidents } from "@/lib/incidents";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
+import { formatDateTime } from "@/lib/format-date";
 import { disasterStrings } from "@/i18n/disasters";
 import { formStrings } from "@/i18n/forms";
 import type { Language } from "@/lib/types";
@@ -44,6 +45,7 @@ import { CodeDisplay } from "@/components/code-display";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
+import { DistrictPicker } from "@/components/district-picker";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function categoryLabel(category: string, language: Language) {
@@ -323,14 +325,10 @@ function OfferDialog({
                 ))}
             </NativeSelect>
           </div>
-          <ChoiceGroup
-            id="offerDistricts"
-            label={`${t.giveHelpDistricts} *`}
-            values={districtNames}
-            selected={districts}
-            onToggle={(value) => toggle(value, districts, setDistricts)}
-            getLabel={(value) => districtLabels[value as keyof typeof districtLabels][language]}
-          />
+          <div className="space-y-2" id="offerDistricts">
+            <Label>{t.giveHelpDistricts} *</Label>
+            <DistrictPicker selected={districts} onChange={setDistricts} language={language} searchPlaceholder={t.giveHelpDistricts} />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="offerDesc">{t.giveHelpDescriptionLabel} *</Label>
             <Textarea
@@ -824,7 +822,7 @@ function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: 
         <CardTitle className="text-lg">{need.maskedName}</CardTitle>
         <CardDescription>
           {districtLabels[need.district as keyof typeof districtLabels]?.[language] ?? need.district} · W{need.ward} ·{" "}
-          {new Date(need.createdAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US")}
+          {formatDateTime(need.createdAt, language)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -895,13 +893,13 @@ function OfferCard({ language, offer }: { language: Language; offer: OfferPublic
         </div>
         <CardTitle className="text-lg">{offer.helperLabel}</CardTitle>
         <CardDescription>
-          {offer.districts.map((district) => districtLabels[district as keyof typeof districtLabels]?.[language] ?? district).join(" · ")}
+          {offer.districts.length ? offer.districts.map((district) => districtLabels[district as keyof typeof districtLabels]?.[language] ?? district).join(" · ") : t.unavailable}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-base leading-relaxed">{offer.description}</p>
         <p className="mt-3 text-sm text-muted-foreground">
-          {new Date(offer.createdAt).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US")}
+          {formatDateTime(offer.createdAt, language)}
         </p>
       </CardContent>
     </Card>

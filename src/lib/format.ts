@@ -1,19 +1,9 @@
 import type { Language, MessageItem, PersonRecord } from "@/lib/types";
+export { formatDateTime, formatNumber } from "./format-date";
 
 const officialRescueUrl = "https://ndrrma.gov.np/en/rescue";
 
 export { officialRescueUrl };
-
-export function formatNumber(value: number, language: Language) {
-  return new Intl.NumberFormat(language === "ne" ? "ne-NP" : "en-US").format(value);
-}
-
-export function formatDateTime(value: string, language: Language) {
-  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 /** Some API fields come back as a plain string or as a {en, ne?} bilingual object; always render a string. */
 export function localizedText(value: string | { en: string; ne?: string }, language: Language) {

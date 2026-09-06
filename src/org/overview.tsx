@@ -7,6 +7,7 @@ import { PageHeader, SectionHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { formatNumber } from "@/lib/format";
+import { formatDateTime } from "@/lib/format-date";
 import { fillTemplate } from "@/lib/edition";
 import { orgStatusLabel, statusTone } from "./use-org";
 import type { OrgController } from "./org-types";
@@ -129,7 +130,7 @@ export function Overview({ controller }: { controller: OrgController }) {
                 <li key={vouch.orgId}>
                   {fillTemplate(t.vouchFromAt, {
                     name: vouch.orgName,
-                    date: new Date(vouch.at).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US"),
+                    date: formatDateTime(vouch.at, language),
                   })}
                 </li>
               ))}

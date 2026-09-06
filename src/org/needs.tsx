@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
+import { formatDateTime } from "@/lib/format-date";
 import type { OrgController } from "./org-types";
 
 export function OrgNeeds({ controller, navigate }: { controller: OrgController; navigate: (page: Page) => void }) {
@@ -47,7 +48,7 @@ export function OrgNeeds({ controller, navigate }: { controller: OrgController; 
   };
 
   if (!selectedOrg) return null;
-  const date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString(language === "ne" ? "ne-NP" : "en-US") : "");
+  const date = (iso?: string) => (iso ? formatDateTime(iso, language) : "");
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader eyebrow={t.navNeeds} title={t.needsTitle} description={t.needsDescription} />

@@ -711,9 +711,11 @@ export interface FlagInput {
 }
 
 export interface ModerationFlag {
+  id: string;
   reason: string;
   details?: string;
   createdAt: string;
+  status?: string;
 }
 
 export interface FlagInboxItem {
@@ -775,6 +777,10 @@ export function flagNeed(id: string, body: FlagInput): Promise<{ ok: boolean }> 
 
 export function getModerationFlags(token: string): Promise<FlagsInboxResponse> {
   return request<FlagsInboxResponse>("/moderation/flags", { token });
+}
+
+export function resolveModerationFlag(token: string, id: string, note?: string): Promise<{ status: string }> {
+  return request(`/moderation/flags/${encodeURIComponent(id)}/resolve`, { method: "POST", token, body: JSON.stringify({ note }) });
 }
 
 export type ProjectType = "tuin" | "bridge" | "trail" | "water" | "school" | "other";
@@ -1378,10 +1384,14 @@ export interface CenterFlagInboxItem {
   district: string;
   orgName: string;
   flagCount: number;
-  reasons: Array<{ reason: CenterFlagReason; details?: string; createdAt: string }>;
+  reasons: Array<{ id: string; reason: CenterFlagReason; details?: string; createdAt: string; status?: string }>;
 }
 export function getModerationCenterFlags(token: string): Promise<{ items: CenterFlagInboxItem[] }> {
   return request("/moderation/center-flags", { token });
+}
+
+export function resolveModerationCenterFlag(token: string, id: string, note?: string): Promise<{ status: string }> {
+  return request(`/moderation/center-flags/${encodeURIComponent(id)}/resolve`, { method: "POST", token, body: JSON.stringify({ note }) });
 }
 
 // Phase 3 — staff, donor drop codes

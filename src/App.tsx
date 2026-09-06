@@ -117,7 +117,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.startsWith("/audit")) return "audit";
   if (pathname.startsWith("/ledger")) return "ledger";
   if (pathname.startsWith("/desk/login")) return "deskLogin";
-  if (pathname.startsWith("/desk")) return "desk";
+  if (pathname === "/desk" || pathname.startsWith("/desk/")) return "desk";
   if (pathname.startsWith("/search")) return "search";
   if (pathname === "/me" || pathname.startsWith("/me/")) return "me";
   if (pathname.startsWith("/missing")) return "missing";
