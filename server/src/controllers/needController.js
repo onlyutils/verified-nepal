@@ -4,7 +4,7 @@ import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth, optionalAuth, isOutOfScope } from "../lib/auth.js";
 import {
-  CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS,
+  CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS, GENERAL_INCIDENT_ID,
   ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE,
 } from "../constants.js";
 import { requestPresign } from "../models/media.js";
@@ -23,9 +23,9 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
   const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident } = body;
-  const hasIncidentId = incidentId !== undefined && incidentId !== null;
+  const hasIncidentId = incidentId !== undefined && incidentId !== null && incidentId !== "";
   const hasNewIncident = newIncident !== undefined && newIncident !== null;
-  if (hasIncidentId === hasNewIncident) throw err(400, "exactly one of incidentId or newIncident is required");
+  if (hasIncidentId && hasNewIncident) throw err(400, "provide at most one of incidentId or newIncident");
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
   let regName, regPhone, regEmail;
   if (onBehalf) {
@@ -64,13 +64,7 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const ddb = getDdb();
   let auth;
   let resolvedIncidentId;
-  if (hasIncidentId) {
-    if (typeof incidentId !== "string" || !incidentId.trim()) throw err(400, "invalid incident");
-    const incident = await getIncidentById(ddb, tableName, incidentId.trim());
-    if (!incident || !["active", "pending"].includes(incident.status)) throw err(400, "invalid incident");
-    resolvedIncidentId = incident.id;
-    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
-  } else {
+  if (hasNewIncident) {
     auth = await requireAuth(event, { fetchJwks, getDdb, env });
     if (typeof newIncident !== "object" || Array.isArray(newIncident)) throw err(400, "newIncident must be object");
     const incidentName = validateString(newIncident.name, "newIncident.name", 2, 150);
@@ -89,6 +83,15 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
       createdBy: auth.payload.sub,
     });
     resolvedIncidentId = incident.id;
+  } else if (hasIncidentId) {
+    if (typeof incidentId !== "string" || !incidentId.trim()) throw err(400, "invalid incident");
+    const incident = await getIncidentById(ddb, tableName, incidentId.trim());
+    if (!incident || !["active", "pending"].includes(incident.status)) throw err(400, "invalid incident");
+    resolvedIncidentId = incident.id;
+    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
+  } else {
+    resolvedIncidentId = GENERAL_INCIDENT_ID;
+    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   }
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,

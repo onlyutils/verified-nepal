@@ -1,6 +1,8 @@
 export const CATEGORIES = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 export const LANGUAGES = ["en", "ne"];
 export const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
+// Bucket for needs submitted without a specific incident/event.
+export const GENERAL_INCIDENT_ID = "general";
 export const PUBLIC_OFFER_STATUSES = ["published", "matched", "fulfilled"];
 export const MOD_STATUS = ["matched", "fulfilled", "archived"];
 export const FLAG_REASONS = ["already_received", "not_real", "other"];

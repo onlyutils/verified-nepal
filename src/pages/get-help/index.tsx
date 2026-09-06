@@ -116,7 +116,6 @@ export function GetHelp({ language }: { language: Language }) {
   const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
-  const [householdSize, setHouseholdSize] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
   const [newIncidentMode, setNewIncidentMode] = useState(false);
@@ -166,7 +165,6 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.beneficiaryEmail === "string") setBeneficiaryEmail(draft.beneficiaryEmail);
       if (typeof draft.district === "string") setDistrict(draft.district);
       if (typeof draft.ward === "string") setWard(draft.ward);
-      if (typeof draft.householdSize === "string") setHouseholdSize(draft.householdSize);
       if (typeof draft.category === "string" && CATEGORIES.includes(draft.category as Category)) setCategory(draft.category as Category);
       if (typeof draft.description === "string") setDescription(draft.description);
       if (typeof draft.newIncidentMode === "boolean") setNewIncidentMode(draft.newIncidentMode);
@@ -194,7 +192,6 @@ export function GetHelp({ language }: { language: Language }) {
       beneficiaryEmail,
       district,
       ward,
-      householdSize,
       category,
       description,
       incidentId: newIncidentMode ? undefined : currentIncidentId,
@@ -214,7 +211,6 @@ export function GetHelp({ language }: { language: Language }) {
       !beneficiaryEmail &&
       !district &&
       !ward &&
-      !householdSize &&
       !description &&
       !currentIncidentId &&
       !newIncidentMode &&
@@ -237,7 +233,6 @@ export function GetHelp({ language }: { language: Language }) {
     consent,
     description,
     district,
-    householdSize,
     onBehalf,
     registrantEmail,
     registrantName,
@@ -275,7 +270,6 @@ export function GetHelp({ language }: { language: Language }) {
     setNewIncidentKind("");
     setNewIncidentDistrict("");
     setNewIncidentDescription("");
-    setHouseholdSize("");
     setMediaItems([]);
     setMediaNames({});
     setUploadingFiles({});
@@ -357,7 +351,6 @@ export function GetHelp({ language }: { language: Language }) {
     event.preventDefault();
     setError(null);
     const next: Partial<Record<FieldKey, string>> = {};
-    if (!newIncidentMode && !currentIncidentId) next.incident = disaster.incidentValidation;
     if (newIncidentMode) {
       if (!newIncidentName.trim()) next.newIncidentName = disaster.reportIncidentRequired;
       if (!newIncidentKind.trim()) next.newIncidentKind = disaster.reportIncidentRequired;
@@ -419,7 +412,6 @@ export function GetHelp({ language }: { language: Language }) {
             email: beneficiaryEmail.trim() || undefined,
             district,
             ward: wardNumber,
-            householdSize: householdSize ? Number(householdSize) : undefined,
           },
           category,
           description: description.trim(),
@@ -548,7 +540,7 @@ export function GetHelp({ language }: { language: Language }) {
               <FieldError id="district-error" error={errors.district} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="incident">{disaster.incidentPickerLabel} *</Label>
+              <Label htmlFor="incident">{disaster.incidentPickerLabel}</Label>
               <NativeSelect
                 id="incident"
                 value={newIncidentMode ? NEW_INCIDENT_VALUE : (currentIncidentId ?? "")}
@@ -566,7 +558,7 @@ export function GetHelp({ language }: { language: Language }) {
                 aria-invalid={Boolean(errors.incident)}
                 aria-describedby={errors.incident ? "incident-error" : undefined}
               >
-                <NativeSelectOption value="">{incidents.length ? disaster.incidentSelect : disaster.incidentNotListed}</NativeSelectOption>
+                <NativeSelectOption value="">{incidents.length ? disaster.incidentGeneral : disaster.incidentNotListed}</NativeSelectOption>
                 {incidents
                   .filter((incident) => incident.status === "active" || incident.status === "pending")
                   .map((incident) => (
@@ -644,15 +636,6 @@ export function GetHelp({ language }: { language: Language }) {
               inputMode="numeric"
               min={1}
               max={35}
-            />
-            <Field
-              id="householdSize"
-              label={t.getHelpHouseholdSize}
-              value={householdSize}
-              onChange={(event) => setHouseholdSize(event.target.value)}
-              type="number"
-              inputMode="numeric"
-              min={1}
             />
           </CardContent>
         </Card>

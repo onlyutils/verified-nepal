@@ -22,7 +22,7 @@ import {
 } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
-import { useIncidents } from "@/lib/incidents";
+import { GENERAL_INCIDENT_ID, useIncidents } from "@/lib/incidents";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
 import { disasterStrings } from "@/i18n/disasters";
@@ -399,6 +399,14 @@ export function GiveHelp({ language }: { language: Language }) {
   const boardIncidentId = activeIncidents.some((incident) => incident.id === currentIncidentId)
     ? currentIncidentId
     : activeIncidents[0]?.id;
+  // Which needs board is being browsed: a specific incident, or GENERAL_INCIDENT_ID for
+  // requests submitted without one. Defaults to the shared incident context but is
+  // independently switchable so orgs can reach general (no-event) needs.
+  const [needsIncidentId, setNeedsIncidentId] = useState("");
+  useEffect(() => {
+    if (needsIncidentId === GENERAL_INCIDENT_ID || activeIncidents.some((incident) => incident.id === needsIncidentId)) return;
+    setNeedsIncidentId(boardIncidentId ?? GENERAL_INCIDENT_ID);
+  }, [activeIncidents, boardIncidentId, needsIncidentId]);
   const [needsDistrict, setNeedsDistrict] = useState("");
   const [needsCategory, setNeedsCategory] = useState("");
   const [needs, setNeeds] = useState<NeedPublic[]>([]);
@@ -432,14 +440,14 @@ export function GiveHelp({ language }: { language: Language }) {
   }, [activeIncidents, currentIncidentId, offerIncidentId]);
   useEffect(() => {
     let cancelled = false;
-    if (!boardIncidentId) {
+    if (!needsIncidentId) {
       setNeeds([]);
       setNeedsLoading(false);
       return;
     }
     setNeedsLoading(true);
     setNeedsError(null);
-    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined, incidentId: boardIncidentId })
+    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined, incidentId: needsIncidentId })
       .then((response) => {
         if (!cancelled) setNeeds(response.items);
       })
@@ -455,7 +463,7 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [boardIncidentId, language, needsCategory, needsDistrict]);
+  }, [needsIncidentId, language, needsCategory, needsDistrict]);
   useEffect(() => {
     let cancelled = false;
     if (!boardIncidentId) {
@@ -519,6 +527,17 @@ export function GiveHelp({ language }: { language: Language }) {
           <TabsTrigger value="offers">{ts.giveHelpOffersTab}</TabsTrigger>
         </TabsList>
         <TabsContent value="needs" className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="needs-incident">{disaster.incidentPickerLabel}</Label>
+            <NativeSelect id="needs-incident" value={needsIncidentId} onChange={(event) => setNeedsIncidentId(event.target.value)}>
+              {activeIncidents.map((incident) => (
+                <NativeSelectOption key={incident.id} value={incident.id}>
+                  {language === "ne" && incident.nameNe ? incident.nameNe : incident.name}
+                </NativeSelectOption>
+              ))}
+              <NativeSelectOption value={GENERAL_INCIDENT_ID}>{disaster.incidentGeneral}</NativeSelectOption>
+            </NativeSelect>
+          </div>
           {filters("needs")}
           {needsLoading ? (
             <LoadingState label={t.giveHelpLoading} />

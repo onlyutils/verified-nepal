@@ -4,6 +4,8 @@ import { nearestDistrict, tryGeolocate } from "./geolocation";
 
 export const INCIDENT_KEY = "vn:incident";
 export const INCIDENT_EVENT = "vn:incident-changed";
+// Keep in sync with server/src/constants.js GENERAL_INCIDENT_ID.
+export const GENERAL_INCIDENT_ID = "general";
 
 function notify() {
   try {
