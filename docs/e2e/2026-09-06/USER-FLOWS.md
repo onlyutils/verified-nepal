@@ -225,3 +225,17 @@ On a published need on the board, a helper splits it into items; others join and
 | Admin roles/districts/stats/climate | ✓ | browser + API | — |
 | Helper groups, flags | — | — | populated → wave 2 |
 | Offline, a11y, contrast, tap targets, console/network | ✓ | browser instrumentation | Lighthouse-grade performance |
+
+---
+
+## 4. Changes since this walkthrough was captured (overnight fixes, 2026-09-07)
+
+Screens in `screenshots/` predate these; the live dev site now differs in the following ways (see [E2E-TEST-REPORT.md §9](E2E-TEST-REPORT.md#9-fixes-applied-overnight-2026-09-06--07)):
+
+- **Unknown URLs** show a real not-found page (F13); the mobile emergency bar is a single compact row, so every page's H1 sits ~190px from the top instead of ~378px.
+- **Anonymous forms** (F1, F6, flags, donations, climate wall) keep Submit disabled until Turnstile issues a token, label the widget "Verification", and explain verification failures instead of "Something went wrong on our side"; `/ledger` shows the widget only inside the CSV download.
+- **Sign-in** (F3) returns to the page you came from on both paths; helpers who open `/desk` get an explanation with My page / organization buttons; the login card has an h1 and labelled fields; the language toggle reads "नेपाली" / "English" everywhere.
+- **Posters** (F4): `/poster/:id` is a read-only view with Edit for the owner; photos render on the board (dialog photo in the last batch).
+- **Desk** (F10, F11): sections are routes (`/desk/boards`, `/desk/flags`, …); Boards has Match and Redeem on desktop and mobile (claim codes come from a moderator-only projection); Flags can be resolved and link to the item; Approve/Archive/Publish confirm first; reject dialogs gate on a reason and carry content-specific helper copy; dates are Kathmandu time with "NPT"; the audit page names target types and specific verbs; the 77-district walls are a searchable picker with chips; the mobile Desk nav has an overflow cue and the chat FAB is hidden.
+- **Helpers / orgs** (F2, F9, F12): the give-help board no longer shows stale state after group actions; anonymous visitors get the sign-in nudge on group buttons; a need taken by an org can't also be split into a group (and vice versa, enforced server-side); phones with a leading "+" save; `/org#needs` deep-links work; declined team invites stay visible as "Declined"; article share counts update instantly.
+- **Public data**: pending disasters and their reporters are no longer exposed by the incidents API; masked names are word-based ("Ram B. K."); "Sent to Sent to" and the "Look up another code" heading are gone; Renew is hidden (and refused) on fulfilled needs.

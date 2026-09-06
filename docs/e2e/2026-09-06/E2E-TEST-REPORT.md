@@ -140,6 +140,60 @@ Three runs on smaller models against the populated dataset: Desk at volume ([fin
 | VN-47 | P2 | `/org#needs` deep-link/reload falls back to Overview. | wave2-helper |
 | nits | — | `/ledger?district=` ignored; one green tone for open and done states; `/poster/:id` opens the editor; article share count not optimistic; anonymous visitors see live group buttons that no-op; "Form a group" and org take not mutually exclusive; declined invites vanish; NE numerals inconsistent; reject-article dialog reuses need copy; mobile print sheet clips Category; dataset media reuse one watermarked stock photo. | all three |
 
-## 9. Fixes applied overnight
+## 9. Fixes applied overnight (2026-09-06 → 07)
 
-_Filled in at the end of the overnight run — see the commit list and the per-VN status table below._
+Six Codex batches, each typechecked, built and run against the 199 server tests before being committed and deployed to dev; a Sonnet verification pass re-checked every item on the live site ([findings/wave3-verify.md](findings/wave3-verify.md)). Commits on `main`: `09e2a73` backend · `c6b89e4` global UI · `3915a57` forms/flows · `6da81a5` Desk · `70a4182` caching/org/helper follow-ups · batch 6 (regression + leftovers) — see `git log`.
+
+| ID | Status | Note |
+|---|---|---|
+| VN-01 posters bypass moderation | **open — product decision** | needs a call: add a poster queue, or document posters as the exception |
+| VN-02 incidents API leak | fixed, verified | public statuses active/archived only; internal fields stripped |
+| VN-03 muted text contrast | fixed, verified (token 7.2:1) | `.text-subtle` tagline still 3.2:1 → batch 6 |
+| VN-04 climate labels | fixed, verified | |
+| VN-05 no 404 page | fixed, verified | **regression: hard load of `/` showed the 404 → batch 6** |
+| VN-06 Turnstile failure path | fixed, verified | submit disabled until token; specific messages; "Verification" label |
+| VN-07 return_to | fixed, verified | |
+| VN-08 audit labels/verbs/actor | fixed, verified | |
+| VN-09 district validation | fixed, verified | |
+| VN-10 confirmations | fixed, verified | |
+| VN-11 masking "Beta (." | fixed, verified | word-based masking, Devanagari-aware |
+| VN-12 "W—" | fixed | |
+| VN-13 published offers not shown publicly | **open — product decision** | show an Offers board or restrict the endpoint |
+| VN-14 reject button gating | fixed, verified | org reject validates on submit instead → batch 6 |
+| VN-15 offline copy on empty list | fixed, verified | |
+| VN-16 draft banner | fixed, verified | |
+| VN-17 list endpoints need filters | **open** | API design; low priority |
+| VN-18 Edit on pending article | fixed, verified | |
+| VN-19 emergency bar height | fixed, verified | compact single row < 640px; h1 now at y=190 |
+| VN-20 77-checkbox walls | fixed, verified | shared searchable picker with chips |
+| VN-21 login h1/labels | fixed, verified | |
+| VN-22 toggle label | fixed, verified | |
+| VN-23 view counter on 404 | fixed | |
+| VN-24 helper on /desk | fixed, verified | |
+| VN-25 tap targets | fixed | |
+| VN-26 Desk section routes | fixed, verified | `/desk/<section>` |
+| VN-27 dates | fixed, verified | audit month dropdown in NE → batch 6 |
+| VN-28 mobile Desk nav / chat FAB | fixed, verified | |
+| VN-29 story eligibility copy | fixed | |
+| VN-30 offer dialog copy | fixed | |
+| VN-31 org visibility copy | fixed | |
+| VN-32 ledger Turnstile placement | fixed | |
+| VN-33 incident gate asymmetry | **open — by design** | needs may reference a pending disaster (inline report) |
+| VN-34 storyRole precedence | **open** | define precedence when a person both gave and received |
+| VN-35 resubmitted article ordering | fixed | |
+| VN-36 poster photos | partially fixed | thumbnails render; detail dialog → batch 6 |
+| VN-37 "Sent to Sent to" | fixed, verified | |
+| VN-38 donation code label | fixed, verified | |
+| VN-39 renew on fulfilled | fixed, verified | UI hidden + API 409 |
+| VN-40 Boards Match on desktop | fixed, verified | |
+| VN-41 Boards Redeem | fixed, verified | moderator-only claim-code projection; anonymous response unchanged (tested) |
+| VN-42 flag resolution | fixed, verified | new resolve endpoints + audit rows + deep links |
+| VN-43 org reject audit reason | fixed, verified | |
+| VN-44 vouched tier | fixed, verified | |
+| VN-45 stale board cache | fixed, verified | NetworkFirst SW strategy, `no-store` reads, refetch after mutations |
+| VN-46 "+" phones | fixed, verified | |
+| VN-47 /org#needs | fixed, verified | |
+| New: match panel `[object Object]` | batch 6 | found by the verifier |
+| Nits | mostly fixed | stats labels, duplicate "Role updated", image fallback, hero caps, share count optimistic, declined invites kept, group/org exclusivity, sign-in nudge for anonymous group actions, badge tones, print sheet mobile, reject-dialog copy |
+
+Still open for a decision in the morning: VN-01, VN-13, VN-17, VN-33, VN-34, the mobile menu grouping, the public phone numbers on posters, and the search substring matching.
