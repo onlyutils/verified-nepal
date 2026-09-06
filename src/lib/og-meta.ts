@@ -39,9 +39,13 @@ function text(value: Localized | undefined): string {
 
 export function dispatchMeta(item: DispatchLike): ShareMeta {
   const title = text(item.title).trim() || "Article";
-  const excerpt = text(item.body).replace(/\s+/g, " ").trim().slice(0, 200);
   const by = [item.author?.displayName, item.author?.place].filter(Boolean).join(", ");
-  const description = [excerpt, by ? `By ${by}` : ""].filter(Boolean).join(" — ");
+  const suffix = by ? ` — By ${by}` : "";
+  const excerpt = text(item.body)
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 155 - suffix.length);
+  const description = `${excerpt}${suffix}`;
   const image = item.cover?.url?.trim();
   return image
     ? { title: `${title} · verifiedNepal`, description, image, imageAlt: item.cover?.caption?.trim() || title }
@@ -50,7 +54,7 @@ export function dispatchMeta(item: DispatchLike): ShareMeta {
 
 export function projectMeta(project: ProjectLike): ShareMeta {
   const title = text(project.title).trim() || "Community project";
-  const description = text(project.description).replace(/\s+/g, " ").trim().slice(0, 200);
+  const description = text(project.description).replace(/\s+/g, " ").trim().slice(0, 155);
   const cover = project.photos?.find((photo) => photo.status === "published" && photo.url?.trim());
   return cover
     ? { title: `${title} · verifiedNepal`, description, image: cover.url.trim(), imageAlt: cover.caption?.trim() || title }
@@ -113,7 +117,7 @@ export function climateMeta(): ShareMeta {
   const top = sorted[0];
   if (!nepal || !top) throw new Error("Climate dataset is missing Nepal or its top country");
   const description = interpolate(
-    "Nepal caused {nepalShare}% of global warming, rank {nepalRank} of {total}. {topName} caused {ratio} times more. The floods, landslides and melting glaciers arrive here anyway. Every number on this page is from a peer-reviewed dataset of emissions since 1851.",
+    "Nepal caused {nepalShare}% of global warming (rank {nepalRank} of {total}) yet bears the floods and landslides. {topName} caused {ratio}x more.",
     {
       nepalShare: nepal.share_pct.toFixed(2),
       nepalRank: sorted.findIndex((country) => country.iso3 === "NPL") + 1,

@@ -26,7 +26,7 @@ function mediaCaption(caption: string | undefined, source: string, sourceLabel: 
   );
 }
 
-function renderBlock(block: Block, sourceLabel: string, index: number): ReactNode {
+function renderBlock(block: Block, sourceLabel: string, imageAlt: string, index: number): ReactNode {
   if (block.type === "paragraph")
     return (
       <p key={block.id ?? index} className="whitespace-pre-wrap break-words">
@@ -53,7 +53,12 @@ function renderBlock(block: Block, sourceLabel: string, index: number): ReactNod
   return (
     <figure key={block.id ?? index} className="my-8">
       {block.type === "image" ? (
-        <img src={media.url} alt={media.caption || ""} className="w-full rounded-xl object-cover" loading="lazy" />
+        <img
+          src={media.url}
+          alt={media.caption || imageAlt}
+          className="w-full rounded-xl object-cover"
+          loading="lazy"
+        />
       ) : (
         <video src={media.url} controls preload="metadata" className="w-full rounded-xl" />
       )}
@@ -64,6 +69,7 @@ function renderBlock(block: Block, sourceLabel: string, index: number): ReactNod
 
 export function ArticleBody({ blocks, body, language }: ArticleBodyProps) {
   const sourceLabel = articlesEditorStrings[language].articleSource;
+  const imageAlt = articlesEditorStrings[language].image;
   if (!blocks) {
     return (
       <div className="text-base leading-8">
@@ -71,5 +77,9 @@ export function ArticleBody({ blocks, body, language }: ArticleBodyProps) {
       </div>
     );
   }
-  return <div className="space-y-8 text-base leading-8">{blocks.map((block, index) => renderBlock(block, sourceLabel, index))}</div>;
+  return (
+    <div className="space-y-8 text-base leading-8">
+      {blocks.map((block, index) => renderBlock(block, sourceLabel, imageAlt, index))}
+    </div>
+  );
 }

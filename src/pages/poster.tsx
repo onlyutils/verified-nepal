@@ -352,7 +352,7 @@ function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language
     <Card>
       <CardContent className="flex gap-4 p-4">
         {item.photo ? (
-          <img src={item.photo.url} alt="" className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
+          <img src={item.photo.url} alt={item.name} className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
         ) : (
           <div
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] text-muted-foreground"

@@ -53,7 +53,7 @@ export function PosterGrid({
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((m) => (
         <Card key={m.id} className="overflow-hidden">
-          {m.photo ? <img src={m.photo.url} alt="" className="aspect-square w-full object-cover" loading="lazy" /> : null}
+          {m.photo ? <img src={m.photo.url} alt={m.name} className="aspect-square w-full object-cover" loading="lazy" /> : null}
           <CardHeader>
             <CardTitle className="text-base">{m.name}</CardTitle>
             <CardDescription>{m.district}</CardDescription>

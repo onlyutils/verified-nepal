@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { centerMeta, climateMeta, dispatchMeta, projectMeta } from "./og-meta.ts";
 
-test("dispatchMeta builds a title and a 200-char excerpt with author", () => {
+test("dispatchMeta builds a title and a <=155-char excerpt with author, kept under the meta description limit", () => {
   const meta = dispatchMeta({
     title: { en: "Glacier retreat in Langtang", ne: "लाङटाङ" },
     body: { en: "Line one.\n\nLine   two. " + "x".repeat(300) },
@@ -11,7 +11,7 @@ test("dispatchMeta builds a title and a 200-char excerpt with author", () => {
   assert.equal(meta.title, "Glacier retreat in Langtang · verifiedNepal");
   assert.ok(meta.description.startsWith("Line one. Line two. xxx"));
   assert.ok(meta.description.endsWith(" — By Asha, Dhunche"));
-  assert.equal(meta.description.length, 200 + " — By Asha, Dhunche".length);
+  assert.ok(meta.description.length <= 160);
 });
 
 test("dispatchMeta tolerates plain strings and missing author", () => {

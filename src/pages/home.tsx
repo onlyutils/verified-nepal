@@ -320,7 +320,12 @@ function Stories({ language }: { language: Language }) {
                 {item.media.type === "video" ? (
                   <video src={item.media.url} controls preload="metadata" playsInline className="aspect-[4/5] w-full bg-black object-cover" />
                 ) : (
-                  <img src={item.media.url} alt="" className="aspect-[4/5] w-full object-cover" loading="lazy" />
+                  <img
+                    src={item.media.url}
+                    alt={item.caption || `${ta.by} ${item.author.displayName}`}
+                    className="aspect-[4/5] w-full object-cover"
+                    loading="lazy"
+                  />
                 )}
                 <div className="space-y-2 p-4">
                   <Badge variant="outline">{storyRoleLabel(item.role, language)}</Badge>
