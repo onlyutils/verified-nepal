@@ -7,6 +7,7 @@ import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { queryPublishedDispatchesPage, getDispatchById, listPendingDispatches, moderateDispatch } from "../models/dispatch.js";
 import { toPublicDispatchListItem, toPublicDispatchDetail } from "../views/dispatch.js";
+import { pingIndexNow } from "../lib/indexnow.js";
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const envOf = (opts) => opts.env || {};
@@ -263,5 +264,6 @@ export async function handlePostModerationDispatch(event, opts, id) {
   if (item.status !== "pending") throw err(400, "only pending items can be moderated");
   const actorName = auth.user?.name || auth.payload.name || "";
   const result = await moderateDispatch(auth.ddb, auth.tableName, { item, action, reason, actorSub: auth.payload.sub, actorName });
+  if (action === "publish") await pingIndexNow([`/articles/${encodeURIComponent(id)}`], envOf(opts));
   return json(200, { status: result.status });
 }

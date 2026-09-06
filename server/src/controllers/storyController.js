@@ -4,6 +4,7 @@ import { validateString, validateArticleUrl } from "../lib/validate.js";
 import { listPointers } from "../models/mine.js";
 import { recordAudit } from "../models/audit.js";
 import { storyRole, createStory, getStory, deleteStory, listStoriesByStatus, moderateStory } from "../models/story.js";
+import { pingIndexNow } from "../lib/indexnow.js";
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const STORY_LIMIT = 24;
@@ -94,5 +95,6 @@ export async function handlePostModerationStory(event, opts, id) {
     actorSub: auth.payload.sub, actorName: auth.user?.name || auth.payload.name || "",
     action, targetType: "STORY", targetId: id, targetLabel: s.caption.slice(0, 80), reason,
   });
+  if (action === "publish") await pingIndexNow(["/"], opts.env);
   return json(200, { status: s.status });
 }

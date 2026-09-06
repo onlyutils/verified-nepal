@@ -8,6 +8,7 @@ import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, listMissingByStatus, putMissing } from "../models/missing.js";
 import { toMyMissing, toMyNeed, toMyOffer, toMyGroup } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
+import { pingIndexNow } from "../lib/indexnow.js";
 
 export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
@@ -114,6 +115,7 @@ export async function handlePutMissing(event, opts, id) {
       createdAt: now,
     });
   }
+  await pingIndexNow([`/poster/${encodeURIComponent(id)}`], opts.env);
   return json(200, { id, updatedAt: now });
 }
 

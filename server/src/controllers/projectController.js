@@ -10,6 +10,7 @@ import {
 import { requestPresign } from "../models/media.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { toPublicProject, toPublishedUpdatesView } from "../views/project.js";
+import { pingIndexNow } from "../lib/indexnow.js";
 import { PUBLIC_PROJECT_STATUSES } from "../constants.js";
 import { getIncidentById } from "../models/incident.js";
 
@@ -237,6 +238,7 @@ export async function handlePostModerationProject(event, opts, projectId) {
     actorSub: auth.payload.sub, actorName, action: result.auditAction, targetType: "PROJECT", targetId: projectId,
     targetLabel, reason: reason ? String(reason).trim() : undefined,
   });
+  if (action === "publish") await pingIndexNow([`/projects/${encodeURIComponent(projectId)}`], opts.env);
   return json(200, { status: result.status });
 }
 
@@ -260,5 +262,6 @@ export async function handlePostModerationUpdate(event, opts, projectId, updateI
     actorSub: auth.payload.sub, actorName: actorNameU, action: `update:${action}`, targetType: "UPDATE", targetId: updateId,
     targetLabel: targetLabelU, reason: reason ? String(reason).trim() : undefined,
   });
+  if (action === "publish") await pingIndexNow([`/projects/${encodeURIComponent(projectId)}`], opts.env);
   return json(200, { status: result.status });
 }

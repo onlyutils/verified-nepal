@@ -10,6 +10,7 @@ import { getEmailPointer } from "../models/user.js";
 import { recordAudit } from "../models/audit.js";
 import { toPrivateOrgView, toModerationOrgView, toMyOrgView } from "../views/org.js";
 import { toPrivateCenterView } from "../views/center.js";
+import { pingIndexNow } from "../lib/indexnow.js";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 const ORG_TYPES = ["ngo", "community", "company", "religious", "government", "other"];
 const TIERS = ["known", "vouched", "self_declared"];
@@ -295,6 +296,7 @@ export async function handleCreateCenter(event, opts, orgId) {
   await createCenter(auth.ddb, auth.tableName, center);
   const actorName = auth.user?.name || auth.payload.name || "";
   await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName, action: "center.create", targetType: "CENTER", targetId: id, targetLabel: validated.name });
+  if (center.visibility === "public") await pingIndexNow([`/drop-centers/${encodeURIComponent(id)}`], opts.env);
   return json(201, { id });
 }
 
