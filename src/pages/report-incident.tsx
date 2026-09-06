@@ -14,11 +14,13 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { PageHeader } from "@/components/page-header";
 import { Textarea } from "@/components/ui/textarea";
+import { TurnstileWidget } from "@/components/turnstile";
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 export function ReportIncident({ language }: { language: Language }) {
   const t = disasterStrings[language];
@@ -33,6 +35,7 @@ export function ReportIncident({ language }: { language: Language }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const handleMediaChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -59,7 +62,12 @@ export function ReportIncident({ language }: { language: Language }) {
     await Promise.all(
       valid.slice(0, available).map(async (file) => {
         try {
-          const presign = await presignNeedMedia({ filename: file.name, contentType: file.type, size: file.size });
+          const presign = await presignNeedMedia({
+            filename: file.name,
+            contentType: file.type,
+            size: file.size,
+            turnstileToken: turnstileToken || undefined,
+          });
           const headers = {
             ...(presign.headers || {}),
             ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
@@ -198,6 +206,12 @@ export function ReportIncident({ language }: { language: Language }) {
                   </ul>
                 ) : null}
               </div>
+              {TURNSTILE_KEY ? (
+                <div>
+                  <p className="mb-2 text-sm text-muted-foreground">{t.reportIncidentTurnstileHint}</p>
+                  <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
+                </div>
+              ) : null}
             </CardContent>
           </Card>
           {error ? (

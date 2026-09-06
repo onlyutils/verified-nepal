@@ -34,6 +34,7 @@ export const disasterStrings = {
     reportIncidentMediaUploadError: "Could not upload this file. Please try again.",
     reportIncidentInvalidType: "Use a JPG, PNG, WebP, MP4, WebM, or QuickTime file.",
     reportIncidentTooLarge: "This file is too large.",
+    reportIncidentTurnstileHint: "Verification required",
   },
   ne: {
     incidentPickerLabel: "आपतकाल वा विपद्",
@@ -68,5 +69,6 @@ export const disasterStrings = {
     reportIncidentMediaUploadError: "यो फाइल अपलोड गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
     reportIncidentInvalidType: "JPG, PNG, WebP, MP4, WebM वा QuickTime फाइल प्रयोग गर्नुहोस्।",
     reportIncidentTooLarge: "यो फाइल धेरै ठूलो छ।",
+    reportIncidentTurnstileHint: "प्रमाणीकरण आवश्यक छ",
   },
 } satisfies Record<Language, Record<string, string>>;
