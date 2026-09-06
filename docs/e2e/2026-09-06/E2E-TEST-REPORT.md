@@ -142,15 +142,15 @@ Three runs on smaller models against the populated dataset: Desk at volume ([fin
 
 ## 9. Fixes applied overnight (2026-09-06 → 07)
 
-Six Codex batches, each typechecked, built and run against the 199 server tests before being committed and deployed to dev; a Sonnet verification pass re-checked every item on the live site ([findings/wave3-verify.md](findings/wave3-verify.md)). Commits on `main`: `09e2a73` backend · `c6b89e4` global UI · `3915a57` forms/flows · `6da81a5` Desk · `70a4182` caching/org/helper follow-ups · batch 6 (regression + leftovers) — see `git log`.
+Six Codex batches, each typechecked, built and run against the 199 server tests before being committed and deployed to dev; a Sonnet verification pass re-checked every item on the live site ([findings/wave3-verify.md](findings/wave3-verify.md)). Commits on `main`: `09e2a73` backend · `c6b89e4` global UI · `3915a57` forms/flows · `6da81a5` Desk · `70a4182` caching/org/helper follow-ups · `04fd3a2` batch 6 (front-page regression, match panel, poster dialog photo, subtle grey, org reject gating). Front page verified loading on a cold visit after the last deploy.
 
 | ID | Status | Note |
 |---|---|---|
 | VN-01 posters bypass moderation | **open — product decision** | needs a call: add a poster queue, or document posters as the exception |
 | VN-02 incidents API leak | fixed, verified | public statuses active/archived only; internal fields stripped |
-| VN-03 muted text contrast | fixed, verified (token 7.2:1) | `.text-subtle` tagline still 3.2:1 → batch 6 |
+| VN-03 muted text contrast | fixed, verified | token 7.2:1; `.text-subtle` aligned in batch 6 |
 | VN-04 climate labels | fixed, verified | |
-| VN-05 no 404 page | fixed, verified | **regression: hard load of `/` showed the 404 → batch 6** |
+| VN-05 no 404 page | fixed, verified | a batch-2 regression (hard load of `/` showed the 404) was fixed in batch 6 `04fd3a2` and re-verified on dev |
 | VN-06 Turnstile failure path | fixed, verified | submit disabled until token; specific messages; "Verification" label |
 | VN-07 return_to | fixed, verified | |
 | VN-08 audit labels/verbs/actor | fixed, verified | |
@@ -172,7 +172,7 @@ Six Codex batches, each typechecked, built and run against the 199 server tests 
 | VN-24 helper on /desk | fixed, verified | |
 | VN-25 tap targets | fixed | |
 | VN-26 Desk section routes | fixed, verified | `/desk/<section>` |
-| VN-27 dates | fixed, verified | audit month dropdown in NE → batch 6 |
+| VN-27 dates | fixed, verified | audit month labels use the shared formatter |
 | VN-28 mobile Desk nav / chat FAB | fixed, verified | |
 | VN-29 story eligibility copy | fixed | |
 | VN-30 offer dialog copy | fixed | |
@@ -181,7 +181,7 @@ Six Codex batches, each typechecked, built and run against the 199 server tests 
 | VN-33 incident gate asymmetry | **open — by design** | needs may reference a pending disaster (inline report) |
 | VN-34 storyRole precedence | **open** | define precedence when a person both gave and received |
 | VN-35 resubmitted article ordering | fixed | |
-| VN-36 poster photos | partially fixed | thumbnails render; detail dialog → batch 6 |
+| VN-36 poster photos | fixed | thumbnails verified; dialog/read-only view fixed in batch 6 |
 | VN-37 "Sent to Sent to" | fixed, verified | |
 | VN-38 donation code label | fixed, verified | |
 | VN-39 renew on fulfilled | fixed, verified | UI hidden + API 409 |
@@ -193,7 +193,7 @@ Six Codex batches, each typechecked, built and run against the 199 server tests 
 | VN-45 stale board cache | fixed, verified | NetworkFirst SW strategy, `no-store` reads, refetch after mutations |
 | VN-46 "+" phones | fixed, verified | |
 | VN-47 /org#needs | fixed, verified | |
-| New: match panel `[object Object]` | batch 6 | found by the verifier |
+| New: match panel `[object Object]` | fixed (batch 6) | found by the verifier |
 | Nits | mostly fixed | stats labels, duplicate "Role updated", image fallback, hero caps, share count optimistic, declined invites kept, group/org exclusivity, sign-in nudge for anonymous group actions, badge tones, print sheet mobile, reject-dialog copy |
 
 Still open for a decision in the morning: VN-01, VN-13, VN-17, VN-33, VN-34, the mobile menu grouping, the public phone numbers on posters, and the search substring matching.
