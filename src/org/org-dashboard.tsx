@@ -23,7 +23,7 @@ import { OrgDialogs } from "./dialogs";
 
 function sectionFromHash(): OrgSection {
   const value = typeof window === "undefined" ? "overview" : window.location.hash.slice(1);
-  return ["overview", "centers", "donations", "team", "settings"].includes(value) ? (value as OrgSection) : "overview";
+  return ["overview", "needs", "centers", "donations", "team", "settings"].includes(value) ? (value as OrgSection) : "overview";
 }
 
 function Invites({ controller }: { controller: ReturnType<typeof useOrg> }) {
@@ -131,12 +131,16 @@ export function OrgDashboard({
   useEffect(() => {
     const onHashChange = () => setActive(sectionFromHash());
     window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    window.addEventListener("popstate", onHashChange);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener("popstate", onHashChange);
+    };
   }, []);
 
   const selectSection = (next: OrgSection) => {
     setActive(next);
-    window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${next}`);
+    window.history.pushState({}, "", `${window.location.pathname}${window.location.search}#${next}`);
   };
 
   if (!auth.idToken) return <Gate controller={controller} navigate={navigate} setLanguage={setLanguage} />;

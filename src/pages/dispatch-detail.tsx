@@ -57,6 +57,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [shareCount, setShareCount] = useState(0);
   const [likeBusy, setLikeBusy] = useState(false);
 
   const load = async () => {
@@ -81,6 +82,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
   useEffect(() => {
     if (!item || item.id !== id) return;
     setLikeCount(item.likes ?? 0);
+    setShareCount(item.shares ?? 0);
     setLiked(!auth.idToken && readAnonymousLike(item.id));
   }, [auth.idToken, item]);
 
@@ -130,7 +132,8 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
 
   const url = `${window.location.origin}/articles/${encodeURIComponent(item.id)}`;
   const trackShare = () => {
-    void postArticleShare(item.id).catch(() => {});
+    setShareCount((count) => count + 1);
+    void postArticleShare(item.id).catch(() => setShareCount((count) => Math.max(0, count - 1)));
   };
   const copy = async () => {
     trackShare();
@@ -206,7 +209,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       </div>
       <div
         className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y py-4 text-sm text-muted-foreground"
-        aria-label={`${formatNumber(item.views ?? 0, language)} ${t.views}, ${formatNumber(likeCount, language)} ${t.likes}, ${formatNumber(item.shares ?? 0, language)} ${t.shares}`}
+        aria-label={`${formatNumber(item.views ?? 0, language)} ${t.views}, ${formatNumber(likeCount, language)} ${t.likes}, ${formatNumber(shareCount, language)} ${t.shares}`}
       >
         <span className="inline-flex items-center gap-1.5 tabular-nums">
           <Eye aria-hidden="true" className="size-4" /> {formatNumber(item.views ?? 0, language)} <span className="sr-only">{t.views}</span>
@@ -215,7 +218,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
           <Heart aria-hidden="true" className="size-4" /> {formatNumber(likeCount, language)} <span className="sr-only">{t.likes}</span>
         </span>
         <span className="inline-flex items-center gap-1.5 tabular-nums">
-          <Share2 aria-hidden="true" className="size-4" /> {formatNumber(item.shares ?? 0, language)}{" "}
+          <Share2 aria-hidden="true" className="size-4" /> {formatNumber(shareCount, language)}{" "}
           <span className="sr-only">{t.shares}</span>
         </span>
       </div>

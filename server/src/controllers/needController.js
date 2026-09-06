@@ -159,7 +159,9 @@ export async function handleGetNeeds(event, { getDdb, env, auth }) {
     const last = sliced[sliced.length - 1];
     body.cursor = encodeCursor({ PK: last.PK, SK: last.SK });
   }
-  return json(200, body);
+  const response = json(200, body);
+  response.headers["cache-control"] = "no-store";
+  return response;
 }
 
 export async function handleGetStatus(event, { getDdb, env }, refCode) {
@@ -181,6 +183,7 @@ export async function handlePostRenew(event, { getDdb, env }, refCode) {
   if (!ref) throw err(404, "not found");
   const need = await getNeedById(ddb, tableName, ref.needId);
   if (!need) throw err(404, "not found");
+  if (!["pending", "published", "matched"].includes(need.status)) throw err(409, "need_not_renewable");
   const expiresAt = await renewNeed(ddb, tableName, { ref, need });
   return json(200, { expiresAt });
 }

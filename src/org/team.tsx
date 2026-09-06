@@ -57,8 +57,8 @@ export function Team({ controller }: { controller: OrgController }) {
                     <TableCell className="font-mono text-sm">{member.email}</TableCell>
                     <TableCell>{member.role === "owner" ? t.staffRoleOwner : t.staffRoleStaff}</TableCell>
                     <TableCell>
-                      <StatusBadge tone={statusTone(member.status === "member" ? "active" : "pending")}>
-                        {member.status === "member" ? t.staffStatusMember : t.staffStatusInvited}
+                      <StatusBadge tone={statusTone(member.status === "member" ? "active" : member.status === "declined" ? "rejected" : "pending")}>
+                        {member.status === "member" ? t.staffStatusMember : member.status === "declined" ? t.staffStatusDeclined : t.staffStatusInvited}
                       </StatusBadge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{formatDateTime(member.createdAt, language)}</TableCell>

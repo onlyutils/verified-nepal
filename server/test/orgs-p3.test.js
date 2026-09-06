@@ -113,6 +113,15 @@ describe("orgs Phase3", () => {
     res = await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "vol@example.com" }, token: ownerToken }, opts);
     assert.equal(res.status, 400);
     assert.match(res.body.error, /already invited/);
+    const volToken = createToken(basePayload({ sub: "vol-sub", email: "vol@example.com" }), kp.privateKey);
+    res = await call(routeOrgs, "POST", `/orgs/${orgId}/decline-invite`, { token: volToken }, opts);
+    assert.equal(res.status, 200);
+    list = await call(routeOrgs, "GET", `/orgs/${orgId}/members`, { token: ownerToken }, opts);
+    assert.equal(list.body.items.find((it) => it.email === "vol@example.com").status, "declined");
+    res = await call(routeOrgs, "POST", `/orgs/${orgId}/members`, { body: { email: "vol@example.com" }, token: ownerToken }, opts);
+    assert.equal(res.status, 201);
+    list = await call(routeOrgs, "GET", `/orgs/${orgId}/members`, { token: ownerToken }, opts);
+    assert.equal(list.body.items.find((it) => it.email === "vol@example.com").status, "invited");
 
     // seed staff pointer and user
     const staffSub = "staff-sub";

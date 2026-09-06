@@ -17,6 +17,7 @@ export async function handlePostGroup(event, opts, needId) {
   const { auth } = opts;
   const { ddb, tableName } = auth;
   const need = await loadNeedWithGroup(ddb, tableName, needId);
+  if (need.handledBy || need.status === "matched") throw err(409, "need_handled_by_org");
   if (need.status !== "published") throw err(400, "need must be published to form a group");
   if (need.group) throw err(409, "group_exists");
   const actorName = maskName(auth.user?.name || auth.payload.name || "");

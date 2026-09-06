@@ -152,6 +152,15 @@ export async function listInvitesForOrg(ddb, tableName, orgId) {
   return res.Items || [];
 }
 
+export async function updateInviteStatus(ddb, tableName, lowerEmail, orgId, status) {
+  const lower = String(lowerEmail).toLowerCase();
+  const invite = await getInviteForEmail(ddb, tableName, lower, orgId);
+  const pointer = await getInviteForOrg(ddb, tableName, orgId, lower);
+  for (const item of [invite, pointer]) {
+    if (item) await ddb.send(new PutCommand({ TableName: tableName, Item: { ...item, status } }));
+  }
+}
+
 export async function deleteInvite(ddb, tableName, lowerEmail, orgId) {
   const lower = String(lowerEmail).toLowerCase();
   await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: `EMAIL#${lower}`, SK: `ORGINVITE#${orgId}` } }));

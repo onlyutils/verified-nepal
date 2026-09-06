@@ -21,7 +21,7 @@ import { formatDateTime } from "@/lib/format-date";
 const DRAFT_KEY = "vn:org-draft";
 type FieldKey =
   "name" | "orgType" | "registrationNumber" | "contactName" | "contactPhone" | "contactEmail" | "districts" | "description" | "website";
-const phoneIsValid = (value: string) => /^[0-9]{7,15}$/.test(value.replace(/[\s-]/g, ""));
+const phoneIsValid = (value: string) => /^[0-9]{7,15}$/.test(value.replace(/[\s-]/g, "").replace(/^\+/, ""));
 
 export function RegisterOrganization({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = orgStrings[language];

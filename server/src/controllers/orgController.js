@@ -4,7 +4,7 @@ import { isOutOfScope } from "../lib/auth.js";
 import { validateString, validateOptionalString, validatePhone, validateOptionalEmail, validateDistrict } from "../lib/validate.js";
 import { maskEmail } from "../lib/format.js";
 import { isGoodsCategory } from "../lib/goods-taxonomy.js";
-import { createOrg, getOrg, saveOrg, listOrgsByStatus, putMembership, getMembership, listUserMemberships, listOrgMembers, countOwnedOrgs, deleteMembership, putInvite, getInviteForEmail, getInviteForOrg, listInvitesForEmail, listInvitesForOrg, deleteInvite } from "../models/org.js";
+import { createOrg, getOrg, saveOrg, listOrgsByStatus, putMembership, getMembership, listUserMemberships, listOrgMembers, countOwnedOrgs, deleteMembership, putInvite, getInviteForEmail, getInviteForOrg, listInvitesForEmail, listInvitesForOrg, updateInviteStatus, deleteInvite } from "../models/org.js";
 import { createCenter, getCenter, saveCenter, listOrgCenterPointers, centerVisibility, refreshCentersForOrg, listFlaggedCenterPointers, listCenterFlags } from "../models/center.js";
 import { getEmailPointer } from "../models/user.js";
 import { recordAudit } from "../models/audit.js";
@@ -198,6 +198,7 @@ export async function handleListMyOrgs(event, opts) {
   if (lower) {
     const invites = await listInvitesForEmail(auth.ddb, auth.tableName, lower);
     for (const inv of invites) {
+      if (inv.status === "declined") continue;
       const existing = await getMembership(auth.ddb, auth.tableName, auth.payload.sub, inv.orgId);
       if (existing) { await deleteInvite(auth.ddb, auth.tableName, lower, inv.orgId); continue; }
       const org = await getOrg(auth.ddb, auth.tableName, inv.orgId);
@@ -468,9 +469,10 @@ export async function handleInviteMember(event, opts, orgId) {
     if (existingMem) throw err(400, "already a member");
   }
   const existingInvite = await getInviteForEmail(auth.ddb, auth.tableName, lower, orgId);
-  if (existingInvite) throw err(400, "already invited");
   const existingInvite2 = await getInviteForOrg(auth.ddb, auth.tableName, orgId, lower);
-  if (existingInvite2) throw err(400, "already invited");
+  const existingInvites = [existingInvite, existingInvite2].filter(Boolean);
+  if (existingInvites.length && !existingInvites.every((invite) => invite.status === "declined")) throw err(400, "already invited");
+  if (existingInvites.length) await deleteInvite(auth.ddb, auth.tableName, lower, orgId);
   // Always create an invite — never an instant membership. The invitee must
   // explicitly accept (POST /orgs/:id/accept-invite), so nobody is attached to an
   // org without consent. The response is identical whether or not the email is
@@ -506,7 +508,8 @@ export async function handleDeclineInvite(event, opts, orgId) {
   const { auth } = opts;
   const lower = String(auth.user?.email || auth.payload.email || "").toLowerCase().trim();
   if (!lower) throw err(400, "no email on account");
-  await deleteInvite(auth.ddb, auth.tableName, lower, orgId);
+  const invite = (await getInviteForEmail(auth.ddb, auth.tableName, lower, orgId)) || (await getInviteForOrg(auth.ddb, auth.tableName, orgId, lower));
+  if (invite) await updateInviteStatus(auth.ddb, auth.tableName, lower, orgId, "declined");
   return json(200, { ok: true });
 }
 
@@ -524,7 +527,7 @@ export async function handleListMembers(event, opts, orgId) {
     items.push(out);
   }
   for (const inv of invites) {
-    const out = { role: inv.role || "staff", status: "invited", createdAt: inv.createdAt, email: inv.email };
+    const out = { role: inv.role || "staff", status: inv.status === "declined" ? "declined" : "invited", createdAt: inv.createdAt, email: inv.email };
     if (inv.name !== undefined) out.name = inv.name;
     items.push(out);
   }

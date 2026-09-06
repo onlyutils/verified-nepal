@@ -192,14 +192,15 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
     ...((opts.headers as Record<string, string>) ?? {}),
   };
   if (opts.token) headers["Authorization"] = `Bearer ${opts.token}`;
-  let res = await fetch(url, { ...opts, headers });
+  const method = opts.method ?? "GET";
+  let res = await fetch(url, { ...opts, ...(method === "GET" ? { cache: "no-store" } : {}), headers });
   // Expired access token mid-session: refresh once and retry, so an active
   // user never sees "sign-in expired" while the refresh token is still good.
   if (res.status === 401 && opts.token) {
     const fresh = await refreshAccessToken(API_BASE, opts.token);
     if (fresh && fresh !== opts.token) {
       headers["Authorization"] = `Bearer ${fresh}`;
-      res = await fetch(url, { ...opts, headers });
+      res = await fetch(url, { ...opts, ...(method === "GET" ? { cache: "no-store" } : {}), headers });
     }
   }
   const text = await res.text();
@@ -1242,7 +1243,7 @@ export interface OrgMember {
   email: string;
   name?: string;
   role: OrgRole;
-  status: "member" | "invited";
+  status: "member" | "invited" | "declined";
   createdAt: string;
 }
 export interface DonationStatus {

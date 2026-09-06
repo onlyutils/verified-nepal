@@ -213,6 +213,18 @@ describe("GET /status and POST renew", () => {
     res = await handler(makeEvent({method:"POST", path:"/needs/BADCODE12345/renew"}));
     assert.equal(res.statusCode, 404);
   });
+
+  it("renew rejects fulfilled, rejected, and archived needs", async () => {
+    const ddb = testDdb();
+    const handler = createHandler({ env:{TABLE_NAME:"t"}, ddbClient:ddb, fetchJwks: async()=>({keys:[]}) });
+    for (const status of ["fulfilled", "rejected", "archived"]) {
+      const res = await handler(makeEvent({method:"POST", path:"/needs", body:{onBehalf:false, beneficiary:{name:"A B", phone:"+9779800000001", district:"Gorkha", ward:1}, category:"goods", description:"Need description long enough for renewal status test", language:"en", incidentId: TEST_INCIDENT_ID}}));
+      const { refCode, id } = JSON.parse(res.body);
+      ddb.store.get(`NEED#${id}|META`).status = status;
+      const renewed = await handler(makeEvent({method:"POST", path:`/needs/${refCode}/renew`}));
+      assert.equal(renewed.statusCode, 409, status);
+    }
+  });
 });
 
 describe("offers", () => {

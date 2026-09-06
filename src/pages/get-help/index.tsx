@@ -1067,7 +1067,7 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               {formatDateTime(result.createdAt, language)} →{" "}
               {formatDateTime(result.expiresAt, language)}
             </p>
-            {!(["fulfilled", "rejected", "expired", "matched"] as string[]).includes(result.status) ? (
+            {!(["fulfilled", "rejected", "archived", "expired", "matched"] as string[]).includes(result.status) ? (
               <Button type="button" variant="outline" size="sm" onClick={renew} disabled={renewing}>
                 {renewDone ? t.getHelpStatusRenewed : renewing ? ts.renewing : t.getHelpStatusRenew}
               </Button>

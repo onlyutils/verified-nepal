@@ -85,7 +85,7 @@ const emptyDialogs = (): DialogState => ({
 });
 
 function validPhone(value: string) {
-  return /^[0-9]{7,15}$/.test(value.replace(/[\s-]/g, ""));
+  return /^[0-9]{7,15}$/.test(value.replace(/[\s-]/g, "").replace(/^\+/, ""));
 }
 function validEmail(value: string) {
   return value.includes("@");

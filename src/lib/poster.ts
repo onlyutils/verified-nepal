@@ -171,7 +171,7 @@ export function validatePoster(input: PosterInput) {
   if (!input.name.trim()) errors.name = true;
   if (!input.district) errors.district = true;
   if (!input.place.trim()) errors.place = true;
-  const phones = input.phones.map((p) => p.replace(/[\s-]/g, "")).filter(Boolean);
+  const phones = input.phones.map((p) => p.replace(/[\s-]/g, "").replace(/^\+/, "")).filter(Boolean);
   if (phones.length === 0 || phones.some((p) => !PHONE.test(p))) errors.phones = true;
   return errors;
 }

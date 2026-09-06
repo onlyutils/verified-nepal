@@ -34,6 +34,22 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//, /^\/guides\//],
         runtimeCaching: [
           {
+            // Board and public-list reads must prefer fresh network data after mutations,
+            // while still falling back to the cached copy when the device is offline.
+            urlPattern: ({ url, request }: { url: URL; request: Request }) => {
+              const method = (request as unknown as { method?: string })?.method ?? "GET";
+              if (method !== "GET") return false;
+              return new Set(["/needs", "/offers", "/me/dashboard", "/projects", "/dispatches", "/stories", "/missing", "/centers"]).has(url.pathname);
+            },
+            handler: "NetworkFirst",
+            options: {
+              networkTimeoutSeconds: 5,
+              cacheName: "vn-api-fresh",
+              expiration: { maxEntries: 100, maxAgeSeconds: 300 },
+            },
+            method: "GET",
+          },
+          {
             urlPattern: /^https?:\/\/.*\/data\/.*/,
             handler: "StaleWhileRevalidate",
             options: {

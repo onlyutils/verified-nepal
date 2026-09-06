@@ -34,6 +34,7 @@ export async function handleOrgClaimNeed(event, opts, orgId, needId) {
   const need = await getNeedById(auth.ddb, auth.tableName, needId);
   if (!need) throw err(404, "not found");
   if (need.status !== "published") throw err(409, "need_not_available");
+  if (need.group) throw err(409, "group_exists");
   const at = new Date().toISOString();
   need.handledBy = { orgId, orgName: org.name, bySub: auth.payload.sub, at };
   await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched", expectedStatus: "published" }).catch((e) => {

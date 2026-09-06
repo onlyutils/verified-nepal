@@ -21,7 +21,7 @@ import {
   type OfferPublic,
 } from "@/lib/api";
 import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
-import { useGoogleAuth } from "@/lib/auth";
+import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
 import { GENERAL_INCIDENT_ID, useIncidents } from "@/lib/incidents";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
@@ -46,6 +46,7 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { DistrictPicker } from "@/components/district-picker";
+import { SignInNudge } from "@/components/sign-in-nudge";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function categoryLabel(category: string, language: Language) {
@@ -424,6 +425,7 @@ export function GiveHelp({ language }: { language: Language }) {
   const [needs, setNeeds] = useState<NeedPublic[]>([]);
   const [needsLoading, setNeedsLoading] = useState(false);
   const [needsError, setNeedsError] = useState<string | null>(null);
+  const [needsRefresh, setNeedsRefresh] = useState(0);
   const [offersDistrict, setOffersDistrict] = useState("");
   const [offersCategory, setOffersCategory] = useState("");
   const [offers, setOffers] = useState<OfferPublic[]>([]);
@@ -475,7 +477,7 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [needsIncidentId, language, needsCategory, needsDistrict]);
+  }, [needsIncidentId, language, needsCategory, needsDistrict, needsRefresh]);
   useEffect(() => {
     let cancelled = false;
     if (!boardIncidentId) {
@@ -562,7 +564,14 @@ export function GiveHelp({ language }: { language: Language }) {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {needs.map((need) => (
-                <NeedCard key={need.id} language={language} need={need} orgs={verifiedOrgs} onFlag={() => setFlagId(need.id)} />
+                <NeedCard
+                  key={need.id}
+                  language={language}
+                  need={need}
+                  orgs={verifiedOrgs}
+                  onFlag={() => setFlagId(need.id)}
+                  onMutated={() => setNeedsRefresh((value) => value + 1)}
+                />
               ))}
             </div>
           )}
@@ -645,17 +654,25 @@ function GroupPanel({
   needId,
   group,
   onGroupChange,
+  onMutated,
 }: {
   language: Language;
   needId: string;
   group: GroupPublic;
   onGroupChange: (group: GroupPublic) => void;
+  onMutated: () => void;
 }) {
   const ts = formStrings[language];
   const auth = useGoogleAuth();
   const [itemText, setItemText] = useState("");
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [showSignInNudge, setShowSignInNudge] = useState(false);
+
+  const requireSignIn = () => {
+    rememberReturnTo();
+    setShowSignInNudge(true);
+  };
 
   const run = async (key: string, fn: () => Promise<void>) => {
     setBusy((b) => ({ ...b, [key]: true }));
@@ -671,47 +688,68 @@ function GroupPanel({
 
   const submitItem = () =>
     run("add", async () => {
-      if (!auth.idToken || !itemText.trim()) return;
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
+      if (!itemText.trim()) return;
       const result = await addGroupItem(auth.idToken, needId, itemText.trim());
       onGroupChange({
         ...group,
         items: [...group.items, { itemId: result.itemId, description: itemText.trim(), status: "open", createdAt: result.createdAt }],
       });
       setItemText("");
+      onMutated();
     });
 
   const claim = (itemId: string) =>
     run(itemId, async () => {
-      if (!auth.idToken) return;
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
       const result = await claimGroupItem(auth.idToken, needId, itemId);
       onGroupChange({
         ...group,
         items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "claimed", claimedByName: result.claimedByName } : it)),
       });
+      onMutated();
     });
 
   const release = (itemId: string) =>
     run(itemId, async () => {
-      if (!auth.idToken) return;
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
       await releaseGroupItem(auth.idToken, needId, itemId);
       onGroupChange({
         ...group,
         items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "open", claimedByName: undefined } : it)),
       });
+      onMutated();
     });
 
   const markDone = (itemId: string) =>
     run(itemId, async () => {
-      if (!auth.idToken) return;
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
       await markGroupItemDone(auth.idToken, needId, itemId);
       onGroupChange({ ...group, items: group.items.map((it) => (it.itemId === itemId ? { ...it, status: "done" } : it)) });
+      onMutated();
     });
 
   const join = () =>
     run("join", async () => {
-      if (!auth.idToken) return;
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
       await joinGroupApi(auth.idToken, needId);
       onGroupChange({ ...group, memberCount: group.memberCount + 1 });
+      onMutated();
     });
 
   return (
@@ -720,6 +758,7 @@ function GroupPanel({
         <p className="font-medium">{group.name}</p>
         <p className="text-xs text-muted-foreground">{ts.groupNotMarketplace}</p>
       </div>
+      {showSignInNudge ? <SignInNudge language={language} id={`group-${needId}`} title={ts.groupSignInTitle} body={ts.groupSignInBody} /> : null}
       {group.items.length > 0 ? (
         <ul className="space-y-2">
           {group.items.map((item) => (
@@ -774,7 +813,7 @@ function GroupPanel({
   );
 }
 
-function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: NeedPublic; orgs: MyOrg[]; onFlag: () => void }) {
+function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Language; need: NeedPublic; orgs: MyOrg[]; onFlag: () => void; onMutated: () => void }) {
   const t = labels[language];
   const ts = formStrings[language];
   const auth = useGoogleAuth();
@@ -791,6 +830,7 @@ function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: 
     try {
       await orgClaimNeed(auth.idToken, org.id, need.id);
       setHandledBy({ status: "matched", org: org.name });
+      onMutated();
     } catch (err) {
       setFormError(apiErrorMessage(err, language));
     } finally {
@@ -805,6 +845,7 @@ function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: 
     try {
       const result = await startGroup(auth.idToken, need.id);
       setGroup({ name: result.name, items: [], memberCount: 1 });
+      onMutated();
     } catch (err) {
       setFormError(apiErrorMessage(err, language));
     } finally {
@@ -843,8 +884,8 @@ function NeedCard({ language, need, orgs, onFlag }: { language: Language; need: 
           </div>
         ) : null}
         {group ? (
-          <GroupPanel language={language} needId={need.id} group={group} onGroupChange={setGroup} />
-        ) : need.status === "published" && auth.idToken ? (
+          <GroupPanel language={language} needId={need.id} group={group} onGroupChange={setGroup} onMutated={onMutated} />
+        ) : need.status === "published" && auth.idToken && !need.handledBy ? (
           <Button variant="outline" size="sm" disabled={forming} onClick={formGroup}>
             {ts.groupForm}
           </Button>

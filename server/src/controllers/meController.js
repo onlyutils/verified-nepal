@@ -75,7 +75,7 @@ function validateMissingBody(body) {
   if (!Array.isArray(body.phones) || body.phones.length < 1 || body.phones.length > 2) {
     throw err(400, "phones must have 1-2 entries");
   }
-  out.phones = body.phones.map((p) => String(p).replace(/[\s-]/g, ""));
+  out.phones = body.phones.map((p) => String(p).replace(/[\s-]/g, "").replace(/^\+/, ""));
   if (out.phones.some((p) => !PHONE.test(p))) throw err(400, "phones must be 7-15 digits");
   if (body.photo !== undefined && body.photo !== null) {
     if (typeof body.photo !== "object" || Array.isArray(body.photo)) throw err(400, "photo must be object");
