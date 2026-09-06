@@ -44,6 +44,8 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   let benPhone;
   if (beneficiary.phone !== undefined && beneficiary.phone !== null && String(beneficiary.phone).trim() !== "") {
     benPhone = validatePhone(beneficiary.phone, "beneficiary.phone");
+  } else if (!onBehalf) {
+    throw err(400, "beneficiary.phone required when onBehalf is false");
   }
   const benEmail = validateOptionalEmail(beneficiary.email, "beneficiary.email");
   const district = validateDistrict(beneficiary.district, "beneficiary.district");

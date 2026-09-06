@@ -372,7 +372,8 @@ export function GetHelp({ language }: { language: Language }) {
     }
     if (registrantEmail.trim() && !isValidEmail(registrantEmail.trim())) next.registrantEmail = ts.validationEmailInvalid;
     if (beneficiaryEmail.trim() && !isValidEmail(beneficiaryEmail.trim())) next.beneficiaryEmail = ts.validationEmailInvalid;
-    if (beneficiaryPhone.trim() && !isValidPhone(beneficiaryPhone.trim())) next.beneficiaryPhone = ts.validationPhoneInvalid;
+    if (!onBehalf && !beneficiaryPhone.trim()) next.beneficiaryPhone = ts.validationBeneficiaryPhoneRequired;
+    else if (beneficiaryPhone.trim() && !isValidPhone(beneficiaryPhone.trim())) next.beneficiaryPhone = ts.validationPhoneInvalid;
     if (Object.keys(next).length) {
       setErrors(next);
       const order: FieldKey[] = [
@@ -499,7 +500,7 @@ export function GetHelp({ language }: { language: Language }) {
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 id="beneficiaryPhone"
-                label={t.getHelpBeneficiaryPhone}
+                label={onBehalf ? t.getHelpBeneficiaryPhone : `${t.getHelpBeneficiaryPhoneRequired} *`}
                 value={beneficiaryPhone}
                 onChange={update("beneficiaryPhone", setBeneficiaryPhone)}
                 error={errors.beneficiaryPhone}

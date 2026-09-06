@@ -15,7 +15,7 @@ function makeHandler(opts = {}) {
 function needBody(extra = {}) {
   return {
     onBehalf: false,
-    beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5 },
+    beneficiary: { name: "Rita Gurung", phone: "+9779800000001", district: "Gorkha", ward: 5 },
     category: "goods",
     description: "Need food and shelter for testing media support",
     language: "en",
