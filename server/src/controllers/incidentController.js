@@ -5,7 +5,11 @@ import { createIncident, getIncidentById, saveIncident, listIncidentsByStatus } 
 import { putPointer } from "../models/mine.js";
 
 const INCIDENT_STATUSES = ["draft", "pending", "active", "archived", "rejected"];
-const PUBLIC_INCIDENT_STATUSES = ["active", "pending", "archived"];
+const PUBLIC_INCIDENT_STATUSES = ["active", "archived"];
+const PUBLIC_INCIDENT_FIELDS = [
+  "id", "name", "nameNe", "kind", "status", "startedAt", "affectedDistricts", "summary", "summaryNe",
+  "coverImageUrl", "landingPagePath", "sourceAttribution", "createdAt",
+];
 
 function requireAdmin(auth) {
   if (auth.role !== "admin") throw err(403, "Forbidden");
@@ -71,12 +75,17 @@ async function listResponse(ddb, tableName, statuses) {
   return { items: items.map(stripInternal) };
 }
 
+async function listPublicResponse(ddb, tableName, statuses) {
+  const items = await listIncidentsByStatus(ddb, tableName, statuses);
+  return { items: items.map((item) => Object.fromEntries(PUBLIC_INCIDENT_FIELDS.filter((field) => item[field] !== undefined).map((field) => [field, item[field]]))) };
+}
+
 export async function handleGetIncidents(event, { getDdb, env }) {
   const q = getQuery(event);
   const statuses = parseStatuses(q.status, PUBLIC_INCIDENT_STATUSES, "active");
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
-  return json(200, await listResponse(getDdb(), tableName, statuses));
+  return json(200, await listPublicResponse(getDdb(), tableName, statuses));
 }
 
 export async function handleGetAdminIncidents(event, opts) {

@@ -260,6 +260,8 @@ describe("Phase5 admin user endpoints", () => {
     const updated = ddb.store.get("USER#user-1|PROFILE");
     assert.equal(updated.role, "moderator");
     assert.equal(updated.gsi2pk, "USER#moderator");
+    res = await handler(makeEvent({ method: "POST", path: "/admin/users/user-1/role", headers: { authorization: `Bearer ${adminTok}` }, body: { role: "moderator", districts: ["Atlantis"] } }));
+    assert.equal(res.statusCode, 400);
     // audit created
     const audits = Array.from(ddb.store.values()).filter(v => v.action === "role.set" && v.targetId === "user-1");
     assert.ok(audits.length >=1);

@@ -5,12 +5,10 @@ const CLAIM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function maskName(name) {
   if (!name || typeof name !== "string") return "";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const parts = name.trim().split(/\s+/).map((part) => part.replace(/[^\p{L}\p{M}\p{N}]/gu, "")).filter(Boolean);
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0];
-  const first = parts[0];
-  const last = parts[parts.length - 1];
-  return `${first} ${last[0].toUpperCase()}.`;
+  return [parts[0], ...parts.slice(1).map((part) => `${part.match(/^\P{M}\p{M}*/u)?.[0] || part[0]}.`)].join(" ");
 }
 
 export function maskEmail(email) {
@@ -34,7 +32,7 @@ export function publicActorName(item) {
     const first = local[0] || "*";
     return `${first}***@${domain}`;
   }
-  return raw;
+  return maskName(raw);
 }
 
 export function ttlSeconds(days = 30) {

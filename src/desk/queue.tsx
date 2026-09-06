@@ -24,7 +24,7 @@ function statusLabel(t: Record<string, string>, status: string) {
 
 export function Queue({ model }: { model: DeskModel }) {
   const { t } = model;
-  const { incidents } = useIncidents("active,pending,archived");
+  const { incidents } = useIncidents("active,archived");
   return (
     <SectionFrame
       title={t.deskQueueTitleRevised}

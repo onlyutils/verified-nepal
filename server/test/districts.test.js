@@ -48,5 +48,7 @@ describe("POST /me/districts", () => {
     assert.equal(res.statusCode, 400);
     res = await handler(makeEvent({ method: "POST", path: "/me/districts", headers: { authorization: `Bearer ${tok}` }, body: { districts: Array.from({ length: 11 }, (_, i) => `D${i}`) } }));
     assert.equal(res.statusCode, 400);
+    res = await handler(makeEvent({ method: "POST", path: "/me/districts", headers: { authorization: `Bearer ${tok}` }, body: { districts: ["Atlantis"] } }));
+    assert.equal(res.statusCode, 400);
   });
 });

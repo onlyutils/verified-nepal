@@ -1,5 +1,5 @@
 import { err } from "./http.js";
-import { DISPATCH_TAGS, MAX_NEED_MEDIA_ITEMS } from "../constants.js";
+import { DISPATCH_TAGS, DISTRICTS, MAX_NEED_MEDIA_ITEMS } from "../constants.js";
 
 export function validateString(v, name, min, max) {
   if (typeof v !== "string") throw err(400, `${name} must be a string`);
@@ -16,7 +16,7 @@ export function validateOptionalString(v, name, min, max) {
 
 export function validateDistrict(v, name = "district") {
   const t = validateString(v, name, 1, 100);
-  if (t.includes("#")) throw err(400, `${name} contains an invalid character`);
+  if (!DISTRICTS.includes(t)) throw err(400, `${name} is not a recognized district`);
   return t;
 }
 

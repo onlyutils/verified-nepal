@@ -574,7 +574,7 @@ export function GetHelp({ language }: { language: Language }) {
               >
                 <NativeSelectOption value="">{disaster.incidentGeneral}</NativeSelectOption>
                 {incidents
-                  .filter((incident) => incident.status === "active" || incident.status === "pending")
+                  .filter((incident) => incident.status === "active")
                   .map((incident) => (
                     <NativeSelectOption key={incident.id} value={incident.id}>
                       {language === "ne" && incident.nameNe ? incident.nameNe : incident.name}

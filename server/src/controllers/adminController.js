@@ -1,5 +1,5 @@
 import { json, err, getQuery, parseBody, decodeCursor, encodeCursor } from "../lib/http.js";
-import { validateString } from "../lib/validate.js";
+import { validateString, validateDistrict } from "../lib/validate.js";
 import { maskEmail } from "../lib/format.js";
 import { listUsersByRoles, getEmailPointer, getUserProfile, setUserRole } from "../models/user.js";
 import { getAdminStats } from "../models/stats.js";
@@ -70,7 +70,7 @@ export async function handleAdminUsersRole(event, opts, targetSub) {
   let districts = [];
   if (body.districts !== undefined) {
     if (!Array.isArray(body.districts)) throw err(400, "districts must be array");
-    districts = body.districts.map((d) => validateString(d, "districts[]", 1, 100));
+    districts = body.districts.map((d) => validateDistrict(d, "districts[]"));
   }
   const user = await setUserRole(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, targetSub, role, districts });
   const actorName = auth.user?.name || auth.payload.name || "";

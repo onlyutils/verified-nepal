@@ -1,5 +1,15 @@
 export const CATEGORIES = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 export const LANGUAGES = ["en", "ne"];
+export const DISTRICTS = [
+  "Rasuwa", "Nuwakot", "Sindhupalchok", "Achham", "Arghakhanchi", "Baglung", "Baitadi", "Bajhang", "Bajura",
+  "Banke", "Bara", "Bardiya", "Bhaktapur", "Bhojpur", "Chitwan", "Dadeldhura", "Dailekh", "Dang", "Darchula",
+  "Dhading", "Dhankuta", "Dhanusha", "Dolakha", "Dolpa", "Doti", "Gorkha", "Gulmi", "Humla", "Ilam", "Jajarkot",
+  "Jhapa", "Jumla", "Kailali", "Kalikot", "Kanchanpur", "Kapilvastu", "Kaski", "Kathmandu", "Kavrepalanchok",
+  "Khotang", "Lalitpur", "Lamjung", "Mahottari", "Makwanpur", "Manang", "Morang", "Mugu", "Mustang", "Myagdi",
+  "Nawalpur", "NawalparasiWest", "Okhaldhunga", "Palpa", "Panchthar", "Parbat", "Parsa", "Pyuthan", "Ramechhap",
+  "Rautahat", "Rolpa", "RukumEast", "RukumWest", "Rupandehi", "Salyan", "Sankhuwasabha", "Saptari", "Sarlahi",
+  "Sindhuli", "Siraha", "Solukhumbu", "Sunsari", "Surkhet", "Syangja", "Tanahun", "Taplejung", "Tehrathum", "Udayapur",
+];
 export const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
 // Bucket for needs submitted without a specific incident/event.
 export const GENERAL_INCIDENT_ID = "general";

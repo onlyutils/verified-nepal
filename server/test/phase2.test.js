@@ -299,9 +299,9 @@ describe("GET /ledger", () => {
     // newest first: iso2 before iso1
     assert.equal(body.items[0].redeemedAt, iso2);
     assert.equal(body.items[1].redeemedAt, iso1);
-    // check maskedName: Ram, Bahadur -> Ram, B. (masked retains comma)
+    // check maskedName: Ram, Bahadur -> Ram B. (punctuation stripped)
     const ramItem = body.items.find(it=>it.redeemedAt===iso1);
-    assert.equal(ramItem.maskedName, "Ram, B.");
+    assert.equal(ramItem.maskedName, "Ram B.");
     assert.equal(ramItem.category, "goods");
     // district-only should return all 3 via second copy single query
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{district:"Gorkha"}}));
@@ -317,11 +317,9 @@ describe("GET /ledger", () => {
     assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName");
     // second line should be for newest in ward 4 (Sita K.)
     assert.ok(lines[1].includes("Sita K."));
-    // line with comma should be quoted
-    const ramLine = lines.find(l=>l.includes("Ram,"));
+    const ramLine = lines.find(l=>l.includes("Ram B."));
     assert.ok(ramLine, "csv should contain Ram line");
-    // csv escaped: field with comma must be quoted
-    assert.ok(ramLine.startsWith('"Ram, B."'), `ram line not escaped: ${ramLine}`);
+    assert.equal(ramLine.startsWith('"Ram, B."'), false);
     // no sensitive keys in ledger json
     const jsonStr = JSON.stringify(body.items);
     assert.equal(jsonStr.includes("phone"), false);
@@ -336,17 +334,14 @@ describe("GET /ledger", () => {
     // district required
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{}}));
     assert.equal(res.statusCode, 400);
-    // escaping test with quote
-    // test quote escaping via district containing quotes (maskedName quote already tested via comma)
-    // create a need whose maskedName will contain a quote in first name
+    // punctuation in a name is stripped before masking
     const {id:id4} = await createNeed(handler, {name:'Te"st Singh', district:"Gorkha", ward:4});
     const c4 = (await publishNeed(handler, modTok, id4)).claimCode;
     const iso4 = new Date("2026-08-13T12:00:00.000Z").toISOString();
     await handler(makeEvent({method:"POST", path:"/claims/sync", headers:{authorization:`Bearer ${modTok}`}, body:{redemptions:[{code:c4, redeemedAt: iso4}]}}));
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{district:"Gorkha", ward:"4", format:"csv"}}));
     const csv2 = res.body;
-    // maskedName Te"st S. should be escaped with doubled quotes
-    assert.ok(csv2.includes('Te""st'), `quote escaping failed in ${csv2}`);
+    assert.ok(csv2.includes("Test S."), `punctuation stripping failed in ${csv2}`);
   });
 });
 

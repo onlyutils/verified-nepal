@@ -223,7 +223,7 @@ export function createNeed(body: CreateNeedBody, token?: string): Promise<Create
   return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body), token });
 }
 
-export function listIncidents(status = "active,pending"): Promise<{ items: Incident[] }> {
+export function listIncidents(status = "active"): Promise<{ items: Incident[] }> {
   return request<{ items: Incident[] }>(`/incidents?status=${encodeURIComponent(status)}`);
 }
 

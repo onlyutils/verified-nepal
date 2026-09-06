@@ -32,7 +32,7 @@ function mostRecentActive(incidents: Incident[]) {
   return incidents.filter((incident) => incident.status === "active").sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 }
 
-export function useIncidents(status = "active,pending") {
+export function useIncidents(status = "active") {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(() => loadSelectedIncidentId());
@@ -70,7 +70,7 @@ export function useIncidents(status = "active,pending") {
   useEffect(() => {
     if (loading || defaultResolved) return;
     const selected = incidents.find(
-      (incident) => incident.id === selectedId && (incident.status === "active" || incident.status === "pending"),
+      (incident) => incident.id === selectedId && incident.status === "active",
     );
     if (selected) {
       setDefaultResolved(true);
@@ -97,7 +97,7 @@ export function useIncidents(status = "active,pending") {
   }, [defaultResolved, incidents, loading, selectedId]);
 
   const currentIncident = incidents.find(
-    (incident) => incident.id === selectedId && (incident.status === "active" || incident.status === "pending"),
+    (incident) => incident.id === selectedId && incident.status === "active",
   );
   const currentIncidentId = currentIncident?.id;
   const setCurrentIncidentId = (id: string) => saveSelectedIncidentId(id);

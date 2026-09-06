@@ -109,6 +109,37 @@ describe("Phase4 dispatches", () => {
     assert.equal(audit.reason, "needs more sources");
   });
 
+  it("resubmission records a new submittedAt and moves the article in the pending queue", async () => {
+    const kp = makeKeyPair();
+    const ddb = new FakeDdb();
+    const { handler } = makeHandler({ kp, ddb });
+    ddb.store.set("USER#mod-1|PROFILE", { ...profile("mod-1", "moderator", "Ram Thapa"), guidelinesAckAt: "now" });
+    const first = await createSubmittedArticle(handler, kp, "author-1", { title: "Revised first" });
+    await moderate(handler, kp, first.id, "reject", "needs edits");
+    ddb.store.get(`DISPATCH#${first.id}|META`).submittedAt = "2026-01-01T00:00:00.000Z";
+    let res = await handler(makeEvent({ method: "PUT", path: `/me/articles/${first.id}`, headers: { authorization: `Bearer ${first.tok}` }, body: {
+      title: "Revised first", blocks: [{ type: "paragraph", text: "This revised article body is long enough for testing." }],
+      cover: { url: "https://cdn.example/cover.jpg", fileId: "cover-1", source: "Author" }, tags: ["story"],
+    } }));
+    assert.equal(res.statusCode, 200, res.body);
+    res = await handler(makeEvent({ method: "POST", path: `/me/articles/${first.id}/submit`, headers: { authorization: `Bearer ${first.tok}` } }));
+    assert.equal(res.statusCode, 200, res.body);
+    const resubmittedItem = ddb.store.get(`DISPATCH#${first.id}|META`);
+    assert.notEqual(resubmittedItem.submittedAt, "2026-01-01T00:00:00.000Z");
+
+    const second = await createSubmittedArticle(handler, kp, "author-2", { title: "Second article" });
+    const secondItem = ddb.store.get(`DISPATCH#${second.id}|META`);
+    resubmittedItem.createdAt = "2026-01-01T00:00:00.000Z";
+    secondItem.createdAt = "2026-01-03T00:00:00.000Z";
+    resubmittedItem.submittedAt = "2026-01-04T00:00:00.000Z";
+    secondItem.submittedAt = "2026-01-02T00:00:00.000Z";
+    resubmittedItem.gsi2sk = resubmittedItem.submittedAt;
+    secondItem.gsi2sk = secondItem.submittedAt;
+    res = await handler(makeEvent({ method: "GET", path: "/moderation/dispatches", headers: { authorization: `Bearer ${token(kp, "mod-1", "Ram Thapa", "mod@example.com")}` } }));
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(JSON.parse(res.body).items.map((item) => item.id), [second.id, first.id]);
+  });
+
   it("moderation role and guideline gates remain enforced", async () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();

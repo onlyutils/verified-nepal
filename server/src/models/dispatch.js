@@ -64,7 +64,7 @@ export async function getDispatchById(ddb, tableName, id) {
 export async function listPendingDispatches(ddb, tableName) {
   const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": "DISPATCH#pending" }, ScanIndexForward: true }));
   let items = res.Items || [];
-  items.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  items.sort((a, b) => (a.submittedAt || a.createdAt || "").localeCompare(b.submittedAt || b.createdAt || ""));
   return items;
 }
 
