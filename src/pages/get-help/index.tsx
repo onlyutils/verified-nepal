@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Home, Search } from "lucide-react";
 import {
   CATEGORIES,
@@ -128,6 +128,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, string>>({});
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileTokenRef = useRef("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
@@ -279,6 +280,17 @@ export function GetHelp({ language }: { language: Language }) {
     setSuccess(null);
   };
 
+  // Selecting a file can race the Turnstile widget's own solve time, so wait briefly for a
+  // token to land rather than firing the presign request with none and failing outright.
+  const waitForTurnstileToken = async () => {
+    if (!TURNSTILE_KEY) return "";
+    const deadline = Date.now() + 8000;
+    while (!turnstileTokenRef.current && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    return turnstileTokenRef.current;
+  };
+
   const handleMediaChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
@@ -310,11 +322,12 @@ export function GetHelp({ language }: { language: Language }) {
         const uploadId = `${Date.now()}-${index}-${file.name}`;
         setUploadingFiles((current) => ({ ...current, [uploadId]: file.name }));
         try {
+          const token = await waitForTurnstileToken();
           const presign = await presignNeedMedia({
             filename: file.name,
             contentType: file.type,
             size: file.size,
-            turnstileToken: turnstileToken || undefined,
+            turnstileToken: token || undefined,
           });
           const headers = {
             ...(presign.headers || {}),
@@ -768,7 +781,13 @@ export function GetHelp({ language }: { language: Language }) {
             {TURNSTILE_KEY ? (
               <div>
                 <p className="mb-2 text-sm text-muted-foreground">{t.getHelpTurnstileHint}</p>
-                <TurnstileWidget siteKey={TURNSTILE_KEY} onToken={setTurnstileToken} />
+                <TurnstileWidget
+                  siteKey={TURNSTILE_KEY}
+                  onToken={(tok) => {
+                    turnstileTokenRef.current = tok;
+                    setTurnstileToken(tok);
+                  }}
+                />
               </div>
             ) : null}
             {errorCount ? (

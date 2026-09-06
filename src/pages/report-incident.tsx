@@ -22,6 +22,11 @@ const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
+interface PendingMedia {
+  file: File;
+  type: "photo" | "video";
+}
+
 export function ReportIncident({ language }: { language: Language }) {
   const t = disasterStrings[language];
   const auth = useGoogleAuth();
@@ -29,59 +34,39 @@ export function ReportIncident({ language }: { language: Language }) {
   const [kind, setKind] = useState("");
   const [district, setDistrict] = useState<DistrictName | "">("");
   const [description, setDescription] = useState("");
-  const [media, setMedia] = useState<NeedMediaItem[]>([]);
-  const [mediaNames, setMediaNames] = useState<Record<string, string>>({});
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
 
-  const handleMediaChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Files are only validated and staged here; the actual presign+upload happens on submit,
+  // by which point the Turnstile challenge has had time to solve (it doesn't on file select).
+  const handleMediaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (!files.length) return;
     setMediaError(null);
-    const available = Math.max(0, 2 - media.length);
-    const valid = files.filter((file) => {
-      const accepted = PHOTO_TYPES.includes(file.type) || VIDEO_TYPES.includes(file.type);
-      const size = PHOTO_TYPES.includes(file.type) ? MAX_PHOTO_SIZE : MAX_VIDEO_SIZE;
-      if (!accepted) {
+    const available = Math.max(0, 2 - pendingMedia.length);
+    const valid: PendingMedia[] = [];
+    for (const file of files) {
+      const isPhoto = PHOTO_TYPES.includes(file.type);
+      const isVideo = VIDEO_TYPES.includes(file.type);
+      if (!isPhoto && !isVideo) {
         setMediaError(t.reportIncidentInvalidType);
-        return false;
+        continue;
       }
-      if (file.size <= 0 || file.size > size) {
+      if (file.size <= 0 || file.size > (isPhoto ? MAX_PHOTO_SIZE : MAX_VIDEO_SIZE)) {
         setMediaError(t.reportIncidentTooLarge);
-        return false;
+        continue;
       }
-      if (PHOTO_TYPES.includes(file.type) && media.some((item) => item.type === "photo")) return false;
-      if (VIDEO_TYPES.includes(file.type) && media.some((item) => item.type === "video")) return false;
-      return true;
-    });
+      const type = isPhoto ? "photo" : "video";
+      if (pendingMedia.some((item) => item.type === type) || valid.some((item) => item.type === type)) continue;
+      valid.push({ file, type });
+    }
     if (files.length > available) setMediaError(t.reportIncidentTooLarge);
-    await Promise.all(
-      valid.slice(0, available).map(async (file) => {
-        try {
-          const presign = await presignNeedMedia({
-            filename: file.name,
-            contentType: file.type,
-            size: file.size,
-            turnstileToken: turnstileToken || undefined,
-          });
-          const headers = {
-            ...(presign.headers || {}),
-            ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
-          };
-          const upload = await fetch(presign.uploadUrl, { method: "PUT", body: file, headers });
-          if (!upload.ok) throw new Error("upload");
-          const item: NeedMediaItem = { fileId: presign.fileId, type: presign.mediaType, originalUrl: presign.publicUrl };
-          setMedia((current) => [...current, item]);
-          setMediaNames((current) => ({ ...current, [item.fileId]: file.name }));
-        } catch {
-          setMediaError(t.reportIncidentMediaUploadError);
-        }
-      }),
-    );
+    setPendingMedia((current) => [...current, ...valid.slice(0, available)]);
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -91,12 +76,39 @@ export function ReportIncident({ language }: { language: Language }) {
       setError(t.reportIncidentSignIn);
       return;
     }
-    if (!name.trim() || !kind.trim() || !district || description.trim().length < 10 || !media.some((item) => item.type === "photo")) {
+    if (
+      !name.trim() ||
+      !kind.trim() ||
+      !district ||
+      description.trim().length < 10 ||
+      !pendingMedia.some((item) => item.type === "photo")
+    ) {
       setError(t.reportIncidentRequired);
       return;
     }
     setSubmitting(true);
     try {
+      const media: NeedMediaItem[] = [];
+      try {
+        for (const item of pendingMedia) {
+          const presign = await presignNeedMedia({
+            filename: item.file.name,
+            contentType: item.file.type,
+            size: item.file.size,
+            turnstileToken: turnstileToken || undefined,
+          });
+          const headers = {
+            ...(presign.headers || {}),
+            ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": item.file.type }),
+          };
+          const upload = await fetch(presign.uploadUrl, { method: "PUT", body: item.file, headers });
+          if (!upload.ok) throw new Error("upload");
+          media.push({ fileId: presign.fileId, type: presign.mediaType, originalUrl: presign.publicUrl });
+        }
+      } catch {
+        setError(t.reportIncidentMediaUploadError);
+        return;
+      }
       const response = await requestIncident(
         { name: name.trim(), kind: kind.trim(), district, description: description.trim(), media },
         auth.idToken,
@@ -188,7 +200,7 @@ export function ReportIncident({ language }: { language: Language }) {
                   accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                   multiple
                   onChange={handleMediaChange}
-                  disabled={submitting || media.length >= 2}
+                  disabled={submitting || pendingMedia.length >= 2}
                 />
                 <p className="text-sm text-muted-foreground">{t.reportIncidentMediaHint}</p>
                 {mediaError ? (
@@ -196,11 +208,11 @@ export function ReportIncident({ language }: { language: Language }) {
                     {mediaError}
                   </p>
                 ) : null}
-                {media.length ? (
+                {pendingMedia.length ? (
                   <ul className="space-y-2 text-sm">
-                    {media.map((item) => (
-                      <li key={item.fileId} className="rounded-md border px-3 py-2">
-                        {mediaNames[item.fileId] || item.fileId} · {item.type === "photo" ? t.reportIncidentPhoto : t.reportIncidentVideo}
+                    {pendingMedia.map((item, index) => (
+                      <li key={`${item.file.name}-${index}`} className="rounded-md border px-3 py-2">
+                        {item.file.name} · {item.type === "photo" ? t.reportIncidentPhoto : t.reportIncidentVideo}
                       </li>
                     ))}
                   </ul>
