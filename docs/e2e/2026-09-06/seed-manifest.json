@@ -1,0 +1,6558 @@
+{
+  "failures": [],
+  "media": [
+    {
+      "flow": "smoke",
+      "fileId": "ou_file_34K2pLfVkhsq8O5kO13OI",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K2pLfVkhsq8O5kO13OI/seed-01.jpg",
+      "file": "seed-01.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "incident-request",
+      "fileId": "ou_file_34K7LmM7XcO5H5oEMLHoH",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7LmM7XcO5H5oEMLHoH/seed-a01.jpg",
+      "file": "seed-a01.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "incident-request",
+      "fileId": "ou_file_34K7LoBUT8dDIe52JVPUF",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7LoBUT8dDIe52JVPUF/seed-a02.jpg",
+      "file": "seed-a02.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7Lpid3dNxxmJ014QVb",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7Lpid3dNxxmJ014QVb/seed-a03.jpg",
+      "file": "seed-a03.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7LulXm0nWZumedgcTn",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7LulXm0nWZumedgcTn/seed-a04.jpg",
+      "file": "seed-a04.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7M0BGUgAe3hO2f4EaD",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7M0BGUgAe3hO2f4EaD/seed-a05.jpg",
+      "file": "seed-a05.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7M53G0KWQDxDazoRCt",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7M53G0KWQDxDazoRCt/seed-a06.jpg",
+      "file": "seed-a06.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7M9r9kKmFQsk6dQvLM",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7M9r9kKmFQsk6dQvLM/seed-a07.jpg",
+      "file": "seed-a07.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7MEmAUcroOqjuLT6sA",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7MEmAUcroOqjuLT6sA/seed-a08.jpg",
+      "file": "seed-a08.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7MJyjPp1H6VJqT5cgF",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7MJyjPp1H6VJqT5cgF/seed-a09.jpg",
+      "file": "seed-a09.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7MPSe6iUQovWdigq9H",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7MPSe6iUQovWdigq9H/seed-a10.jpg",
+      "file": "seed-a10.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7MToxRRS2UMKmQ6UbV",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7MToxRRS2UMKmQ6UbV/seed-a11.jpg",
+      "file": "seed-a11.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "need-media",
+      "fileId": "ou_file_34K7MZH1FDuPHwr6W0gF5",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7MZH1FDuPHwr6W0gF5/seed-a12.jpg",
+      "file": "seed-a12.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7R2udhQkDLDj7LUbIa",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7R2udhQkDLDj7LUbIa/seed-a01.jpg",
+      "file": "seed-a01.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7R54Hqw3bXQyNUfQc8",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7R54Hqw3bXQyNUfQc8/seed-a02.jpg",
+      "file": "seed-a02.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7R6uLBVQX3G987eO6N",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7R6uLBVQX3G987eO6N/seed-a03.jpg",
+      "file": "seed-a03.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7R8eXg9eGBx4EgmBal",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7R8eXg9eGBx4EgmBal/seed-a04.jpg",
+      "file": "seed-a04.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7RAJNm8SEUh2p9I8Gn",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RAJNm8SEUh2p9I8Gn/seed-a05.jpg",
+      "file": "seed-a05.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-committee",
+      "fileId": "ou_file_34K7RBeR2ypqEPd1bEbis",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RBeR2ypqEPd1bEbis/seed-a06.jpg",
+      "file": "seed-a06.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-mod",
+      "fileId": "ou_file_34K7RCqiMeSFM2zz5AO6F",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RCqiMeSFM2zz5AO6F/seed-a07.jpg",
+      "file": "seed-a07.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "project-photo-mod",
+      "fileId": "ou_file_34K7RE1EuPYOyTargq5j0",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RE1EuPYOyTargq5j0/seed-a08.jpg",
+      "file": "seed-a08.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7RakbcB8ZPlX6OF0HI",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RakbcB8ZPlX6OF0HI/seed-a09.jpg",
+      "file": "seed-a09.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-block",
+      "fileId": "ou_file_34K7RcJnRTBOcmyIMIJxx",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RcJnRTBOcmyIMIJxx/seed-a10.jpg",
+      "file": "seed-a10.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7Rez7clQzfliV6Gn3q",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7Rez7clQzfliV6Gn3q/seed-a11.jpg",
+      "file": "seed-a11.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7RhoaNuL9c6U04jZ9Y",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RhoaNuL9c6U04jZ9Y/seed-a12.jpg",
+      "file": "seed-a12.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-block",
+      "fileId": "ou_file_34K7Rj4BN02fA30agLNuI",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7Rj4BN02fA30agLNuI/seed-b01.jpg",
+      "file": "seed-b01.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7RpppTwKuCCFYaXIoe",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RpppTwKuCCFYaXIoe/seed-b02.jpg",
+      "file": "seed-b02.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7RuQZdOCcg2f89ZgN5",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RuQZdOCcg2f89ZgN5/seed-b03.jpg",
+      "file": "seed-b03.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-block",
+      "fileId": "ou_file_34K7RvxKARP7muGXJdphf",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7RvxKARP7muGXJdphf/seed-b04.jpg",
+      "file": "seed-b04.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7Rzs8tcAML04u9nskS",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7Rzs8tcAML04u9nskS/seed-b05.jpg",
+      "file": "seed-b05.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-cover",
+      "fileId": "ou_file_34K7S3KzUa2fApF4thMMl",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7S3KzUa2fApF4thMMl/seed-b06.jpg",
+      "file": "seed-b06.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "article-block",
+      "fileId": "ou_file_34K7S4bqxA61ebtS5ZhFV",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7S4bqxA61ebtS5ZhFV/seed-b07.jpg",
+      "file": "seed-b07.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7T3oGaif2S2rM1TUNx",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7T3oGaif2S2rM1TUNx/seed-b08.jpg",
+      "file": "seed-b08.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7T720AiqnqSIeQOk11",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7T720AiqnqSIeQOk11/seed-b09.jpg",
+      "file": "seed-b09.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7TAC2HxPoDYk21fTzE",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TAC2HxPoDYk21fTzE/seed-b10.jpg",
+      "file": "seed-b10.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7TD4ufESg25XZHs29k",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TD4ufESg25XZHs29k/seed-b11.jpg",
+      "file": "seed-b11.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7TFhzgra7s3uoAso97",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TFhzgra7s3uoAso97/seed-b12.jpg",
+      "file": "seed-b12.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "story-photo",
+      "fileId": "ou_file_34K7TIB2Uz2u8gVns0E0Y",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TIB2Uz2u8gVns0E0Y/seed-b13.jpg",
+      "file": "seed-b13.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7TTtkmS6xaTk1WAcW4",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TTtkmS6xaTk1WAcW4/seed-b14.jpg",
+      "file": "seed-b14.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7TW9pZZi9ow85xdZmg",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TW9pZZi9ow85xdZmg/seed-a01.jpg",
+      "file": "seed-a01.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7TYJ5MBAk8SfHXOCCH",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TYJ5MBAk8SfHXOCCH/seed-a02.jpg",
+      "file": "seed-a02.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7TaQ0NOFgE5AMS6HYK",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TaQ0NOFgE5AMS6HYK/seed-a03.jpg",
+      "file": "seed-a03.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7TccTO6DRxLYHpCl6d",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7TccTO6DRxLYHpCl6d/seed-a04.jpg",
+      "file": "seed-a04.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    },
+    {
+      "flow": "poster-photo",
+      "fileId": "ou_file_34K7Tf2asj98WrMYXWMzB",
+      "publicUrl": "https://cdn.dev.verifiednepal.com/media/ou_client_34HIKupJ5afWl0DIoh7zi/ou_file_34K7Tf2asj98WrMYXWMzB/seed-a05.jpg",
+      "file": "seed-a05.jpg",
+      "putStatus": 200,
+      "cdnStatus": 200
+    }
+  ],
+  "helpers": [
+    {
+      "n": "01",
+      "sub": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "email": "helper-01-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 01",
+      "loggable": true,
+      "districts": [
+        "Morang",
+        "Bhaktapur",
+        "Syangja"
+      ],
+      "createdAt": "2026-08-18T12:16:18.267Z"
+    },
+    {
+      "n": "02",
+      "sub": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "email": "helper-02-beta-tester@verifiednepal.com",
+      "name": "सीता तामाङ (Beta 02)",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-08-12T02:35:33.325Z"
+    },
+    {
+      "n": "03",
+      "sub": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "email": "helper-03-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 03",
+      "loggable": true,
+      "districts": [
+        "Kathmandu",
+        "Tanahun"
+      ],
+      "createdAt": "2026-08-15T18:22:22.128Z"
+    },
+    {
+      "n": "04",
+      "sub": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "email": "helper-04-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 04",
+      "loggable": true,
+      "districts": [
+        "Kaski"
+      ],
+      "createdAt": "2026-08-11T16:22:39.392Z"
+    },
+    {
+      "n": "05",
+      "sub": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "email": "helper-05-beta-tester@verifiednepal.com",
+      "name": "रमेश श्रेष्ठ (Beta 05)",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-08-10T06:46:48.363Z"
+    },
+    {
+      "n": "06",
+      "sub": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "email": "helper-06-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 06",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-09-03T01:13:18.818Z"
+    },
+    {
+      "n": "07",
+      "sub": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "email": "helper-07-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 07",
+      "loggable": true,
+      "districts": [
+        "Morang",
+        "Kailali",
+        "Lalitpur"
+      ],
+      "createdAt": "2026-09-03T09:51:09.789Z"
+    },
+    {
+      "n": "08",
+      "sub": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "email": "helper-08-beta-tester@verifiednepal.com",
+      "name": "अनिता गुरुङ (Beta 08)",
+      "loggable": true,
+      "districts": [
+        "Achham",
+        "Kaski"
+      ],
+      "createdAt": "2026-09-05T18:00:15.544Z"
+    },
+    {
+      "n": "09",
+      "sub": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "email": "helper-09-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 09",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-08-28T06:05:08.026Z"
+    },
+    {
+      "n": "10",
+      "sub": "ou_user_34K2hr02nVSsKynyidD2N",
+      "email": "helper-10-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 10",
+      "loggable": true,
+      "districts": [
+        "Kathmandu"
+      ],
+      "createdAt": "2026-08-08T14:29:56.824Z"
+    },
+    {
+      "n": "11",
+      "sub": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "email": "helper-11-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 11",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-09-06T11:18:09.987Z"
+    },
+    {
+      "n": "12",
+      "sub": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "email": "helper-12-beta-tester@verifiednepal.com",
+      "name": "विकास राई (Beta 12)",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-09-02T11:54:31.462Z"
+    },
+    {
+      "n": "13",
+      "sub": "ou_user_34K2hybqg06hzoC6ZL170",
+      "email": "helper-13-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 13",
+      "loggable": true,
+      "districts": [
+        "Kaski",
+        "Dolakha"
+      ],
+      "createdAt": "2026-08-26T10:42:39.141Z"
+    },
+    {
+      "n": "14",
+      "sub": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "email": "helper-14-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 14",
+      "loggable": true,
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-09-01T04:05:27.071Z"
+    },
+    {
+      "n": "15",
+      "sub": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "email": "helper-15-beta-tester@verifiednepal.com",
+      "name": "सुनिता मगर (Beta 15)",
+      "loggable": true,
+      "districts": [
+        "Jhapa",
+        "Bardiya"
+      ],
+      "createdAt": "2026-08-15T23:59:41.946Z"
+    },
+    {
+      "n": "16",
+      "sub": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "email": "helper-16-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 16",
+      "loggable": true,
+      "districts": [
+        "Bardiya",
+        "Kaski",
+        "Kavrepalanchok"
+      ],
+      "createdAt": "2026-08-14T02:58:10.996Z"
+    },
+    {
+      "n": "17",
+      "sub": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "email": "helper-17-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 17",
+      "loggable": true,
+      "districts": [
+        "Kathmandu",
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-09-03T05:59:57.018Z"
+    },
+    {
+      "n": "18",
+      "sub": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "email": "helper-18-beta-tester@verifiednepal.com",
+      "name": "प्रकाश लामा (Beta 18)",
+      "loggable": true,
+      "districts": [
+        "Tanahun",
+        "Sindhupalchok",
+        "Achham"
+      ],
+      "createdAt": "2026-08-13T14:27:09.846Z"
+    },
+    {
+      "n": "19",
+      "sub": "ou_user_34K2iQmUz7WK5LxCU7EGc",
+      "email": "helper-19-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 19",
+      "loggable": true,
+      "districts": [
+        "Gorkha",
+        "Kaski"
+      ],
+      "createdAt": "2026-08-30T15:04:49.525Z"
+    },
+    {
+      "n": "20",
+      "sub": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "email": "helper-20-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 20",
+      "loggable": true,
+      "districts": [
+        "Lalitpur",
+        "Achham"
+      ],
+      "createdAt": "2026-08-30T06:16:47.573Z"
+    },
+    {
+      "n": "21",
+      "sub": "ou_user_34K2iX966laabGIrXr2ZW",
+      "email": "helper-21-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 21",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-08-14T15:54:14.177Z"
+    },
+    {
+      "n": "22",
+      "sub": "ou_user_34K2iaM3PGW5Bk4KEulW5",
+      "email": "helper-22-beta-tester@verifiednepal.com",
+      "name": "कमला थापा (Beta 22)",
+      "loggable": true,
+      "districts": [
+        "Jhapa",
+        "Kailali",
+        "Tanahun"
+      ],
+      "createdAt": "2026-09-03T18:18:16.958Z"
+    },
+    {
+      "n": "23",
+      "sub": "ou_user_34K2icaBVWlgiGCnSYEaG",
+      "email": "helper-23-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 23",
+      "loggable": true,
+      "districts": [
+        "Tanahun"
+      ],
+      "createdAt": "2026-08-12T19:29:04.386Z"
+    },
+    {
+      "n": "24",
+      "sub": "ou_user_34K2ig5As1Ci5fTlRzFL2",
+      "email": "helper-24-beta-tester@verifiednepal.com",
+      "name": "Beta Helper 24",
+      "loggable": true,
+      "districts": [],
+      "createdAt": "2026-09-01T01:57:51.648Z"
+    },
+    {
+      "n": "25",
+      "sub": "ou_user_34K2ijchcyhQCG1n8ittv",
+      "email": "helper-25-beta-tester@verifiednepal.com",
+      "name": "दीपक भट्टराई (Beta 25)",
+      "loggable": true,
+      "districts": [
+        "Kaski",
+        "Makwanpur",
+        "Rasuwa"
+      ],
+      "createdAt": "2026-08-29T22:51:31.925Z"
+    },
+    {
+      "n": "026",
+      "sub": "seed_helper_026",
+      "email": "seed-helper-026@verifiednepal.com",
+      "name": "Sunita Rai",
+      "loggable": false,
+      "districts": [
+        "Nuwakot",
+        "Kathmandu",
+        "Bhaktapur"
+      ],
+      "createdAt": "2026-08-11T13:42:52.863Z"
+    },
+    {
+      "n": "027",
+      "sub": "seed_helper_027",
+      "email": "seed-helper-027@verifiednepal.com",
+      "name": "Maya Yadav",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-26T00:24:56.296Z"
+    },
+    {
+      "n": "028",
+      "sub": "seed_helper_028",
+      "email": "seed-helper-028@verifiednepal.com",
+      "name": "गीता राई",
+      "loggable": false,
+      "districts": [
+        "Jhapa"
+      ],
+      "createdAt": "2026-08-13T02:16:26.792Z"
+    },
+    {
+      "n": "029",
+      "sub": "seed_helper_029",
+      "email": "seed-helper-029@verifiednepal.com",
+      "name": "Binod Poudel",
+      "loggable": false,
+      "districts": [
+        "Lamjung",
+        "Bhaktapur",
+        "Dhading"
+      ],
+      "createdAt": "2026-08-22T11:59:55.751Z"
+    },
+    {
+      "n": "030",
+      "sub": "seed_helper_030",
+      "email": "seed-helper-030@verifiednepal.com",
+      "name": "Sunita Thapa",
+      "loggable": false,
+      "districts": [
+        "Jhapa"
+      ],
+      "createdAt": "2026-08-23T03:37:26.695Z"
+    },
+    {
+      "n": "031",
+      "sub": "seed_helper_031",
+      "email": "seed-helper-031@verifiednepal.com",
+      "name": "Santosh Lama",
+      "loggable": false,
+      "districts": [
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-10T13:10:48.510Z"
+    },
+    {
+      "n": "032",
+      "sub": "seed_helper_032",
+      "email": "seed-helper-032@verifiednepal.com",
+      "name": "सरिता बस्नेत",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-16T07:42:00.513Z"
+    },
+    {
+      "n": "033",
+      "sub": "seed_helper_033",
+      "email": "seed-helper-033@verifiednepal.com",
+      "name": "Anita Lama",
+      "loggable": false,
+      "districts": [
+        "Kathmandu",
+        "Bhaktapur",
+        "Kavrepalanchok"
+      ],
+      "createdAt": "2026-09-04T22:22:42.163Z"
+    },
+    {
+      "n": "034",
+      "sub": "seed_helper_034",
+      "email": "seed-helper-034@verifiednepal.com",
+      "name": "Suman Basnet",
+      "loggable": false,
+      "districts": [
+        "Lalitpur",
+        "Kathmandu",
+        "Achham"
+      ],
+      "createdAt": "2026-09-01T15:12:05.087Z"
+    },
+    {
+      "n": "035",
+      "sub": "seed_helper_035",
+      "email": "seed-helper-035@verifiednepal.com",
+      "name": "Sangita Lama",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-22T11:08:59.949Z"
+    },
+    {
+      "n": "036",
+      "sub": "seed_helper_036",
+      "email": "seed-helper-036@verifiednepal.com",
+      "name": "राधा महर्जन",
+      "loggable": false,
+      "districts": [
+        "Bhaktapur",
+        "Sindhupalchok",
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-24T23:34:27.336Z"
+    },
+    {
+      "n": "037",
+      "sub": "seed_helper_037",
+      "email": "seed-helper-037@verifiednepal.com",
+      "name": "Kamala Dahal",
+      "loggable": false,
+      "districts": [
+        "Lamjung",
+        "Jhapa"
+      ],
+      "createdAt": "2026-08-10T08:25:43.163Z"
+    },
+    {
+      "n": "038",
+      "sub": "seed_helper_038",
+      "email": "seed-helper-038@verifiednepal.com",
+      "name": "Sangita Shrestha",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-12T01:31:52.711Z"
+    },
+    {
+      "n": "039",
+      "sub": "seed_helper_039",
+      "email": "seed-helper-039@verifiednepal.com",
+      "name": "Gita Sherpa",
+      "loggable": false,
+      "districts": [
+        "Kavrepalanchok",
+        "Syangja",
+        "Morang"
+      ],
+      "createdAt": "2026-08-24T22:51:30.439Z"
+    },
+    {
+      "n": "040",
+      "sub": "seed_helper_040",
+      "email": "seed-helper-040@verifiednepal.com",
+      "name": "निर्मला खड्का",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-10T23:57:06.487Z"
+    },
+    {
+      "n": "041",
+      "sub": "seed_helper_041",
+      "email": "seed-helper-041@verifiednepal.com",
+      "name": "Rajesh Tamang",
+      "loggable": false,
+      "districts": [
+        "Nuwakot",
+        "Tanahun",
+        "Lalitpur"
+      ],
+      "createdAt": "2026-08-12T08:43:02.345Z"
+    },
+    {
+      "n": "042",
+      "sub": "seed_helper_042",
+      "email": "seed-helper-042@verifiednepal.com",
+      "name": "Ram Adhikari",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-30T20:32:37.196Z"
+    },
+    {
+      "n": "043",
+      "sub": "seed_helper_043",
+      "email": "seed-helper-043@verifiednepal.com",
+      "name": "Nirmala Gurung",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-29T19:14:55.956Z"
+    },
+    {
+      "n": "044",
+      "sub": "seed_helper_044",
+      "email": "seed-helper-044@verifiednepal.com",
+      "name": "राधा महर्जन",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-07T10:56:26.771Z"
+    },
+    {
+      "n": "045",
+      "sub": "seed_helper_045",
+      "email": "seed-helper-045@verifiednepal.com",
+      "name": "Nirmala Magar",
+      "loggable": false,
+      "districts": [
+        "Jhapa",
+        "Kavrepalanchok",
+        "Chitwan"
+      ],
+      "createdAt": "2026-08-25T12:56:21.121Z"
+    },
+    {
+      "n": "046",
+      "sub": "seed_helper_046",
+      "email": "seed-helper-046@verifiednepal.com",
+      "name": "Bikash Chaudhary",
+      "loggable": false,
+      "districts": [
+        "Lalitpur",
+        "Kaski"
+      ],
+      "createdAt": "2026-09-05T05:52:27.766Z"
+    },
+    {
+      "n": "047",
+      "sub": "seed_helper_047",
+      "email": "seed-helper-047@verifiednepal.com",
+      "name": "Kamala Lama",
+      "loggable": false,
+      "districts": [
+        "Achham",
+        "Nuwakot"
+      ],
+      "createdAt": "2026-08-28T22:08:39.751Z"
+    },
+    {
+      "n": "048",
+      "sub": "seed_helper_048",
+      "email": "seed-helper-048@verifiednepal.com",
+      "name": "सन्तोष दाहाल",
+      "loggable": false,
+      "districts": [
+        "Rasuwa",
+        "Kailali"
+      ],
+      "createdAt": "2026-09-05T08:15:44.932Z"
+    },
+    {
+      "n": "049",
+      "sub": "seed_helper_049",
+      "email": "seed-helper-049@verifiednepal.com",
+      "name": "Krishna Maharjan",
+      "loggable": false,
+      "districts": [
+        "Rasuwa",
+        "Kailali",
+        "Syangja"
+      ],
+      "createdAt": "2026-08-18T06:03:50.719Z"
+    },
+    {
+      "n": "050",
+      "sub": "seed_helper_050",
+      "email": "seed-helper-050@verifiednepal.com",
+      "name": "Prakash Bhattarai",
+      "loggable": false,
+      "districts": [
+        "Dhading",
+        "Kailali",
+        "Bhaktapur"
+      ],
+      "createdAt": "2026-08-31T19:52:35.977Z"
+    },
+    {
+      "n": "051",
+      "sub": "seed_helper_051",
+      "email": "seed-helper-051@verifiednepal.com",
+      "name": "Parbati Limbu",
+      "loggable": false,
+      "districts": [
+        "Bhaktapur",
+        "Lalitpur"
+      ],
+      "createdAt": "2026-08-07T15:41:02.388Z"
+    },
+    {
+      "n": "052",
+      "sub": "seed_helper_052",
+      "email": "seed-helper-052@verifiednepal.com",
+      "name": "विनोद चौधरी",
+      "loggable": false,
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-08-13T03:30:11.659Z"
+    },
+    {
+      "n": "053",
+      "sub": "seed_helper_053",
+      "email": "seed-helper-053@verifiednepal.com",
+      "name": "Kamala Rai",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-19T11:37:16.382Z"
+    },
+    {
+      "n": "054",
+      "sub": "seed_helper_054",
+      "email": "seed-helper-054@verifiednepal.com",
+      "name": "Sarita Yadav",
+      "loggable": false,
+      "districts": [
+        "Kailali",
+        "Nuwakot",
+        "Bardiya"
+      ],
+      "createdAt": "2026-09-04T14:12:14.836Z"
+    },
+    {
+      "n": "055",
+      "sub": "seed_helper_055",
+      "email": "seed-helper-055@verifiednepal.com",
+      "name": "Nirmala Shrestha",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Bardiya"
+      ],
+      "createdAt": "2026-08-12T02:56:10.296Z"
+    },
+    {
+      "n": "056",
+      "sub": "seed_helper_056",
+      "email": "seed-helper-056@verifiednepal.com",
+      "name": "लक्ष्मी यादव",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Dolakha"
+      ],
+      "createdAt": "2026-08-24T09:56:27.281Z"
+    },
+    {
+      "n": "057",
+      "sub": "seed_helper_057",
+      "email": "seed-helper-057@verifiednepal.com",
+      "name": "Gopal Dahal",
+      "loggable": false,
+      "districts": [
+        "Rasuwa",
+        "Lalitpur",
+        "Jhapa"
+      ],
+      "createdAt": "2026-08-14T07:32:59.826Z"
+    },
+    {
+      "n": "058",
+      "sub": "seed_helper_058",
+      "email": "seed-helper-058@verifiednepal.com",
+      "name": "Binod Rai",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-21T08:53:55.481Z"
+    },
+    {
+      "n": "059",
+      "sub": "seed_helper_059",
+      "email": "seed-helper-059@verifiednepal.com",
+      "name": "Umesh Lama",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-20T06:24:32.797Z"
+    },
+    {
+      "n": "060",
+      "sub": "seed_helper_060",
+      "email": "seed-helper-060@verifiednepal.com",
+      "name": "गीता राई",
+      "loggable": false,
+      "districts": [
+        "Rasuwa"
+      ],
+      "createdAt": "2026-08-13T00:59:55.080Z"
+    },
+    {
+      "n": "061",
+      "sub": "seed_helper_061",
+      "email": "seed-helper-061@verifiednepal.com",
+      "name": "Gopal Rai",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-09-01T01:47:53.467Z"
+    },
+    {
+      "n": "062",
+      "sub": "seed_helper_062",
+      "email": "seed-helper-062@verifiednepal.com",
+      "name": "Ram Magar",
+      "loggable": false,
+      "districts": [
+        "Bhaktapur"
+      ],
+      "createdAt": "2026-08-11T13:54:42.078Z"
+    },
+    {
+      "n": "063",
+      "sub": "seed_helper_063",
+      "email": "seed-helper-063@verifiednepal.com",
+      "name": "Parbati Bista",
+      "loggable": false,
+      "districts": [
+        "Dhading"
+      ],
+      "createdAt": "2026-08-13T06:38:58.730Z"
+    },
+    {
+      "n": "064",
+      "sub": "seed_helper_064",
+      "email": "seed-helper-064@verifiednepal.com",
+      "name": "सुनिता अधिकारी",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Bhaktapur",
+        "Bardiya"
+      ],
+      "createdAt": "2026-09-04T21:31:02.956Z"
+    },
+    {
+      "n": "065",
+      "sub": "seed_helper_065",
+      "email": "seed-helper-065@verifiednepal.com",
+      "name": "Santosh Khadka",
+      "loggable": false,
+      "districts": [
+        "Lalitpur",
+        "Chitwan",
+        "Kailali"
+      ],
+      "createdAt": "2026-08-26T12:41:14.379Z"
+    },
+    {
+      "n": "066",
+      "sub": "seed_helper_066",
+      "email": "seed-helper-066@verifiednepal.com",
+      "name": "Rita Adhikari",
+      "loggable": false,
+      "districts": [
+        "Sunsari"
+      ],
+      "createdAt": "2026-08-23T08:14:19.756Z"
+    },
+    {
+      "n": "067",
+      "sub": "seed_helper_067",
+      "email": "seed-helper-067@verifiednepal.com",
+      "name": "Sita Limbu",
+      "loggable": false,
+      "districts": [
+        "Morang",
+        "Kaski"
+      ],
+      "createdAt": "2026-08-13T02:31:24.960Z"
+    },
+    {
+      "n": "068",
+      "sub": "seed_helper_068",
+      "email": "seed-helper-068@verifiednepal.com",
+      "name": "सुनिता अधिकारी",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-13T09:59:38.539Z"
+    },
+    {
+      "n": "069",
+      "sub": "seed_helper_069",
+      "email": "seed-helper-069@verifiednepal.com",
+      "name": "Nabin Bhattarai",
+      "loggable": false,
+      "districts": [
+        "Rasuwa",
+        "Tanahun",
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-08-17T07:52:42.069Z"
+    },
+    {
+      "n": "070",
+      "sub": "seed_helper_070",
+      "email": "seed-helper-070@verifiednepal.com",
+      "name": "Sunita Bhattarai",
+      "loggable": false,
+      "districts": [
+        "Bhaktapur",
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-16T06:00:57.895Z"
+    },
+    {
+      "n": "071",
+      "sub": "seed_helper_071",
+      "email": "seed-helper-071@verifiednepal.com",
+      "name": "Dipak Tamang",
+      "loggable": false,
+      "districts": [
+        "Syangja",
+        "Lalitpur",
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-08-24T05:48:42.595Z"
+    },
+    {
+      "n": "072",
+      "sub": "seed_helper_072",
+      "email": "seed-helper-072@verifiednepal.com",
+      "name": "माया लिम्बू",
+      "loggable": false,
+      "districts": [
+        "Jhapa",
+        "Kailali",
+        "Bardiya"
+      ],
+      "createdAt": "2026-08-08T16:27:25.619Z"
+    },
+    {
+      "n": "073",
+      "sub": "seed_helper_073",
+      "email": "seed-helper-073@verifiednepal.com",
+      "name": "Sita Bhattarai",
+      "loggable": false,
+      "districts": [
+        "Tanahun"
+      ],
+      "createdAt": "2026-08-19T05:35:18.396Z"
+    },
+    {
+      "n": "074",
+      "sub": "seed_helper_074",
+      "email": "seed-helper-074@verifiednepal.com",
+      "name": "Krishna Chaudhary",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-13T23:50:43.411Z"
+    },
+    {
+      "n": "075",
+      "sub": "seed_helper_075",
+      "email": "seed-helper-075@verifiednepal.com",
+      "name": "Parbati Yadav",
+      "loggable": false,
+      "districts": [
+        "Kaski",
+        "Jhapa",
+        "Tanahun"
+      ],
+      "createdAt": "2026-08-19T23:15:41.680Z"
+    },
+    {
+      "n": "076",
+      "sub": "seed_helper_076",
+      "email": "seed-helper-076@verifiednepal.com",
+      "name": "सन्तोष दाहाल",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Bhaktapur"
+      ],
+      "createdAt": "2026-09-05T02:43:15.249Z"
+    },
+    {
+      "n": "077",
+      "sub": "seed_helper_077",
+      "email": "seed-helper-077@verifiednepal.com",
+      "name": "Kamala Sherpa",
+      "loggable": false,
+      "districts": [
+        "Morang"
+      ],
+      "createdAt": "2026-09-02T22:35:19.987Z"
+    },
+    {
+      "n": "078",
+      "sub": "seed_helper_078",
+      "email": "seed-helper-078@verifiednepal.com",
+      "name": "Sita Thapa",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-29T06:14:19.789Z"
+    },
+    {
+      "n": "079",
+      "sub": "seed_helper_079",
+      "email": "seed-helper-079@verifiednepal.com",
+      "name": "Bikash Gurung",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-16T12:39:30.949Z"
+    },
+    {
+      "n": "080",
+      "sub": "seed_helper_080",
+      "email": "seed-helper-080@verifiednepal.com",
+      "name": "सुमन थापा",
+      "loggable": false,
+      "districts": [
+        "Jhapa",
+        "Kavrepalanchok"
+      ],
+      "createdAt": "2026-08-10T22:43:44.425Z"
+    },
+    {
+      "n": "081",
+      "sub": "seed_helper_081",
+      "email": "seed-helper-081@verifiednepal.com",
+      "name": "Sarita Sherpa",
+      "loggable": false,
+      "districts": [
+        "Kathmandu",
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-28T01:13:06.930Z"
+    },
+    {
+      "n": "082",
+      "sub": "seed_helper_082",
+      "email": "seed-helper-082@verifiednepal.com",
+      "name": "Nirmala Yadav",
+      "loggable": false,
+      "districts": [
+        "Jhapa",
+        "Dolakha",
+        "Sindhupalchok"
+      ],
+      "createdAt": "2026-08-27T03:52:27.565Z"
+    },
+    {
+      "n": "083",
+      "sub": "seed_helper_083",
+      "email": "seed-helper-083@verifiednepal.com",
+      "name": "Sangita Karki",
+      "loggable": false,
+      "districts": [
+        "Bardiya"
+      ],
+      "createdAt": "2026-08-28T21:01:42.719Z"
+    },
+    {
+      "n": "084",
+      "sub": "seed_helper_084",
+      "email": "seed-helper-084@verifiednepal.com",
+      "name": "कृष्ण विष्ट",
+      "loggable": false,
+      "districts": [
+        "Bardiya"
+      ],
+      "createdAt": "2026-09-05T01:23:15.796Z"
+    },
+    {
+      "n": "085",
+      "sub": "seed_helper_085",
+      "email": "seed-helper-085@verifiednepal.com",
+      "name": "Suman Yadav",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Nuwakot"
+      ],
+      "createdAt": "2026-08-10T11:30:38.667Z"
+    },
+    {
+      "n": "086",
+      "sub": "seed_helper_086",
+      "email": "seed-helper-086@verifiednepal.com",
+      "name": "Parbati Gurung",
+      "loggable": false,
+      "districts": [
+        "Kaski",
+        "Bhaktapur"
+      ],
+      "createdAt": "2026-08-08T15:19:58.931Z"
+    },
+    {
+      "n": "087",
+      "sub": "seed_helper_087",
+      "email": "seed-helper-087@verifiednepal.com",
+      "name": "Ram Maharjan",
+      "loggable": false,
+      "districts": [
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-29T17:30:14.064Z"
+    },
+    {
+      "n": "088",
+      "sub": "seed_helper_088",
+      "email": "seed-helper-088@verifiednepal.com",
+      "name": "दीपक शेर्पा",
+      "loggable": false,
+      "districts": [
+        "Chitwan",
+        "Sunsari"
+      ],
+      "createdAt": "2026-08-18T12:34:32.986Z"
+    },
+    {
+      "n": "089",
+      "sub": "seed_helper_089",
+      "email": "seed-helper-089@verifiednepal.com",
+      "name": "Dinesh Adhikari",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Kathmandu"
+      ],
+      "createdAt": "2026-08-07T14:13:08.224Z"
+    },
+    {
+      "n": "090",
+      "sub": "seed_helper_090",
+      "email": "seed-helper-090@verifiednepal.com",
+      "name": "Sangita Rai",
+      "loggable": false,
+      "districts": [
+        "Dolakha"
+      ],
+      "createdAt": "2026-08-13T00:13:46.438Z"
+    },
+    {
+      "n": "091",
+      "sub": "seed_helper_091",
+      "email": "seed-helper-091@verifiednepal.com",
+      "name": "Gopal Chaudhary",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-23T18:23:45.414Z"
+    },
+    {
+      "n": "092",
+      "sub": "seed_helper_092",
+      "email": "seed-helper-092@verifiednepal.com",
+      "name": "राम तामाङ",
+      "loggable": false,
+      "districts": [],
+      "createdAt": "2026-08-12T04:55:27.474Z"
+    },
+    {
+      "n": "093",
+      "sub": "seed_helper_093",
+      "email": "seed-helper-093@verifiednepal.com",
+      "name": "Radha Dahal",
+      "loggable": false,
+      "districts": [
+        "Makwanpur"
+      ],
+      "createdAt": "2026-08-28T05:27:11.748Z"
+    },
+    {
+      "n": "094",
+      "sub": "seed_helper_094",
+      "email": "seed-helper-094@verifiednepal.com",
+      "name": "Gita Magar",
+      "loggable": false,
+      "districts": [
+        "Bhaktapur",
+        "Kailali",
+        "Chitwan"
+      ],
+      "createdAt": "2026-08-26T18:42:26.784Z"
+    },
+    {
+      "n": "095",
+      "sub": "seed_helper_095",
+      "email": "seed-helper-095@verifiednepal.com",
+      "name": "Dinesh Dahal",
+      "loggable": false,
+      "districts": [
+        "Makwanpur",
+        "Morang",
+        "Bardiya"
+      ],
+      "createdAt": "2026-08-26T17:59:44.816Z"
+    },
+    {
+      "n": "096",
+      "sub": "seed_helper_096",
+      "email": "seed-helper-096@verifiednepal.com",
+      "name": "विकास मगर",
+      "loggable": false,
+      "districts": [
+        "Kaski"
+      ],
+      "createdAt": "2026-08-09T22:30:25.243Z"
+    },
+    {
+      "n": "097",
+      "sub": "seed_helper_097",
+      "email": "seed-helper-097@verifiednepal.com",
+      "name": "Anita Bista",
+      "loggable": false,
+      "districts": [
+        "Lamjung",
+        "Gorkha"
+      ],
+      "createdAt": "2026-08-06T23:43:29.328Z"
+    },
+    {
+      "n": "098",
+      "sub": "seed_helper_098",
+      "email": "seed-helper-098@verifiednepal.com",
+      "name": "Laxmi Limbu",
+      "loggable": false,
+      "districts": [
+        "Kailali",
+        "Rasuwa"
+      ],
+      "createdAt": "2026-08-26T01:26:19.037Z"
+    },
+    {
+      "n": "099",
+      "sub": "seed_helper_099",
+      "email": "seed-helper-099@verifiednepal.com",
+      "name": "Sangita Sherpa",
+      "loggable": false,
+      "districts": [
+        "Sunsari"
+      ],
+      "createdAt": "2026-08-31T16:01:14.963Z"
+    },
+    {
+      "n": "100",
+      "sub": "seed_helper_100",
+      "email": "seed-helper-100@verifiednepal.com",
+      "name": "सुनिता अधिकारी",
+      "loggable": false,
+      "districts": [
+        "Nuwakot"
+      ],
+      "createdAt": "2026-08-11T09:43:37.299Z"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "seed-sunkoshi-flood-2026",
+      "name": "[seed] Sunkoshi flood 2026",
+      "status": "active",
+      "origin": "admin",
+      "districts": [
+        "Sindhupalchok",
+        "Dolakha",
+        "Kavrepalanchok"
+      ]
+    },
+    {
+      "id": "seed-melamchi-landslide-cluster",
+      "name": "[seed] Melamchi landslide cluster",
+      "status": "active",
+      "origin": "admin",
+      "districts": [
+        "Sindhupalchok",
+        "Nuwakot",
+        "Rasuwa"
+      ]
+    },
+    {
+      "id": "seed-koshi-monsoon-floods",
+      "name": "[seed] Koshi monsoon floods",
+      "status": "active",
+      "origin": "admin",
+      "districts": [
+        "Sunsari",
+        "Morang",
+        "Jhapa"
+      ]
+    },
+    {
+      "id": "seed-karnali-riverbank-erosion",
+      "name": "[seed] Karnali riverbank erosion",
+      "status": "active",
+      "origin": "admin",
+      "districts": [
+        "Kailali",
+        "Bardiya",
+        "Achham"
+      ]
+    },
+    {
+      "id": "seed-gorkha-aftershock-relief-2025",
+      "name": "[seed] Gorkha aftershock relief 2025",
+      "status": "archived",
+      "origin": "admin",
+      "districts": [
+        "Gorkha",
+        "Lamjung",
+        "Dhading"
+      ]
+    },
+    {
+      "id": "seed-bhaktapur-market-fire",
+      "name": "[seed] Bhaktapur market fire",
+      "status": "pending",
+      "origin": "community-request",
+      "districts": [
+        "Bhaktapur"
+      ],
+      "by": "ou_user_34K2hSAFinvy0U5HFujOb"
+    },
+    {
+      "id": "seed-tanahun-school-roof-collapse",
+      "name": "[seed] Tanahun school roof collapse",
+      "status": "rejected",
+      "origin": "community-request",
+      "districts": [
+        "Tanahun"
+      ],
+      "by": "ou_user_34K2hgadMDWO4dkMCD0vN"
+    }
+  ],
+  "needs": [
+    {
+      "id": "89325e84-23c2-4ea8-b18b-83ebe2be5282",
+      "refCode": "KUL7TVFY3KZV",
+      "district": "Dolakha",
+      "ward": 5,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "status": "matched",
+      "media": [
+        "ou_file_34K7Lpid3dNxxmJ014QVb"
+      ],
+      "claimCode": "PW8YVK4K",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "65574a1c-ddf7-4b76-b9e3-0c4b4fb9992e"
+    },
+    {
+      "id": "7fde4773-cb82-446a-a5fa-82761334ae42",
+      "refCode": "RPJLUCUD3735",
+      "district": "Tanahun",
+      "ward": 7,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "49GLKHJ8",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "1becaaed-44e2-4c52-9a90-5aa98554875f"
+    },
+    {
+      "id": "b6dd9c1a-029b-492e-9a3d-96e7cd52fb06",
+      "refCode": "QLKVHZ6XC6VW",
+      "district": "Jhapa",
+      "ward": 11,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "5HMP59DB",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "a82241e7-8091-4848-a84b-c3038488e448"
+    },
+    {
+      "id": "e366f2e8-906c-4ce3-899e-b18769391e82",
+      "refCode": "QRZOYEOJMIGW",
+      "district": "Kailali",
+      "ward": 9,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "GH4ZUQS5",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "a0a037f0-f4f2-4209-b32b-c35315aa99bc"
+    },
+    {
+      "id": "32c5bffb-0aa8-457e-a37d-73835ceee9a5",
+      "refCode": "BBOFX3FVYBUD",
+      "district": "Chitwan",
+      "ward": 8,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "6PGV39LZ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "68662186-835a-4fb1-9b3f-447d167c03dc"
+    },
+    {
+      "id": "baf9a4f5-d3e1-4a11-8ce7-68aebbbf927d",
+      "refCode": "MKOMNBMB2B47",
+      "district": "Dolakha",
+      "ward": 6,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "67ee4d29-d513-4678-8a0f-b744261773a4",
+      "refCode": "AFHNFOSIEP5N",
+      "district": "Tanahun",
+      "ward": 7,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "test",
+      "owner": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "status": "matched",
+      "media": [],
+      "claimCode": "W5SDZSEW",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "2c06c0d2-cb38-4f5f-a484-6d92cffe0b86"
+    },
+    {
+      "id": "40e086cf-1bff-4fe5-b967-d0e35ff9ad82",
+      "refCode": "VUXR3HQLQCEX",
+      "district": "Achham",
+      "ward": 4,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "49RYD9VC",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "5fb9f815-0bf3-4a44-bb50-49192f0457ea"
+    },
+    {
+      "id": "4eb225a2-5f11-4194-af55-b0b468feef6f",
+      "refCode": "BICZ3KIZ5S3B",
+      "district": "Bhaktapur",
+      "ward": 12,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "4AUKKZSA",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "49531fe1-f9dd-4429-bfff-45de3ecd4276"
+    },
+    {
+      "id": "9c60ac42-0016-49f7-b6f6-d261b5a25515",
+      "refCode": "KZDHCBXKMS3Y",
+      "district": "Bhaktapur",
+      "ward": 9,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "ZSN5L5AB",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "bfeef5c7-60c1-41d5-9cfc-9b0b4f1b2cdc"
+    },
+    {
+      "id": "89670a18-9f63-4c7a-8138-2fce8bb3b97a",
+      "refCode": "SMGHMI4BGUOY",
+      "district": "Morang",
+      "ward": 4,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "YRQKBPUW",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "fccd5d6c-853a-4ba0-81af-0c1daa053a03"
+    },
+    {
+      "id": "c52475a7-2f0b-47a7-8a9e-5405d883a7bd",
+      "refCode": "TVG3AJO5IBGN",
+      "district": "Kailali",
+      "ward": 10,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "status": "matched",
+      "media": [],
+      "claimCode": "R8HYNL9C",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "8af1ad08-9998-443c-b87d-56f5f74f8e06"
+    },
+    {
+      "id": "edcf9cea-678b-45a0-bd32-bf80e908c22f",
+      "refCode": "E2K3M46GDBRG",
+      "district": "Gorkha",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "9UUG9A7Z",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "2dfd8c94-386e-4251-b43d-c5b9f21c0fc6"
+    },
+    {
+      "id": "2d0ac902-5c99-42bb-9357-9ffcaecb961d",
+      "refCode": "RYSCQMXK3IKP",
+      "district": "Morang",
+      "ward": 11,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "AZWSCYMB",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "44397cbd-02f3-4705-9e2c-8c9d0ddf7c27"
+    },
+    {
+      "id": "dbbe9e75-19d8-469b-9b9d-7f1620379bbc",
+      "refCode": "HPRWDTGL4KDA",
+      "district": "Achham",
+      "ward": 2,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "matched",
+      "media": [
+        "ou_file_34K7LulXm0nWZumedgcTn"
+      ],
+      "claimCode": "NDEYRP7Y",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "0b5f10a5-328f-478d-ac0a-d7563e99b44c"
+    },
+    {
+      "id": "c7fc8c43-9ad3-423f-99a2-d9d52e37c68c",
+      "refCode": "BLSDPEGJGWEU",
+      "district": "Jhapa",
+      "ward": 6,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "6SRMTL4V",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "matchedOffer": "9e16c48a-2c71-4724-af88-9288bdd4f2cd"
+    },
+    {
+      "id": "103c1058-1429-4066-a338-13451e7ec4df",
+      "refCode": "235SWMLJ6YDQ",
+      "district": "Syangja",
+      "ward": 1,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "4257c7f4-bb1c-42f7-b132-a10e2e2dc80f",
+      "refCode": "HQAC2KPZGS7K",
+      "district": "Bardiya",
+      "ward": 5,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "Q65R87XN",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "bcb38f98-d2de-418d-a123-6214c2f255f5",
+      "refCode": "CBDKJ24GHZPA",
+      "district": "Dhading",
+      "ward": 6,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "XY7YNPN7",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "d0b02eac-e301-4d2d-8bd9-48c8426a3dc8",
+      "refCode": "FEENTDWKLG6B",
+      "district": "Tanahun",
+      "ward": 10,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "YU23VPF2",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "731965e8-582a-4ef5-88f1-6ce8f260071a",
+      "refCode": "52P2HHHPRG7T",
+      "district": "Sindhupalchok",
+      "ward": 6,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "CFMKQ52U",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "d806fb5c-db7d-4c7a-a357-1a41a107c656",
+      "refCode": "DRS6DZCMLTYS",
+      "district": "Tanahun",
+      "ward": 5,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "EZXF4ARQ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "84019b9c-ec16-4cce-80b6-7bbe236944c4",
+      "refCode": "TR3GDEMENH3M",
+      "district": "Sindhupalchok",
+      "ward": 6,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "UKX4JKWG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "f5342cb7-8491-423d-83cb-ef185577d47d",
+      "refCode": "O4LMUFE4437C",
+      "district": "Dhading",
+      "ward": 6,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "BCULAJ9Y",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "3c9326e7-9ba1-46d1-ad17-341ac55750f6",
+      "refCode": "62XNA5K6RKBW",
+      "district": "Morang",
+      "ward": 5,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "L9XQSTDX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "7fde023c-a92a-40b0-8c97-4e5c503ee6d9",
+      "refCode": "MEJS2QUPKM7T",
+      "district": "Rasuwa",
+      "ward": 3,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "HD2LSJ3J",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "e6491ffe-dccb-4795-8231-badbc8c6c623",
+      "refCode": "CTLGNMK54BZI",
+      "district": "Sindhupalchok",
+      "ward": 1,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "EZEGW869",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "19bdd604-844f-496f-8c22-75dc64dd4291",
+      "refCode": "JZCZW64GXUNM",
+      "district": "Sunsari",
+      "ward": 8,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2iX966laabGIrXr2ZW",
+      "status": "rejected",
+      "media": [
+        "ou_file_34K7M0BGUgAe3hO2f4EaD"
+      ],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "08caa440-d876-43df-9693-cf4bc10b2e16",
+      "refCode": "BYUGML4U7BI7",
+      "district": "Bhaktapur",
+      "ward": 3,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "Z853583J",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "group": true
+    },
+    {
+      "id": "284ab241-bf40-4d30-bc85-14ce3a8ec8c1",
+      "refCode": "DIO3JGWIDL47",
+      "district": "Syangja",
+      "ward": 11,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "JZEG58UJ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "group": true
+    },
+    {
+      "id": "0cc7b11c-0f2c-4527-a1c9-271e55a36349",
+      "refCode": "76KPSNKUIU2V",
+      "district": "Gorkha",
+      "ward": 9,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "test-960f7f8b",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "HTX8RZBK",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "group": true
+    },
+    {
+      "id": "87828272-67d0-4e4c-820d-bed9c2237cb6",
+      "refCode": "HXM622RXXSSE",
+      "district": "Lamjung",
+      "ward": 7,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "ZGS2CEDW",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "group": true
+    },
+    {
+      "id": "0651aa72-4532-4d3e-8040-ade1ab2dbc6a",
+      "refCode": "JYRMESZ3GOKP",
+      "district": "Bardiya",
+      "ward": 8,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "BX5RC6BX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "group": true
+    },
+    {
+      "id": "9a8f473d-c1c1-4121-b601-04d2e427c8bf",
+      "refCode": "HUWYQK5RRBMC",
+      "district": "Sunsari",
+      "ward": 8,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "U9PRDHTJ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "74c53b1e-575d-42c4-8259-7e5826fb4ad1"
+    },
+    {
+      "id": "a5e37cb3-5648-45fd-a695-6fcc56d82737",
+      "refCode": "4OTIQRY6BUYK",
+      "district": "Kathmandu",
+      "ward": 1,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "75TJXYMY",
+      "by": "ou_user_34K26RnyAqynTAtX0L2Go",
+      "org": "758f7ed2-3ccd-4fc8-8e6d-433ccc756882"
+    },
+    {
+      "id": "e0b094db-2af0-4dca-a63d-c744941a28f6",
+      "refCode": "UQDTB3THX7DB",
+      "district": "Gorkha",
+      "ward": 3,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "FXTYNLKQ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "64d8037b-ad61-46e4-bd53-b36280555af8"
+    },
+    {
+      "id": "4a5f5c7b-90b7-4c54-bde1-c47c07159ad9",
+      "refCode": "MF2D65LDNTPA",
+      "district": "Makwanpur",
+      "ward": 9,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "E2GHLJQW",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "a7f1b345-043f-478e-b60b-9119e06b40f1"
+    },
+    {
+      "id": "43f6a056-c654-429a-a353-989309591084",
+      "refCode": "3IH57I6OYBJX",
+      "district": "Lamjung",
+      "ward": 7,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "JPV489CZ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "5dd95a5f-8d06-40cf-b055-202c2539b1ad"
+    },
+    {
+      "id": "f76aba1f-f478-45f5-bb23-00916cbdf323",
+      "refCode": "3S3NJTVTHMDJ",
+      "district": "Kailali",
+      "ward": 6,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5dcc4283-aafd-4431-9eed-39ac5fd9fa6d",
+      "refCode": "OTUUQ4Y4J3BO",
+      "district": "Chitwan",
+      "ward": 8,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [],
+      "claimCode": "7U9EUMYA",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "74c53b1e-575d-42c4-8259-7e5826fb4ad1"
+    },
+    {
+      "id": "75691853-c8d2-44de-9454-ad53624ec2df",
+      "refCode": "JEWNHGTMY6D3",
+      "district": "Kailali",
+      "ward": 4,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "Z6WNWNSQ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "758f7ed2-3ccd-4fc8-8e6d-433ccc756882"
+    },
+    {
+      "id": "5bb648f9-7b31-4d3c-8559-d771bbfa6a7d",
+      "refCode": "BAUUJUWNYQGJ",
+      "district": "Lamjung",
+      "ward": 3,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "matched",
+      "media": [
+        "ou_file_34K7M53G0KWQDxDazoRCt"
+      ],
+      "claimCode": "ET6VNW8T",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "64d8037b-ad61-46e4-bd53-b36280555af8"
+    },
+    {
+      "id": "6bfe3156-ff31-408f-b9f7-5bb6bfccea24",
+      "refCode": "MMLBRT2XD7E2",
+      "district": "Lalitpur",
+      "ward": 8,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "fulfilled",
+      "media": [],
+      "claimCode": "7LCR8YQX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "org": "a7f1b345-043f-478e-b60b-9119e06b40f1"
+    },
+    {
+      "id": "fe06eb17-2aff-43be-a50c-ffd88300fd1c",
+      "refCode": "SW7F3MEOMPFE",
+      "district": "Sindhupalchok",
+      "ward": 4,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "5DS5NJVT",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "20747126-1af7-46c6-aaea-e62728447efe",
+      "refCode": "LT5J7VO7IIIX",
+      "district": "Dhading",
+      "ward": 1,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "status": "published",
+      "media": [],
+      "claimCode": "FJCQC6DK",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "cfc136cd-d66a-40a1-ad52-48807acdb51f",
+      "refCode": "7HQWJAT3RAQA",
+      "district": "Lalitpur",
+      "ward": 11,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "KUYDQYGG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "665d2a9f-8ddd-4456-86e4-dffeee34f3b2",
+      "refCode": "CCOI4NXY46YD",
+      "district": "Dhading",
+      "ward": 1,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "5EV4ATWZ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "e812a2ca-e241-452a-b722-f2ff51389248",
+      "refCode": "IHCSCB4KIKSK",
+      "district": "Makwanpur",
+      "ward": 4,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "RRAM63E7",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "73548670-6b25-4c47-8a6e-910fd390d4ac",
+      "refCode": "VGNZW2ZODQLZ",
+      "district": "Nuwakot",
+      "ward": 7,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "FXNEXW97",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "6d322fae-bcf5-4739-9dee-f743591246ee",
+      "refCode": "VEHL4PA7SPFI",
+      "district": "Sindhupalchok",
+      "ward": 2,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5a2c57ee-27a3-45b8-92c0-678916ead96b",
+      "refCode": "VFRNHF2Q7AW3",
+      "district": "Jhapa",
+      "ward": 7,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2ig5As1Ci5fTlRzFL2",
+      "status": "published",
+      "media": [],
+      "claimCode": "68DQN2SF",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "3ad3f798-6fd8-4863-9b1a-87f3126fd835",
+      "refCode": "DSOYMPO27P3X",
+      "district": "Achham",
+      "ward": 3,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "BJ7KKLUR",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "11d5183e-0925-4dc1-beee-17a2e14d4ee5",
+      "refCode": "I5B2T5RF664Q",
+      "district": "Bardiya",
+      "ward": 12,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "6APKTP26",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "2d9e68f8-e21a-4358-af02-27da5dd6b76d",
+      "refCode": "FYNZJIFIDATL",
+      "district": "Gorkha",
+      "ward": 2,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "CLHLDNBY",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "69563c7f-93e4-4ae7-889f-a8f500785db0",
+      "refCode": "RX77QIHXZAMY",
+      "district": "Lalitpur",
+      "ward": 2,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "UZ9UCS32",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "db666be9-060e-4fdb-a9e1-83b233f78340",
+      "refCode": "SNQDMU26CIV7",
+      "district": "Chitwan",
+      "ward": 6,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "BX2EDGSJ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "03bbb7b3-4109-43fe-8888-2120bf4d0c3d",
+      "refCode": "QUKHABINSSMM",
+      "district": "Rasuwa",
+      "ward": 3,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "status": "published",
+      "media": [
+        "ou_file_34K7M9r9kKmFQsk6dQvLM"
+      ],
+      "claimCode": "7CMRM7LA",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "33bb7885-eb34-47d8-967a-b815b253ec4b",
+      "refCode": "OL5GDFHEZJRN",
+      "district": "Jhapa",
+      "ward": 12,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "AF6P7ZDG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "3848c78e-4c75-400d-a61c-626d85f9dec4",
+      "refCode": "OCX6574YHX64",
+      "district": "Bhaktapur",
+      "ward": 4,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "G3BNNPPF",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "0757a8ec-3017-431c-a76c-442b78c7c4cb",
+      "refCode": "JVSE5WLSJ76W",
+      "district": "Bhaktapur",
+      "ward": 1,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "8KPHZMLE",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "6bddc065-122a-48bf-a397-d0dd92ae7505",
+      "refCode": "Y63RXG2P5Y5S",
+      "district": "Lamjung",
+      "ward": 2,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "test-960f7f8b",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "049c8b87-ff36-450e-acf6-1a17828fcde6",
+      "refCode": "LNFDULQZQADB",
+      "district": "Achham",
+      "ward": 5,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "WSX6K556",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "122b760f-9cd8-461d-8ebe-4271d1e03227",
+      "refCode": "ZUWS6AXC62WO",
+      "district": "Kavrepalanchok",
+      "ward": 10,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "status": "published",
+      "media": [],
+      "claimCode": "EYWFHTZA",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "d8cef77b-5040-4438-b46e-2a3048531649",
+      "refCode": "NSXGXTHHMDKV",
+      "district": "Sindhupalchok",
+      "ward": 8,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "S9MJV6MG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "b73c8bf5-5c60-4808-87e9-5ee9564f930b",
+      "refCode": "EGSBHZEJEIZK",
+      "district": "Dhading",
+      "ward": 7,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "9WWUCR92",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "448c562a-3976-4ee7-830b-a220cc4c4d8c",
+      "refCode": "SPODNCTQY4VE",
+      "district": "Achham",
+      "ward": 4,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "test",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "ZJGD7NSG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5c112fbb-5bb7-479c-9977-8c8f1d116626",
+      "refCode": "OMZ3T7SSET4M",
+      "district": "Bhaktapur",
+      "ward": 4,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "5X7ST87H",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "56b14c43-e37f-44ed-971d-4fb1828fea13",
+      "refCode": "62Y6MCI6WCPQ",
+      "district": "Morang",
+      "ward": 9,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "status": "published",
+      "media": [],
+      "claimCode": "BCJQLNAZ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5ca7eb78-442f-411f-821b-53372d931591",
+      "refCode": "D57BSAMEMHIT",
+      "district": "Achham",
+      "ward": 2,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "GVZUFPWP",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "47d8903c-78ba-4995-966a-0190940e9deb",
+      "refCode": "JXPWJ62GEGL7",
+      "district": "Jhapa",
+      "ward": 3,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "X94E52CG",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "67c339e5-bf21-46d8-bd97-0b9376d4db0e",
+      "refCode": "F3WHLFPGAIBQ",
+      "district": "Tanahun",
+      "ward": 11,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [
+        "ou_file_34K7MEmAUcroOqjuLT6sA"
+      ],
+      "claimCode": "UNHMHHHS",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "a1f2f534-1d29-4b65-9250-594186a364aa",
+      "refCode": "FF54KPIBTCCQ",
+      "district": "Sindhupalchok",
+      "ward": 4,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "93a19f96-6e70-4e8d-8ec4-3bf2463763b8",
+      "refCode": "UHEEYP64AEW6",
+      "district": "Bardiya",
+      "ward": 9,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "test-960f7f8b",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "RPGDTKDF",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "3c1ee73f-e960-45aa-bd48-de61ef6f3f14",
+      "refCode": "7BXJNFKOOHJ4",
+      "district": "Kaski",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "status": "published",
+      "media": [],
+      "claimCode": "PR9U5BG4",
+      "by": "ou_user_34K26RnyAqynTAtX0L2Go"
+    },
+    {
+      "id": "242e1697-8373-4694-ae7b-3164bb9223e2",
+      "refCode": "5ZRVZCKLPDQM",
+      "district": "Kavrepalanchok",
+      "ward": 12,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "8TWHH6N7",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5d9c781a-d04a-4c08-bcd3-972fbb2b5523",
+      "refCode": "446C64FCWPJD",
+      "district": "Jhapa",
+      "ward": 5,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "9V6EL8M3",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "b619679e-0020-4b61-884e-a13195fd6e67",
+      "refCode": "GX2NALYSTP46",
+      "district": "Bhaktapur",
+      "ward": 10,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "EHYJ29L2",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "e8bcc44c-9b1e-4189-a7ac-e0a64cd6b24f",
+      "refCode": "YMCYNNCTMWE5",
+      "district": "Kailali",
+      "ward": 6,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "CBHJ6QNP",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "41d53282-26f4-488f-b425-2207300d8e0f",
+      "refCode": "EP4UXQJ6JX3X",
+      "district": "Tanahun",
+      "ward": 12,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "6F7ZBUF8",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "00bdaef5-d5ab-4302-a5a6-28b44c3c1169",
+      "refCode": "XAVEQM6J2SIV",
+      "district": "Sunsari",
+      "ward": 11,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2icaBVWlgiGCnSYEaG",
+      "status": "published",
+      "media": [],
+      "claimCode": "ZWQKM95J",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "4264eb59-f291-430a-a9f4-197e08bd4d80",
+      "refCode": "7X7IVZCVOVRI",
+      "district": "Bardiya",
+      "ward": 11,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "QNPAFGA8",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "b939d78b-a244-45d3-be83-0d0876ff7210",
+      "refCode": "BUPP63BOR5KD",
+      "district": "Morang",
+      "ward": 4,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "S5GFBTTF",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "fa6bcac5-d4c3-489f-bd70-a93531dd8a04",
+      "refCode": "GJTCIAIY344Q",
+      "district": "Bardiya",
+      "ward": 7,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "548a6218-e0dc-41ea-89db-8a02093bdf88",
+      "refCode": "HMIVXOLEYHHM",
+      "district": "Jhapa",
+      "ward": 6,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "W48C59DY",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "13b7a6d9-bb0e-4bfb-972d-5da1cc8e6efe",
+      "refCode": "R2X6RRU52BQ2",
+      "district": "Sindhupalchok",
+      "ward": 2,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "VQMKPPFP",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "7d36c18d-5066-4ca2-ab7f-84d5f8d34b34",
+      "refCode": "ZYEJAD2QLPDX",
+      "district": "Sunsari",
+      "ward": 6,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "status": "published",
+      "media": [
+        "ou_file_34K7MJyjPp1H6VJqT5cgF"
+      ],
+      "claimCode": "E7QJ9H2V",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "652b5782-2a72-444a-b9fd-7a5430150d5d",
+      "refCode": "VLMR37CPERTN",
+      "district": "Bhaktapur",
+      "ward": 12,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "6ZHBLREH",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "609594b7-5d39-4c6a-ab8a-897a2f3a0e7b",
+      "refCode": "FMIJYIA6EKIB",
+      "district": "Gorkha",
+      "ward": 7,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "VFBMCE9R",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "19e1eb6e-ddd5-42ce-a320-8e5794426aee",
+      "refCode": "IMKITRRBPGV4",
+      "district": "Makwanpur",
+      "ward": 11,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "CTBRK9P9",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "85bdff66-7a00-4b83-abc1-2e91cb1a1087",
+      "refCode": "HTNQCQWD3WIP",
+      "district": "Achham",
+      "ward": 10,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "test",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "ZLCRPS5K",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "41c748cf-1ced-4c30-ae74-49d2616f03cb",
+      "refCode": "3VLG245BRUEU",
+      "district": "Makwanpur",
+      "ward": 1,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "RASKX8UX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "a42b7b16-6c88-4d8c-838b-7217731bd96b",
+      "refCode": "4F2PD3JVAWCD",
+      "district": "Dhading",
+      "ward": 11,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": "ou_user_34K2iaM3PGW5Bk4KEulW5",
+      "status": "published",
+      "media": [],
+      "claimCode": "94TUJFLV",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "e1e4a9ab-9f45-4018-9f6f-9b633410ba08",
+      "refCode": "MW5EV3RRQGEG",
+      "district": "Sunsari",
+      "ward": 12,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "UUGF3PDX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "37ea3816-2474-4201-96dc-3c10e1842ab8",
+      "refCode": "JQL7SO4UDPFB",
+      "district": "Kailali",
+      "ward": 7,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "5723eb36-8be5-4894-ab8b-1fb66345edb8",
+      "refCode": "UB7UW3QGDTFW",
+      "district": "Achham",
+      "ward": 11,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "test",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "Q42VHNXX",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "a1666233-2ca0-4c51-b795-58610a132977",
+      "refCode": "TCHFXKLD7ZVC",
+      "district": "Tanahun",
+      "ward": 5,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "2R33ETHW",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "07eefca3-ecbc-44cf-9dc6-30aef8cdcd87",
+      "refCode": "B6COT432MQA3",
+      "district": "Nuwakot",
+      "ward": 8,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "B22WYRWK",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "6b63c13d-f75c-411a-9346-c1de88dcc50c",
+      "refCode": "QYS3CN7JLZDW",
+      "district": "Gorkha",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "status": "published",
+      "media": [],
+      "claimCode": "T4QJ8L2G",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "42f01d20-f83b-4976-b569-8af4384e8246",
+      "refCode": "RDDRUD2NV2DT",
+      "district": "Kavrepalanchok",
+      "ward": 8,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "8V25ECHJ",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "9fc6647c-e6c8-424b-8e5d-265e8fe997a6",
+      "refCode": "AYR5V3DXOGJH",
+      "district": "Kavrepalanchok",
+      "ward": 6,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "9YB6962M",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "69805872-b6bc-4482-a7ee-c12588530a82",
+      "refCode": "EUNPTPZCHFPP",
+      "district": "Bhaktapur",
+      "ward": 10,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "PHDRD6CD",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "f1afd59a-e819-44e3-837c-be5a96f8c9bc",
+      "refCode": "7FMUOSDLEUWM",
+      "district": "Lamjung",
+      "ward": 11,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "test",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "GGSMHCPB",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "flagged": true
+    },
+    {
+      "id": "19f1691e-d7a4-4401-8a21-3510ca9dd3e4",
+      "refCode": "WNPKBIYMD3Z5",
+      "district": "Gorkha",
+      "ward": 7,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "status": "published",
+      "media": [],
+      "claimCode": "X64FC75M",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "flagged": true
+    },
+    {
+      "id": "d4db3798-dde8-45fa-89a1-a3fe5b33162e",
+      "refCode": "FJ3DY4IUCI6P",
+      "district": "Syangja",
+      "ward": 5,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "published",
+      "media": [],
+      "claimCode": "S5RN6PDU",
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG",
+      "flagged": true
+    },
+    {
+      "id": "3f484845-071c-4d71-9f0a-d95d8fc06e86",
+      "refCode": "OBFAJJKDXRU5",
+      "district": "Sunsari",
+      "ward": 5,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "rejected",
+      "media": [],
+      "by": "ou_user_34K26TiVJuJeTuhI27ImG"
+    },
+    {
+      "id": "89036d05-0e98-4efe-b903-b68e1ef1e147",
+      "refCode": "ZYHPXPOQTLBL",
+      "district": "Syangja",
+      "ward": 9,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": [],
+      "renewed": true
+    },
+    {
+      "id": "32bbcf06-f73d-42de-96f4-eb7e6ebc8879",
+      "refCode": "J24LIHCCHTKR",
+      "district": "Achham",
+      "ward": 2,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "test",
+      "owner": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "status": "pending",
+      "media": [],
+      "renewed": true
+    },
+    {
+      "id": "6c93bf81-81aa-489b-94a0-57110e2da494",
+      "refCode": "6VP2BI6WIUKC",
+      "district": "Syangja",
+      "ward": 4,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "b2d43277-c5e5-470f-a090-50fcaa498606",
+      "refCode": "EJU3S5YTT4ZL",
+      "district": "Kailali",
+      "ward": 9,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "9a5199a2-6f1f-4f2a-aaa7-bc24319cb647",
+      "refCode": "W7HCLSEUGBGJ",
+      "district": "Syangja",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "d0f01f47-cb9c-44e2-a1fa-95ebb0a05fef",
+      "refCode": "3HLUIZSWS62C",
+      "district": "Dhading",
+      "ward": 8,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "f5b5ae27-ae52-464c-89c1-74608a35fa8c",
+      "refCode": "GOEU62RIZQDP",
+      "district": "Tanahun",
+      "ward": 2,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "status": "pending",
+      "media": [
+        "ou_file_34K7MToxRRS2UMKmQ6UbV"
+      ]
+    },
+    {
+      "id": "b000704d-fd2d-4554-a545-4ed4e168add4",
+      "refCode": "S4QJRUJEJYSV",
+      "district": "Dhading",
+      "ward": 2,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "eab1756e-d4aa-4743-9467-c2c3a8b6889f",
+      "refCode": "TLJUU2TOIJQ7",
+      "district": "Gorkha",
+      "ward": 10,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "6bb8272b-ad15-43ff-a63b-dd129404e332",
+      "refCode": "6ITVFOHJMZ2M",
+      "district": "Sunsari",
+      "ward": 12,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "3ade98ce-72ca-408c-a66f-226bed41cdb5",
+      "refCode": "G4QKATWQWCWV",
+      "district": "Morang",
+      "ward": 5,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "a1f3a205-5a06-4603-95f4-6c0051cde69a",
+      "refCode": "UGZANC2JVJOJ",
+      "district": "Lalitpur",
+      "ward": 5,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "0dd270fd-d287-4966-abdf-fc654a68468a",
+      "refCode": "2MSD36DG67GN",
+      "district": "Lamjung",
+      "ward": 11,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "general",
+      "owner": "ou_user_34K2iX966laabGIrXr2ZW",
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "a1bba451-51b8-4b79-ac64-6c412069057e",
+      "refCode": "2H7Q7H6WQN34",
+      "district": "Sindhupalchok",
+      "ward": 5,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "c1b9d194-6d58-467f-a0ee-ecaefe77889e",
+      "refCode": "SY5UQWUKX6ER",
+      "district": "Kavrepalanchok",
+      "ward": 4,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "670106c9-34e3-43a6-814a-832a1a71b2de",
+      "refCode": "ID4ZFPA753RO",
+      "district": "Dolakha",
+      "ward": 10,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "c68d5f6b-6a08-4202-8b6f-5f78d0e6bc59",
+      "refCode": "IEFCGRPJP7EJ",
+      "district": "Dolakha",
+      "ward": 9,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "72282745-7029-47e7-bbb9-50367e861a5a",
+      "refCode": "HSMP3YNF73YP",
+      "district": "Dolakha",
+      "ward": 6,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "20edefd7-f395-48a9-9810-f93b3890764a",
+      "refCode": "OXJTEE2LKROH",
+      "district": "Jhapa",
+      "ward": 5,
+      "category": "medical",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": "ou_user_34K2iX966laabGIrXr2ZW",
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "ddc7b6a6-3b6a-4a5b-ba0c-0350aae85784",
+      "refCode": "QG4RRDBKY4ZF",
+      "district": "Nuwakot",
+      "ward": 1,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "5f56e6d8-ed3f-4fe8-ab0a-b10e3831c9b1",
+      "refCode": "W5D46PL3NNGJ",
+      "district": "Lalitpur",
+      "ward": 6,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "1dcfd638-b516-4c6c-88b3-deff7dc4e6ce",
+      "refCode": "KXHM5YUZX3I2",
+      "district": "Kailali",
+      "ward": 12,
+      "category": "shelter",
+      "language": "en",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "pending",
+      "media": [
+        "ou_file_34K7MZH1FDuPHwr6W0gF5"
+      ]
+    },
+    {
+      "id": "3710bc99-e952-4c01-a138-ef96a7aa1ed2",
+      "refCode": "SGJKNST425PK",
+      "district": "Sindhupalchok",
+      "ward": 8,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "f7d58148-ed40-4949-8eac-eb8402994d26",
+      "refCode": "42LPT5OY6O55",
+      "district": "Syangja",
+      "ward": 1,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "8145e5b2-8b38-4301-9c73-194b1fd33902",
+      "refCode": "GEYJ4JOHYOZS",
+      "district": "Kavrepalanchok",
+      "ward": 12,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "1c9f3910-471b-4585-a853-57e3d3cebd8a",
+      "refCode": "PWF64T6COKJ4",
+      "district": "Kailali",
+      "ward": 11,
+      "category": "medical",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "d006886a-aa1a-43ec-9b47-8c15811e88e6",
+      "refCode": "NWWBP2ELZ3XE",
+      "district": "Morang",
+      "ward": 12,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "e4b1bce5-17bf-4bfe-8c9c-5e35156461a7",
+      "refCode": "ZUKLAIITMMEG",
+      "district": "Dolakha",
+      "ward": 1,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "8c8fcd4f-c4b6-4b76-aec9-5078a217e2e5",
+      "refCode": "HUPWVII6PGYN",
+      "district": "Sunsari",
+      "ward": 3,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "369f8d08-0acd-478a-8ecf-2035a45d850a",
+      "refCode": "KJ2LH6F3UXHE",
+      "district": "Nuwakot",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "f3bf4040-04df-4275-a76e-51f9d92198c2",
+      "refCode": "A4IKO6KCYKMK",
+      "district": "Morang",
+      "ward": 6,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "7822fe49-279f-455e-95d4-66cb1e5f6a57",
+      "refCode": "WXSDVZAJTVTU",
+      "district": "Makwanpur",
+      "ward": 12,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "226cfd17-b358-4ac5-84ce-2fcfa2ed7d12",
+      "refCode": "OUOMJ6T27UIO",
+      "district": "Kaski",
+      "ward": 3,
+      "category": "goods",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "a2f9ddcf-9dc0-4c49-935a-ebec4e00c77c",
+      "refCode": "QL4HVNVFAU2W",
+      "district": "Makwanpur",
+      "ward": 10,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "test-960f7f8b",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "b2dbf523-c338-4bd7-9fc5-cf8388c279b5",
+      "refCode": "CFZGJ5KTT2W3",
+      "district": "Sindhupalchok",
+      "ward": 7,
+      "category": "goods",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "99fc5aad-2041-4aa9-abba-1164ae5d23b1",
+      "refCode": "HI5J6EUNKTC4",
+      "district": "Lalitpur",
+      "ward": 8,
+      "category": "shelter",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "e1b7e5d7-bcfd-4562-a79d-24742d53d654",
+      "refCode": "R5S6AIOP5CGJ",
+      "district": "Gorkha",
+      "ward": 12,
+      "category": "skilled-labor",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "75a6dce5-ac0b-4f75-b48e-bfb5446df6c0",
+      "refCode": "COABM4FDUTWL",
+      "district": "Dolakha",
+      "ward": 2,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "f91c5ec1-0d81-4733-b9b2-8107084a2706",
+      "refCode": "T6YDA5S64DTY",
+      "district": "Dolakha",
+      "ward": 9,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "9b0c24e6-8728-49d4-8c1b-fc7a01f38525",
+      "refCode": "NIJ5VNCL5CTA",
+      "district": "Bardiya",
+      "ward": 10,
+      "category": "funds-guidance",
+      "language": "en",
+      "incidentId": "test-960f7f8b",
+      "owner": "ou_user_34K2iaM3PGW5Bk4KEulW5",
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "234624eb-2489-462c-b6ad-9252cbfc6642",
+      "refCode": "ZJBJEW3QVMXD",
+      "district": "Jhapa",
+      "ward": 5,
+      "category": "transport",
+      "language": "ne",
+      "incidentId": "seed-koshi-monsoon-floods",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "a3456919-5d57-4de9-840b-8850a3100c2f",
+      "refCode": "3SDABC42RPLB",
+      "district": "Dolakha",
+      "ward": 1,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "312ad7cf-d18f-4046-bee7-e1f3f719e5e2",
+      "refCode": "BKYTMVNUP3T7",
+      "district": "Lalitpur",
+      "ward": 11,
+      "category": "transport",
+      "language": "en",
+      "incidentId": "general",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "855dd2a9-cb23-4b88-bf88-7e2b492cdd67",
+      "refCode": "6TLHWDH6X6IA",
+      "district": "Dolakha",
+      "ward": 1,
+      "category": "skilled-labor",
+      "language": "en",
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    },
+    {
+      "id": "f5b7a629-406c-4719-a7dc-3da5313af632",
+      "refCode": "TXJSGJABXCYW",
+      "district": "Kailali",
+      "ward": 7,
+      "category": "funds-guidance",
+      "language": "ne",
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "owner": null,
+      "status": "pending",
+      "media": []
+    }
+  ],
+  "offers": [
+    {
+      "id": "a82241e7-8091-4848-a84b-c3038488e448",
+      "helper": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "helperN": "03",
+      "districts": [
+        "Tanahun",
+        "Kaski"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "matched",
+      "matchedNeed": "b6dd9c1a-029b-492e-9a3d-96e7cd52fb06"
+    },
+    {
+      "id": "1becaaed-44e2-4c52-9a90-5aa98554875f",
+      "helper": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "helperN": "04",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "matched",
+      "matchedNeed": "7fde4773-cb82-446a-a5fa-82761334ae42"
+    },
+    {
+      "id": "65574a1c-ddf7-4b76-b9e3-0c4b4fb9992e",
+      "helper": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "helperN": "05",
+      "districts": [
+        "Sindhupalchok",
+        "Dhading"
+      ],
+      "categories": [
+        "transport",
+        "skilled-labor"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "matched",
+      "matchedNeed": "89325e84-23c2-4ea8-b18b-83ebe2be5282"
+    },
+    {
+      "id": "1604cef4-62fe-4d30-aea5-55288df4cfbe",
+      "helper": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "helperN": "06",
+      "districts": [
+        "Sunsari"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "rejected"
+    },
+    {
+      "id": "68662186-835a-4fb1-9b3f-447d167c03dc",
+      "helper": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "helperN": "08",
+      "districts": [
+        "Achham"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "matched",
+      "matchedNeed": "32c5bffb-0aa8-457e-a37d-73835ceee9a5"
+    },
+    {
+      "id": "2c06c0d2-cb38-4f5f-a484-6d92cffe0b86",
+      "helper": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "helperN": "09",
+      "districts": [
+        "Lamjung"
+      ],
+      "categories": [
+        "funds-guidance",
+        "medical"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "matched",
+      "matchedNeed": "67ee4d29-d513-4678-8a0f-b744261773a4"
+    },
+    {
+      "id": "8af1ad08-9998-443c-b87d-56f5f74f8e06",
+      "helper": "ou_user_34K2hr02nVSsKynyidD2N",
+      "helperN": "10",
+      "districts": [
+        "Kathmandu"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "matched",
+      "matchedNeed": "c52475a7-2f0b-47a7-8a9e-5405d883a7bd"
+    },
+    {
+      "id": "bfeef5c7-60c1-41d5-9cfc-9b0b4f1b2cdc",
+      "helper": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "helperN": "11",
+      "districts": [
+        "Bhaktapur",
+        "Jhapa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "matched",
+      "matchedNeed": "9c60ac42-0016-49f7-b6f6-d261b5a25515"
+    },
+    {
+      "id": "49531fe1-f9dd-4429-bfff-45de3ecd4276",
+      "helper": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "helperN": "12",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "medical",
+        "goods"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "matched",
+      "matchedNeed": "4eb225a2-5f11-4194-af55-b0b468feef6f"
+    },
+    {
+      "id": "9b847bfb-03ab-44fc-bf32-741ad3045c3f",
+      "helper": "ou_user_34K2hybqg06hzoC6ZL170",
+      "helperN": "13",
+      "districts": [
+        "Dolakha",
+        "Gorkha"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "b5ffd961-8eee-433e-9313-b2628a02e0a1",
+      "helper": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "helperN": "14",
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "b749d2a7-588f-4877-892d-a6d2c5398e8f",
+      "helper": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "helperN": "15",
+      "districts": [
+        "Jhapa",
+        "Gorkha"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "rejected"
+    },
+    {
+      "id": "2dfd8c94-386e-4251-b43d-c5b9f21c0fc6",
+      "helper": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "helperN": "16",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "matched",
+      "matchedNeed": "edcf9cea-678b-45a0-bd32-bf80e908c22f"
+    },
+    {
+      "id": "a8a34953-fda6-45ad-a357-be4fe34c5e73",
+      "helper": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "helperN": "17",
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "979753f9-4fc0-4daf-bc05-e5799ed52fe1",
+      "helper": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "helperN": "18",
+      "districts": [
+        "Sindhupalchok",
+        "Tanahun"
+      ],
+      "categories": [
+        "shelter",
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "6759cf24-1324-4faf-8df8-3b51eef0f687",
+      "helper": "ou_user_34K2iQmUz7WK5LxCU7EGc",
+      "helperN": "19",
+      "districts": [
+        "Gorkha",
+        "Nuwakot"
+      ],
+      "categories": [
+        "medical",
+        "shelter"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "7357ecf5-7282-4e13-bebf-56aa0bea474d",
+      "helper": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "helperN": "20",
+      "districts": [
+        "Lalitpur"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "a0a037f0-f4f2-4209-b32b-c35315aa99bc",
+      "helper": "ou_user_34K2iX966laabGIrXr2ZW",
+      "helperN": "21",
+      "districts": [
+        "Kailali",
+        "Bhaktapur"
+      ],
+      "categories": [
+        "skilled-labor",
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "matched",
+      "matchedNeed": "e366f2e8-906c-4ce3-899e-b18769391e82"
+    },
+    {
+      "id": "864b44ca-9260-47e5-a972-361dc545942a",
+      "helper": "ou_user_34K2iaM3PGW5Bk4KEulW5",
+      "helperN": "22",
+      "districts": [
+        "Tanahun",
+        "Kailali"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "7f27709e-eeba-42f1-acc2-03b54c564b81",
+      "helper": "ou_user_34K2ijchcyhQCG1n8ittv",
+      "helperN": "25",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "test",
+      "status": "rejected"
+    },
+    {
+      "id": "55d687d6-43dc-4184-abeb-d4bb0ebc7498",
+      "helper": "seed_helper_026",
+      "helperN": "026",
+      "districts": [
+        "Kathmandu",
+        "Bhaktapur"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "fccd5d6c-853a-4ba0-81af-0c1daa053a03",
+      "helper": "seed_helper_027",
+      "helperN": "027",
+      "districts": [
+        "Lalitpur",
+        "Bardiya"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "test",
+      "status": "matched",
+      "matchedNeed": "89670a18-9f63-4c7a-8138-2fce8bb3b97a"
+    },
+    {
+      "id": "4dbf4243-5bd6-4b18-9617-67a2b6cc6c6b",
+      "helper": "seed_helper_028",
+      "helperN": "028",
+      "districts": [
+        "Jhapa"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "04ba66b5-37c6-4b19-a450-06df522d7342",
+      "helper": "seed_helper_029",
+      "helperN": "029",
+      "districts": [
+        "Bhaktapur",
+        "Chitwan"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "ee8e7762-d909-4fdc-a6d7-47e6708725bb",
+      "helper": "seed_helper_030",
+      "helperN": "030",
+      "districts": [
+        "Jhapa"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "5fb9f815-0bf3-4a44-bb50-49192f0457ea",
+      "helper": "seed_helper_031",
+      "helperN": "031",
+      "districts": [
+        "Gorkha"
+      ],
+      "categories": [
+        "shelter",
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "matched",
+      "matchedNeed": "40e086cf-1bff-4fe5-b967-d0e35ff9ad82"
+    },
+    {
+      "id": "d5cff115-6aa1-476b-bcf4-d52f6b4e2b7f",
+      "helper": "seed_helper_032",
+      "helperN": "032",
+      "districts": [
+        "Tanahun",
+        "Achham"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "f5a045c0-5d8d-4ef3-a31f-544d1e8c17a0",
+      "helper": "seed_helper_033",
+      "helperN": "033",
+      "districts": [
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "rejected"
+    },
+    {
+      "id": "c491cf36-844e-4958-a43d-7471d64554b7",
+      "helper": "seed_helper_035",
+      "helperN": "035",
+      "districts": [
+        "Bardiya"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "dfde3934-8dc9-48d5-a062-8366ee2e7320",
+      "helper": "seed_helper_036",
+      "helperN": "036",
+      "districts": [
+        "Bhaktapur",
+        "Lamjung"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "1c732567-db57-4d7c-b884-58eec1c20012",
+      "helper": "seed_helper_037",
+      "helperN": "037",
+      "districts": [
+        "Jhapa",
+        "Lalitpur"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "0b5f10a5-328f-478d-ac0a-d7563e99b44c",
+      "helper": "seed_helper_038",
+      "helperN": "038",
+      "districts": [
+        "Dolakha"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "matched",
+      "matchedNeed": "dbbe9e75-19d8-469b-9b9d-7f1620379bbc"
+    },
+    {
+      "id": "77cee945-31ce-4b80-a54b-b9d91111bc12",
+      "helper": "seed_helper_039",
+      "helperN": "039",
+      "districts": [
+        "Morang",
+        "Sunsari"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "33f2b277-666f-4fe0-9acd-881b6b3d9e95",
+      "helper": "seed_helper_040",
+      "helperN": "040",
+      "districts": [
+        "Bhaktapur",
+        "Kaski"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "44397cbd-02f3-4705-9e2c-8c9d0ddf7c27",
+      "helper": "seed_helper_041",
+      "helperN": "041",
+      "districts": [
+        "Tanahun",
+        "Makwanpur"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "matched",
+      "matchedNeed": "2d0ac902-5c99-42bb-9357-9ffcaecb961d"
+    },
+    {
+      "id": "e7940ebd-933d-47e4-bb4c-915dafcc8cb3",
+      "helper": "seed_helper_042",
+      "helperN": "042",
+      "districts": [
+        "Bhaktapur"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "rejected"
+    },
+    {
+      "id": "9e16c48a-2c71-4724-af88-9288bdd4f2cd",
+      "helper": "seed_helper_044",
+      "helperN": "044",
+      "districts": [
+        "Makwanpur"
+      ],
+      "categories": [
+        "funds-guidance",
+        "transport"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "matched",
+      "matchedNeed": "c7fc8c43-9ad3-423f-99a2-d9d52e37c68c"
+    },
+    {
+      "id": "1dfdf479-af84-4a2e-8043-07cfd4073d84",
+      "helper": "seed_helper_045",
+      "helperN": "045",
+      "districts": [
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "transport",
+        "goods"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "14482856-bc12-4680-8fcd-9fc376b9c07a",
+      "helper": "seed_helper_046",
+      "helperN": "046",
+      "districts": [
+        "Lalitpur",
+        "Lamjung"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "c8e6a67c-2b68-4f7b-bf56-df849d66a02c",
+      "helper": "seed_helper_047",
+      "helperN": "047",
+      "districts": [
+        "Nuwakot",
+        "Syangja"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "9f1dfd85-be24-4be2-8224-1b81e45ccf47",
+      "helper": "seed_helper_048",
+      "helperN": "048",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "funds-guidance",
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "a4d53b54-e78c-4b2d-94dd-58fb09c7fb1d",
+      "helper": "seed_helper_050",
+      "helperN": "050",
+      "districts": [
+        "Kailali"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "748726b7-676a-4b7f-8acf-fb4652dc3c56",
+      "helper": "seed_helper_051",
+      "helperN": "051",
+      "districts": [
+        "Bhaktapur"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "d02b71b4-460c-4e61-90bd-aff8300d1998",
+      "helper": "seed_helper_052",
+      "helperN": "052",
+      "districts": [
+        "Sindhupalchok",
+        "Bardiya"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "rejected"
+    },
+    {
+      "id": "bc937807-fa62-4f7b-aa85-76eac238d82d",
+      "helper": "seed_helper_053",
+      "helperN": "053",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "651bb35b-8b3d-4e30-9a08-2582eeef7cae",
+      "helper": "seed_helper_054",
+      "helperN": "054",
+      "districts": [
+        "Kailali"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "20e20ab7-c8b5-45ed-bce8-64746755c767",
+      "helper": "seed_helper_055",
+      "helperN": "055",
+      "districts": [
+        "Makwanpur",
+        "Jhapa"
+      ],
+      "categories": [
+        "funds-guidance",
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "8959be7c-14ff-4785-ba4b-773455346527",
+      "helper": "seed_helper_056",
+      "helperN": "056",
+      "districts": [
+        "Dolakha"
+      ],
+      "categories": [
+        "shelter",
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "e2aab48a-036e-4a05-af49-4ce07ecc883b",
+      "helper": "seed_helper_057",
+      "helperN": "057",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "1339b5a1-5796-4e07-b55d-539ace0683ac",
+      "helper": "seed_helper_058",
+      "helperN": "058",
+      "districts": [
+        "Nuwakot"
+      ],
+      "categories": [
+        "shelter",
+        "skilled-labor"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "aaa2c035-2874-4acb-8a25-24c76f67352c",
+      "helper": "seed_helper_059",
+      "helperN": "059",
+      "districts": [
+        "Chitwan"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "9c56e959-8fa1-4e59-96fe-71815d4b3d2b",
+      "helper": "seed_helper_060",
+      "helperN": "060",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "rejected"
+    },
+    {
+      "id": "325c5171-9154-423d-8478-9a6fbebef05d",
+      "helper": "seed_helper_061",
+      "helperN": "061",
+      "districts": [
+        "Bhaktapur"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "59d05a8a-b5c4-4395-8095-e01dc15ffc6c",
+      "helper": "seed_helper_062",
+      "helperN": "062",
+      "districts": [
+        "Bhaktapur",
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "255bd871-5033-47db-af80-a5206ef0fcc7",
+      "helper": "seed_helper_063",
+      "helperN": "063",
+      "districts": [
+        "Dhading"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "86078da3-0070-4e48-8a18-8d82e92a022d",
+      "helper": "seed_helper_064",
+      "helperN": "064",
+      "districts": [
+        "Makwanpur"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "4208935c-492d-467a-a73b-6667ba99ee8e",
+      "helper": "seed_helper_065",
+      "helperN": "065",
+      "districts": [
+        "Kailali",
+        "Morang"
+      ],
+      "categories": [
+        "shelter",
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "published"
+    },
+    {
+      "id": "05df82a5-88e0-4718-bae6-dddae421426a",
+      "helper": "seed_helper_066",
+      "helperN": "066",
+      "districts": [
+        "Sunsari"
+      ],
+      "categories": [
+        "transport",
+        "goods"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "f5b37898-a0f0-4489-94ab-5fd49579edfa",
+      "helper": "seed_helper_067",
+      "helperN": "067",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "438742f8-ba96-4b67-bcd8-53dc286d4d60",
+      "helper": "seed_helper_069",
+      "helperN": "069",
+      "districts": [
+        "Sindhupalchok",
+        "Kaski"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "rejected"
+    },
+    {
+      "id": "45e6126b-af05-422b-a0f5-caba82533442",
+      "helper": "seed_helper_070",
+      "helperN": "070",
+      "districts": [
+        "Bhaktapur"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "e60aebd9-7142-420f-bfea-c0bffe7736ae",
+      "helper": "seed_helper_071",
+      "helperN": "071",
+      "districts": [
+        "Syangja",
+        "Jhapa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "4afdb7c5-1f61-4605-a27d-031bcbe6bc7c",
+      "helper": "seed_helper_072",
+      "helperN": "072",
+      "districts": [
+        "Jhapa"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "c8867172-eb69-4d15-ac28-c323f69e431f",
+      "helper": "seed_helper_073",
+      "helperN": "073",
+      "districts": [
+        "Tanahun"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "1af2a286-6f40-4b71-a5b3-a1e941ea1870",
+      "helper": "seed_helper_075",
+      "helperN": "075",
+      "districts": [
+        "Tanahun"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "fc76d02d-3329-44f2-badc-52968914e4f4",
+      "helper": "seed_helper_077",
+      "helperN": "077",
+      "districts": [
+        "Morang",
+        "Kaski"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "f717bc8b-4606-4fda-8ec9-c8c409b37d3f",
+      "helper": "seed_helper_078",
+      "helperN": "078",
+      "districts": [
+        "Dolakha"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "7a599d36-4a22-4f42-b5a9-4c4496123b10",
+      "helper": "seed_helper_080",
+      "helperN": "080",
+      "districts": [
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "medical",
+        "funds-guidance"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "rejected"
+    },
+    {
+      "id": "b59e05b3-6381-4ab6-93fb-f98cca6e6236",
+      "helper": "seed_helper_081",
+      "helperN": "081",
+      "districts": [
+        "Kathmandu",
+        "Lamjung"
+      ],
+      "categories": [
+        "transport",
+        "shelter"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "e4dfa5df-7d1a-4ded-b799-6254ae68f14c",
+      "helper": "seed_helper_082",
+      "helperN": "082",
+      "districts": [
+        "Jhapa"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "0725c2d6-8609-440b-b0ec-a6242320ca96",
+      "helper": "seed_helper_084",
+      "helperN": "084",
+      "districts": [
+        "Bardiya",
+        "Lalitpur"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "9b49ba83-3409-437c-9bcc-c18229710995",
+      "helper": "seed_helper_086",
+      "helperN": "086",
+      "districts": [
+        "Kaski",
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "f751694f-4e8b-434e-87bf-87c562e4e6de",
+      "helper": "seed_helper_089",
+      "helperN": "089",
+      "districts": [
+        "Makwanpur",
+        "Chitwan"
+      ],
+      "categories": [
+        "medical",
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "published"
+    },
+    {
+      "id": "baa0248b-d1d9-4cf0-be27-4d3c6ab9969f",
+      "helper": "seed_helper_090",
+      "helperN": "090",
+      "districts": [
+        "Dolakha",
+        "Lamjung"
+      ],
+      "categories": [
+        "skilled-labor",
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "published"
+    },
+    {
+      "id": "a90824df-13d0-45d5-89df-732b6187394d",
+      "helper": "seed_helper_091",
+      "helperN": "091",
+      "districts": [
+        "Gorkha",
+        "Tanahun"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "a8b42d0f-d0ab-4dab-8f6c-7a4df4a5eadc",
+      "helper": "seed_helper_092",
+      "helperN": "092",
+      "districts": [
+        "Makwanpur"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "rejected"
+    },
+    {
+      "id": "8692b1b0-e206-4cdf-9eba-564297cd8b47",
+      "helper": "seed_helper_093",
+      "helperN": "093",
+      "districts": [
+        "Makwanpur"
+      ],
+      "categories": [
+        "medical",
+        "transport"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "published"
+    },
+    {
+      "id": "60f31afa-34ec-4c76-877f-f7a3daca4644",
+      "helper": "seed_helper_094",
+      "helperN": "094",
+      "districts": [
+        "Chitwan",
+        "Gorkha"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "606b0213-0fe2-465b-b175-7e2190046a5d",
+      "helper": "seed_helper_095",
+      "helperN": "095",
+      "districts": [
+        "Morang",
+        "Jhapa"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "published"
+    },
+    {
+      "id": "b9d3ac53-c402-4208-ac7a-7a8cdbea4369",
+      "helper": "seed_helper_097",
+      "helperN": "097",
+      "districts": [
+        "Lamjung",
+        "Syangja"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "published"
+    },
+    {
+      "id": "c8091c71-7d5c-4167-8fa1-657818260bb6",
+      "helper": "seed_helper_098",
+      "helperN": "098",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "pending"
+    },
+    {
+      "id": "0568ddfc-0b46-477e-8432-b4ce11c5bc9e",
+      "helper": "seed_helper_099",
+      "helperN": "099",
+      "districts": [
+        "Sunsari",
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "0d94954a-75ca-4298-b109-ec66e45ae0bc",
+      "helper": "seed_helper_100",
+      "helperN": "100",
+      "districts": [
+        "Nuwakot",
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "402e3e60-6ffe-42fe-8ebb-6e1591322773",
+      "helper": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "helperN": "01",
+      "districts": [
+        "Morang",
+        "Nuwakot"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "a6708812-127c-4719-983a-1483bf2c77c6",
+      "helper": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "helperN": "02",
+      "districts": [
+        "Tanahun"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "ca49a754-0d59-43e0-af25-7d1270bb7c53",
+      "helper": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "helperN": "03",
+      "districts": [
+        "Kathmandu"
+      ],
+      "categories": [
+        "goods",
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "4c9f3eec-e7ea-431f-bc00-9b518e4be199",
+      "helper": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "helperN": "04",
+      "districts": [
+        "Kaski",
+        "Chitwan"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "30fae687-d72f-45c3-9348-c0c54928cf91",
+      "helper": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "helperN": "05",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "1577e994-57f0-4bfa-8af7-b53e5214e61b",
+      "helper": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "helperN": "06",
+      "districts": [
+        "Makwanpur"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "11d22b4a-8a54-4e2e-b24e-71f74fd206f8",
+      "helper": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "helperN": "07",
+      "districts": [
+        "Kailali",
+        "Gorkha"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "pending"
+    },
+    {
+      "id": "bc5a1b65-347b-46d4-b10c-6db50b7e8cc1",
+      "helper": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "helperN": "08",
+      "districts": [
+        "Kaski",
+        "Morang"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "pending"
+    },
+    {
+      "id": "43ad6eb9-6a08-47d3-b83a-e7e42128b59f",
+      "helper": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "helperN": "09",
+      "districts": [
+        "Chitwan",
+        "Kaski"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "ee4c2fc7-fe7e-4bcc-bc26-a2d2be71a417",
+      "helper": "ou_user_34K2hr02nVSsKynyidD2N",
+      "helperN": "10",
+      "districts": [
+        "Kathmandu"
+      ],
+      "categories": [
+        "goods",
+        "skilled-labor"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "85fec351-9842-4955-b2ed-b69fdd77f73b",
+      "helper": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "helperN": "11",
+      "districts": [
+        "Rasuwa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "5f9f4f83-ba42-4bf7-a134-7716115d65a8",
+      "helper": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "helperN": "12",
+      "districts": [
+        "Sunsari",
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "funds-guidance",
+        "goods"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "pending"
+    },
+    {
+      "id": "cfec2082-7b1c-4d98-a7e3-3084031f2cf0",
+      "helper": "ou_user_34K2hybqg06hzoC6ZL170",
+      "helperN": "13",
+      "districts": [
+        "Kaski",
+        "Lamjung"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "7715e2e6-9ced-4e05-a989-684f7b9b9394",
+      "helper": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "helperN": "14",
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "goods",
+        "funds-guidance"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "ecc94aa1-27c0-4dbb-a1b9-11e7c4fa719b",
+      "helper": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "helperN": "15",
+      "districts": [
+        "Bardiya",
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "medical",
+        "shelter"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "pending"
+    },
+    {
+      "id": "d05272c6-ea8a-4212-b695-b31845f3d78b",
+      "helper": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "helperN": "16",
+      "districts": [
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "pending"
+    },
+    {
+      "id": "8cd6afdd-0c71-4b75-bb48-3cc0323ff103",
+      "helper": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "helperN": "17",
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "19aefd39-2a45-44fc-bad2-ccb3dc9fff33",
+      "helper": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "helperN": "18",
+      "districts": [
+        "Sindhupalchok",
+        "Gorkha"
+      ],
+      "categories": [
+        "skilled-labor",
+        "goods"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "pending"
+    },
+    {
+      "id": "98a72745-e33e-4c78-ab23-db234056140e",
+      "helper": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "helperN": "02",
+      "districts": [
+        "Chitwan"
+      ],
+      "categories": [
+        "goods",
+        "skilled-labor"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "e8d10d1f-f7dd-4947-9246-2526e2a81afb",
+      "helper": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "helperN": "03",
+      "districts": [
+        "Tanahun",
+        "Morang"
+      ],
+      "categories": [
+        "transport",
+        "skilled-labor"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "pending"
+    },
+    {
+      "id": "bb05ddb4-f32c-4a73-a8b5-890bd63442b9",
+      "helper": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "helperN": "04",
+      "districts": [
+        "Kaski",
+        "Rasuwa"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "78536eaa-e0c6-4c2b-b65b-0e28b187386f",
+      "helper": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "helperN": "05",
+      "districts": [
+        "Chitwan",
+        "Jhapa"
+      ],
+      "categories": [
+        "shelter"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "e28b954b-4879-45d5-88d9-bc24bae910f2",
+      "helper": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "helperN": "06",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-koshi-monsoon-floods",
+      "status": "pending"
+    },
+    {
+      "id": "e4deb115-42ab-44b7-a2ee-99f6dbe85dca",
+      "helper": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "helperN": "07",
+      "districts": [
+        "Lalitpur"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "seed-karnali-riverbank-erosion",
+      "status": "pending"
+    },
+    {
+      "id": "9b016364-0ecc-4875-be09-f37876d2ce53",
+      "helper": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "helperN": "08",
+      "districts": [
+        "Achham",
+        "Rasuwa"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "233e9a71-f858-4b1d-84d7-aba05df29a38",
+      "helper": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "helperN": "09",
+      "districts": [
+        "Gorkha",
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "funds-guidance"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "99e56068-559e-46d0-a890-a6959f6c6f17",
+      "helper": "ou_user_34K2hr02nVSsKynyidD2N",
+      "helperN": "10",
+      "districts": [
+        "Kathmandu"
+      ],
+      "categories": [
+        "shelter",
+        "goods"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "07dbdcb3-a010-47e8-b1c3-f743902051ff",
+      "helper": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "helperN": "11",
+      "districts": [
+        "Gorkha"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "test-960f7f8b",
+      "status": "pending"
+    },
+    {
+      "id": "231a7823-59f2-4da9-9bec-152b96dd45c7",
+      "helper": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "helperN": "12",
+      "districts": [
+        "Rasuwa",
+        "Kavrepalanchok"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "4d3f4a77-f5c0-4ac4-8acb-947b2de2bff2",
+      "helper": "ou_user_34K2hybqg06hzoC6ZL170",
+      "helperN": "13",
+      "districts": [
+        "Kaski",
+        "Dolakha"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-melamchi-landslide-cluster",
+      "status": "pending"
+    },
+    {
+      "id": "efe5ac4d-4a5c-4882-8415-ff0eba4a4509",
+      "helper": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "helperN": "14",
+      "districts": [
+        "Sindhupalchok",
+        "Makwanpur"
+      ],
+      "categories": [
+        "skilled-labor"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "b1873af0-8688-4913-808a-5a4cb8013e06",
+      "helper": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "helperN": "15",
+      "districts": [
+        "Jhapa"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "d56c0991-322f-49a8-a627-a0e64597da03",
+      "helper": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "helperN": "16",
+      "districts": [
+        "Bardiya"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "ee4dc7b6-4622-4034-968d-0245ad8d629e",
+      "helper": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "helperN": "17",
+      "districts": [
+        "Kathmandu"
+      ],
+      "categories": [
+        "goods"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    },
+    {
+      "id": "d6c1cf3d-1e57-403b-8f9a-c46224fd3ce3",
+      "helper": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "helperN": "18",
+      "districts": [
+        "Sindhupalchok"
+      ],
+      "categories": [
+        "medical"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "5499d202-c2f0-4105-a082-2425b37d5432",
+      "helper": "ou_user_34K2iQmUz7WK5LxCU7EGc",
+      "helperN": "19",
+      "districts": [
+        "Kaski"
+      ],
+      "categories": [
+        "transport"
+      ],
+      "incidentId": "test",
+      "status": "pending"
+    },
+    {
+      "id": "1121ddb5-da70-42d9-8acb-9a58170057b5",
+      "helper": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "helperN": "20",
+      "districts": [
+        "Lalitpur"
+      ],
+      "categories": [
+        "skilled-labor",
+        "medical"
+      ],
+      "incidentId": "seed-sunkoshi-flood-2026",
+      "status": "pending"
+    }
+  ],
+  "claimSync": {
+    "results": [
+      {
+        "code": "L9XQSTDX",
+        "status": "redeemed",
+        "needId": "3c9326e7-9ba1-46d1-ad17-341ac55750f6"
+      },
+      {
+        "code": "HD2LSJ3J",
+        "status": "redeemed",
+        "needId": "7fde023c-a92a-40b0-8c97-4e5c503ee6d9"
+      },
+      {
+        "code": "EZEGW869",
+        "status": "redeemed",
+        "needId": "e6491ffe-dccb-4795-8231-badbc8c6c623"
+      }
+    ]
+  },
+  "printSheets": [
+    {
+      "district": "Dolakha",
+      "ward": 5,
+      "count": 1,
+      "sample": [
+        {
+          "claimCode": "PW8YVK4K",
+          "maskedName": "कमला भ.",
+          "category": "skilled-labor",
+          "ward": 5,
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "district": "Tanahun",
+      "ward": 7,
+      "count": 2,
+      "sample": [
+        {
+          "claimCode": "W5SDZSEW",
+          "maskedName": "Ram P.",
+          "category": "medical",
+          "ward": 7,
+          "status": "matched"
+        },
+        {
+          "claimCode": "49GLKHJ8",
+          "maskedName": "विकास म.",
+          "category": "medical",
+          "ward": 7,
+          "status": "matched"
+        }
+      ]
+    },
+    {
+      "district": "Jhapa",
+      "ward": 11,
+      "count": 1,
+      "sample": [
+        {
+          "claimCode": "5HMP59DB",
+          "maskedName": "हरि ग.",
+          "category": "transport",
+          "ward": 11,
+          "status": "matched"
+        }
+      ]
+    }
+  ],
+  "ledgerSample": [
+    {
+      "maskedName": "दीपक श.",
+      "category": "funds-guidance",
+      "district": "Bardiya",
+      "ward": 5,
+      "redeemedAt": "2026-09-06T12:43:04.694Z"
+    }
+  ],
+  "statusSample": {
+    "status": "fulfilled",
+    "category": "funds-guidance",
+    "district": "Bardiya",
+    "createdAt": "2026-09-06T12:40:49.977Z",
+    "expiresAt": "2026-10-06T12:40:49.000Z",
+    "claimCode": "Q65R87XN"
+  },
+  "groups": [
+    {
+      "needId": "08caa440-d876-43df-9693-cf4bc10b2e16",
+      "starter": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "joiner": "ou_user_34K2hybqg06hzoC6ZL170",
+      "items": [
+        "3c454392-025e-477d-9b52-308b76bdba6b",
+        "d06aea28-48f4-4cac-b400-a7b5236c28e6",
+        "d37b3e63-0e2c-4900-9707-af2f053ba5a0"
+      ]
+    },
+    {
+      "needId": "284ab241-bf40-4d30-bc85-14ce3a8ec8c1",
+      "starter": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "joiner": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "items": [
+        "61839b2a-d4df-45f2-b8a5-a14eb9772726",
+        "bce4606c-2f38-4b80-aa98-cc5e3b952488",
+        "5e41ff8a-1923-4027-8d68-cab0ee6684fa"
+      ]
+    },
+    {
+      "needId": "0cc7b11c-0f2c-4527-a1c9-271e55a36349",
+      "starter": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "joiner": "ou_user_34K2ijchcyhQCG1n8ittv",
+      "items": [
+        "196a2301-c87f-49e6-aa9b-919210e13870",
+        "f568e6a1-2f93-4d33-998f-a4ed617a5fd3",
+        "dceefed0-d050-431b-a20b-7d552bf43f05"
+      ]
+    },
+    {
+      "needId": "87828272-67d0-4e4c-820d-bed9c2237cb6",
+      "starter": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "joiner": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "items": [
+        "6ef006c5-ef40-493f-a4c7-671236a5974e",
+        "d26e3cbc-7363-4845-a0b3-3b457761255a",
+        "d595b296-b065-4308-8544-a0556ad3ae4e"
+      ]
+    },
+    {
+      "needId": "0651aa72-4532-4d3e-8040-ade1ab2dbc6a",
+      "starter": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "joiner": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "items": [
+        "6fabb4f3-d53a-4207-898e-ddf02b97b07f",
+        "96374040-3d2c-4bf3-8d41-c46d65d03af0",
+        "39343443-191d-4ff0-8611-7e2a38fb995e"
+      ]
+    }
+  ],
+  "orgs": [
+    {
+      "id": "74c53b1e-575d-42c4-8259-7e5826fb4ad1",
+      "name": "[seed] Sindhu Youth Relief Network",
+      "owner": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "ownerN": "01",
+      "districts": [
+        "Sindhupalchok",
+        "Kavrepalanchok"
+      ],
+      "status": "verified",
+      "tier": "known",
+      "staff": [
+        "ou_user_34K2hnl2h4x4LlRWXKkSC"
+      ]
+    },
+    {
+      "id": "758f7ed2-3ccd-4fc8-8e6d-433ccc756882",
+      "name": "[seed] Pokhara Mothers Group",
+      "owner": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "ownerN": "02",
+      "districts": [
+        "Kaski",
+        "Tanahun"
+      ],
+      "status": "verified",
+      "tier": "self_declared"
+    },
+    {
+      "id": "64d8037b-ad61-46e4-bd53-b36280555af8",
+      "name": "[seed] Himalaya Care Foundation",
+      "owner": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "ownerN": "03",
+      "districts": [
+        "Kathmandu",
+        "Lalitpur",
+        "Bhaktapur"
+      ],
+      "status": "verified",
+      "tier": "known",
+      "declined": true
+    },
+    {
+      "id": "a7f1b345-043f-478e-b60b-9119e06b40f1",
+      "name": "[seed] Koshi Boat Volunteers",
+      "owner": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "ownerN": "04",
+      "districts": [
+        "Sunsari",
+        "Morang"
+      ],
+      "status": "verified",
+      "tier": "vouched"
+    },
+    {
+      "id": "5dd95a5f-8d06-40cf-b055-202c2539b1ad",
+      "name": "[seed] Karnali Trust Hospital Outreach",
+      "owner": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "ownerN": "05",
+      "districts": [
+        "Kailali",
+        "Bardiya"
+      ],
+      "status": "verified",
+      "tier": "self_declared"
+    },
+    {
+      "id": "4cf99017-e29e-4128-8809-acf725cf6c2d",
+      "name": "[seed] Gorkha Rebuild Society",
+      "owner": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "ownerN": "06",
+      "districts": [
+        "Gorkha",
+        "Lamjung"
+      ],
+      "status": "pending",
+      "pending": true
+    },
+    {
+      "id": "b507e74f-d9db-46c1-86ff-7ad80ac4ee06",
+      "name": "[seed] Valley Logistics Pvt",
+      "owner": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "ownerN": "07",
+      "districts": [
+        "Kathmandu"
+      ],
+      "status": "pending",
+      "pending": true
+    },
+    {
+      "id": "da899be3-951e-42dc-92ec-8420a08c1e77",
+      "name": "[seed] Instant Relief Nepal",
+      "owner": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "ownerN": "08",
+      "districts": [
+        "Chitwan"
+      ],
+      "status": "rejected",
+      "reject": "[seed] No verifiable registration and the contact person could not be reached."
+    }
+  ],
+  "centers": [
+    {
+      "id": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "orgId": "74c53b1e-575d-42c4-8259-7e5826fb4ad1",
+      "ownerN": "01",
+      "district": "Sindhupalchok",
+      "name": "[seed] Community hall depot — Sindhupalchok",
+      "accepts": [
+        "solar-light",
+        "rice",
+        "lentils",
+        "hygiene-kit",
+        "tent",
+        "blanket"
+      ]
+    },
+    {
+      "id": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "orgId": "74c53b1e-575d-42c4-8259-7e5826fb4ad1",
+      "ownerN": "01",
+      "district": "Kavrepalanchok",
+      "name": "[seed] Health post store — Kavrepalanchok",
+      "accepts": [
+        "cooking-oil",
+        "lentils",
+        "medicine"
+      ]
+    },
+    {
+      "id": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "orgId": "758f7ed2-3ccd-4fc8-8e6d-433ccc756882",
+      "ownerN": "02",
+      "district": "Kaski",
+      "name": "[seed] Community hall depot — Kaski",
+      "accepts": [
+        "medicine",
+        "cooking-oil",
+        "lentils",
+        "blanket"
+      ]
+    },
+    {
+      "id": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "orgId": "758f7ed2-3ccd-4fc8-8e6d-433ccc756882",
+      "ownerN": "02",
+      "district": "Tanahun",
+      "name": "[seed] Bus park distribution tent — Tanahun",
+      "accepts": [
+        "solar-light",
+        "cooking-oil",
+        "lentils"
+      ]
+    },
+    {
+      "id": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "orgId": "64d8037b-ad61-46e4-bd53-b36280555af8",
+      "ownerN": "03",
+      "district": "Kathmandu",
+      "name": "[seed] Ward office collection point — Kathmandu",
+      "accepts": [
+        "drinking-water",
+        "tent",
+        "solar-light",
+        "blanket"
+      ]
+    },
+    {
+      "id": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "orgId": "64d8037b-ad61-46e4-bd53-b36280555af8",
+      "ownerN": "03",
+      "district": "Lalitpur",
+      "name": "[seed] Health post store — Lalitpur",
+      "accepts": [
+        "tarpaulin",
+        "rice",
+        "hygiene-kit"
+      ]
+    },
+    {
+      "id": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "orgId": "a7f1b345-043f-478e-b60b-9119e06b40f1",
+      "ownerN": "04",
+      "district": "Sunsari",
+      "name": "[seed] Bus park distribution tent — Sunsari",
+      "accepts": [
+        "hygiene-kit",
+        "rice",
+        "tarpaulin"
+      ]
+    },
+    {
+      "id": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "orgId": "a7f1b345-043f-478e-b60b-9119e06b40f1",
+      "ownerN": "04",
+      "district": "Morang",
+      "name": "[seed] School ground relief camp — Morang",
+      "accepts": [
+        "solar-light",
+        "blanket",
+        "tent",
+        "cooking-oil",
+        "medicine"
+      ]
+    },
+    {
+      "id": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "orgId": "5dd95a5f-8d06-40cf-b055-202c2539b1ad",
+      "ownerN": "05",
+      "district": "Kailali",
+      "name": "[seed] Community hall depot — Kailali",
+      "accepts": [
+        "lentils",
+        "medicine",
+        "rice",
+        "drinking-water",
+        "solar-light"
+      ]
+    },
+    {
+      "id": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "orgId": "5dd95a5f-8d06-40cf-b055-202c2539b1ad",
+      "ownerN": "05",
+      "district": "Bardiya",
+      "name": "[seed] Community hall depot — Bardiya",
+      "accepts": [
+        "hygiene-kit",
+        "solar-light",
+        "blanket",
+        "medicine"
+      ]
+    }
+  ],
+  "goods": [
+    {
+      "id": "adfb9977-e8e6-4d59-a958-83e4c4ab5b99",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "entryType": "intake",
+      "category": "solar-light"
+    },
+    {
+      "id": "2521c57b-7102-484c-a30c-6de959004618",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "entryType": "intake",
+      "category": "rice"
+    },
+    {
+      "id": "d41deceb-6d31-44d5-9654-cfcf3f56d39d",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "entryType": "intake",
+      "category": "lentils"
+    },
+    {
+      "id": "e8aad38d-403d-4bcc-9fd9-6dd613e9c9fd",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "entryType": "distribution",
+      "category": "solar-light"
+    },
+    {
+      "id": "b5cd101f-99be-479d-911a-a480e23ddc7f",
+      "centerId": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "entryType": "intake",
+      "category": "cooking-oil"
+    },
+    {
+      "id": "cd46951e-700b-4f1c-8a8b-1a840fe00d2f",
+      "centerId": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "entryType": "intake",
+      "category": "lentils"
+    },
+    {
+      "id": "fef55ec4-5324-42ca-8b6b-e664bc841ac7",
+      "centerId": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "entryType": "intake",
+      "category": "medicine"
+    },
+    {
+      "id": "1cc31d4f-cb3d-47b4-98c2-4b19ed3cba47",
+      "centerId": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "entryType": "distribution",
+      "category": "cooking-oil"
+    },
+    {
+      "id": "27f79004-2cb6-4df3-9069-c40960f429d3",
+      "centerId": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "entryType": "intake",
+      "category": "medicine"
+    },
+    {
+      "id": "fa5c7a3b-697e-43fd-a429-86d51f1faea7",
+      "centerId": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "entryType": "intake",
+      "category": "cooking-oil"
+    },
+    {
+      "id": "fe4a201b-9b01-4d1d-bd30-ed2c0fc1c1c8",
+      "centerId": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "entryType": "intake",
+      "category": "lentils"
+    },
+    {
+      "id": "cd089787-5e5b-4971-bd5b-89aad46f77b2",
+      "centerId": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "entryType": "distribution",
+      "category": "medicine"
+    },
+    {
+      "id": "b1521c06-5bfb-4d9e-9fc1-90c6c18ac2b9",
+      "centerId": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "entryType": "intake",
+      "category": "solar-light"
+    },
+    {
+      "id": "a2aa56b8-63ac-4c9c-8f62-a04253ceca0a",
+      "centerId": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "entryType": "intake",
+      "category": "cooking-oil"
+    },
+    {
+      "id": "908500b5-e033-4814-8379-373dc66052a8",
+      "centerId": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "entryType": "intake",
+      "category": "lentils"
+    },
+    {
+      "id": "f4a86cb3-a561-4998-b524-0d2c2241af31",
+      "centerId": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "entryType": "distribution",
+      "category": "solar-light"
+    },
+    {
+      "id": "067449ce-4075-40ac-9202-bc709323e837",
+      "centerId": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "entryType": "intake",
+      "category": "drinking-water"
+    },
+    {
+      "id": "738dda00-e460-4ce3-acb9-c3494a22313b",
+      "centerId": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "entryType": "intake",
+      "category": "tent"
+    },
+    {
+      "id": "ef00e096-a2e5-44fb-a477-f8402bb22959",
+      "centerId": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "entryType": "intake",
+      "category": "solar-light"
+    },
+    {
+      "id": "e467ee78-e7b5-48c1-9391-cc915532da93",
+      "centerId": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "entryType": "distribution",
+      "category": "drinking-water"
+    },
+    {
+      "id": "9f3334b9-ab92-4ee0-a580-1c5dc4897b2d",
+      "centerId": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "entryType": "intake",
+      "category": "tarpaulin"
+    },
+    {
+      "id": "3baafde0-af97-49d6-b4cf-3714aeb6c738",
+      "centerId": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "entryType": "intake",
+      "category": "rice"
+    },
+    {
+      "id": "199bfc6c-6608-41b8-9103-6fd2549bf1e1",
+      "centerId": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "entryType": "intake",
+      "category": "hygiene-kit"
+    },
+    {
+      "id": "1c6308d5-bf8f-413e-8ea0-94334cfd9653",
+      "centerId": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "entryType": "distribution",
+      "category": "tarpaulin"
+    },
+    {
+      "id": "6331fd1a-6c9b-4ad2-8ddb-655b18f18de7",
+      "centerId": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "entryType": "intake",
+      "category": "hygiene-kit"
+    },
+    {
+      "id": "7410889c-ba5b-4f72-a1d9-533537714b30",
+      "centerId": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "entryType": "intake",
+      "category": "rice"
+    },
+    {
+      "id": "21fcef44-17fe-474a-a849-8a54ef780a9c",
+      "centerId": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "entryType": "intake",
+      "category": "tarpaulin"
+    },
+    {
+      "id": "db211e2c-f4ae-4041-ac2c-425d5fccd703",
+      "centerId": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "entryType": "distribution",
+      "category": "hygiene-kit"
+    },
+    {
+      "id": "5837f57c-022a-4d47-b416-df21a7ddf445",
+      "centerId": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "entryType": "intake",
+      "category": "solar-light"
+    },
+    {
+      "id": "eab4891d-3cff-4f63-96d8-22ef2ba8d078",
+      "centerId": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "entryType": "intake",
+      "category": "blanket"
+    },
+    {
+      "id": "594f8f63-c8ab-487e-b44c-f149a92fc111",
+      "centerId": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "entryType": "intake",
+      "category": "tent"
+    },
+    {
+      "id": "9daaae58-5e2c-470b-8707-6490facdc709",
+      "centerId": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "entryType": "distribution",
+      "category": "solar-light"
+    },
+    {
+      "id": "416e5f83-46c2-464c-b8ce-031f0819ba69",
+      "centerId": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "entryType": "intake",
+      "category": "lentils"
+    },
+    {
+      "id": "521b007d-104e-4e87-b16c-93381f04f09c",
+      "centerId": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "entryType": "intake",
+      "category": "medicine"
+    },
+    {
+      "id": "7f2cc564-24c9-4be8-95fc-1e67f38ef6bb",
+      "centerId": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "entryType": "intake",
+      "category": "rice"
+    },
+    {
+      "id": "ff8f5a7d-2518-4d4c-80b3-356e71f2bcd1",
+      "centerId": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "entryType": "distribution",
+      "category": "lentils"
+    },
+    {
+      "id": "8e954d19-034f-468a-9d37-ef883cf3951e",
+      "centerId": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "entryType": "intake",
+      "category": "hygiene-kit"
+    },
+    {
+      "id": "a99b9625-275f-4f2f-9e83-39b8aca009d7",
+      "centerId": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "entryType": "intake",
+      "category": "solar-light"
+    },
+    {
+      "id": "0e5810d3-c2fd-4530-a78b-bcc6b09476e2",
+      "centerId": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "entryType": "intake",
+      "category": "blanket"
+    },
+    {
+      "id": "d143df81-6357-4e29-9f72-2c59107345f2",
+      "centerId": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "entryType": "distribution",
+      "category": "hygiene-kit"
+    },
+    {
+      "id": "c645aa2a-56b4-4453-b4ac-c5c55caece88",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "entryType": "transfer_out",
+      "category": "lentils"
+    }
+  ],
+  "transfer": {
+    "from": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+    "to": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+    "transferId": "2ae2e5ef-92f5-4fb7-9d3c-77552df676a2",
+    "entryId": "3c6932cd-181e-4da4-ae31-d6f5efe9636e",
+    "received": true,
+    "discrepancy": 2
+  },
+  "donations": [
+    {
+      "ref": "JFZBO77BGETU",
+      "centerId": "d2d6c137-c804-4ac5-a57c-0c7576532620",
+      "category": "solar-light",
+      "status": "received"
+    },
+    {
+      "ref": "BJ2VSV7JVW7H",
+      "centerId": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+      "category": "lentils",
+      "status": "received"
+    },
+    {
+      "ref": "RUN53RM75XOC",
+      "centerId": "1e3cc7cc-3ea4-46b1-935b-6eedc7b7e972",
+      "category": "lentils",
+      "status": "received"
+    },
+    {
+      "ref": "VFR2O7P23HXM",
+      "centerId": "fd35b042-9f5b-46a9-b448-7837fbab345a",
+      "category": "solar-light",
+      "status": "received"
+    },
+    {
+      "ref": "N7V6VLO6B3BA",
+      "centerId": "5ee1262b-5a62-40aa-8c83-2e9ec3de237a",
+      "category": "drinking-water",
+      "status": "received"
+    },
+    {
+      "ref": "YJEZHJZ3IPU7",
+      "centerId": "fb594683-fb8d-4290-a9f2-cc25f5901bf0",
+      "category": "hygiene-kit",
+      "status": "received"
+    },
+    {
+      "ref": "UXR2X5TDRBRI",
+      "centerId": "a0658243-f192-41e3-b778-05f179a57ea7",
+      "category": "hygiene-kit",
+      "status": "received"
+    },
+    {
+      "ref": "ESDYFRZZYWKD",
+      "centerId": "67324634-a19e-4ccc-b9a3-63f5e42b1d2f",
+      "category": "tent",
+      "status": "not_received"
+    },
+    {
+      "ref": "MV47QIDG2EGK",
+      "centerId": "9326be3b-2805-44e0-94c2-e3a20575defc",
+      "category": "drinking-water",
+      "status": "declared"
+    },
+    {
+      "ref": "ACLCSASCS6OB",
+      "centerId": "8de9d184-27cb-4344-9311-e27f5ca7cd7f",
+      "category": "solar-light",
+      "status": "declared"
+    }
+  ],
+  "centerFlag": "69b474d7-5b00-49cb-b2f1-79adaf9aa4a8",
+  "projects": [
+    {
+      "id": "d4f22d9c-8241-4ba3-b822-63e17cd61e6c",
+      "updateCode": "E6D6YKBJYLGV",
+      "district": "Chitwan",
+      "type": "tuin",
+      "title": "[seed] Tuin replacement over the Trishuli — Chitwan",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7R2udhQkDLDj7LUbIa",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "66805aa5-7982-487b-948a-663fce9f1153",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "8dd0831d-5151-4304-a90a-c17851dfc6d1",
+      "updateCode": "6WX5TP6HEY7B",
+      "district": "Rasuwa",
+      "type": "bridge",
+      "title": "[seed] Suspension footbridge rebuild — Rasuwa",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7R54Hqw3bXQyNUfQc8",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "7d493db3-6b4d-4719-bfcf-c848dcdd1f2d",
+          "status": "rejected"
+        },
+        {
+          "id": "26ae23ef-666a-4935-97d7-76d90c440294",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "27ed6345-8fb0-4cea-8c6c-8a73bf9ef31e",
+      "updateCode": "WIH4LCDBQAHL",
+      "district": "Kathmandu",
+      "type": "trail",
+      "title": "[seed] Reopen the mule trail to the upper wards — Kathmandu",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7R6uLBVQX3G987eO6N",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "bce5b735-c609-4397-9b2f-ba7e901cd0c6",
+          "status": "published"
+        },
+        {
+          "id": "b3c19981-801e-4d57-beaf-e0c734495699",
+          "status": "published"
+        },
+        {
+          "id": "379fd4ac-ab92-4fe3-9102-2d8648fc9fe9",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "7f7ac496-f5f9-4814-b448-1531f62ebf32",
+      "updateCode": "4Q6ST7X7UQVJ",
+      "district": "Kaski",
+      "type": "water",
+      "title": "[seed] Repair the gravity water scheme — Kaski",
+      "status": "in-progress",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7R8eXg9eGBx4EgmBal",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "fb613002-7282-41cb-8c4a-b76cbc30aa51",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "6e51c13b-dce1-47a8-9cf9-a2dd1e66aef3",
+      "updateCode": "UH42SKZPZW7V",
+      "district": "Chitwan",
+      "type": "school",
+      "title": "[seed] Two temporary learning centres — Chitwan",
+      "status": "rejected"
+    },
+    {
+      "id": "b1cfa99b-15d8-42bb-b885-440c7d410d58",
+      "updateCode": "3OLW6I762YS2",
+      "district": "Sindhupalchok",
+      "type": "other",
+      "title": "[seed] Riverbank gabion wall — Sindhupalchok",
+      "status": "rejected"
+    },
+    {
+      "id": "7c6fbb76-33dc-43e2-a409-658e17583595",
+      "updateCode": "YRRRL2IL2LJB",
+      "district": "Bhaktapur",
+      "type": "tuin",
+      "title": "[seed] Tuin replacement over the Trishuli — Bhaktapur",
+      "status": "completed",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7RAJNm8SEUh2p9I8Gn",
+          "status": "pending"
+        }
+      ],
+      "updates": [
+        {
+          "id": "fc1e03df-9aab-4718-853d-df46566d389e",
+          "status": "published"
+        },
+        {
+          "id": "e274e171-3971-4a5f-b808-275d6f039369",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "8871698b-5011-493b-973f-fd4fc2782a26",
+      "updateCode": "STWUIUXNAK2C",
+      "district": "Morang",
+      "type": "bridge",
+      "title": "[seed] Suspension footbridge rebuild — Morang",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7RBeR2ypqEPd1bEbis",
+          "status": "pending"
+        }
+      ],
+      "updates": [
+        {
+          "id": "2fc7b6c3-a4e8-4338-bf25-f26379785960",
+          "status": "published"
+        },
+        {
+          "id": "d797d4ef-9326-459f-bff0-229c6e9860ec",
+          "status": "published"
+        },
+        {
+          "id": "1b832040-2cfb-49e7-a7cf-ca44e051e606",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "1e8a9b51-a005-4ae6-a247-69315be7a835",
+      "updateCode": "RME6FQNFLK7E",
+      "district": "Syangja",
+      "type": "trail",
+      "title": "[seed] Reopen the mule trail to the upper wards — Syangja",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7RCqiMeSFM2zz5AO6F",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "691dd485-f97e-40ee-b431-9fc05e842e4e",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "2fbfc07c-c323-4078-b60a-ad8a8edefe7e",
+      "updateCode": "NDXDCWKCRZXC",
+      "district": "Nuwakot",
+      "type": "water",
+      "title": "[seed] Repair the gravity water scheme — Nuwakot",
+      "status": "published",
+      "photos": [
+        {
+          "fileId": "ou_file_34K7RE1EuPYOyTargq5j0",
+          "status": "published"
+        }
+      ],
+      "updates": [
+        {
+          "id": "32e82ed6-1b19-4357-8527-f1ed6f855842",
+          "status": "published"
+        },
+        {
+          "id": "dc511f0d-8e42-483c-a9d6-13ac0e19967c",
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "4edb803f-bb14-47ef-a2ef-df0f88a171c6",
+      "updateCode": "HG2KAANIF7PM",
+      "district": "Kailali",
+      "type": "school",
+      "title": "[seed] Two temporary learning centres — Kailali",
+      "status": "pending"
+    },
+    {
+      "id": "0af2ddcb-eb8a-4d76-a2cd-fdf04f9018ec",
+      "updateCode": "ISLOO3PUL2LS",
+      "district": "Kailali",
+      "type": "other",
+      "title": "[seed] Riverbank gabion wall — Kailali",
+      "status": "pending"
+    },
+    {
+      "id": "4ecd00c1-2b05-44b5-ab0f-b060771f8956",
+      "updateCode": "JFDV63KU3QTL",
+      "district": "Jhapa",
+      "type": "tuin",
+      "title": "[seed] Tuin replacement over the Trishuli — Jhapa",
+      "status": "pending"
+    },
+    {
+      "id": "30526b7e-f6af-499b-8342-81bf9825ec4e",
+      "updateCode": "WQZLQPLKFORA",
+      "district": "Bhaktapur",
+      "type": "bridge",
+      "title": "[seed] Suspension footbridge rebuild — Bhaktapur",
+      "status": "pending"
+    },
+    {
+      "id": "d5a71a86-6ff5-4990-8aef-7cd8a6ba5516",
+      "updateCode": "T6VT2FZ6VMP3",
+      "district": "Lalitpur",
+      "type": "trail",
+      "title": "[seed] Reopen the mule trail to the upper wards — Lalitpur",
+      "status": "pending"
+    }
+  ],
+  "articles": [
+    {
+      "id": "4b9f9519-255d-49eb-881b-cb01dfe37cc6",
+      "author": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "language": "en",
+      "title": "[seed] What the Sunkoshi took, and what the wards are rebuilding",
+      "status": "draft"
+    },
+    {
+      "id": "a1568141-0500-450b-bc73-49b497619a3c",
+      "author": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "language": "en",
+      "title": "[seed] A night on the Koshi embankment",
+      "status": "published",
+      "views": 32
+    },
+    {
+      "id": "d7af5651-2c5e-42f8-b395-fbb713a312f6",
+      "author": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "language": "en",
+      "title": "[seed] Why the Melamchi slopes keep failing",
+      "status": "published",
+      "views": 31
+    },
+    {
+      "id": "2b501469-3b57-4d84-b313-4cb3df2f472d",
+      "author": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "language": "en",
+      "title": "[seed] The mothers group that fed 400 people",
+      "status": "published",
+      "views": 5
+    },
+    {
+      "id": "b6319dab-ac03-4140-9b41-a95ab9421d25",
+      "author": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "language": "ne",
+      "title": "[seed] Field notes from Kailali: erosion and empty granaries",
+      "status": "published",
+      "views": 37
+    },
+    {
+      "id": "f09db3f1-97ab-4c3d-b984-715273581425",
+      "author": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "language": "en",
+      "title": "[seed] Glacier melt is not an abstraction in Rasuwa",
+      "status": "draft"
+    },
+    {
+      "id": "73e403af-6a11-4e56-9553-564a80081293",
+      "author": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "language": "en",
+      "title": "[seed] How claim codes kept relief honest",
+      "status": "published",
+      "views": 38
+    },
+    {
+      "id": "3819be41-9add-4cd8-b17f-713b68781622",
+      "author": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "language": "en",
+      "title": "[seed] Three days with the Bardiya boat crews",
+      "status": "pending",
+      "resubmitted": true
+    },
+    {
+      "id": "be0f71c9-118d-46af-b4c6-33a2600e247a",
+      "author": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "language": "en",
+      "title": "[seed] The trail that reconnects six wards",
+      "status": "rejected"
+    },
+    {
+      "id": "8a45baef-928e-4d13-beaa-9a41b7e473a8",
+      "author": "ou_user_34K2hr02nVSsKynyidD2N",
+      "language": "ne",
+      "title": "[seed] Solar lights after the flood: small, decisive",
+      "status": "published",
+      "views": 31
+    },
+    {
+      "id": "25f85a09-f19e-4183-9adb-b350a06a7ffd",
+      "author": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "language": "en",
+      "title": "[seed] What a ward secretary sees first",
+      "status": "draft"
+    },
+    {
+      "id": "ed6d381f-f4f7-451b-96fc-8a5db24c847e",
+      "author": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "language": "en",
+      "title": "[seed] Landslide early warning, village style",
+      "status": "published",
+      "views": 21
+    },
+    {
+      "id": "104ed338-6e87-46cb-a593-796fe32e08d5",
+      "author": "ou_user_34K2hybqg06hzoC6ZL170",
+      "language": "en",
+      "title": "[seed] The tuin is back, and so is the school run",
+      "status": "published",
+      "views": 34
+    },
+    {
+      "id": "c666235a-1006-4130-ad28-3141f271f2f2",
+      "author": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "language": "en",
+      "title": "[seed] Counting blankets: the goods ledger explained",
+      "status": "published",
+      "views": 36
+    },
+    {
+      "id": "0d844125-a780-47aa-820d-0a523e916f13",
+      "author": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "language": "ne",
+      "title": "[seed] Voices from the relief camp",
+      "status": "published",
+      "views": 20
+    },
+    {
+      "id": "183d4c20-bc40-4fff-9b8e-5a16f72a5e5b",
+      "author": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "language": "en",
+      "title": "[seed] Karnali: a river changing course",
+      "status": "draft"
+    },
+    {
+      "id": "5be1413b-5b9d-44d7-b825-9370bf583963",
+      "author": "ou_user_34K2iJmuLSZ86EJhjZkI3",
+      "language": "en",
+      "title": "[seed] A rebuilt water tap, one week later",
+      "status": "pending"
+    },
+    {
+      "id": "859d152f-bb92-4c9c-9c62-997f28404104",
+      "author": "ou_user_34K2iNKizxQgyWJV4DYbt",
+      "language": "en",
+      "title": "[seed] Heat, monsoon, and the new normal in the hills",
+      "status": "pending"
+    },
+    {
+      "id": "f2f1d2f0-9955-4b33-802b-c9eae72b9ac7",
+      "author": "ou_user_34K2iQmUz7WK5LxCU7EGc",
+      "language": "en",
+      "title": "[seed] When the diaspora sends more than money",
+      "status": "pending"
+    },
+    {
+      "id": "d7f8fde7-fdc2-4fd6-9a50-d6487291bddb",
+      "author": "ou_user_34K2iTiOqDj5qplGyPrZK",
+      "language": "ne",
+      "title": "[seed] The audit log is the point",
+      "status": "pending"
+    }
+  ],
+  "stories": [
+    {
+      "id": "3272256f-891e-4a31-b6c2-5246066f28fe",
+      "author": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "74ff8455-6210-4ae6-9923-483d2133bf89",
+      "author": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "ee2bdeb3-5ed7-4fb4-baaa-0ae9f0fda08b",
+      "author": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "3b167f9f-2dd5-4b2a-b26e-aa8d71a3b357",
+      "author": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "aa914d0a-dfa8-4179-8af0-efc1b4e6d2d0",
+      "author": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "bfa2c5a9-7dcd-4912-92b3-bf70f1fabdd2",
+      "author": "ou_user_34K2hr02nVSsKynyidD2N",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "53e827bb-31a0-458c-aa99-55a2ed37d079",
+      "author": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "e9f47df2-6aca-4904-bb8b-e92438754be8",
+      "author": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "80aa97f5-b3d0-4a6b-ab65-30ac61fd1861",
+      "author": "ou_user_34K2iGE7Aoqj5uLRmapOy",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "760d8ed0-14a5-4ef8-bcbb-e68c618a43ff",
+      "author": "ou_user_34K2iX966laabGIrXr2ZW",
+      "kind": "helper",
+      "status": "published"
+    },
+    {
+      "id": "273b655b-9319-49af-8d77-4c3d8c9d3001",
+      "author": "seed_helper_027",
+      "kind": "helper",
+      "status": "rejected"
+    },
+    {
+      "id": "f31313d0-9f01-404a-b336-cb2d2ed71cf0",
+      "author": "seed_helper_031",
+      "kind": "helper",
+      "status": "pending"
+    },
+    {
+      "id": "7acedaf3-06fb-42ea-a7a5-08071def861d",
+      "author": "seed_helper_038",
+      "kind": "helper",
+      "status": "pending"
+    },
+    {
+      "id": "a4d0741a-4a68-4d52-bd07-f20ba5a3b38f",
+      "author": "seed_helper_041",
+      "kind": "helper",
+      "status": "pending"
+    },
+    {
+      "id": "185b5f20-a788-46bb-bf02-7d387f3fa8bc",
+      "author": "seed_helper_044",
+      "kind": "helper",
+      "status": "pending"
+    }
+  ],
+  "missing": [
+    {
+      "id": "dbcfedef-c8cd-43f5-a87c-25760838ea56",
+      "owner": "ou_user_34K2hKz9lNMPt0icHQp30",
+      "status": "found",
+      "photo": true,
+      "edited": true
+    },
+    {
+      "id": "36292c30-9af9-4265-b8ee-d4b7da8b535a",
+      "owner": "ou_user_34K2hPjjv2gqHp5Lk8spN",
+      "status": "missing",
+      "photo": true
+    },
+    {
+      "id": "91273c1b-af7b-471d-800f-6dc1b117d617",
+      "owner": "ou_user_34K2hSAFinvy0U5HFujOb",
+      "status": "missing",
+      "photo": true
+    },
+    {
+      "id": "57a38fad-f496-44e2-b816-2b9b87d1f3de",
+      "owner": "ou_user_34K2hVls0xyrqLy3Rb72r",
+      "status": "missing",
+      "photo": true
+    },
+    {
+      "id": "3865254c-67de-45e5-ba5d-f4dc9ac18a19",
+      "owner": "ou_user_34K2hZfoYeSnTEoOyobEF",
+      "status": "missing",
+      "photo": true
+    },
+    {
+      "id": "bbaa88cb-8e3f-4a55-806f-c6bbe0ad9086",
+      "owner": "ou_user_34K2hcjVfIJcAW9fSgtx3",
+      "status": "missing",
+      "photo": true
+    },
+    {
+      "id": "1b7402fc-1eaf-4d49-b0f0-b6ea68375964",
+      "owner": "ou_user_34K2hgadMDWO4dkMCD0vN",
+      "status": "missing",
+      "photo": false
+    },
+    {
+      "id": "28c5a418-32b7-4079-820d-77a4f4714a1d",
+      "owner": "ou_user_34K2hkHJvV2sAi9SO1ES8",
+      "status": "missing",
+      "photo": false
+    },
+    {
+      "id": "a0f51215-01f2-4d87-8522-1b4552d9f13b",
+      "owner": "ou_user_34K2hnl2h4x4LlRWXKkSC",
+      "status": "missing",
+      "photo": false
+    },
+    {
+      "id": "23d2601e-58a3-42e0-8387-dfb9b07c5455",
+      "owner": "ou_user_34K2hr02nVSsKynyidD2N",
+      "status": "found",
+      "photo": false
+    },
+    {
+      "id": "c064c03c-f6a8-4f70-9166-5aa9385128f2",
+      "owner": "ou_user_34K2htKzwdXViYJQzxoFa",
+      "status": "found",
+      "photo": false
+    },
+    {
+      "id": "2402b6d8-848e-407e-b1f4-b87cc0543a99",
+      "owner": "ou_user_34K2hvuxiu7wTB4PSxa2w",
+      "status": "found",
+      "photo": false
+    },
+    {
+      "id": "02587926-477d-41ff-978f-fd1c31bbc050",
+      "owner": "ou_user_34K2hybqg06hzoC6ZL170",
+      "status": "found",
+      "photo": false
+    },
+    {
+      "id": "f284bd56-4eff-4cee-b89b-bceb67d34baa",
+      "owner": "ou_user_34K2iAIuIIotzR6C3xasA",
+      "status": "safe",
+      "photo": false
+    },
+    {
+      "id": "b623cdd7-877f-44fd-a92e-e72dce466b7a",
+      "owner": "ou_user_34K2iDnzlem8HoGxOjJjf",
+      "status": "safe",
+      "photo": false
+    }
+  ],
+  "climate": {
+    "messages": 26,
+    "downloads": 8
+  }
+}

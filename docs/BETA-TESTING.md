@@ -17,6 +17,13 @@ exists to let you exercise that pipeline end to end, for all three roles.
 | moderator | `moderator-beta-tester@verifiednepal.com`  | `E2eTest!2026Pass`  |
 | admin     | `admin-beta-tester@verifiednepal.com`      | `E2eTest!2026Pass`  |
 
+Plus 25 more helper accounts for parallel testers — `helper-01-beta-tester@verifiednepal.com`
+through `helper-25-beta-tester@verifiednepal.com`, all with the same password. They own the
+seeded needs/offers/orgs/projects/articles/posters described in
+[e2e/2026-09-06/SEED-REPORT.md](e2e/2026-09-06/SEED-REPORT.md) (which helper owns what is in
+`seed-manifest.json` next to it). The 2026-09-06 e2e test report and user-flow document for
+UI/UX review live in [e2e/2026-09-06/](e2e/2026-09-06/).
+
 These are OnlyUtils fixture accounts (`provider: password`) on the dev client
 (`ou_client_34HIKupJ5afWl0DIoh7zi`), with roles pre-seeded in DynamoDB so each
 account lands in its role from the very first request — no promotion step
