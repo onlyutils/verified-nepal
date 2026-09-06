@@ -15,12 +15,19 @@ type Props = Omit<React.ComponentProps<"input">, "type" | "className"> & { langu
 const FileInput = React.forwardRef<HTMLInputElement, Props>(({ language, className, id, multiple, disabled, onChange, ...props }, ref) => {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [names, setNames] = React.useState<string[]>([]);
+  const [previews, setPreviews] = React.useState<{ url: string; isVideo: boolean }[]>([]);
   const t = copy[language];
   const setRef = (node: HTMLInputElement | null) => {
     inputRef.current = node;
     if (typeof ref === "function") ref(node);
     else if (ref) ref.current = node;
   };
+
+  // Local object URLs so the picked file previews immediately, before any network upload starts.
+  React.useEffect(() => {
+    return () => previews.forEach((p) => URL.revokeObjectURL(p.url));
+  }, [previews]);
+
   return (
     <label
       htmlFor={id}
@@ -45,6 +52,17 @@ const FileInput = React.forwardRef<HTMLInputElement, Props>(({ language, classNa
           {names.length === 1 ? names[0] : t.selected.replace("{n}", String(names.length))}
         </span>
       ) : null}
+      {previews.length ? (
+        <span className="flex flex-wrap justify-center gap-2">
+          {previews.map((p) =>
+            p.isVideo ? (
+              <video key={p.url} src={p.url} muted playsInline className="h-16 w-16 rounded-md object-cover" />
+            ) : (
+              <img key={p.url} src={p.url} alt="" className="h-16 w-16 rounded-md object-cover" />
+            ),
+          )}
+        </span>
+      ) : null}
       <input
         ref={setRef}
         id={id}
@@ -53,7 +71,13 @@ const FileInput = React.forwardRef<HTMLInputElement, Props>(({ language, classNa
         disabled={disabled}
         className="sr-only"
         onChange={(e) => {
-          setNames(Array.from(e.target.files ?? []).map((f) => f.name));
+          const files = Array.from(e.target.files ?? []);
+          setNames(files.map((f) => f.name));
+          setPreviews(
+            files
+              .filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"))
+              .map((f) => ({ url: URL.createObjectURL(f), isVideo: f.type.startsWith("video/") })),
+          );
           onChange?.(e);
         }}
         {...props}
