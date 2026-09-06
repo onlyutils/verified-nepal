@@ -558,7 +558,7 @@ export function GetHelp({ language }: { language: Language }) {
                 aria-invalid={Boolean(errors.incident)}
                 aria-describedby={errors.incident ? "incident-error" : undefined}
               >
-                <NativeSelectOption value="">{incidents.length ? disaster.incidentGeneral : disaster.incidentNotListed}</NativeSelectOption>
+                <NativeSelectOption value="">{disaster.incidentGeneral}</NativeSelectOption>
                 {incidents
                   .filter((incident) => incident.status === "active" || incident.status === "pending")
                   .map((incident) => (
