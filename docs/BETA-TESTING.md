@@ -11,17 +11,19 @@ exists to let you exercise that pipeline end to end, for all three roles.
 
 ## Seeded test accounts (dev only)
 
-| Role      | Email                              | Password           |
-|-----------|-------------------------------------|---------------------|
-| helper    | `e2e-agent@verifiednepal.dev`       | `E2eTest!2026Pass`  |
-| moderator | `e2e-moderator@verifiednepal.dev`   | `E2eTest!2026Pass`  |
-| admin     | `e2e-admin@verifiednepal.dev`       | `E2eTest!2026Pass`  |
+| Role      | Email                                     | Password           |
+|-----------|---------------------------------------------|---------------------|
+| helper    | `helper-beta-tester@verifiednepal.com`     | `E2eTest!2026Pass`  |
+| moderator | `moderator-beta-tester@verifiednepal.com`  | `E2eTest!2026Pass`  |
+| admin     | `admin-beta-tester@verifiednepal.com`      | `E2eTest!2026Pass`  |
 
 These are OnlyUtils fixture accounts (`provider: password`) on the dev client
 (`ou_client_34HIKupJ5afWl0DIoh7zi`), with roles pre-seeded in DynamoDB so each
 account lands in its role from the very first request — no promotion step
 needed. Verified working 2026-09-06 (all three return the expected role from
-`/me`).
+`/me`). They use the `@verifiednepal.com` domain purely as a label — these are
+OnlyUtils password accounts, not real mailboxes; nothing is ever emailed to
+them.
 
 ### Signing in through the real UI (human testers)
 
@@ -50,7 +52,7 @@ agent driving the API directly:
 # Get a token
 curl -s -X POST https://auth.onlyutils.com/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"e2e-moderator@verifiednepal.dev","password":"E2eTest!2026Pass","client_id":"ou_client_34HIKupJ5afWl0DIoh7zi"}'
+  -d '{"email":"moderator-beta-tester@verifiednepal.com","password":"E2eTest!2026Pass","client_id":"ou_client_34HIKupJ5afWl0DIoh7zi"}'
 # -> {"access_token":"...", "refresh_token":"...", "expires_in":900, ...}
 
 # Call the API with it
