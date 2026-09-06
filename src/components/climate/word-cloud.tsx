@@ -6,7 +6,7 @@ import { messageText } from "@/lib/climate-messages";
 import { layoutWordCloud, type CloudWord, type PlacedWord } from "@/lib/word-cloud";
 import { interpolate } from "@/lib/format";
 import type { CountryClimate } from "@/lib/climate-data";
-import { ShareButton } from "@/components/climate/share-button";
+import { ShareButton } from "@/components/share-button";
 import { Button } from "@/components/ui/button";
 
 export function WordCloud({

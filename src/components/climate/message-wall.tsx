@@ -5,7 +5,7 @@ import type { ClimateFacts, CountryClimate } from "@/lib/climate-data";
 import { interpolate } from "@/lib/format";
 import type { Language } from "@/lib/types";
 import { TurnstileWidget } from "@/components/turnstile";
-import { ShareButton } from "@/components/climate/share-button";
+import { ShareButton } from "@/components/share-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

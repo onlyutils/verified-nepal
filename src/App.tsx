@@ -47,6 +47,7 @@ const DropCenters = lazy(() => import("@/pages/drop-centers").then((m) => ({ def
 const DropCenterDetail = lazy(() => import("@/pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
 const DonationStatusPage = lazy(() => import("@/pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
 const ClimatePage = lazy(() => import("@/pages/climate").then((m) => ({ default: m.ClimatePage })));
+const IncidentsPage = lazy(() => import("@/pages/incidents").then((m) => ({ default: m.IncidentsPage })));
 const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
 const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
 
@@ -81,6 +82,7 @@ const pagePaths: Record<AppPage, string> = {
   donationStatus: "/donation/:ref",
   climate: "/climate",
   reportIncident: "/report-incident",
+  incidents: "/incidents",
 };
 
 /** "/poster/new" → undefined; "/poster/<id>" → id. */
@@ -97,6 +99,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
   if (pathname.startsWith("/climate")) return "climate";
   if (pathname.startsWith("/report-incident")) return "reportIncident";
+  if (pathname.startsWith("/incidents")) return "incidents";
   if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/articles")) return "dispatches";
   if (pathname.match(/^\/me\/articles\/[^\/]+\/edit/)) return "articleEdit";
@@ -154,6 +157,7 @@ function pageTitle(page: AppPage, language: Language): string {
     donationStatus: centerStrings[language].donationStatusTitle,
     climate: climateStrings[language].title,
     reportIncident: disasterStrings[language].reportIncidentTitle,
+    incidents: disasterStrings[language].incidentsPublicTitle,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -374,6 +378,11 @@ export function App() {
               {page === "reportIncident" ? (
                 <ComponentErrorBoundary language={language}>
                   <ReportIncident language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "incidents" ? (
+                <ComponentErrorBoundary language={language}>
+                  <IncidentsPage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "donationStatus" ? (

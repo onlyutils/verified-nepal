@@ -16,7 +16,7 @@ import { RankingPanel } from "@/components/climate/ranking-panel";
 import { MessageWall } from "@/components/climate/message-wall";
 import { MultiLineChart } from "@/components/climate/line-chart";
 import { DonutChart } from "@/components/climate/donut-chart";
-import { ShareButton } from "@/components/climate/share-button";
+import { ShareButton } from "@/components/share-button";
 import { WordCloud } from "@/components/climate/word-cloud";
 
 const MAX_COMPARE = 6;

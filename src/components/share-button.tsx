@@ -18,7 +18,7 @@ export function ShareButton({
   draw,
   labels,
 }: {
-  kind: ClimateDownloadKind;
+  kind?: ClimateDownloadKind;
   filename: string;
   headline: string;
   subline?: string;
@@ -51,7 +51,7 @@ export function ShareButton({
       const input: ShareCardInput = { headline, subline, message, footnote, draw: cardDraw };
       renderShareCard(canvas, input);
       const result = await exportCanvas(canvas, filename, { share });
-      if (result === "downloaded" || result === "shared") void postClimateDownload(kind);
+      if (kind && (result === "downloaded" || result === "shared")) void postClimateDownload(kind);
       if (result === "failed") setFailed(true);
     } catch {
       setFailed(true);

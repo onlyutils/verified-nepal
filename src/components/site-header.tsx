@@ -29,6 +29,7 @@ const navPages = [
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
   ["dropCenters", "dropCenters"],
+  ["incidents", "incidents"],
   ["climate", "climate"],
   ["info", "info"],
   ["projects", "projects"],
