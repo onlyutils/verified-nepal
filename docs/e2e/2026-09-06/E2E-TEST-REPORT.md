@@ -1,6 +1,6 @@
 # VerifiedNepal — End-to-end test report, dev, 2026-09-06
 
-Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough for the UI/UX review), [SEED-REPORT.md](SEED-REPORT.md) (the dataset now on dev), per-run raw findings in [findings/](findings/), screenshots in [screenshots/](screenshots/).
+Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough for the UI/UX review), [DEV-DATASET.md](DEV-DATASET.md) (the dataset now on dev), per-run raw findings in [findings/](findings/), screenshots in [screenshots/](screenshots/).
 
 ## 1. Executive summary
 
@@ -12,7 +12,7 @@ Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough fo
 
 **Everything else that failed is fixable UX/quality work**, not broken flows: a systemic contrast failure of the muted-text token (`VN-03`), an unreadable climate chart (`VN-04`), no 404 page (`VN-05`), and a Turnstile failure path that lets the form submit and then blames the server (`VN-06`). One regression introduced by the dev-only test sign-in (`VN-07`, landing on `/org` instead of the page you came from) was fixed and deployed during this run (`e1fd179`).
 
-**Numbers.** Wave 1 (empty-ish dev): 5 runs, 27 routes × EN/NE × mobile/desktop, ~115 flow steps — 89 PASS, 4 FAIL, 9 BLOCKED, the rest partial/observational. Blocks were environmental (Cloudflare Turnstile never issues a token to headless Chrome, so anonymous writes could only be verified at the API level) and data (dev had zero published needs). Both are addressed: the environment was then seeded through the app's own handlers with 100 helpers, 150 needs, 120 offers, 8 orgs, 10 drop centers, 15 projects, 20 articles, 15 stories, 15 posters and 44 real photos, and wave 2 (Desk at volume, org/drop-center/donation flows, helper groups, posters, populated visuals) is appended in §8 as it completes.
+**Numbers.** Wave 1 (empty-ish dev): 5 runs, 27 routes × EN/NE × mobile/desktop, ~115 flow steps — 89 PASS, 4 FAIL, 9 BLOCKED, the rest partial/observational. Blocks were environmental (Cloudflare Turnstile never issues a token to headless Chrome, so anonymous writes could only be verified at the API level) and data (dev had zero published needs). Both are addressed: the environment was then populated through the app's own handlers with 100 helpers, 150 needs, 120 offers, 8 orgs, 10 drop centers, 15 projects, 20 articles, 15 stories, 15 posters and 44 real photos, and wave 2 (Desk at volume, org/drop-center/donation flows, helper groups, posters, populated visuals) is appended in §8 as it completes.
 
 ## 2. Scope and method
 
@@ -23,7 +23,7 @@ Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough fo
 | moderator | moderator-beta-tester | Chrome + curl | gates, queue, boards, print/sync, articles/stories, audit — [findings/moderator.md](findings/moderator.md) |
 | admin | admin-beta-tester (+ throwaway fixture) | Chrome + curl + OnlyUtils MCP | roles/districts, disasters lifecycle, climate, cross-role visibility — [findings/admin.md](findings/admin.md) |
 | ux | read-only | Chrome instrumentation | 27 pages × 4 captures; overflow, contrast, tap targets, a11y tree, console/network, offline — [findings/ux.md](findings/ux.md) |
-| seed | all 100 helpers + moderator/admin | in-process Lambda handler harness (Turnstile skipped, real DynamoDB, real media presign/CDN) | dataset + [SEED-REPORT.md](SEED-REPORT.md) |
+| dev dataset | all 100 helpers + moderator/admin | in-process Lambda handler harness (Turnstile skipped, real DynamoDB, real media presign/CDN) | dataset + [DEV-DATASET.md](DEV-DATASET.md) |
 
 Environment: `https://dev.verifiednepal.com` (Cloudflare Pages) → `https://api.dev.verifiednepal.com` (Lambda, DynamoDB `verifiednepal-dev`), OnlyUtils dev client `ou_client_34HIKupJ5afWl0DIoh7zi`. Accounts and the dev-only password sign-in are described in [../../BETA-TESTING.md](../../BETA-TESTING.md). Nothing touched production.
 
@@ -31,12 +31,12 @@ Environment: `https://dev.verifiednepal.com` (Cloudflare Pages) → `https://api
 
 | Content | Pending hidden (page + API) | Approve → public | Reject → never public | Audit row | Verdict |
 |---|---|---|---|---|---|
-| Need | ✓ | ✓ (seeded via API; UI publish in wave 2) | ✓ | ✓ | holds |
+| Need | ✓ | ✓ (populated via API; UI publish in wave 2) | ✓ | ✓ | holds |
 | Offer | ✓ | ✓ UI | ✓ UI (reason) | ✓ | holds; but published offers surface on no public page (`VN-13`) |
-| Project | ✓ | seeded; UI in wave 2 | ✓ | ✓ | holds (creation blocked by Turnstile in automation) |
-| Article | ✓ | ✓ UI (one click) | seeded | ✓ | holds |
-| Story | ✓ (+ computed eligibility) | ✓ UI | seeded | ✓ | holds |
-| Organization | ✓ ("unverified" gating) | seeded; UI in wave 2 | seeded | ✓ | holds; copy contradicts model (`VN-31`) |
+| Project | ✓ | populated; UI in wave 2 | ✓ | ✓ | holds (creation blocked by Turnstile in automation) |
+| Article | ✓ | ✓ UI (one click) | populated | ✓ | holds |
+| Story | ✓ (+ computed eligibility) | ✓ UI | populated | ✓ | holds |
+| Organization | ✓ ("unverified" gating) | populated; UI in wave 2 | populated | ✓ | holds; copy contradicts model (`VN-31`) |
 | Disaster | page ✓ / **API ✗** | ✓ UI | ✓ UI (reason) | ✓ | **`VN-02`** |
 | Missing poster | **✗ no moderation** | n/a | n/a | — | **`VN-01`** |
 
@@ -69,7 +69,7 @@ Severity: **P1** = breaks the USP, a task, or WCAG AA broadly · **P2** = degrad
 | VN-14 | Reject dialog's Reject button enabled before a reason is chosen. | moderator |
 | VN-15 | `/projects` empty state says "You appear to be offline" while online (`projects.tsx:169` passes `t.offline` unconditionally). | anon B1, ux 12 |
 | VN-16 | "Draft restored from …" banner appears on the same visit / on an empty form. | anon B3 |
-| VN-17 | Public GETs 400 without filters (`/needs`, `/projects`, `/offers` need `incidentId`; `/audit` month; `/ledger`, `/goods-ledger` district). No cross-incident listing exists. | anon B5, seed obs 2 |
+| VN-17 | Public GETs 400 without filters (`/needs`, `/projects`, `/offers` need `incidentId`; `/audit` month; `/ledger`, `/goods-ledger` district). No cross-incident listing exists. | anon B5, dataset obs 2 |
 | VN-18 | Pending article still shows "Edit", which opens a read-only page. | helper B3 |
 | VN-19 | Emergency banner + status bar take 213px of a 390×844 viewport; every H1 starts at y≈378; banner wraps to 3 rows. | ux 4, anon, helper |
 | VN-20 | 77-district checkbox walls (offer dialog, register-org, `/incidents` filter, admin role picker) — ~4,600px of scrolling on mobile; the moderator district gate already has search — reuse it. | ux 5, helper, admin |
@@ -85,13 +85,13 @@ Severity: **P1** = breaks the USP, a task, or WCAG AA broadly · **P2** = degrad
 | VN-30 | Offer dialog header says "Sign in with Google to register help…" while signed in. | helper B5 |
 | VN-31 | Org dashboard copy "Unverified — publicly visible as unverified" contradicts "nothing public until approved". | helper |
 | VN-32 | `/ledger` shows a Turnstile widget inline with the filters on a read-only page (guards CSV) — looks broken until it resolves. | anon |
-| VN-33 | Asymmetric incident gate: `POST /needs` accepts a pending incident, offers/projects require active. | seed obs 1 |
-| VN-34 | `storyRole` reports whichever pointer is read first (all 15 seeded stories resolved "helper" though several authors also own a fulfilled need). | seed obs 4 |
-| VN-35 | Resubmitted article keeps its original `createdAt`, so it never moves up the moderation queue. | seed obs 7 |
+| VN-33 | Asymmetric incident gate: `POST /needs` accepts a pending incident, offers/projects require active. | dataset obs 1 |
+| VN-34 | `storyRole` reports whichever pointer is read first (all 15 dataset stories resolved "helper" though several authors also own a fulfilled need). | dataset obs 4 |
+| VN-35 | Resubmitted article keeps its original `createdAt`, so it never moves up the moderation queue. | dataset obs 7 |
 
 ### Nits
 
-Stats labels ("Oldest pending age: h", trailing colons); "Role updated." shown twice; broken proof image has no fallback; desktop home hero ALL CAPS vs mobile sentence case; mobile menu is 20 flat items mixing pages/account/guides; `/audit` cached 60 s so a moderator may not see their own action; poster board prints full phone numbers publicly (confirm against the privacy principle); person search matches substrings ("Ram" → "Pramila"); offers can't be closed (matched/fulfilled) from the Boards UI; rejection reason is public on `/audit` while the dialog placeholder says "shown to the reporter"; moderator district scope can never be cleared; guidelines ack with the box unchecked gives no feedback; "Aa" text-size trigger meaningless in NE; login photo credit ~2.5:1; two pre-existing incidents both named "Test"; `/ledger` is per-district only so a district picker without counts feels empty (seed obs 6); story media has no dedicated presign route (seed obs 3); admin-created incidents cannot be rejected, only archived (seed obs 5).
+Stats labels ("Oldest pending age: h", trailing colons); "Role updated." shown twice; broken proof image has no fallback; desktop home hero ALL CAPS vs mobile sentence case; mobile menu is 20 flat items mixing pages/account/guides; `/audit` cached 60 s so a moderator may not see their own action; poster board prints full phone numbers publicly (confirm against the privacy principle); person search matches substrings ("Ram" → "Pramila"); offers can't be closed (matched/fulfilled) from the Boards UI; rejection reason is public on `/audit` while the dialog placeholder says "shown to the reporter"; moderator district scope can never be cleared; guidelines ack with the box unchecked gives no feedback; "Aa" text-size trigger meaningless in NE; login photo credit ~2.5:1; two pre-existing incidents had generic names; `/ledger` is per-district only so a district picker without counts feels empty (dataset obs 6); story media has no dedicated presign route (dataset obs 3); admin-created incidents cannot be rejected, only archived (dataset obs 5).
 
 ## 5. What is working well (leave alone)
 
@@ -106,15 +106,15 @@ Stats labels ("Oldest pending age: h", trailing colons); "Role updated." shown t
 
 ## 6. Environment limitations and recommendations
 
-1. **Turnstile blocks automation.** Cloudflare's managed widget never issues a token to headless Chrome (checkbox challenge, tried with real mouse events and a non-headless UA). Recommendation: on **dev only**, use Cloudflare's always-pass test keys (`1x00000000000000000000AA` site / `1x0000000000000000000000000000000AA` secret) via `VITE_TURNSTILE_SITE_KEY` + the Lambda `TURNSTILE_SECRET`, so anonymous forms can be driven end to end by agents and CI. Until then the seed harness (Turnstile skipped in-process) is the way to create anonymous content.
+1. **Turnstile blocks automation.** Cloudflare's managed widget never issues a token to headless Chrome (checkbox challenge, tried with real mouse events and a non-headless UA). Recommendation: on **dev only**, use Cloudflare's always-pass test keys (`1x00000000000000000000AA` site / `1x0000000000000000000000000000000AA` secret) via `VITE_TURNSTILE_SITE_KEY` + the Lambda `TURNSTILE_SECRET`, so anonymous forms can be driven end to end by agents and CI. Until then the dataset harness (Turnstile skipped in-process) is the way to create anonymous content.
 2. **Radix tabs** ignore synthetic `element.click()`; drivers must send real CDP mouse events. Not a product bug, but worth a `data-testid` pass for future automation.
 3. **15-minute tokens** — every browser scenario re-logs in; fine.
-4. **Shared dev database** — runs interleaved (an incident archived by the admin run mid-seed cost 29 retries); the seed harness is idempotent and topped up.
+4. **Shared dev database** — runs interleaved (an incident archived by the admin run mid-run cost 29 retries); the dataset harness is idempotent and topped up.
 5. `Page.captureScreenshot` with `captureBeyondViewport` hangs on pages embedding the Turnstile iframe.
 
 ## 7. Test data left on dev
 
-All tagged: `E2E-0906-{anon,helper,mod,admin}` (wave 1), `[seed]` in every free-text field, `seed_helper_NNN` subs, `*-beta-tester@verifiednepal.com` emails. The full inventory with ids, reference codes, claim codes, update codes and donation codes is `seed-manifest.json`; wave-1 fixtures are listed at the end of each `findings/*.md`. The throwaway admin-test account `throwaway-beta-tester@verifiednepal.com` is back to `helper`. To reset dev later, everything above is greppable.
+The dev dataset reads as real content. Identify records by the ids in `dev-dataset.json` and by the `*-beta-tester@verifiednepal.com` owner emails; wave-1 fixtures are listed at the end of each `findings/*.md`. The account `throwaway-beta-tester@verifiednepal.com` remains a helper account. The dataset inventory contains the reference codes, claim codes, update codes and donation codes.
 
 ## 8. Wave 2 (populated environment) — appended when the runs complete
 

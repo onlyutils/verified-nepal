@@ -1,7 +1,7 @@
 # Beta Testing — Dev Environment
 
 Dev only: `https://dev.verifiednepal.com`. **None of this exists on production** —
-prod has no test-user seeding and no test-audience allow-list gate.
+prod has no test-user population and no test-audience allow-list gate.
 
 The product's USP is principle #1 from the project plan: **"Verified is the
 product."** Nothing a member of the public submits (a need, an offer, a missing
@@ -9,7 +9,7 @@ person poster, a project, an article, a story, an org delivery) becomes publicly
 visible until a signed-in **moderator** approves it at `/desk`. Everything below
 exists to let you exercise that pipeline end to end, for all three roles.
 
-## Seeded test accounts (dev only)
+## Dev test accounts (dev only)
 
 | Role      | Email                                     | Password           |
 |-----------|---------------------------------------------|---------------------|
@@ -19,13 +19,13 @@ exists to let you exercise that pipeline end to end, for all three roles.
 
 Plus 25 more helper accounts for parallel testers — `helper-01-beta-tester@verifiednepal.com`
 through `helper-25-beta-tester@verifiednepal.com`, all with the same password. They own the
-seeded needs/offers/orgs/projects/articles/posters described in
-[e2e/2026-09-06/SEED-REPORT.md](e2e/2026-09-06/SEED-REPORT.md) (which helper owns what is in
-`seed-manifest.json` next to it). The 2026-09-06 e2e test report and user-flow document for
+dev dataset's needs/offers/orgs/projects/articles/posters described in
+[e2e/2026-09-06/DEV-DATASET.md](e2e/2026-09-06/DEV-DATASET.md) (which helper owns what is in
+`dev-dataset.json` next to it). The 2026-09-06 e2e test report and user-flow document for
 UI/UX review live in [e2e/2026-09-06/](e2e/2026-09-06/).
 
 These are OnlyUtils fixture accounts (`provider: password`) on the dev client
-(`ou_client_34HIKupJ5afWl0DIoh7zi`), with roles pre-seeded in DynamoDB so each
+(`ou_client_34HIKupJ5afWl0DIoh7zi`), with roles already present in DynamoDB so each
 account lands in its role from the very first request — no promotion step
 needed. Verified working 2026-09-06 (all three return the expected role from
 `/me`). They use the `@verifiednepal.com` domain purely as a label — these are
@@ -69,7 +69,7 @@ curl -s https://b7pru6scda.execute-api.ap-south-1.amazonaws.com/me \
 
 (The real Gmail accounts — `onlyutils@gmail.com` as admin,
 `laxman.pokhrel.101@gmail.com` as moderator — still exist and still work the
-old way; the seeded fixtures above are the recommended path for anyone new.)
+old way; the dev dataset accounts above are the recommended path for anyone new.)
 
 ## What to test — the USP checklist
 

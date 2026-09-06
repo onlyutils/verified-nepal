@@ -1,6 +1,6 @@
 # VerifiedNepal — User Flows (as observed on dev, 2026-09-06)
 
-For the UI/UX review. Every flow below was walked on `https://dev.verifiednepal.com` by five automated testers (anonymous, helper, moderator, admin, and a UX/a11y audit) plus a data seeder. Screenshots are in `screenshots/` (named `<run>--<shot>.jpg`); the raw per-run findings are in `findings/`; the consolidated defect list with IDs (`VN-nn`) is in [E2E-TEST-REPORT.md](E2E-TEST-REPORT.md). Where a flow step cites a `VN-nn`, that is the issue to look at.
+For the UI/UX review. Every flow below was walked on `https://dev.verifiednepal.com` by five automated testers (anonymous, helper, moderator, admin, and a UX/a11y audit) alongside the dev dataset. Screenshots are in `screenshots/` (named `<run>--<shot>.jpg`); the raw per-run findings are in `findings/`; the consolidated defect list with IDs (`VN-nn`) is in [E2E-TEST-REPORT.md](E2E-TEST-REPORT.md). Where a flow step cites a `VN-nn`, that is the issue to look at.
 
 How to read a flow: **Entry → Steps (screen · action · system response) → Exit**, then *States/branches*, then *What the reviewer should look at*.
 
@@ -29,7 +29,7 @@ Three roles + anonymous:
 | Moderator | Everything a helper can + the Desk (queue, boards, print/sync, flags, projects, articles, stories, orgs) inside their districts | `/desk/login` → guidelines → districts → `/desk` |
 | Admin | Everything + Admin, Disasters, Climate tabs; no district limit; no guidelines gate | `/desk/login` → `/desk` |
 
-Sign-in is Google via OnlyUtils in production; on dev a second "Test account sign-in (dev only)" form exists for the seeded accounts ([../../BETA-TESTING.md](../../BETA-TESTING.md)).
+Sign-in is Google via OnlyUtils in production; on dev a second "Test account sign-in (dev only)" form exists for the dev accounts ([../../BETA-TESTING.md](../../BETA-TESTING.md)).
 
 ---
 
@@ -140,7 +140,7 @@ Entry: `/projects` → "Register a project".
 3. Committee posts updates at `/projects/update` with the code (text, spend, photos) → moderator approves each.
 4. Public `/projects/:id` shows the verified project, approved updates and published photos.
 
-Observed: creation blocked by Turnstile in automation; the failure state shows "Something went wrong on our side" with submit enabled (`VN-06`); `/projects` empty state says you're offline while online (`VN-15`). Data seeded through the API populates this flow for the human review.
+Observed: creation blocked by Turnstile in automation; the failure state shows "Something went wrong on our side" with submit enabled (`VN-06`); `/projects` empty state says you're offline while online (`VN-15`). The dev dataset populated through the API covers this flow for the human review.
 
 ### F7 · Articles — `helper--25-article-editor.jpg`, `helper--29-article-cover-uploaded.jpg`, `helper--32-my-articles-after-submit.jpg`, `moderator--20-articles.jpg`, `moderator--27-article-publish-dialog.jpg`, `ux--articles-en-mobile.jpg`
 
@@ -193,7 +193,7 @@ Mobile Desk: sections become a clipped horizontal strip ("Print cla…") and the
 
 ### F12 · Helper groups (split a big need)
 
-On a published need on the board, a helper splits it into items; others join and claim items; "done" per item; the original need is still only fulfilled via claim code or org delivery. Not exercised in wave 1 (no published needs existed); seeded data now covers it for the human review.
+On a published need on the board, a helper splits it into items; others join and claim items; "done" per item; the original need is still only fulfilled via claim code or org delivery. Not exercised in wave 1 (no published needs existed); the dev dataset now covers it for the human review.
 
 ### F13 · Cross-cutting
 
@@ -212,16 +212,16 @@ On a published need on the board, a helper splits it into items; others join and
 | Area | Exercised | Method | Blocked / not covered |
 |---|---|---|---|
 | All 27 primary routes, EN+NE, mobile+desktop | ✓ | browser | — |
-| Anonymous need submit | validation, on-behalf, Turnstile failure state | browser + API | real submit (Turnstile in headless) — seeded via API instead |
+| Anonymous need submit | validation, on-behalf, Turnstile failure state | browser + API | real submit (Turnstile in headless) — populated via API instead |
 | Offer → pending → publish/reject/edit/match | ✓ | browser + API | — |
 | Guidelines + district gates, claim/release | ✓ | browser + API | — |
-| Claim code → print → redeem → ledger | print/sync empty states | browser | needs published needs (now seeded) → wave 2 |
-| Projects register → verify → updates/photos | Turnstile failure state, Desk empty state | browser | seeded → wave 2 |
+| Claim code → print → redeem → ledger | print/sync empty states | browser | needs published needs (now populated) → wave 2 |
+| Projects register → verify → updates/photos | Turnstile failure state, Desk empty state | browser | populated → wave 2 |
 | Articles write → submit → publish → read | ✓ incl. cover upload to CDN | browser + API | — |
 | Stories eligibility → post → publish | ✓ | API + browser | media presign |
 | Org register → verify → centers → goods ledger → donations → take/deliver | register, unverified gating, Desk view | browser | verify + centers + donations → wave 2 |
 | Posters build/board/search | ✓ | browser | save/edit/found as helper → wave 2 |
 | Disasters report → approve/edit/reject/archive | ✓ | browser + API | browser report form (Turnstile-free but not driven) |
 | Admin roles/districts/stats/climate | ✓ | browser + API | — |
-| Helper groups, flags | — | — | seeded → wave 2 |
+| Helper groups, flags | — | — | populated → wave 2 |
 | Offline, a11y, contrast, tap targets, console/network | ✓ | browser instrumentation | Lighthouse-grade performance |
