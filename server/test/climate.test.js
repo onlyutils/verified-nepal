@@ -56,12 +56,24 @@ describe("climate message and download routes", () => {
     assert.equal(ddb.store.get("CLIMATE#STATS|TOTAL").messages, 3);
   });
 
-  it("rejects more than 3 messageIds in one submission", async () => {
+  it("accepts all available messageIds in one submission", async () => {
+    const ddb = new FakeDdb();
+    const handler = createHandler({ env, ddbClient: ddb });
+    const res = await handler(makeEvent({
+      method: "POST",
+      path: "/climate/messages",
+      body: { iso3: "USA", messageIds: CLIMATE_MESSAGE_IDS, turnstileToken: "one-token-for-the-whole-batch" },
+    }));
+    assert.equal(res.statusCode, 201);
+    assert.equal(ddb.store.get("CLIMATE#STATS|TOTAL").messages, CLIMATE_MESSAGE_IDS.length);
+  });
+
+  it("rejects duplicate messageIds in one submission", async () => {
     const handler = createHandler({ env, ddbClient: new FakeDdb() });
     const res = await handler(makeEvent({
       method: "POST",
       path: "/climate/messages",
-      body: { iso3: "USA", messageIds: CLIMATE_MESSAGE_IDS.slice(0, 4) },
+      body: { iso3: "USA", messageIds: [CLIMATE_MESSAGE_IDS[0], CLIMATE_MESSAGE_IDS[0]] },
     }));
     assert.equal(res.statusCode, 400);
   });

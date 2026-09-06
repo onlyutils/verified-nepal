@@ -5,7 +5,6 @@ import type { ClimateFacts, CountryClimate } from "@/lib/climate-data";
 import { interpolate } from "@/lib/format";
 import type { Language } from "@/lib/types";
 import { TurnstileWidget } from "@/components/turnstile";
-import { ShareButton } from "@/components/share-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,7 +28,6 @@ export function MessageWall({
     () => countries.filter((country) => country.iso3 !== "NPL").sort((a, b) => a.name.localeCompare(b.name)),
     [countries],
   );
-  const MAX_MESSAGES = 3;
   const [iso3, setIso3] = useState(facts.top.iso3);
   const [messageIds, setMessageIds] = useState<string[]>([]);
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -42,11 +40,9 @@ export function MessageWall({
   const canSubmit = messageIds.length > 0 && !submitting && (!siteKey || Boolean(turnstileToken));
 
   const toggleMessage = (id: string) => {
-    setMessageIds((current) => {
-      if (current.includes(id)) return current.filter((existing) => existing !== id);
-      if (current.length >= MAX_MESSAGES) return current;
-      return [...current, id];
-    });
+    setMessageIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
     setSent(null);
     setError(false);
   };
@@ -103,7 +99,7 @@ export function MessageWall({
         </NativeSelect>
       </div>
 
-      <p className="text-sm text-muted-foreground">{interpolate(t.messagesPickUpTo, { max: MAX_MESSAGES })}</p>
+      <p className="text-sm text-muted-foreground">{t.messagesPickAny}</p>
       <div className="space-y-4">
         {CLIMATE_MESSAGE_GROUPS.map((group) => (
           <fieldset key={group.id} className="space-y-2">
@@ -113,15 +109,13 @@ export function MessageWall({
             <div className="flex flex-wrap gap-2">
               {group.messages.map((item) => {
                 const selected = messageIds.includes(item.id);
-                const disabled = !selected && messageIds.length >= MAX_MESSAGES;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     aria-pressed={selected}
-                    disabled={disabled}
                     onClick={() => toggleMessage(item.id)}
-                    className={`min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    className={`min-h-11 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       selected ? "border-primary bg-primary text-primary-foreground" : "bg-background text-foreground hover:bg-accent"
                     }`}
                   >
@@ -152,19 +146,6 @@ export function MessageWall({
               })}
             </AlertDescription>
           </Alert>
-          <ShareButton
-            kind="message"
-            filename={`verifiednepal-message-${sent.iso3}.png`}
-            headline={messageText(sent.messageIds[0])}
-            subline={`${interpolate(t.cardTo, { country: country.name })} · ${t.cardFrom}`}
-            message={sent.messageIds.slice(1).map((id) => messageText(id)).join("\n") || undefined}
-            footnote={interpolate(t.cardStat, {
-              nepalShare: facts.nepalShare,
-              country: country.name,
-              countryShare: country.share_pct.toFixed(2),
-            })}
-            labels={{ download: t.downloadMessageCard, share: t.shareImage, exportError: t.exportError }}
-          />
         </div>
       ) : null}
       <Button type="submit" disabled={!canSubmit}>

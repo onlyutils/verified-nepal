@@ -8,8 +8,6 @@ function requireTable(env) {
   return env.TABLE_NAME;
 }
 
-const MAX_MESSAGES_PER_SUBMIT = 3;
-
 export async function handlePostClimateMessage(event, { getDdb, env }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
@@ -19,10 +17,11 @@ export async function handlePostClimateMessage(event, { getDdb, env }) {
   if (
     !ids ||
     !ids.length ||
-    ids.length > MAX_MESSAGES_PER_SUBMIT ||
+    ids.length > CLIMATE_MESSAGE_IDS.length ||
     !ids.every((id) => typeof id === "string" && CLIMATE_MESSAGE_IDS.includes(id))
   )
     throw err(400, "invalid messageId");
+  if (new Set(ids).size !== ids.length) throw err(400, "duplicate messageId");
   // One human check covers the whole batch: a Turnstile token is single-use, so verifying it
   // once per selected message would fail every submission after the first.
   await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
