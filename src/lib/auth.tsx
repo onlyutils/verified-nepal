@@ -22,6 +22,31 @@ type TokenResponse = {
   orgs?: { id: string; name: string }[];
 };
 
+/** Remember where sign-in started so both sign-in paths can send the user back there. */
+export function rememberReturnTo() {
+  try {
+    const path = window.location.pathname;
+    if (path.startsWith("/desk")) return;
+    sessionStorage.setItem("vn:return_to", path + window.location.search);
+  } catch {}
+}
+
+function consumeReturnTo() {
+  try {
+    const returnTo = sessionStorage.getItem("vn:return_to");
+    if (
+      typeof returnTo === "string" &&
+      returnTo.startsWith("/") &&
+      !returnTo.startsWith("//") &&
+      returnTo !== "/desk" &&
+      !returnTo.startsWith("/desk/")
+    ) {
+      sessionStorage.removeItem("vn:return_to");
+      window.location.replace(returnTo);
+    }
+  } catch {}
+}
+
 function b64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -68,10 +93,12 @@ export function useGoogleAuth() {
     const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
     sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
     sessionStorage.setItem(PKCE_STATE_KEY, state);
-    try {
-      if (window.location.pathname.startsWith("/desk")) sessionStorage.removeItem("vn:return_to");
-      else sessionStorage.setItem("vn:return_to", window.location.pathname + window.location.search);
-    } catch {}
+    // On /desk/login keep what the header stored when the user left the page they were on.
+    if (window.location.pathname.startsWith("/desk") && !window.location.pathname.startsWith("/desk/login")) {
+      try { sessionStorage.removeItem("vn:return_to"); } catch {}
+    } else {
+      rememberReturnTo();
+    }
     const redirectUri = window.location.origin + "/desk";
     const authorizeUrl =
       `${AUTH_HOST}/authorize?` +
@@ -103,6 +130,7 @@ export function useGoogleAuth() {
         const tokens = (await res.json()) as TokenResponse;
         saveTokens(tokens);
         setAccessToken(tokens.access_token);
+        consumeReturnTo();
       } catch {
         setError("password-login-failed");
         setLoading(false);
@@ -188,19 +216,7 @@ export function useGoogleAuth() {
         if (cancelled) return;
         stripParams();
         setAccessToken(tokens.access_token);
-        try {
-          const returnTo = sessionStorage.getItem("vn:return_to");
-          if (
-            typeof returnTo === "string" &&
-            returnTo.startsWith("/") &&
-            !returnTo.startsWith("//") &&
-            returnTo !== "/desk" &&
-            !returnTo.startsWith("/desk/")
-          ) {
-            sessionStorage.removeItem("vn:return_to");
-            window.location.replace(returnTo);
-          }
-        } catch {}
+        consumeReturnTo();
       } catch {
         if (cancelled) return;
         setError("verify-failed");

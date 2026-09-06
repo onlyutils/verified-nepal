@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LogOut, Menu, UserRound } from "lucide-react";
-import { useGoogleAuth } from "@/lib/auth";
+import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
@@ -103,7 +103,7 @@ export function SiteHeader({
                 <div className="my-3 border-t" />
                 {signedIn ? null : (
                   <SheetClose asChild>
-                    <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("deskLogin")}>
+                    <Button type="button" variant="ghost" className="justify-start" onClick={() => { rememberReturnTo(); navigate("deskLogin"); }}>
                       {meStrings[language].navSignIn}
                     </Button>
                   </SheetClose>
