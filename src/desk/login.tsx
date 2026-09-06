@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
 
 const TEST_LOGIN_ENABLED = import.meta.env.VITE_ENABLE_TEST_LOGIN === "true";
@@ -19,13 +20,13 @@ function TestLoginForm({ t, signInWithPassword, loading }: { t: (typeof labels)[
   const [password, setPassword] = useState("");
   return (
     <form
-      className="space-y-2 border-t border-white/20 pt-4"
+      className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         signInWithPassword(email, password);
       }}
     >
-      <p className="text-center text-xs text-background/70">{t.deskTestLoginToggle}</p>
+      <p className="text-center text-xs text-muted-foreground">{t.deskTestLoginToggle}</p>
       <Input
         type="email"
         placeholder={t.deskQueueEmail}
@@ -147,7 +148,16 @@ export function DeskLogin({
                 <AlertDescription>{auth.error === "password-login-failed" ? t.deskTestLoginFailed : t.deskSignInFailed}</AlertDescription>
               </Alert>
             ) : null}
-            {TEST_LOGIN_ENABLED ? <TestLoginForm t={t} signInWithPassword={auth.signInWithPassword} loading={auth.loading} /> : null}
+            {TEST_LOGIN_ENABLED ? (
+              <>
+                <div className="flex items-center gap-3" aria-hidden="true">
+                  <Separator className="flex-1 w-auto shrink" />
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">{t.deskLoginOrDivider}</span>
+                  <Separator className="flex-1 w-auto shrink" />
+                </div>
+                <TestLoginForm t={t} signInWithPassword={auth.signInWithPassword} loading={auth.loading} />
+              </>
+            ) : null}
           </CardContent>
         </Card>
       </main>

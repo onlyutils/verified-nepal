@@ -17,6 +17,7 @@ export const labels = {
     dashboard: "Front page",
     search: "Find a person",
     info: "Info / help",
+    incidents: "Incidents",
     language: "Language",
     floodName: "Disaster response across Nepal",
     floodDate: "Bhote Koshi river, 26 Aug 2026",
@@ -153,6 +154,7 @@ export const labels = {
     deskTestLoginPassword: "Password",
     deskTestLoginSubmit: "Sign in",
     deskTestLoginFailed: "Sign-in failed. Check the email and password.",
+    deskLoginOrDivider: "or",
 
     getHelp: "Get help",
     giveHelp: "Give help",
@@ -681,6 +683,7 @@ export const labels = {
     dashboard: "मुख्य पृष्ठ",
     search: "व्यक्ति खोज्नुहोस्",
     info: "जानकारी / सहयोग",
+    incidents: "विपद्हरू",
     language: "भाषा",
     floodName: "नेपालभरि विपद् प्रतिक्रिया",
     floodDate: "भोटेकोशी नदी, २६ अगस्ट २०२६",
@@ -816,6 +819,7 @@ export const labels = {
     deskTestLoginPassword: "पासवर्ड",
     deskTestLoginSubmit: "साइन इन",
     deskTestLoginFailed: "साइन-इन असफल भयो। इमेल र पासवर्ड जाँच्नुहोस्।",
+    deskLoginOrDivider: "वा",
 
     getHelp: "सहयोग माग्नुहोस्",
     giveHelp: "सहयोग दिनुहोस्",
