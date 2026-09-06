@@ -149,6 +149,10 @@ export const labels = {
     deskSignInFailed: "Sign-in failed. Please try again.",
     deskAuthErrorTitle: "Authentication error",
     deskAuthErrorBody: "Could not verify your account. Try signing in again.",
+    deskTestLoginToggle: "Test account sign-in (dev only)",
+    deskTestLoginPassword: "Password",
+    deskTestLoginSubmit: "Sign in",
+    deskTestLoginFailed: "Sign-in failed. Check the email and password.",
 
     getHelp: "Get help",
     giveHelp: "Give help",
@@ -808,6 +812,10 @@ export const labels = {
     deskSignInFailed: "साइन-इन असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।",
     deskAuthErrorTitle: "प्रमाणीकरण त्रुटि",
     deskAuthErrorBody: "तपाईंको खाता प्रमाणीकरण हुन सकेन। फेरि साइन-इन गर्नुहोस्।",
+    deskTestLoginToggle: "परीक्षण खाता साइन-इन (डेभ मात्र)",
+    deskTestLoginPassword: "पासवर्ड",
+    deskTestLoginSubmit: "साइन इन",
+    deskTestLoginFailed: "साइन-इन असफल भयो। इमेल र पासवर्ड जाँच्नुहोस्।",
 
     getHelp: "सहयोग माग्नुहोस्",
     giveHelp: "सहयोग दिनुहोस्",

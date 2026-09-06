@@ -87,6 +87,30 @@ export function useGoogleAuth() {
     window.location.assign(authorizeUrl);
   }, [clientId]);
 
+  /** Dev-only: OnlyUtils password-provider fixture accounts (see docs/BETA-TESTING.md). */
+  const signInWithPassword = useCallback(
+    async (email: string, password: string) => {
+      if (!clientId) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${AUTH_HOST}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, client_id: clientId }),
+        });
+        if (!res.ok) throw new Error("password-login-failed");
+        const tokens = (await res.json()) as TokenResponse;
+        saveTokens(tokens);
+        setAccessToken(tokens.access_token);
+      } catch {
+        setError("password-login-failed");
+        setLoading(false);
+      }
+    },
+    [clientId],
+  );
+
   const signOut = useCallback(() => {
     clearTokens();
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
@@ -295,6 +319,7 @@ export function useGoogleAuth() {
     error,
     buttonRef,
     signIn,
+    signInWithPassword,
     signOut,
     setError,
   };

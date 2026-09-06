@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
@@ -8,7 +8,46 @@ import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
+
+const TEST_LOGIN_ENABLED = import.meta.env.VITE_ENABLE_TEST_LOGIN === "true";
+
+/** Dev-only email/password form for the OnlyUtils fixture accounts in docs/BETA-TESTING.md. */
+function TestLoginForm({ t, signInWithPassword, loading }: { t: (typeof labels)["en"]; signInWithPassword: (email: string, password: string) => void; loading: boolean }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  return (
+    <form
+      className="space-y-2 border-t border-white/20 pt-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        signInWithPassword(email, password);
+      }}
+    >
+      <p className="text-center text-xs text-background/70">{t.deskTestLoginToggle}</p>
+      <Input
+        type="email"
+        placeholder={t.deskQueueEmail}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="bg-background text-foreground"
+        required
+      />
+      <Input
+        type="password"
+        placeholder={t.deskTestLoginPassword}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="bg-background text-foreground"
+        required
+      />
+      <Button type="submit" variant="outline" size="sm" className="w-full bg-background" disabled={loading}>
+        {t.deskTestLoginSubmit}
+      </Button>
+    </form>
+  );
+}
 
 /**
  * Background: Planet SkySat scene of the flood-widened Trishuli at Betrawati, five days after the
@@ -105,9 +144,10 @@ export function DeskLogin({
             )}
             {auth.error ? (
               <Alert variant="destructive">
-                <AlertDescription>{t.deskSignInFailed}</AlertDescription>
+                <AlertDescription>{auth.error === "password-login-failed" ? t.deskTestLoginFailed : t.deskSignInFailed}</AlertDescription>
               </Alert>
             ) : null}
+            {TEST_LOGIN_ENABLED ? <TestLoginForm t={t} signInWithPassword={auth.signInWithPassword} loading={auth.loading} /> : null}
           </CardContent>
         </Card>
       </main>
