@@ -78,4 +78,27 @@ describe("ownership pointers and dashboard", () => {
     const anon = await handler(makeEvent({ method: "GET", path: "/me/dashboard" }));
     assert.equal(anon.statusCode, 401);
   });
+
+  it("POST /incidents/request writes a pointer and GET /me/dashboard lists it", async () => {
+    const { handler, ddb, token } = setup();
+    const auth = { authorization: `Bearer ${token("u4")}` };
+    const body = {
+      name: "Bagmati flood",
+      kind: "flood",
+      district: "Rasuwa",
+      description: "Sudden flooding along the Bagmati riverbank near the bridge",
+      media: [{ type: "photo", fileId: "f1", originalUrl: "https://media.example.com/f1.jpg" }],
+    };
+    const res = await handler(makeEvent({ method: "POST", path: "/incidents/request", body, headers: auth }));
+    assert.equal(res.statusCode, 201);
+    const { id } = JSON.parse(res.body);
+    assert.ok(ddb.store.get(`USER#u4|INCIDENT#${id}`));
+
+    const dash = await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: auth }));
+    const dashBody = JSON.parse(dash.body);
+    assert.equal(dashBody.incidents.length, 1);
+    assert.equal(dashBody.incidents[0].id, id);
+    assert.equal(dashBody.incidents[0].status, "pending");
+    assert.equal(dashBody.incidents[0].name, "Bagmati flood");
+  });
 });

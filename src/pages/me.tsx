@@ -4,7 +4,8 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
-import { getDashboard, listMyOrgs, renewNeed, type Category, type DashboardResponse } from "@/lib/api";
+import { getDashboard, listMyOrgs, renewNeed, type Category, type DashboardResponse, type IncidentStatus } from "@/lib/api";
+import { districtLabels } from "@/lib/districts";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
 import type { Language, Page } from "@/lib/types";
@@ -38,6 +39,13 @@ function statusLabel(status: string, language: Language) {
   const key = `deskNeedsStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`;
   if (status === "in_progress" || status === "in-progress") return t.inProgress;
   return t[key] ?? t.unavailable;
+}
+
+function incidentStatusLabel(status: IncidentStatus, t: (typeof meStrings)["en"]) {
+  if (status === "pending") return t.incidentStatusPending;
+  if (status === "active") return t.incidentStatusActive;
+  if (status === "rejected") return t.incidentStatusRejected;
+  return t.incidentStatusArchived;
 }
 
 function groupItemStatusLabel(status: string, t: (typeof meStrings)["en"]) {
@@ -104,6 +112,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
         const groups = [...data.groups].sort((a, b) => timestamp(b.joinedAt) - timestamp(a.joinedAt));
         const offers = [...data.offers].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
         const missing = [...data.missing].sort((a, b) => timestamp(b.updatedAt) - timestamp(a.updatedAt));
+        const incidents = [...data.incidents].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
         return [
           {
             key: "needs",
@@ -260,6 +269,47 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                     items={missing}
                     onChange={(fn) => setData((d) => d && { ...d, missing: fn(d.missing) })}
                   />
+                )}
+              </section>
+            ),
+          },
+          {
+            key: "incidents",
+            hasItems: incidents.length > 0,
+            latestTimestamp: latestTimestamp(incidents.map((incident) => incident.createdAt)),
+            render: () => (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-bold tracking-tight">{t.incidentsTitle}</h2>
+                {incidents.length === 0 ? (
+                  <EmptyState
+                    title={t.incidentsEmpty}
+                    action={
+                      <Button type="button" onClick={() => navigate("reportIncident")}>
+                        {t.incidentsNew}
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {incidents.map((incident) => (
+                      <Card key={incident.id}>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{incident.name}</CardTitle>
+                          <CardDescription>
+                            {incident.districts.map((district) => districtLabels[district][language]).join(", ")}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <StatusBadge tone={toneForStatus(incident.status)}>{incidentStatusLabel(incident.status, t)}</StatusBadge>
+                          {incident.status === "rejected" && incident.rejectionReason ? (
+                            <p className="text-sm text-muted-foreground">
+                              {t.incidentRejectionReason.replace("{reason}", incident.rejectionReason)}
+                            </p>
+                          ) : null}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </section>
             ),

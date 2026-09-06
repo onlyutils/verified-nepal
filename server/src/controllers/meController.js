@@ -6,7 +6,7 @@ import { getRefPointer } from "../models/need.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, listMissingByStatus, putMissing } from "../models/missing.js";
-import { toMyMissing, toMyNeed, toMyOffer, toMyGroup } from "../views/mine.js";
+import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 
@@ -14,7 +14,7 @@ export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
   const { ddb, tableName, payload } = auth;
   const pointers = await listPointers(ddb, tableName, payload.sub);
-  const out = { missing: [], needs: [], offers: [], groups: [] };
+  const out = { missing: [], needs: [], offers: [], groups: [], incidents: [] };
   // A person owns tens of items, not thousands; one read per pointer keeps this simple.
   for (const p of pointers) {
     const pk = p.kind === "GROUP" ? `NEED#${p.id}` : `${p.kind}#${p.id}`;
@@ -25,6 +25,7 @@ export async function handleGetDashboard(event, opts) {
     else if (p.kind === "OFFER") out.offers.push(toMyOffer(item));
     else if (p.kind === "MISSING") out.missing.push(toMyMissing(item));
     else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
+    else if (p.kind === "INCIDENT") out.incidents.push(toMyIncident(item));
   }
   out.storyRole = await storyRole(ddb, tableName, payload.sub);
   return json(200, out);

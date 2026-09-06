@@ -25,3 +25,15 @@ export function toMyMissing(m) {
   const { PK, SK, type, gsi1pk, gsi1sk, gsi2pk, gsi2sk, createdBy, ...rest } = m;
   return rest;
 }
+
+export function toMyIncident(i) {
+  return {
+    id: i.id,
+    name: i.name,
+    kind: i.kind,
+    status: i.status,
+    districts: i.affectedDistricts,
+    createdAt: i.createdAt,
+    rejectionReason: i.status === "rejected" ? i.rejectionReason : undefined,
+  };
+}

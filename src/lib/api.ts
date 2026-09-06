@@ -334,11 +334,22 @@ export interface MyGroup {
 
 export type StoryRole = "needy" | "helper" | "org";
 
+export interface MyIncident {
+  id: string;
+  name: string;
+  kind: string;
+  status: IncidentStatus;
+  districts: DistrictName[];
+  createdAt: string;
+  rejectionReason?: string;
+}
+
 export interface DashboardResponse {
   missing: MyMissing[];
   needs: MyNeed[];
   offers: MyOffer[];
   groups: MyGroup[];
+  incidents: MyIncident[];
   /** Who the caller may tell a story as; null until they have received or given help. */
   storyRole?: StoryRole | null;
 }

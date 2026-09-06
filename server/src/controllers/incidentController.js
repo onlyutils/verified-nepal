@@ -2,6 +2,7 @@ import { json, err, getQuery, parseBody, stripInternal } from "../lib/http.js";
 import { validateString, validateOptionalString, validateDistrict, validateNeedMedia } from "../lib/validate.js";
 import { recordAudit } from "../models/audit.js";
 import { createIncident, getIncidentById, saveIncident, listIncidentsByStatus } from "../models/incident.js";
+import { putPointer } from "../models/mine.js";
 
 const INCIDENT_STATUSES = ["draft", "pending", "active", "archived", "rejected"];
 const PUBLIC_INCIDENT_STATUSES = ["active", "pending", "archived"];
@@ -108,7 +109,7 @@ export async function handlePostIncidentRequest(event, opts) {
   const description = validateString(body.description, "description", 10, 2000);
   const media = validateNeedMedia(body.media);
   if (!media || !media.some((item) => item.type === "photo")) throw err(400, "media must include at least one photo");
-  const { id } = await createIncident(auth.ddb, auth.tableName, {
+  const { id, item } = await createIncident(auth.ddb, auth.tableName, {
     name,
     kind,
     startedAt: new Date().toISOString().slice(0, 10),
@@ -119,6 +120,7 @@ export async function handlePostIncidentRequest(event, opts) {
     createdBy: auth.payload.sub,
     proofMedia: media,
   });
+  await putPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, type: "INCIDENT", id, createdAt: item.createdAt });
   return json(201, { id, status: "pending" });
 }
 
