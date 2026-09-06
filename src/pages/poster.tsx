@@ -370,7 +370,10 @@ function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language
           {input.story.trim() ? <p className="truncate text-muted-foreground">{input.story.trim()}</p> : null}
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-t pt-2">
             {phone ? (
-              <a href={`tel:${phone}`} className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline">
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex min-h-11 items-center gap-1.5 px-2 -mx-2 font-medium underline-offset-4 hover:underline"
+              >
                 <Phone aria-hidden="true" className="size-3.5" />
                 {phone}
               </a>

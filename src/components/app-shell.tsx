@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { LogOut, Phone, UserRound } from "lucide-react";
 import { AccessibilityBar } from "@/components/accessibility-bar";
+import { deskStrings } from "@/i18n/desk";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,8 @@ export function AppShell<K extends string>({
   aside?: ReactNode;
   children: ReactNode;
 }) {
+  const otherLanguage = language === "en" ? deskStrings[language].deskNepali : deskStrings[language].deskEnglish;
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-background">
@@ -83,9 +86,9 @@ export function AppShell<K extends string>({
               variant="ghost"
               size="sm"
               onClick={() => setLanguage(language === "en" ? "ne" : "en")}
-              aria-label={language === "en" ? "नेपालीमा हेर्नुहोस्" : "Switch to English"}
+              aria-label={otherLanguage}
             >
-              <span lang={language === "en" ? "ne" : "en"}>{language === "en" ? "नेपाली" : "EN"}</span>
+              <span lang={language === "en" ? "ne" : "en"}>{otherLanguage}</span>
             </Button>
             <AccessibilityBar language={language} />
             {user ? (

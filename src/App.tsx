@@ -3,6 +3,7 @@ import { Dashboard } from "@/pages/home";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { BackToTop } from "@/components/back-to-top";
 import { EmergencyBar } from "@/components/emergency-bar";
+import { NotFound } from "@/components/not-found";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SiteStatusBar } from "@/components/site-status-bar";
@@ -83,6 +84,7 @@ const pagePaths: Record<AppPage, string> = {
   climate: "/climate",
   reportIncident: "/report-incident",
   incidents: "/incidents",
+  notFound: "/404",
 };
 
 /** "/poster/new" → undefined; "/poster/<id>" → id. */
@@ -121,7 +123,7 @@ function pageFromPath(pathname: string): AppPage {
   if (pathname.startsWith("/poster")) return "poster";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";
-  return "dashboard";
+  return "notFound";
 }
 
 function pageTitle(page: AppPage, language: Language): string {
@@ -158,6 +160,7 @@ function pageTitle(page: AppPage, language: Language): string {
     climate: climateStrings[language].title,
     reportIncident: disasterStrings[language].reportIncidentTitle,
     incidents: disasterStrings[language].incidentsPublicTitle,
+    notFound: shellStrings[language].notFoundTitle,
   };
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
@@ -385,6 +388,7 @@ export function App() {
                   <IncidentsPage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
+              {page === "notFound" ? <NotFound language={language} onBack={() => navigate("dashboard")} /> : null}
               {page === "donationStatus" ? (
                 <ComponentErrorBoundary language={language}>
                   <DonationStatusPage

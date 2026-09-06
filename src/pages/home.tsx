@@ -54,7 +54,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
         <div className={`${container} grid items-start gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
           <div>
             <Eyebrow>{ts.landingFloodName}</Eyebrow>
-            <h1 className="mt-3 text-4xl font-bold uppercase leading-[1.1] tracking-tight text-foreground lg:text-5xl">
+            <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight text-foreground lg:text-5xl">
               {ts.landingTitle}
             </h1>
             <p className="mt-5 text-lg text-muted-foreground">{labels[language].aboutBody}</p>
@@ -67,7 +67,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
             <ActionCard language={language} kind="want" navigate={navigate} />
             <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
               {ts.registerOrgPrompt}
-              <Button type="button" variant="link" className="h-auto min-h-0 p-0" onClick={() => navigate("registerOrg")}>
+              <Button type="button" variant="link" className="h-auto min-h-11 px-2" onClick={() => navigate("registerOrg")}>
                 {orgStrings[language].registerOrgCta} →
               </Button>
             </p>

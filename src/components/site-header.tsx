@@ -4,6 +4,7 @@ import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
 import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
+import { deskStrings } from "@/i18n/desk";
 import { meStrings } from "@/i18n/me";
 import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
@@ -50,7 +51,7 @@ export function SiteHeader({
   const ts = shellStrings[language];
   const [menuOpen, setMenuOpen] = useState(false);
   const signedIn = Boolean(useGoogleAuth().idToken);
-  const otherLanguage = language === "en" ? "नेपाली" : "EN";
+  const otherLanguage = language === "en" ? deskStrings[language].deskNepali : deskStrings[language].deskEnglish;
 
   return (
     <header className="border-b bg-background">

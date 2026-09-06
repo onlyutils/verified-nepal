@@ -12,7 +12,29 @@ export function EmergencyBar({ language }: { language: Language }) {
   const ts = shellStrings[language];
   return (
     <aside aria-label={t.emergencyStripLabel} className="bg-destructive text-destructive-foreground">
-      <div className={container}>
+      <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-center gap-1 px-2 text-[11px] sm:hidden">
+        <a
+          href="tel:1234"
+          className="inline-flex min-h-10 items-center whitespace-nowrap font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {ts.emergencyCompactPrompt} <span className="ml-1 underline underline-offset-2">1234</span>
+        </a>
+        <span aria-hidden="true">·</span>
+        <a
+          href="tel:100"
+          className="inline-flex min-h-10 items-center whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {t.policeShort} <span className="ml-1 font-bold tabular-nums">100</span>
+        </a>
+        <span aria-hidden="true">·</span>
+        <a
+          href="tel:102"
+          className="inline-flex min-h-10 items-center whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {t.ambulanceShort} <span className="ml-1 font-bold tabular-nums">102</span>
+        </a>
+      </div>
+      <div className={`${container} hidden sm:flex`}>
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <a
             href="tel:1234"

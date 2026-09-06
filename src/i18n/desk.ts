@@ -385,6 +385,6 @@ export const deskStrings = {
     deskLoginPhotoCredit: "तस्बिर: {title} · © {author}, {license}",
     deskHomeLabel: "मुख्य पृष्ठमा फर्कनुहोस्",
     deskNepali: "नेपाली",
-    deskEnglish: "अङ्ग्रेजी",
+    deskEnglish: "English",
   },
 } as const;

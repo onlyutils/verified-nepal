@@ -523,8 +523,8 @@ export function GiveHelp({ language }: { language: Language }) {
       <PageHeader eyebrow={ts.mutualAidEyebrow} title={t.giveHelpTitle} description={t.giveHelpLead} />
       <Tabs defaultValue="needs">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="needs">{ts.giveHelpNeedsTab}</TabsTrigger>
-          <TabsTrigger value="offers">{ts.giveHelpOffersTab}</TabsTrigger>
+          <TabsTrigger value="needs" className="min-h-11">{ts.giveHelpNeedsTab}</TabsTrigger>
+          <TabsTrigger value="offers" className="min-h-11">{ts.giveHelpOffersTab}</TabsTrigger>
         </TabsList>
         <TabsContent value="needs" className="space-y-5">
           <div className="space-y-2">

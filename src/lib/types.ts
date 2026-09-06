@@ -29,7 +29,8 @@ export type Page =
   | "donationStatus"
   | "climate"
   | "reportIncident"
-  | "incidents";
+  | "incidents"
+  | "notFound";
 
 export interface RescueStatus {
   id: number;

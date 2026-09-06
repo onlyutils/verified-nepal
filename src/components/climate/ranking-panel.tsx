@@ -281,6 +281,7 @@ function BarColumn({
   highlight: boolean;
 }) {
   const heightPct = maxWarming > 0 ? Math.max(2, (row.warming_c / maxWarming) * 100) : 0;
+  const labelInside = heightPct >= 18;
   const title = `${row.rank}. ${row.name}: ${formatNumber(row.warming_c)} ${unit}${row.share_pct !== null ? ` · ${formatNumber(row.share_pct, 2)}%` : ""}`;
   return (
     <button
@@ -292,7 +293,13 @@ function BarColumn({
     >
       <div className="mt-4 flex h-44 w-full items-end">
         <div className="relative w-full rounded-t-sm bg-primary transition-[height] duration-200" style={{ height: `${heightPct}%` }}>
-          <span className="absolute -top-4 left-0 right-0 text-center text-[10px] tabular-nums text-muted-foreground">
+          <span
+            className={
+              labelInside
+                ? "absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-semibold tabular-nums text-primary-foreground"
+                : "absolute -top-4 left-0 right-0 text-center text-[10px] tabular-nums text-muted-foreground"
+            }
+          >
             {formatNumber(row.warming_c, 3)}
           </span>
         </div>

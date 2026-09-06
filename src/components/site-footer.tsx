@@ -68,7 +68,12 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
           <LiveStatusBadge language={language} tone="faint" />
           <p>
             {ts.footerPoweredBy}{" "}
-            <a className="underline underline-offset-2 hover:text-background" href={onlyUtilsUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="inline-flex min-h-11 items-center px-2 -mx-2 underline underline-offset-2 hover:text-background"
+              href={onlyUtilsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {ts.onlyUtils}
             </a>
           </p>

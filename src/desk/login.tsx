@@ -7,7 +7,7 @@ import { meStrings } from "@/i18n/me";
 import type { Language, Page } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/logo";
@@ -27,17 +27,27 @@ function TestLoginForm({ t, signInWithPassword, loading }: { t: (typeof labels)[
       }}
     >
       <p className="text-center text-xs text-muted-foreground">{t.deskTestLoginToggle}</p>
+      <label htmlFor="desk-test-email" className="sr-only">
+        {t.deskQueueEmail}
+      </label>
       <Input
+        id="desk-test-email"
         type="email"
         placeholder={t.deskQueueEmail}
+        autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         className="bg-background text-foreground"
         required
       />
+      <label htmlFor="desk-test-password" className="sr-only">
+        {t.deskTestLoginPassword}
+      </label>
       <Input
+        id="desk-test-password"
         type="password"
         placeholder={t.deskTestLoginPassword}
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         className="bg-background text-foreground"
@@ -131,7 +141,7 @@ export function DeskLogin({
       <main id="main" tabIndex={-1} className="relative flex flex-1 items-center justify-center px-4 py-8 focus:outline-none">
         <Card className="w-full max-w-md border-transparent">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{meStrings[language].navSignIn}</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">{meStrings[language].navSignIn}</h1>
             <CardDescription>{ds.deskLoginTagline}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
