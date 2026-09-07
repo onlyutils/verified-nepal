@@ -264,7 +264,7 @@ function SituationBand({ language }: { language: Language }) {
   const missing = liveData.missingCount === null ? t.unavailable : formatNumber(liveData.missingCount, language);
   const camps = data.stationedLocations.results.length || data.rescuedLocations.results.length;
   return (
-    <section className="bg-secondary">
+    <section id="current-situation" className="scroll-mt-20 bg-secondary">
       <div className={`${container} py-12 lg:py-16`}>
         <SectionHeader
           title={ts.currentSituation}

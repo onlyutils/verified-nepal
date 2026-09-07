@@ -4,20 +4,17 @@ import { climateData, climateFacts } from "@/lib/climate-data";
 import { climateSeriesColor } from "@/lib/climate-colors";
 import { climateStrings } from "@/i18n/climate";
 import { interpolate } from "@/lib/format";
-import { messageText } from "@/lib/climate-messages";
 import { drawComposition, drawRankingBars, drawTrendLines } from "@/lib/climate-share";
-import type { Language } from "@/lib/types";
+import type { Language, Page } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import { PageHeader, SectionHeader } from "@/components/page-header";
 import { RankingPanel } from "@/components/climate/ranking-panel";
-import { MessageWall } from "@/components/climate/message-wall";
 import { MultiLineChart } from "@/components/climate/line-chart";
 import { DonutChart } from "@/components/climate/donut-chart";
 import { ShareButton } from "@/components/share-button";
-import { WordCloud } from "@/components/climate/word-cloud";
 import { formatDateTime } from "@/lib/format-date";
 
 const MAX_COMPARE = 6;
@@ -33,21 +30,17 @@ function firstSentence(value: string) {
   return (match?.[0] ?? value).trim();
 }
 
-export function ClimatePage({ language }: { language: Language }) {
+export function ClimatePage({ language, navigate }: { language: Language; navigate: (page: Page, sectionId?: string) => void }) {
   const t = climateStrings[language];
   const facts = climateFacts();
   const { countries, timeseries, rankingsByYear, meta } = climateData;
   const [compareIso3s, setCompareIso3s] = useState<string[]>(DEFAULT_COMPARE);
   const [logScale, setLogScale] = useState(false);
   const [addValue, setAddValue] = useState("");
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-  const [selectedCountryIso3, setSelectedCountryIso3] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const compareRef = useRef<HTMLDivElement>(null);
 
   const byIso3 = useMemo(() => new Map(countries.map((c) => [c.iso3, c])), [countries]);
   const sortedByName = useMemo(() => [...countries].sort((a, b) => a.name.localeCompare(b.name)), [countries]);
-  const pageMessage = selectedMessageId ? messageText(selectedMessageId) : undefined;
 
   const handleSelect = (iso3: string) => {
     setCompareIso3s((current) => [iso3, ...current.filter((c) => c !== iso3)].slice(0, MAX_COMPARE));
@@ -95,14 +88,23 @@ export function ClimatePage({ language }: { language: Language }) {
       <PageHeader eyebrow={t.eyebrow} title={t.title} description={pageDescription} />
 
       <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="space-y-3 pt-6">
-          <h2 className="text-xl font-bold text-foreground">{t.caseTitle}</h2>
-          <p className="text-sm leading-6 text-foreground">{interpolate(t.caseLine1, factValues)}</p>
+        <CardContent className="space-y-4 pt-6">
+          <h2 className="text-2xl font-bold text-foreground">{t.caseTitle}</h2>
+          <p className="text-base font-semibold leading-7 text-foreground">{interpolate(t.caseLine1, factValues)}</p>
           <p className="text-sm leading-6 text-foreground">{t.caseLine2}</p>
           <p className="text-sm leading-6 text-foreground">{t.caseLine3}</p>
-          <Button asChild type="button" variant="link" className="h-auto min-h-11 px-0">
-            <a href="/">{t.caseLink}</a>
-          </Button>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button type="button" onClick={() => navigate("ourMessage")}>
+              {t.caseCta}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("dashboard", "current-situation")}
+            >
+              {t.caseLink}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -122,7 +124,6 @@ export function ClimatePage({ language }: { language: Language }) {
               filename="verifiednepal-climate-map.png"
               headline={t.mapLegendTitle}
               subline={firstSentence(pageDescription)}
-              message={pageMessage}
               labels={{ download: t.downloadImage, share: t.shareImage, exportError: t.exportError }}
             />
           }
@@ -133,7 +134,6 @@ export function ClimatePage({ language }: { language: Language }) {
             filename="verifiednepal-climate-ranking.png"
             headline={t.rankingTitle}
             subline={t.rankingSubtitle}
-            message={pageMessage}
             footnote={interpolate(t.cardStat, {
               nepalShare: facts.nepalShare,
               country: facts.top.name,
@@ -210,7 +210,6 @@ export function ClimatePage({ language }: { language: Language }) {
                   filename="verifiednepal-climate-trend.png"
                   headline={t.trendTitle}
                   subline={lineSeries.map((series) => series.name).join(" · ")}
-                  message={pageMessage}
                   draw={(ctx, box) =>
                     drawTrendLines(ctx, box, { years: timeseries.years, series: lineSeries, logScale, unit: t.unitCelsius })
                   }
@@ -275,7 +274,6 @@ export function ClimatePage({ language }: { language: Language }) {
                   filename="verifiednepal-climate-composition.png"
                   headline={`${primary.name} · ${t.gasCompositionTitle}`}
                   subline={t.sourceCompositionTitle}
-                  message={pageMessage}
                   draw={(ctx, box) =>
                     drawComposition(ctx, box, {
                       left: {
@@ -319,38 +317,6 @@ export function ClimatePage({ language }: { language: Language }) {
             ) : null}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-3">
-        <SectionHeader title={t.messagesTitle} />
-        <p className="text-sm text-muted-foreground">{t.messagesDescription}</p>
-        <Card>
-          <CardContent className="pt-6">
-            <MessageWall
-              language={language}
-              t={t}
-              countries={countries}
-              facts={facts}
-              onSent={(messageId, iso3) => {
-                setSelectedMessageId(messageId);
-                setSelectedCountryIso3(iso3);
-                setRefreshKey((key) => key + 1);
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-3">
-        <SectionHeader title={t.cloudTitle} />
-        <WordCloud
-          t={t}
-          language={language}
-          countries={countries}
-          selectedIso3={selectedCountryIso3}
-          refreshKey={refreshKey}
-          message={pageMessage}
-        />
       </div>
 
       <Card>

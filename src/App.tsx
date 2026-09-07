@@ -15,6 +15,7 @@ import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
+import { ourMessageStrings } from "@/i18n/our-message";
 import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import type { Language, Page } from "@/lib/types";
@@ -49,6 +50,7 @@ const DropCenters = lazy(() => import("@/pages/drop-centers").then((m) => ({ def
 const DropCenterDetail = lazy(() => import("@/pages/drop-center-detail").then((m) => ({ default: m.DropCenterDetail })));
 const DonationStatusPage = lazy(() => import("@/pages/donation-status").then((m) => ({ default: m.DonationStatusPage })));
 const ClimatePage = lazy(() => import("@/pages/climate").then((m) => ({ default: m.ClimatePage })));
+const OurMessagePage = lazy(() => import("@/pages/our-message").then((m) => ({ default: m.OurMessagePage })));
 const IncidentsPage = lazy(() => import("@/pages/incidents").then((m) => ({ default: m.IncidentsPage })));
 const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
 const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
@@ -84,6 +86,7 @@ const pagePaths: Record<AppPage, string> = {
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
   climate: "/climate",
+  ourMessage: "/our-message",
   reportIncident: "/report-incident",
   incidents: "/incidents",
   notFound: "/404",
@@ -128,6 +131,7 @@ function pageTitle(page: AppPage, language: Language): string {
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
     climate: climateStrings[language].title,
+    ourMessage: ourMessageStrings[language].title,
     reportIncident: disasterStrings[language].reportIncidentTitle,
     incidents: disasterStrings[language].incidentsPublicTitle,
     notFound: shellStrings[language].notFoundTitle,
@@ -135,12 +139,17 @@ function pageTitle(page: AppPage, language: Language): string {
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
 
-function focusMainAndScroll() {
+function focusMainAndScroll(sectionId?: string) {
   const main = document.getElementById("main");
   if (main) {
     (main as HTMLElement).focus({ preventScroll: true });
   }
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const target = sectionId ? document.getElementById(sectionId) : null;
+  if (target) {
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 export function App() {
@@ -188,12 +197,12 @@ export function App() {
   }, [page]);
 
   const navigate = useCallback(
-    (nextPage: Page) => {
+    (nextPage: Page, sectionId?: string) => {
       window.history.pushState({}, "", pagePaths[nextPage]);
       setPage(nextPage);
       document.title = `${pageTitle(nextPage, language)} · verifiedNepal`;
       requestAnimationFrame(() => {
-        focusMainAndScroll();
+        focusMainAndScroll(sectionId);
       });
     },
     [language],
@@ -350,7 +359,12 @@ export function App() {
               ) : null}
               {page === "climate" ? (
                 <ComponentErrorBoundary language={language}>
-                  <ClimatePage language={language} />
+                  <ClimatePage language={language} navigate={navigate} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "ourMessage" ? (
+                <ComponentErrorBoundary language={language}>
+                  <OurMessagePage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "reportIncident" ? (

@@ -28,6 +28,7 @@ export type Page =
   | "dropCenterDetail"
   | "donationStatus"
   | "climate"
+  | "ourMessage"
   | "reportIncident"
   | "incidents"
   | "notFound";
