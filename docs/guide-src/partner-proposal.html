@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VerifiedNepal — Where has help reached? A proposal for responding organizations</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --crimson: #C8102E; --navy: #1F3B8B; --ink: #1a2333; --muted: #5b6472; --rule: #e5e7eb; --soft: #f4f6fa; --ok: #2E7D32; --warn: #92400E; }
+  body { font-family: Arial, Helvetica, sans-serif; color: var(--ink); }
+  .page { position: relative; width: 210mm; height: 297mm; overflow: hidden; padding: 14mm 20mm 16mm; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .flagbar { width: 160px; height: 7px; display: flex; margin-bottom: 26px; }
+  .flagbar .r { flex: 1; background: var(--crimson); }
+  .flagbar .b { flex: 1; background: var(--navy); }
+  .brand { color: var(--crimson); font-weight: bold; letter-spacing: 0.35em; font-size: 17px; margin-bottom: 28px; }
+  .cover h1 { font-size: 38px; line-height: 1.25; margin-bottom: 22px; }
+  .cover .sub { color: var(--muted); font-size: 16px; line-height: 1.6; max-width: 480px; }
+  .cover .meta { margin-top: 48px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+
+  .kicker { display: inline-block; background: #eef1e6; color: #5a6b3b; font-size: 11px; font-weight: bold; letter-spacing: 0.18em; padding: 5px 12px; border-radius: 12px; margin-bottom: 18px; }
+  h2 { color: var(--navy); font-size: 23px; margin-bottom: 8px; padding-bottom: 9px; border-bottom: 2px solid var(--crimson); }
+  h3 { color: var(--ink); font-size: 14.5px; margin: 18px 0 6px; }
+  section { margin-bottom: 16px; }
+  p.body, li { color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+  section > p.body { margin-top: 10px; }
+  strong { color: var(--ink); }
+  ul.plain { list-style: none; margin-top: 8px; }
+  ul.plain li { position: relative; padding-left: 16px; margin-bottom: 7px; }
+  ul.plain li::before { content: ""; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; background: var(--crimson); border-radius: 50%; }
+  ol.steps { list-style: none; margin-top: 10px; }
+  ol.steps li { position: relative; padding-left: 32px; margin-bottom: 9px; }
+  ol.steps li::before { content: attr(data-n); position: absolute; left: 0; top: 1px; width: 21px; height: 21px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 11px; font-weight: bold; text-align: center; line-height: 21px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .stat { border: 1px solid var(--rule); padding: 10px 10px 8px; }
+  .stat .n { font-size: 22px; font-weight: bold; color: var(--crimson); line-height: 1.1; }
+  .stat .l { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  .callout { border-left: 4px solid var(--navy); background: var(--soft); padding: 12px 15px; margin-top: 10px; }
+  .callout p { color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+  .quote { border-left: 4px solid var(--crimson); padding: 8px 14px; margin: 10px 0; color: var(--ink); font-size: 13px; line-height: 1.55; font-style: italic; }
+  .quote span { display: block; font-style: normal; color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+  figure { margin: 14px 0 6px; }
+  figcaption { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
+  figcaption b { color: var(--ink); }
+  svg text { font-family: Arial, Helvetica, sans-serif; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+  th, td { text-align: left; vertical-align: top; padding: 5px 7px; border-bottom: 1px solid var(--rule); line-height: 1.4; }
+  th { background: var(--soft); color: var(--navy); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  td.c, th.c { text-align: center; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--navy); vertical-align: middle; }
+  .dot.full { background: var(--navy); }
+  .dot.half { background: linear-gradient(90deg, var(--navy) 50%, #fff 50%); }
+  .dot.none { border-color: #c4c9d2; }
+  .tag { display: inline-block; font-size: 10px; font-weight: bold; padding: 1px 6px; border-radius: 8px; margin-left: 4px; vertical-align: middle; }
+  .tag.building { background: #FEF3C7; color: var(--warn); }
+  .tag.live { background: #E8F5E9; color: var(--ok); }
+  tr.unreached td { background: #fff5f5; }
+  tr.stale td { background: #fffaf0; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .box { border: 1px solid var(--rule); padding: 8px 11px; }
+  .box h4 { font-size: 12.5px; color: var(--navy); margin-bottom: 6px; }
+  .box p, .box li { font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+  .box ul { list-style: none; }
+  .box li { padding-left: 12px; position: relative; margin-bottom: 4px; }
+  .box li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; background: var(--navy); border-radius: 50%; }
+
+  .foot { text-align: center; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .foot p { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .foot .url { color: var(--crimson); font-weight: bold; font-size: 15px; }
+  .pageno { position: absolute; bottom: 9mm; right: 20mm; font-size: 10px; color: #9aa1ab; }
+  .sources li { font-size: 10.5px; line-height: 1.5; margin-bottom: 4px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="page cover">
+  <div class="flagbar"><div class="r"></div><div class="b"></div></div>
+  <div class="brand">VERIFIEDNEPAL</div>
+  <h1>Where has help reached?</h1>
+  <p class="sub">A proposal for organizations responding to disasters in Nepal: what the last responses taught us, what VerifiedNepal already does, what we are building next, and how your organization can use it.</p>
+  <div class="meta">Prepared for INGOs, NGOs, government offices and community groups<br>September 2026 · verifiednepal.com</div>
+</div>
+
+<!-- PAGE 1: THE PROBLEM -->
+<div class="page">
+  <span class="kicker">THE PROBLEM</span>
+  <h2>One question nobody could answer</h2>
+
+  <section>
+    <p class="body">On 26 August 2026 an ice and rock avalanche from Langtang Lirung sent a flash flood down the Bhote Koshi and Trishuli. Within days the government convened its council, deployed 21,000 security personnel, sent 679,295 warning messages in one minute and restored 116 of 120 damaged telecom towers. Mapping volunteers traced 16,388 buildings from satellite imagery. The response had resources.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">1,300+</div><div class="l">people confirmed dead</div></div>
+      <div class="stat"><div class="n">4,900</div><div class="l">people reported missing</div></div>
+      <div class="stat"><div class="n">41</div><div class="l">motorable bridges destroyed</div></div>
+      <div class="stat"><div class="n">3,702</div><div class="l">households cut off for up to six days</div></div>
+    </div>
+    <figcaption>Figures from NDRRMA Situation Report 1, 1 September 2026, and the OCHA flash updates that followed.</figcaption>
+  </section>
+
+  <section>
+    <h3>What went wrong was not effort. It was information.</h3>
+    <ul class="plain">
+      <li>Relief collected under the one-door system was stockpiled in Bidur while villages in Rasuwa received nothing. Twelve days in, Aamachhodingmo Rural Municipality, home to about 7,000 people, was asking for salt and cooking oil.</li>
+      <li>Federal and local tiers ran separate operations. Ministries used separate online forms that duplicated each other. One Finance Ministry officer built his own tool to merge the missing-person lists from NDRRMA, Police and the Army every five minutes.</li>
+      <li>Drone crews collected requests by loudspeaker, with villagers writing phone numbers in the mud, and kept clear of helicopters by hand.</li>
+      <li>The deputy mayor of Bidur said she could not find people to walk five minutes to unreached spots. Nobody had a list of which settlements had been reached and which had not.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>This is not new</h3>
+    <div class="quote">"Cases of duplication or under-distribution of aid… teams neglected some isolated areas to cover others, unaware of the efforts already undertaken."<span>European Institute for Asian Studies, lessons from the 2015 earthquake response. More than 300 NGOs worked in Gorkha district alone.</span></div>
+    <div class="quote">"Relief distribution faced significant discrepancies, leading to conflicts… lack of accurate data on vulnerable populations."<span>DPNet Nepal field assessment after the Jajarkot earthquake, February 2024.</span></div>
+    <p class="body">Across three responses in eleven years the same gap appears: the money, goods and people were there, but no shared record showed where they had gone. VerifiedNepal exists to keep that record.</p>
+  </section>
+  <div class="pageno">1</div>
+</div>
+
+<!-- PAGE 2: EVIDENCE -->
+<div class="page">
+  <span class="kicker">WHAT THE EVIDENCE SAYS</span>
+  <h2>Why most response tools fade, and a few last</h2>
+
+  <section>
+    <p class="body">Before building anything new, we studied the civic and humanitarian platforms used since Haiti 2010, including Nepal's own QuakeMap from 2015. The pattern is consistent. Tools that survive do one narrow job, keep a visible human verification step, let data leave in standard formats, and have an institution that reads them on a schedule. Tools that try to do everything, or depend on a volunteer team alone, stop being used when the emergency ends.</p>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="QuakeMap 2015 report funnel">
+      <g font-size="12" fill="#5b6472">
+        <text x="150" y="22" text-anchor="end">Reports received</text>
+        <text x="150" y="57" text-anchor="end">Verified by phone call</text>
+        <text x="150" y="92" text-anchor="end">Judged actionable</text>
+        <text x="150" y="127" text-anchor="end">Routed to a responder</text>
+        <text x="150" y="162" text-anchor="end">Confirmed closed</text>
+        <text x="150" y="197" text-anchor="end">Delivery unknown</text>
+      </g>
+      <g>
+        <rect x="160" y="8" width="440" height="20" fill="#1F3B8B"/>
+        <rect x="160" y="43" width="211" height="20" fill="#1F3B8B"/>
+        <rect x="160" y="78" width="119" height="20" fill="#1F3B8B"/>
+        <rect x="160" y="113" width="94" height="20" fill="#1F3B8B"/>
+        <rect x="160" y="148" width="67" height="20" fill="#2E7D32"/>
+        <rect x="160" y="183" width="27" height="20" fill="#C8102E"/>
+      </g>
+      <g font-size="12" font-weight="bold" fill="#1a2333">
+        <text x="606" y="23">2,035</text>
+        <text x="377" y="58">978</text>
+        <text x="285" y="93">551</text>
+        <text x="260" y="128">434</text>
+        <text x="233" y="163">309</text>
+        <text x="193" y="198">125</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 1. QuakeMap, Nepal 2015.</b> The Nepal Army pulled verified reports every two hours and 50 organizations received them. Even so, for 125 of the 434 reports routed to a responder, the team could not tell whether help was ever delivered. A record that ends at "sent to a responder" cannot answer "where has help reached". Source: Ushahidi and Kathmandu Living Labs.</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>Platform</th><th>What it owns</th><th>Who reads it</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><strong>KoboToolbox</strong></td><td>Field survey forms, offline</td><td>32,000+ organizations; IFRC runs its own</td><td>In use since 2014</td></tr>
+      <tr><td><strong>Crisis Cleanup</strong> (USA)</td><td>Cleanup work orders with a claim that expires</td><td>2,000+ organizations, 130,000 families</td><td>In use since 2012</td></tr>
+      <tr><td><strong>PetaBencana</strong> (Indonesia)</td><td>Flood reports from chat apps on one map</td><td>Declared official by BNPB in 2020</td><td>In use, year round</td></tr>
+      <tr><td><strong>Sahana Eden</strong></td><td>Twenty modules for everything</td><td>Needed developers per deployment</td><td>Archived 2025</td></tr>
+      <tr><td><strong>afetharita</strong> (Türkiye 2023)</td><td>Rescue requests mined from tweets</td><td>Volunteers only</td><td>Archived after three weeks</td></tr>
+      <tr><td><strong>QuakeMap</strong> (Nepal 2015)</td><td>Crowd reports, verified by callback</td><td>Nepal Army, 50 organizations</td><td>Closed July 2015</td></tr>
+    </tbody>
+  </table>
+  <figcaption><b>Figure 2. Platforms that lasted and platforms that faded.</b> Sources: KoboToolbox, Crisis Cleanup, BNPB, Sahana Foundation, Açık Yazılım Ağı, Ushahidi.</figcaption>
+
+  <div class="callout"><p><strong>The lesson we took.</strong> Own one record, the ward-level register of what is needed, who has taken it and what was delivered. Verify before publishing. Export in the formats the cluster system already uses. Give a government desk and the Red Cross a feed they can read every hour. Keep the platform in use every monsoon so it is already the habit on the day of the earthquake.</p></div>
+  <div class="pageno">2</div>
+</div>
+
+<!-- PAGE 3: WHERE WE STAND -->
+<div class="page">
+  <span class="kicker">WHERE WE STAND</span>
+  <h2>What VerifiedNepal does today</h2>
+
+  <section>
+    <p class="body">VerifiedNepal is an independent, volunteer-run, bilingual platform covering all 77 districts. It went live during the 2026 Bhote Koshi flood and now supports any number of disasters at once. It is not a government website and it handles no money. Everything below is running now.</p>
+    <div class="two">
+      <div class="box"><h4>Requests and offers, verified by people</h4><ul>
+        <li>Anyone can ask for help without an account, in Nepali or English.</li>
+        <li>A moderator calls to verify before anything is published. Every decision is written to a public audit log.</li>
+        <li>Verified organizations, helper groups and individuals take a published request, see the family's contact privately, and mark it delivered.</li>
+      </ul></div>
+      <div class="box"><h4>Organizations and drop centers</h4><ul>
+        <li>Organizations register once, are verified, and carry a public trust tier.</li>
+        <li>Drop centers record every movement of goods in a public ledger anyone can download.</li>
+        <li>A donor can follow one donation from the center to the family.</li>
+      </ul></div>
+      <div class="box"><h4>Works where there is no signal</h4><ul>
+        <li>Printed claim sheets with QR codes for field distribution.</li>
+        <li>Codes redeemed on paper are reconciled later in one pass.</li>
+        <li>Names are masked in every public view. Phone numbers are shown only to the verified handler.</li>
+      </ul></div>
+      <div class="box"><h4>Also on the platform</h4><ul>
+        <li>Missing-person posters and a search across the official rescued and missing lists.</li>
+        <li>Community rebuild projects with a public spending trail.</li>
+        <li>Field articles and short photo stories, all moderated.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <table>
+    <thead><tr><th>Capability</th><th class="c">BIPAD</th><th class="c">SetuRapid</th><th class="c">PMO portal</th><th class="c">donate.gov.np</th><th class="c">VerifiedNepal</th></tr></thead>
+    <tbody>
+      <tr><td>Incident and loss register</td><td class="c"><span class="dot full"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot half"></span></td></tr>
+      <tr><td>Requests for help, verified before publishing</td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot half"></span></td><td class="c"><span class="dot half"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot full"></span></td></tr>
+      <tr><td>Verified organization registry with trust level</td><td class="c"><span class="dot half"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot full"></span></td></tr>
+      <tr><td>One handler per request, delivery recorded</td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot full"></span></td></tr>
+      <tr><td>Public goods ledger and audit log</td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot half"></span></td><td class="c"><span class="dot full"></span></td></tr>
+      <tr><td>Paper and QR flow for no-signal areas</td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot full"></span></td></tr>
+      <tr><td>Per-ward view of reached and unreached</td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot half"></span><span class="tag building">building</span></td></tr>
+      <tr><td>Export in cluster formats (HXL, GeoJSON)</td><td class="c"><span class="dot half"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot none"></span></td><td class="c"><span class="dot half"></span><span class="tag building">building</span></td></tr>
+    </tbody>
+  </table>
+  <figcaption><b>Figure 3. Existing Nepali platforms and VerifiedNepal, September 2026.</b> Full circle: available. Half circle: partial. BIPAD is the national incident and loss register with a public API; it does not track requests or deliveries. SetuRapid and the PMO portal take requests but show no status back. Assessed from each site's public pages and API.</figcaption>
+  <div class="pageno">3</div>
+</div>
+
+<!-- PAGE 4: WHAT WE ARE BUILDING -->
+<div class="page">
+  <span class="kicker">WHAT WE ARE BUILDING NOW</span>
+  <h2>The ward register</h2>
+
+  <section>
+    <p class="body">Work started in September 2026 and ships in stages to the live site. The first stage answers the Rasuwa question directly.</p>
+    <ol class="steps">
+      <li data-n="1"><strong>A municipality and ward code on every record.</strong> All 753 municipalities and their wards, taken from the government's BIPAD dataset, so "Gosaikunda ward 3" means the same thing in our data, in yours and in the district office.</li>
+      <li data-n="2"><strong>A public coverage page per disaster.</strong> For every ward: requests open, in progress, delivered, and days since anything was last delivered. Wards that have received nothing sort to the top.</li>
+      <li data-n="3"><strong>One-click 3W export.</strong> A who-does-what-where file with HXL tags and a GeoJSON layer, the formats OCHA information officers and HDX already accept. No retyping into the cluster template.</li>
+      <li data-n="4"><strong>A delivery receipt.</strong> Photo, location and number of households served, attached when a request is marked delivered. The count is public. The photo and location are visible only to moderators and the family.</li>
+      <li data-n="5"><strong>Requests that come back.</strong> A request taken but not delivered within six days returns to the open list automatically, and the family is told at every step. This is the same rule 2,000 organizations follow on Crisis Cleanup, and it is what stops two teams working the same house while a third is missed.</li>
+    </ol>
+  </section>
+
+  <figure>
+    <table>
+      <thead><tr><th>District</th><th>Municipality</th><th class="c">Ward</th><th class="c">Open</th><th class="c">In progress</th><th class="c">Delivered</th><th>Last delivery</th></tr></thead>
+      <tbody>
+        <tr class="unreached"><td>Rasuwa</td><td>Aamachhodingmo</td><td class="c">2</td><td class="c">14</td><td class="c">0</td><td class="c">0</td><td>Never</td></tr>
+        <tr class="unreached"><td>Rasuwa</td><td>Gosaikunda</td><td class="c">5</td><td class="c">9</td><td class="c">1</td><td class="c">0</td><td>Never</td></tr>
+        <tr class="stale"><td>Rasuwa</td><td>Uttargaya</td><td class="c">1</td><td class="c">6</td><td class="c">3</td><td class="c">4</td><td>9 days ago</td></tr>
+        <tr><td>Nuwakot</td><td>Bidur</td><td class="c">4</td><td class="c">2</td><td class="c">5</td><td class="c">31</td><td>Today</td></tr>
+        <tr><td>Nuwakot</td><td>Kakani</td><td class="c">3</td><td class="c">0</td><td class="c">2</td><td class="c">12</td><td>1 day ago</td></tr>
+      </tbody>
+    </table>
+    <figcaption><b>Figure 4. The coverage page, illustrated with example figures.</b> Red rows have never received a delivery. Amber rows have had none for more than a week. The same rows download as an HXL-tagged CSV or as map points.</figcaption>
+  </figure>
+
+  <section>
+    <h3>Next stages, in order</h3>
+    <ul class="plain">
+      <li><strong>Offline entry for field teams.</strong> Register, receive and deliver with no signal; the phone syncs when a bar appears.</li>
+      <li><strong>One-door distribution filing.</strong> An organization files what it will distribute, in which wards, on which date. The palika or district office acknowledges it on the platform, and the record becomes the DDMC daily distribution log the 2017 one-door policy requires.</li>
+      <li><strong>Drone tasking board.</strong> Payload requests from wards, a roster of operators with payload and permits, landing sites registered by ward chairs, and a shared timeline of planned flights per district.</li>
+      <li><strong>Staff assignments and shift handover</strong> inside the organization dashboard, and requests expressed in standard kit units.</li>
+    </ul>
+  </section>
+  <div class="pageno">4</div>
+</div>
+
+<!-- PAGE 5: WHO BENEFITS -->
+<div class="page">
+  <span class="kicker">WHO BENEFITS</span>
+  <h2>What each partner gets</h2>
+
+  <section>
+    <h3>International NGOs and UN agencies</h3>
+    <ul class="plain">
+      <li><strong>A 3W you do not have to compile.</strong> Your deliveries recorded on the platform export as an HXL-tagged file with province, district, municipality and ward codes. Upload to HDX or hand to the cluster information officer unchanged.</li>
+      <li><strong>Fewer duplicates.</strong> One handler per request, expiring claims, and a public register of who is working where. In 2023, 41.6% of cash and voucher practitioners surveyed by CALP named deduplication and data sharing as a top need.</li>
+      <li><strong>Verified local partners.</strong> Every organization on the platform has been checked and carries a visible trust tier. Humanitarian ID was decommissioned in January 2026; there is currently no other shared registry at this level.</li>
+      <li><strong>Nothing new for field staff to learn.</strong> Paper claim sheets, QR codes and a phone browser. Data leaves in open formats whenever you need it.</li>
+    </ul>
+
+    <h3>Nepali NGOs and community organizations</h3>
+    <ul class="plain">
+      <li><strong>Free, with no IT to run.</strong> Register once, invite your team, take requests, mark them delivered.</li>
+      <li><strong>Proof for your donors.</strong> The drop-center ledger and the delivery receipt show that goods reached families. Donors can follow a single donation.</li>
+      <li><strong>A trust tier you earn.</strong> Being vouched for by a known organization is visible to everyone, including the district office and international partners looking for local implementers.</li>
+      <li><strong>One-door made easier.</strong> When the filing feature ships, the permission trail you must keep today by letter becomes a record you already have.</li>
+    </ul>
+
+    <h3>Government offices: DEOC, palikas and ward offices</h3>
+    <ul class="plain">
+      <li><strong>The unreached list.</strong> The coverage page shows which wards under your responsibility have received nothing, and for how long, from all organizations at once.</li>
+      <li><strong>A feed you can read every hour.</strong> Public, no login, in JSON or CSV, keyed to BIPAD's own ward ids. It complements BIPAD, which records incidents and losses, with what BIPAD does not hold: requests, handlers and deliveries.</li>
+      <li><strong>The DDMC daily log, generated.</strong> Once distribution filing ships, the log the one-door policy requires is produced from what organizations already entered.</li>
+    </ul>
+
+    <h3>People in affected communities</h3>
+    <ul class="plain">
+      <li><strong>Ask for help without an account</strong>, in Nepali, and get a reference code to check on it.</li>
+      <li><strong>Know what is happening.</strong> When someone takes the request, hands it back or delivers, the status page says so.</li>
+      <li><strong>Privacy by default.</strong> Names are masked in public. Phone numbers are seen only by the verified handler, and every such view is logged.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 640 96" width="100%" role="img" aria-label="How people in Nepal received disaster information">
+      <g font-size="12" fill="#5b6472">
+        <text x="150" y="30" text-anchor="end">Face to face</text>
+        <text x="150" y="70" text-anchor="end">Digital channels</text>
+      </g>
+      <rect x="160" y="16" width="410" height="20" fill="#1F3B8B"/>
+      <rect x="160" y="56" width="19" height="20" fill="#C8102E"/>
+      <g font-size="12" font-weight="bold" fill="#1a2333"><text x="576" y="31">65%</text><text x="185" y="71">3%</text></g>
+    </svg>
+    <figcaption><b>Figure 5. How people in Nepal said they received disaster information.</b> Source: Frontiers in Earth Science, 2026. This is why the platform keeps paper claim sheets, masks names by default and treats a phone call by a moderator, not a form, as the verification step.</figcaption>
+  </figure>
+  <div class="pageno">5</div>
+</div>
+
+<!-- PAGE 6: HOW WE WORK, WHAT WE ASK -->
+<div class="page">
+  <span class="kicker">WORKING TOGETHER</span>
+  <h2>How we handle data, and what we ask of you</h2>
+
+  <section>
+    <h3>Our commitments</h3>
+    <ul class="plain">
+      <li>Nothing is published until a person has verified it. Every moderator action is in a public audit log.</li>
+      <li>A beneficiary's full name and phone number are shown only to the moderator and to the organization or helper currently handling the request. Each view is recorded.</li>
+      <li>Public exports carry organization names and role labels, never a person's name or contact.</li>
+      <li>Data is yours to take. Exports are in CSV, HXL and GeoJSON, and the ward codes are the government's.</li>
+      <li>The platform handles no money and is not a government website. It does not replace the one-door system; it gives you the record to comply with it.</li>
+      <li>No automated matching. A person decides who helps whom.</li>
+    </ul>
+
+    <h3>What we ask</h3>
+    <ol class="steps">
+      <li data-n="1"><strong>Register your organization</strong> at verifiednepal.com/register-organization and tell us which districts and wards you work in.</li>
+      <li data-n="2"><strong>Use the take and deliver flow</strong> for the requests you fulfil, even when you would have helped anyway. That is what puts your work on the coverage page and in the 3W.</li>
+      <li data-n="3"><strong>Give us one information contact.</strong> One person who can tell us whether the export columns fit your reporting and what is missing.</li>
+      <li data-n="4"><strong>Point a desk at the feed.</strong> If you run an emergency operations centre or an information management unit, pull the coverage feed on a schedule and tell us what would make it more useful.</li>
+    </ol>
+
+    <h3>What we ask specifically of government partners</h3>
+    <p class="body">A DEOC or palika that reads the coverage page during the next monsoon, and tells us whether the DDMC log we generate matches what the one-door policy needs, would shape the platform more than any other single input.</p>
+  </section>
+
+  <div class="callout"><p><strong>Where the platform is heading.</strong> A national register of requests, handlers and deliveries that any organization can write to and any office can read, kept in use through every monsoon so it is already the habit when a large earthquake comes. The work is open source and the record is public. We would rather build it with you than for you.</p></div>
+
+  <div class="foot">
+    <p>Talk to us</p>
+    <p class="url">verifiednepal.com</p>
+    <p>verifiednepal01@gmail.com</p>
+  </div>
+  <div class="pageno">6</div>
+</div>
+
+<!-- PAGE 7: SOURCES -->
+<div class="page">
+  <span class="kicker">SOURCES</span>
+  <h2>Where the figures come from</h2>
+  <ul class="sources plain">
+    <li>NDRRMA, Rasuwa Flood Situation Report 1, 1 September 2026. OCHA, Nepal Rasuwa Flood Flash Update 5, 1 September 2026. WFP, logistics cluster activation, 4 September 2026.</li>
+    <li>Kathmandu Post: "What is the Nepal government's one-door system for flood relief", 27 August 2026; "People in flood-hit Rasuwa villages call for help after supplies run out", 7 September 2026; "Drones deployed to search for survivors", 26 August 2026.</li>
+    <li>AFP via Inquirer: "Nepal's high-tech disaster response meets low-tech reality", 30 August 2026; "Nepal's disaster response drones deliver food, carry bodies", 2 September 2026. OnlineKhabar: "Drones: Nepal's eyes in a crisis", 4 September 2026. Republica: "Coordination gap hampers flood rescue, relief works", September 2026.</li>
+    <li>OpenStreetMap wiki, Organised Editing, Nepal Floods 2026 (16,388 buildings mapped).</li>
+    <li>European Institute for Asian Studies, "The crisis response to the Nepal earthquake: lessons learned", 2016. DPNet Nepal, Jajarkot earthquake field assessment, February 2024 (Journal of Disaster Research abstracts). ScienceDirect, International Journal of Disaster Risk Reduction, 2018, on NGO density in Gorkha.</li>
+    <li>Ushahidi, "QuakeMap" case study; ODImpact, "Nepal earthquake recovery" case; Kathmandu Living Labs.</li>
+    <li>KoboToolbox, about the organization; IFRC Kobo. Crisis Cleanup, crisiscleanup.org and its claiming policy. BNPB Indonesia and Rest of World on PetaBencana, 2020 and 2021. Sahana Foundation, Eden Legacy, 2025. Açık Yazılım Ağı, afetharita repository, archived 28 February 2023.</li>
+    <li>CALP Network practitioner survey 2023, cited in the IFRC deduplication briefing note, October 2024. OCHA, Humanitarian ID decommissioning notice, 2025 to 2026.</li>
+    <li>Frontiers in Earth Science, 2026, on early warning communication channels in Nepal (face to face 65%, digital 3%).</li>
+    <li>BIPAD Portal public API, bipadportal.gov.np/api/v1, queried 7 September 2026. HDX, Nepal administrative boundaries (COD-AB). HXL Standard 1.1.</li>
+    <li>Nepal Government, one-door relief distribution policy, 2017 (Kathmandu Post, 15 August 2017).</li>
+  </ul>
+  <p class="body" style="margin-top:14px">Illustrative figures in Figure 4 are examples, not live data. Every other number in this document is taken from the sources above.</p>
+  <div class="pageno">7</div>
+</div>
+
+</body>
+</html>
