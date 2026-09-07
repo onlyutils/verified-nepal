@@ -49,7 +49,9 @@ describe("individual and group need takes", () => {
     const helper = ctx.token("helper", "Helper Person");
     for (const need of [first, second, third]) assert.equal((await call(ctx.handler, "POST", `/needs/${need.id}/take`, helper)).statusCode, 200);
     assert.equal((await call(ctx.handler, "POST", `/needs/${fourth.id}/take`, helper)).statusCode, 409);
+    assert.ok(ctx.ddb.store.get(`USER#helper|HANDLING#${first.id}`));
 
+    delete ctx.ddb.store.get(`NEED#${first.id}|META`).contactViewedBy;
     const contact = await call(ctx.handler, "GET", `/me/needs/${first.id}/contact`, helper);
     assert.equal(contact.statusCode, 200);
     assert.equal(JSON.parse(contact.body).beneficiary.phone, "+9779800000001");
@@ -59,6 +61,7 @@ describe("individual and group need takes", () => {
     assert.equal((await call(ctx.handler, "POST", `/needs/${first.id}/release`, ctx.token("other"))).statusCode, 409);
     assert.equal((await call(ctx.handler, "POST", `/needs/${first.id}/release`, helper)).statusCode, 200);
     assert.equal(ctx.ddb.store.get(`NEED#${first.id}|META`).status, "published");
+    assert.equal(ctx.ddb.store.has(`USER#helper|HANDLING#${first.id}`), false);
     assert.equal(Array.from(ctx.ddb.store.values()).some((item) => item.action === "need.take" && item.actorName === "Helper P."), true);
   });
 
@@ -81,6 +84,7 @@ describe("individual and group need takes", () => {
     const helper = ctx.token("legacy-helper", "Legacy Helper");
     assert.equal((await call(ctx.handler, "POST", `/needs/${need.id}/take`, helper)).statusCode, 200);
     assert.equal((await call(ctx.handler, "POST", `/needs/${need.id}/deliver`, helper, {})).statusCode, 200);
+    assert.equal(ctx.ddb.store.has(`USER#legacy-helper|HANDLING#${need.id}`), false);
   });
 
   it("lets a group member take and deliver for the group, updates the label, confirms redemption, and grants story eligibility", async () => {

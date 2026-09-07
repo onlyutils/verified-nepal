@@ -95,7 +95,11 @@ function getAtPath(obj, segs) {
 function setAtPath(obj, segs, value) {
   let cur = obj;
   for (let i = 0; i < segs.length - 1; i++) {
-    if (typeof cur[segs[i]] !== "object" || cur[segs[i]] === null) cur[segs[i]] = {};
+    if (typeof cur[segs[i]] !== "object" || cur[segs[i]] === null) {
+      const e = new Error("The document path provided in the update expression is invalid for update");
+      e.name = "ValidationException";
+      throw e;
+    }
     cur = cur[segs[i]];
   }
   cur[segs[segs.length - 1]] = value;

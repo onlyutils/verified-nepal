@@ -21,6 +21,17 @@ export async function deletePointer(ddb, tableName, { sub, type, id }) {
   await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: `USER#${sub}`, SK: `${type}#${id}` } }));
 }
 
+export async function putHandlingPointer(ddb, tableName, { sub, needId, createdAt }) {
+  await ddb.send(new PutCommand({
+    TableName: tableName,
+    Item: { PK: `USER#${sub}`, SK: `HANDLING#${needId}`, type: "HANDLING", kind: "NEED", id: needId, sub, createdAt: createdAt || new Date().toISOString() },
+  }));
+}
+
+export async function deleteHandlingPointer(ddb, tableName, { sub, needId }) {
+  await ddb.send(new DeleteCommand({ TableName: tableName, Key: { PK: `USER#${sub}`, SK: `HANDLING#${needId}` } }));
+}
+
 export async function listPointers(ddb, tableName, sub) {
   const res = await ddb.send(new QueryCommand({
     TableName: tableName,

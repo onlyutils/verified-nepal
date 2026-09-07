@@ -8,18 +8,16 @@ function put(ddb, item) {
 }
 
 describe("FakeDdb nested UpdateCommand support", () => {
-  it("SET on a dotted path creates intermediate maps", async () => {
+  it("SET on a dotted path rejects a missing parent map like DynamoDB", async () => {
     const ddb = new FakeDdb();
-    put(ddb, { PK: "NEED#1", SK: "META", groupItems: {} });
-    await ddb.send(new UpdateCommand({
+    put(ddb, { PK: "NEED#1", SK: "META" });
+    await assert.rejects(ddb.send(new UpdateCommand({
       TableName: "t",
       Key: { PK: "NEED#1", SK: "META" },
       UpdateExpression: "SET groupItems.#id = :item",
       ExpressionAttributeNames: { "#id": "abc" },
       ExpressionAttributeValues: { ":item": { description: "shelter", status: "open" } },
-    }));
-    const item = ddb.store.get("NEED#1|META");
-    assert.deepEqual(item.groupItems.abc, { description: "shelter", status: "open" });
+    })), (e) => e.name === "ValidationException");
   });
 
   it("SET on a leaf of an existing nested map updates only that leaf", async () => {

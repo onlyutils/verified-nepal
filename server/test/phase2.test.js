@@ -314,7 +314,7 @@ describe("GET /ledger", () => {
     assert.match(res.headers["content-type"], /csv/);
     const csv = res.body;
     const lines = csv.split("\n");
-    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName,deliveredBy,deliveredByKind,deliveredByRef");
+    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName,deliveredBy,deliveredByKind");
     // second line should be for newest in ward 4 (Sita K.)
     assert.ok(lines[1].includes("Sita K."));
     const ramLine = lines.find(l=>l.includes("Ram B."));
@@ -326,6 +326,8 @@ describe("GET /ledger", () => {
     assert.equal(jsonStr.includes("householdSize"), false);
     assert.equal(jsonStr.includes("registrant"), false);
     assert.equal(jsonStr.includes("household"), false);
+    for (const internal of ["ref", "sub", "ou_user"]) assert.equal(jsonStr.includes(internal), false, internal);
+    for (const internal of ["ref", "sub", "ou_user"]) assert.equal(csv.includes(internal), false, internal);
     for(const it of body.items){
       assert.equal("phone" in it, false);
       assert.equal("householdSize" in it, false);

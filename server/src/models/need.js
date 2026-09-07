@@ -74,8 +74,12 @@ export async function listNeedsForHandling(ddb, tableName, sub) {
 }
 
 export async function countActiveHelperTakes(ddb, tableName, sub) {
-  const result = await ddb.send(new ScanCommand({ TableName: tableName }));
-  return (result.Items || []).filter((item) => item.type === "NEED" && item.status === "matched" && item.handledBy?.kind === "helper" && item.handledBy.sub === sub).length;
+  const result = await ddb.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+    ExpressionAttributeValues: { ":pk": `USER#${sub}`, ":prefix": "HANDLING#" },
+  }));
+  return (result.Items || []).length;
 }
 
 export async function listPublicNeeds(ddb, tableName, { incidentId, district, category }) {

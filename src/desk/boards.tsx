@@ -106,6 +106,17 @@ export function Boards({ model }: { model: DeskModel }) {
       refresh={model.loadBoards}
       refreshLabel={model.ds.deskRefresh}
     >
+      <div className="mb-5 max-w-md space-y-2">
+        <Label htmlFor="boards-incident">{model.ds.deskIncidentFilterLabel}</Label>
+        <NativeSelect id="boards-incident" value={model.boardIncidentId ?? ""} onChange={(event) => model.setBoardIncident(event.target.value)}>
+          {model.activeIncidents.map((incident) => (
+            <NativeSelectOption key={incident.id} value={incident.id}>
+              {model.language === "ne" && incident.nameNe ? incident.nameNe : incident.name}
+            </NativeSelectOption>
+          ))}
+          <NativeSelectOption value="general">{model.ds.deskIncidentGeneral}</NativeSelectOption>
+        </NativeSelect>
+      </div>
       {model.boardsLoading ? (
         <SectionLoading label={model.t.deskBoardsLoading} />
       ) : model.boardsError ? (

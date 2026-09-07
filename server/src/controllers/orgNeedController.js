@@ -37,6 +37,7 @@ export async function handleOrgClaimNeed(event, opts, orgId, needId) {
   if (need.handledBy) throw err(409, "need_not_available");
   const at = new Date().toISOString();
   need.handledBy = { orgId, orgName: org.name, bySub: auth.payload.sub, at };
+  need.contactViewedBy ||= {};
   await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched", expectedStatus: "published" }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_available");
     throw e;

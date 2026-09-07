@@ -2,6 +2,7 @@ import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { json, err, parseBody } from "../lib/http.js";
 import { maskName } from "../lib/format.js";
 import { getNeedById, setNeedStatus, countActiveHelperTakes } from "../models/need.js";
+import { deleteHandlingPointer, putHandlingPointer } from "../models/mine.js";
 import { fulfilNeed } from "../models/claim.js";
 import { deleteOrgNeed } from "../models/orgNeed.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
@@ -37,6 +38,12 @@ async function setContactViewed(auth, need) {
     await auth.ddb.send(new UpdateCommand({
       TableName: auth.tableName,
       Key: { PK: need.PK, SK: need.SK },
+      UpdateExpression: "SET contactViewedBy = if_not_exists(contactViewedBy, :empty)",
+      ExpressionAttributeValues: { ":empty": {} },
+    }));
+    await auth.ddb.send(new UpdateCommand({
+      TableName: auth.tableName,
+      Key: { PK: need.PK, SK: need.SK },
       UpdateExpression: "SET contactViewedBy.#sub = :viewedAt",
       ConditionExpression: "attribute_not_exists(contactViewedBy.#sub)",
       ExpressionAttributeNames: { "#sub": auth.payload.sub },
@@ -44,9 +51,14 @@ async function setContactViewed(auth, need) {
     }));
   } catch (e) {
     if (e.name === "ConditionalCheckFailedException") return;
-    throw e;
+    console.error("Could not record need contact view", { needId: need.id, sub: auth.payload.sub, error: e });
+    return;
   }
-  await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.contact_view", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
+  try {
+    await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.contact_view", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
+  } catch (e) {
+    console.error("Could not record need contact view audit", { needId: need.id, sub: auth.payload.sub, error: e });
+  }
 }
 
 export async function handleHelperTakeNeed(event, opts, needId) {
@@ -57,12 +69,14 @@ export async function handleHelperTakeNeed(event, opts, needId) {
   const label = actorLabel(auth);
   const at = new Date().toISOString();
   need.handledBy = { kind: "helper", sub: auth.payload.sub, label, at };
+  need.contactViewedBy ||= {};
   try {
     await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched", expectedStatus: "published" });
   } catch (e) {
     if (e.status === 409) throw err(409, "need_not_available");
     throw e;
   }
+  await putHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.take", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
   return json(200, { status: "matched", handler: label });
 }
@@ -81,6 +95,7 @@ export async function handleHelperReleaseNeed(event, opts, needId) {
     if (e.status === 409) throw err(409, "need_not_handled_by_helper");
     throw e;
   });
+  await deleteHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.release", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
   return json(200, { status: "published" });
 }
@@ -98,6 +113,7 @@ export async function handleHelperDeliverNeed(event, opts, needId) {
     if (e.status === 409) throw err(409, "need_not_handled_by_helper");
     throw e;
   });
+  await deleteHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }
 
@@ -110,6 +126,7 @@ export async function handleGroupTakeNeed(event, opts, needId) {
   const label = `Helper group (${Object.keys(need.groupMembers || {}).length})`;
   const at = new Date().toISOString();
   need.handledBy = { kind: "group", groupId, label, at };
+  need.contactViewedBy ||= {};
   try {
     await setNeedStatus(auth.ddb, auth.tableName, { need, status: "matched", expectedStatus: "published" });
   } catch (e) {

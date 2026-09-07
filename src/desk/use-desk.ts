@@ -64,7 +64,7 @@ import {
   type DeliveredBy,
 } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
-import { useIncidents } from "@/lib/incidents";
+import { GENERAL_INCIDENT_ID, loadSelectedIncidentId, saveSelectedIncidentId, useIncidents } from "@/lib/incidents";
 import { apiErrorMessage } from "@/lib/api-error";
 import { districtNames } from "@/lib/geo";
 import { labels } from "@/i18n";
@@ -107,9 +107,13 @@ export function useDesk(language: Language) {
   const auth = useGoogleAuth();
   const incidentState = useIncidents();
   const activeIncidents = incidentState.incidents.filter((incident) => incident.status === "active");
-  const boardIncidentId = activeIncidents.some((incident) => incident.id === incidentState.currentIncidentId)
-    ? incidentState.currentIncidentId
-    : activeIncidents[0]?.id;
+  const [selectedBoardIncidentId, setSelectedBoardIncidentId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("incident") || loadSelectedIncidentId();
+  });
+  const boardIncidentId = selectedBoardIncidentId === GENERAL_INCIDENT_ID || activeIncidents.some((incident) => incident.id === selectedBoardIncidentId)
+    ? selectedBoardIncidentId
+    : incidentState.currentIncidentId || activeIncidents[0]?.id || GENERAL_INCIDENT_ID;
   const t = labels[language] as Record<string, string>;
   const ds = deskStrings[language] as Record<string, string>;
   const dos = deskOrgStrings[language] as Record<string, string>;
@@ -276,10 +280,18 @@ export function useDesk(language: Language) {
     if (typeof window !== "undefined") window.history.pushState(null, "", `/desk/${sectionPath(section)}${window.location.search}`);
   }, []);
 
+  const setBoardIncident = useCallback((id: string) => {
+    setSelectedBoardIncidentId(id);
+    saveSelectedIncidentId(id);
+    if (typeof window !== "undefined") window.history.pushState(null, "", `/desk/boards?incident=${encodeURIComponent(id)}`);
+  }, []);
+
   useEffect(() => {
     const onPopState = () => {
       setActiveSectionState(initialSection());
-      setHighlightNeedId(new URLSearchParams(window.location.search).get("need"));
+      const params = new URLSearchParams(window.location.search);
+      setHighlightNeedId(params.get("need"));
+      setSelectedBoardIncidentId(params.get("incident") || loadSelectedIncidentId());
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -1119,6 +1131,9 @@ export function useDesk(language: Language) {
     publishedNeeds,
     filteredNeeds,
     filteredOffers,
+    activeIncidents,
+    boardIncidentId,
+    setBoardIncident,
     highlightNeedId,
     boardsLoading,
     boardsError,

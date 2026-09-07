@@ -72,7 +72,7 @@ export function useIncidents(status = "active") {
     const selected = incidents.find(
       (incident) => incident.id === selectedId && incident.status === "active",
     );
-    if (selected) {
+    if (selected || selectedId === GENERAL_INCIDENT_ID) {
       setDefaultResolved(true);
       return;
     }
