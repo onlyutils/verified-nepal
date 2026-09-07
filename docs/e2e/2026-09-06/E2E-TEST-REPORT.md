@@ -1,6 +1,6 @@
 # VerifiedNepal — End-to-end test report, dev, 2026-09-06
 
-Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough for the UI/UX review), [DEV-DATASET.md](DEV-DATASET.md) (the dataset now on dev), per-run raw findings in [findings/](findings/), screenshots in [screenshots/](screenshots/).
+Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough for the UI/UX review), [DEV-DATASET.md](DEV-DATASET.md) (the dataset now on dev), per-run raw findings in [findings/](findings/), screenshots are embedded in the review page (https://claude.ai/code/artifact/cb4fcdad-c4f9-43a8-888f-36ccf4f6415c) and kept out of git.
 
 ## 1. Executive summary
 

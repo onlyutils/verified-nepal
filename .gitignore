@@ -12,3 +12,6 @@ dist/
 docs/superpowers/
 .impeccable/
 .wrangler/
+
+# e2e screenshots are kept out of git (see the review artifact); findings and reports stay in
+docs/e2e/**/screenshots/

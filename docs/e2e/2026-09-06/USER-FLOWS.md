@@ -1,6 +1,6 @@
 # VerifiedNepal — User Flows (as observed on dev, 2026-09-06)
 
-For the UI/UX review. Every flow below was walked on `https://dev.verifiednepal.com` by five automated testers (anonymous, helper, moderator, admin, and a UX/a11y audit) alongside the dev dataset. Screenshots are in `screenshots/` (named `<run>--<shot>.jpg`); the raw per-run findings are in `findings/`; the consolidated defect list with IDs (`VN-nn`) is in [E2E-TEST-REPORT.md](E2E-TEST-REPORT.md). Where a flow step cites a `VN-nn`, that is the issue to look at.
+For the UI/UX review. Every flow below was walked on `https://dev.verifiednepal.com` by five automated testers (anonymous, helper, moderator, admin, and a UX/a11y audit) alongside the dev dataset. Screenshots (named `<run>--<shot>.jpg`) are kept out of git — they are embedded in the review page (https://claude.ai/code/artifact/cb4fcdad-c4f9-43a8-888f-36ccf4f6415c) and in the tester's local `screenshots/` folder; the raw per-run findings are in `findings/`; the consolidated defect list with IDs (`VN-nn`) is in [E2E-TEST-REPORT.md](E2E-TEST-REPORT.md). Where a flow step cites a `VN-nn`, that is the issue to look at.
 
 How to read a flow: **Entry → Steps (screen · action · system response) → Exit**, then *States/branches*, then *What the reviewer should look at*.
 
