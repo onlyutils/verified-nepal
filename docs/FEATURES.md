@@ -65,6 +65,7 @@ This is the heart of the site: `/get-help` and `/give-help`.
 
 - **Asking for help** needs no account. Someone fills in what they need — food, shelter,
   medical help, and so on — where they are, and a short description, in English or Nepali.
+  They choose a municipality and ward from the checked list of Nepal's local government units.
   This is called a **need**. Registering a need for someone else requires Google sign-in, so
   the person you register for can be reached and you can follow their request; the registrant's
   name, phone and consent are still required.
@@ -119,6 +120,11 @@ The shared four-step timeline is:
 The direct channel moves from Taken to Handed over without the center's Declared and Received
 steps. The request owner can follow these milestones on `/me`, and public viewers can verify
 the final fulfilment without seeing private contact details.
+
+When help is marked delivered, the helper, group, or organization can attach an optional
+**delivery receipt** with a photo, the number of households served, and the delivery location.
+The household count is public; the receipt photo and location are private to moderators and
+the requester.
 
 ---
 
@@ -433,6 +439,21 @@ handler, and delivery writes one ledger row through the shared fulfilment path. 
 beneficiary redeems the claim code before or after helper delivery, the ledger records the
 beneficiary confirmation. A helper who delivers individually, or any member of a group that
 delivers, is eligible for the Stories feature.
+
+---
+
+## 16. Coverage and 3W export
+
+The public `/coverage` page shows ward-level coverage for a selected disaster: open, matched,
+and fulfilled needs, plus when a ward last received a delivery. It groups records by
+municipality and ward and puts wards that have never received a delivery first. The public
+`GET /coverage` endpoint serves the same data for a selected incident.
+
+The public `GET /export/3w` endpoint provides a Who-does-What-Where export for a selected
+incident. It offers an HXL-tagged CSV by default and GeoJSON when `format=geojson`, with
+province, district, municipality and ward fields, the BIPAD municipality code, status, dates,
+and household count. GeoJSON points use the most specific available administrative centroid.
+Neither format includes beneficiary names or contact details.
 
 ---
 

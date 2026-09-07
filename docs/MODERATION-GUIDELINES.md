@@ -64,6 +64,7 @@ Rejection is not a punishment. Write the reason as you would say it on the phone
 - At the distribution site, tick off on paper. Claim codes are redeemed once — a second redemption visibly bounces as `already_redeemed`.
 - If you are offline, collect codes on paper and use `Paper sync` afterwards. Duplicates are reported at sync time; re-tick the physical list.
 - Never read a claim code aloud in a public place.
+- A helper, group, or organization take expires automatically after 6 days if it has not been delivered. The need returns to the published pool; a moderator match without a handler take does not expire.
 
 ## 7. Conflicts of interest
 
@@ -75,7 +76,7 @@ The same applies to offers and projects where you are on the committee or stand 
 
 ## 8. Audit accountability
 
-Every publish, reject, match, fulfill, redeem, sync, role change and governance change writes an `AUDIT` item `{actorSub, actorName, action, targetType, targetId, targetLabel, reason?, ts}`.
+Every publish, reject, match, fulfill, redeem, sync, role change, governance change and automatic take expiry writes an `AUDIT` item `{actorSub, actorName, action, targetType, targetId, targetLabel, reason?, ts}`. An expired take uses the `take_expired` action with `system` as the actor.
 
 - The audit page at `/audit` is public. Your name is on every action you take.
 - `targetLabel` is masked (`need → maskedName + ward`, `project → title`, `dispatch → title`, `user → masked email like r***@domain`). Never write private fields into `targetLabel` or `reason`.

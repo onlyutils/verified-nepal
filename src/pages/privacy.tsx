@@ -56,6 +56,7 @@ const enSections: Section[] = [
     body: [
       "Public on the site: masked name (e.g., R. Gurung), district and ward-level location only, category, description (for needs and projects), and for articles the published title, excerpt/body, display name, place, cover/media credits and tags. For projects, committee bank and wallet details become public only after moderator verification of the committee, by design.",
       "Never public: phone numbers, registrant identity and contact, household size and household details, the Google account email used by an article author, and any private contact for offers. Phones, account emails and registrant/household information are visible only to moderators and are never shown on public boards, ledger, or article pages.",
+      "Delivery receipts are private: the receipt photo and delivery location are visible only to moderators and the requester, and never appear on public pages, the ledger, coverage, or exports. The number of households served is public.",
       "Nothing you type into the Find a Person search leaves your browser: searching is performed locally against the mirrored dataset.",
     ],
   },
@@ -224,6 +225,7 @@ const neSections: Section[] = [
     body: [
       "सार्वजनिक: मास्क गरिएको नाम (जस्तै R. Gurung), जिल्ला र वडा-स्तरको स्थान मात्र, श्रेणी, विवरण (आवश्यकता/परियोजनाका लागि) र लेख प्रकाशनमा शीर्षक, अंश/मूलपाठ, देखिने नाम, ठाउँ, कभर/मिडिया स्रोत र ट्याग। परियोजनामा समितिको बैंक/वालेट विवरण सम्पादकले समिति प्रमाणित गरेपछि मात्र सार्वजनिक हुन्छ — डिजाइन नै त्यस्तै हो।",
       "कहिल्यै सार्वजनिक हुँदैन: फोन नम्बर, दर्ता गर्ने व्यक्तिको पहिचान/सम्पर्क, परिवार संख्या/विवरण, लेख-लेखकले प्रयोग गरेको Google खाताको इमेल, प्रस्तावको निजी सम्पर्क। फोन, खाता इमेल र दर्ता/परिवार विवरण केवल सम्पादकले मात्र देख्छन् र कहिल्यै सार्वजनिक बोर्ड, लेजर वा लेख पृष्ठमा देखिँदैन।",
+      "डेलिभरीको प्रमाण निजी हुन्छ: प्रमाण फोटो र सहयोग दिइएको स्थान केवल सम्पादक र अनुरोधकर्ताले देख्न सक्छन्, र सार्वजनिक पृष्ठ, लेजर, कभरेज वा निर्यातमा कहिल्यै देखिँदैन। सेवा पाएका परिवारको संख्या भने सार्वजनिक हुन्छ।",
       "व्यक्ति खोज बक्समा टाइप गरेको कुरा तपाईंको ब्राउजरबाट बाहिर जाँदैन: खोज मिरर डेटासेटमा स्थानीय रूपमा हुन्छ।",
     ],
   },

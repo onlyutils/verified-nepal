@@ -37,6 +37,10 @@ For the production-safety migration, run `node server/scripts/backfill-missing-s
 
 To rebuild monthly work tallies, run `node server/scripts/backfill-work.mjs --table <TableName> [--from=YYYY-MM] [--region <region>] [--dry-run|--apply]`; `--from` defaults to `2026-08`, and dry-run is the default.
 
+To rebuild the checked BIPAD administrative-unit dataset, run `node scripts/build-admin-units.mjs` from the repository root. It writes `src/lib/admin-units.json` and `server/src/data/admin-units.json`; rerun it by hand when BIPAD changes and review the diff before committing it.
+
+The hourly scheduled task invokes the Lambda with `{"task":"expire-takes"}`. It returns helper, group, and organization takes older than 6 days to the published pool and records the expiry in the audit log.
+
 ## Routes
 
 Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`), not inside handlers: wrap the handler with `withAuth`, `withOptionalAuth`, or `withModAck` (moderator/admin + guidelines acknowledged) from `src/lib/middleware.js` and read `opts.auth`. Unwrapped handlers are public.
@@ -89,6 +93,8 @@ Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`)
 - `POST /claims/sync` → moderator/admin (guidelines ack) batch redeem `{redemptions:[{code, redeemedAt, note?}]}` → `200 {results}`
 - `GET /claims/print?district=&ward=` → moderator/admin (guidelines ack, district-scoped) printable claim codes for ward (masked, sorted)
 - `GET /ledger?district=&ward=&format=` → anonymous public ledger (masked names, `json` or `csv`, requires district)
+- `GET /coverage` → anonymous public per-incident ward coverage (requires `incidentId`, cached for 5 minutes)
+- `GET /export/3w` → anonymous public HXL-tagged 3W export (requires `incidentId`; `format=csv` or `geojson`, CSV default; no beneficiary names or contacts)
 - `GET /audit?month=YYYY-MM&cursor=` → anonymous public audit log (masked targetLabel, `actorName` public)
 - `POST /me/ack-guidelines` → authenticated (Bearer) acknowledge moderation guidelines → `200 {guidelinesAckAt}`
 - `GET /admin/users?role=&cursor=` → admin list users by role
