@@ -33,6 +33,7 @@ export type CenterForm = {
   id: string | null;
   name: string;
   district: string;
+  municipalityId: number | "";
   ward: string;
   address: string;
   lat: string;

@@ -8,8 +8,12 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea";
 import { ORG_TYPES } from "@/lib/api";
 import { districtLabels, districtNames } from "@/lib/geo";
+import { municipalityById } from "@/lib/admin-units";
 import { GOODS_CATEGORIES, goodsLabel, unitLabel } from "@/lib/goods";
 import { fillTemplate } from "@/lib/edition";
+import { needTimelineStrings } from "@/i18n/needs";
+import { centerStrings } from "@/i18n/centers";
+import { MunicipalitySelect } from "@/components/municipality-select";
 import { DistrictCheckboxes } from "./settings";
 import type { OrgController } from "./org-types";
 
@@ -29,6 +33,8 @@ export function OrgDialogs({ controller }: { controller: OrgController }) {
 
 function CenterDialog({ controller }: { controller: OrgController }) {
   const { t, language, centerForm: form } = controller;
+  const centerText = centerStrings[language];
+  const needText = needTimelineStrings[language];
   const set = (patch: Partial<typeof form>) => controller.setCenterForm((state) => ({ ...state, ...patch }));
   const error = (key: string) =>
     controller.centerFormErrors[key] ? (
@@ -52,7 +58,12 @@ function CenterDialog({ controller }: { controller: OrgController }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="centerDistrict">{t.centerDistrictLabel} *</Label>
-              <NativeSelect id="centerDistrict" value={form.district} onChange={(event) => set({ district: event.target.value })} required>
+              <NativeSelect
+                id="centerDistrict"
+                value={form.district}
+                onChange={(event) => set({ district: event.target.value, municipalityId: "" })}
+                required
+              >
                 <NativeSelectOption value="">{t.centerSelectDistrict}</NativeSelectOption>
                 {districtNames.map((district) => (
                   <NativeSelectOption key={district} value={district}>
@@ -62,13 +73,30 @@ function CenterDialog({ controller }: { controller: OrgController }) {
               </NativeSelect>
               {error("district")}
             </div>
+            <MunicipalitySelect
+              id="centerMunicipality"
+              district={form.district}
+              value={form.municipalityId}
+              onChange={(id) => set({ municipalityId: id })}
+              language={language}
+              label={centerText.centerMunicipalityLabel}
+              placeholder={centerText.centerSelectMunicipality}
+              districtFirst={t.centerSelectDistrict}
+              typeLabels={{
+                unitTypeRural: needText.unitTypeRural,
+                unitTypeMunicipality: needText.unitTypeMunicipality,
+                unitTypeSubMetro: needText.unitTypeSubMetro,
+                unitTypeMetro: needText.unitTypeMetro,
+              }}
+              error={controller.centerFormErrors.municipality}
+            />
             <div className="space-y-2">
               <Label htmlFor="centerWard">{t.centerWardLabel}</Label>
               <Input
                 id="centerWard"
                 type="number"
                 min="1"
-                max="33"
+                max={municipalityById(form.municipalityId || undefined)?.wards ?? 33}
                 step="1"
                 value={form.ward}
                 onChange={(event) => set({ ward: event.target.value })}

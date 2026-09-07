@@ -11,6 +11,8 @@ export const centerStrings = {
     centersStandfirst:
       "Independent organizations collect food, water and shelter goods at these centers. Stock and activity figures are logged by the organizations themselves and are not independently verified.",
     districtLabel: "District",
+    centerMunicipalityLabel: "Municipality / Palika",
+    centerSelectMunicipality: "Select your palika",
     allDistricts: "All districts",
     viewCenter: "View center",
     loadMore: "Load more",
@@ -112,6 +114,8 @@ export const centerStrings = {
     centersStandfirst:
       "स्वतन्त्र संस्थाहरूले यी केन्द्रहरूमा खाद्यान्न, पानी र आवास सामग्री सङ्कलन गर्छन्। मौज्दात र गतिविधि तथ्याङ्क संस्थाकै कर्मचारीले प्रविष्ट गरेका हुन् र स्वतन्त्र रूपमा प्रमाणित गरिएको छैन।",
     districtLabel: "जिल्ला",
+    centerMunicipalityLabel: "नगरपालिका / गाउँपालिका",
+    centerSelectMunicipality: "आफ्नो पालिका छान्नुहोस्",
     allDistricts: "सबै जिल्ला",
     viewCenter: "केन्द्र हेर्नुहोस्",
     loadMore: "थप हेर्नुहोस्",

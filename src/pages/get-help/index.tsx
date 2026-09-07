@@ -14,6 +14,7 @@ import {
 import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
 import { useGoogleAuth } from "@/lib/auth";
 import { districtLabels, districtNames } from "@/lib/geo";
+import { municipalityById } from "@/lib/admin-units";
 import { useIncidents } from "@/lib/incidents";
 import { saveSelectedIncidentId } from "@/lib/incidents";
 import { labels } from "@/i18n";
@@ -21,6 +22,7 @@ import { formatDateTime } from "@/lib/format-date";
 import { disasterStrings } from "@/i18n/disasters";
 import { formStrings } from "@/i18n/forms";
 import { meStrings } from "@/i18n/me";
+import { needTimelineStrings } from "@/i18n/needs";
 import type { Language } from "@/lib/types";
 import type { DistrictName } from "@/lib/districts";
 import { TurnstileWidget } from "@/components/turnstile";
@@ -38,6 +40,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { NeedTimeline } from "@/components/need-timeline";
+import { MunicipalitySelect } from "@/components/municipality-select";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
@@ -63,6 +66,7 @@ const NEW_INCIDENT_VALUE = "__new_incident__";
 type FieldKey =
   | "beneficiaryName"
   | "district"
+  | "municipality"
   | "ward"
   | "description"
   | "assignOnly"
@@ -119,6 +123,7 @@ function statusLabel(status: string, language: Language) {
 export function GetHelp({ language }: { language: Language }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const needText = needTimelineStrings[language];
   const disaster = disasterStrings[language];
   const auth = useGoogleAuth();
   const { incidents, currentIncidentId, setCurrentIncidentId } = useIncidents();
@@ -131,6 +136,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [beneficiaryPhone, setBeneficiaryPhone] = useState("");
   const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
   const [district, setDistrict] = useState("");
+  const [municipalityId, setMunicipalityId] = useState<number | "">("");
   const [ward, setWard] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
@@ -191,6 +197,7 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.beneficiaryPhone === "string") setBeneficiaryPhone(draft.beneficiaryPhone);
       if (typeof draft.beneficiaryEmail === "string") setBeneficiaryEmail(draft.beneficiaryEmail);
       if (typeof draft.district === "string") setDistrict(draft.district);
+      if (typeof draft.municipalityId === "number") setMunicipalityId(draft.municipalityId);
       if (typeof draft.ward === "string") setWard(draft.ward);
       if (typeof draft.category === "string" && CATEGORIES.includes(draft.category as Category)) setCategory(draft.category as Category);
       if (typeof draft.description === "string") setDescription(draft.description);
@@ -220,6 +227,7 @@ export function GetHelp({ language }: { language: Language }) {
       beneficiaryPhone,
       beneficiaryEmail,
       district,
+      municipalityId,
       ward,
       category,
       description,
@@ -241,6 +249,7 @@ export function GetHelp({ language }: { language: Language }) {
       !beneficiaryPhone &&
       !beneficiaryEmail &&
       !district &&
+      !municipalityId &&
       !ward &&
       !description &&
       !currentIncidentId &&
@@ -265,6 +274,7 @@ export function GetHelp({ language }: { language: Language }) {
     description,
     assignOnly,
     district,
+    municipalityId,
     onBehalf,
     registrantEmail,
     registrantName,
@@ -296,6 +306,7 @@ export function GetHelp({ language }: { language: Language }) {
     setBeneficiaryName("");
     setBeneficiaryPhone("");
     setBeneficiaryEmail("");
+    setMunicipalityId("");
     setDescription("");
     setAssignOnly(false);
     setNewIncidentMode(false);
@@ -416,8 +427,11 @@ export function GetHelp({ language }: { language: Language }) {
     }
     if (!beneficiaryName.trim()) next.beneficiaryName = ts.validationBeneficiaryName;
     if (!district) next.district = ts.validationDistrict;
+    if (!municipalityId) next.municipality = needText.validationMunicipality;
     const wardNumber = Number(ward);
-    if (!ward.trim() || Number.isNaN(wardNumber) || wardNumber < 1 || wardNumber > 35) next.ward = ts.validationWardRange;
+    const maxWard = municipalityById(municipalityId || undefined)?.wards ?? 33;
+    if (!ward.trim() || Number.isNaN(wardNumber) || wardNumber < 1 || wardNumber > maxWard)
+      next.ward = needText.validationWardForMunicipality.replace("{max}", String(maxWard));
     if (!description.trim()) next.description = ts.validationDescription;
     if (onBehalf) {
       if (!registrantName.trim()) next.registrantName = ts.validationRegistrantName;
@@ -434,6 +448,7 @@ export function GetHelp({ language }: { language: Language }) {
       const order: FieldKey[] = [
         "beneficiaryName",
         "district",
+        "municipality",
         "ward",
         "description",
         "registrantName",
@@ -453,6 +468,7 @@ export function GetHelp({ language }: { language: Language }) {
       document.getElementById(first ?? "beneficiaryName")?.focus();
       return;
     }
+    if (typeof municipalityId !== "number") return;
     setErrors({});
     setSubmitting(true);
     try {
@@ -468,6 +484,7 @@ export function GetHelp({ language }: { language: Language }) {
             phone: beneficiaryPhone.trim() || undefined,
             email: beneficiaryEmail.trim() || undefined,
             district,
+            municipalityId,
             ward: wardNumber,
           },
           category,
@@ -588,7 +605,10 @@ export function GetHelp({ language }: { language: Language }) {
               <NativeSelect
                 id="district"
                 value={district}
-                onChange={update("district", setDistrict)}
+                onChange={update("district", (value) => {
+                  setDistrict(value);
+                  setMunicipalityId("");
+                })}
                 aria-invalid={Boolean(errors.district)}
                 aria-describedby={errors.district ? "district-error" : undefined}
               >
@@ -601,6 +621,26 @@ export function GetHelp({ language }: { language: Language }) {
               </NativeSelect>
               <FieldError id="district-error" error={errors.district} />
             </div>
+            <MunicipalitySelect
+              id="municipality"
+              district={district}
+              value={municipalityId}
+              onChange={(id) => {
+                setMunicipalityId(id);
+                clearError("municipality");
+              }}
+              language={language}
+              label={needText.getHelpMunicipality}
+              placeholder={needText.getHelpSelectMunicipality}
+              districtFirst={needText.getHelpSelectDistrictFirst}
+              typeLabels={{
+                unitTypeRural: needText.unitTypeRural,
+                unitTypeMunicipality: needText.unitTypeMunicipality,
+                unitTypeSubMetro: needText.unitTypeSubMetro,
+                unitTypeMetro: needText.unitTypeMetro,
+              }}
+              error={errors.municipality}
+            />
             <div className="space-y-2">
               <Label htmlFor="incident">{disaster.incidentPickerLabel}</Label>
               <NativeSelect
@@ -697,7 +737,7 @@ export function GetHelp({ language }: { language: Language }) {
               type="number"
               inputMode="numeric"
               min={1}
-              max={35}
+              max={municipalityById(municipalityId || undefined)?.wards ?? 33}
             />
           </CardContent>
         </Card>

@@ -38,6 +38,7 @@ import { useGoogleAuth } from "@/lib/auth";
 import { enqueue, flush, load as loadQueue, save as saveQueue, type QueuedEntry } from "@/lib/goods-queue";
 import { orgStrings } from "@/i18n/orgs";
 import { fillTemplate } from "@/lib/edition";
+import { municipalityById } from "@/lib/admin-units";
 import type { Language } from "@/lib/types";
 import type { CenterForm, DialogState, LogForm, OrgController, OrgEditForm } from "./org-types";
 
@@ -45,6 +46,7 @@ const emptyCenterForm = (): CenterForm => ({
   id: null,
   name: "",
   district: "",
+  municipalityId: "",
   ward: "",
   address: "",
   lat: "",
@@ -106,7 +108,8 @@ function centerPayload(form: CenterForm): { body?: CreateCenterBody; errors: Rec
   const address = form.address.trim();
   if (name.length < 1 || name.length > 100) errors.name = "validationCenterName";
   if (!form.district) errors.district = "validationCenterDistrict";
-  if (form.ward.trim() && (!Number.isInteger(Number(form.ward)) || Number(form.ward) < 1 || Number(form.ward) > 33))
+  const maxWard = municipalityById(form.municipalityId || undefined)?.wards ?? 33;
+  if (form.ward.trim() && (!Number.isInteger(Number(form.ward)) || Number(form.ward) < 1 || Number(form.ward) > maxWard))
     errors.ward = "validationCenterWard";
   if (address.length < 1 || address.length > 300) errors.address = "validationCenterAddress";
   const hasLat = form.lat.trim() !== "";
@@ -124,6 +127,7 @@ function centerPayload(form: CenterForm): { body?: CreateCenterBody; errors: Rec
     body: {
       name,
       district: form.district,
+      municipalityId: Number(form.municipalityId),
       ward: form.ward ? Number(form.ward) : undefined,
       address,
       lat: hasLat ? Number(form.lat) : undefined,
@@ -446,6 +450,7 @@ export function useOrg(language: Language): OrgController {
       id: center.id,
       name: center.name,
       district: center.district,
+      municipalityId: center.municipalityId ?? "",
       ward: center.ward ? String(center.ward) : "",
       address: center.address,
       lat: center.lat ? String(center.lat) : "",

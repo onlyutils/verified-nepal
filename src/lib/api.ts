@@ -37,6 +37,8 @@ export interface NeedPublic {
   id: string;
   maskedName: string;
   district: string;
+  municipalityId?: number;
+  municipality?: string;
   ward: number;
   category: Category;
   description: string;
@@ -71,6 +73,8 @@ export interface StatusResponse {
   status: string;
   category: Category;
   district: string;
+  municipalityId?: number;
+  municipality?: string;
   createdAt: string;
   expiresAt: string;
   claimCode?: string;
@@ -122,7 +126,15 @@ export interface CreateNeedBody {
   onBehalf: boolean;
   registrant: { name: string; phone: string; email?: string } | null;
   consent?: boolean;
-  beneficiary: { name: string; phone?: string; email?: string; district: string; ward: number; householdSize?: number };
+  beneficiary: {
+    name: string;
+    phone?: string;
+    email?: string;
+    district: string;
+    municipalityId: number;
+    ward: number;
+    householdSize?: number;
+  };
   category: Category;
   description: string;
   language: "en" | "ne";
@@ -1350,6 +1362,8 @@ export interface CenterPublic {
   id: string;
   name: string;
   district: string;
+  municipalityId?: number;
+  municipality?: string;
   ward?: number;
   address: string;
   lat?: number;
@@ -1370,6 +1384,8 @@ export interface CenterPrivate extends CenterPublic {
 export interface CreateCenterBody {
   name: string;
   district: string;
+  municipalityId?: number;
+  municipality?: string;
   ward?: number;
   address: string;
   lat?: number;
