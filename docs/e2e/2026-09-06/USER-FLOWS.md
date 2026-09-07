@@ -18,7 +18,7 @@ flowchart LR
     L -.every decision.-> A[/audit — public, names masked/]
 ```
 
-Observed on dev: this holds for **needs, offers, projects, articles, stories, organizations, disasters** (each verified end to end or via API). It does **not** hold for **missing-person posters** (`VN-01`: no moderation route, public on submit) and the incidents API leaks *pending* reports to anonymous callers (`VN-02`) even though the page hides them.
+Observed on dev: this holds for **needs, offers, projects, articles, stories, organizations, disasters, and saved missing-person posters** (each verified end to end or via API). The incidents API still leaks *pending* reports to anonymous callers (`VN-02`) even though the page hides them.
 
 Three roles + anonymous:
 
@@ -111,14 +111,14 @@ Reviewer focus: no `h1` and placeholder-only inputs on the login card (`VN-21`);
 
 Entry: home "Find a person" / "Missing person poster", nav.
 
-1. `/poster` board · list with Missing/Found/Safe filters and search (placeholder-only search input) · cards show full phone numbers publicly (by design; reviewer to confirm against the privacy principle).
+1. `/poster` board · list with Missing/Found/Safe filters and search (placeholder-only search input) · cards show status and share actions, never creator contact details.
 2. `/poster/new` · builder: name, age, last seen, clothing, photo, contacts · live 1080×1080 preview · "Download picture" · *"Nothing is uploaded"* until you save.
 3. Signed in: **Save** → `/poster/:id`, editable, mark **Found** later.
-4. **The saved poster is public immediately** — there is no moderation step (`VN-01`).
+4. **Saved posters are pending until the Desk publishes them**; owners see moderation status/rejection reasons in `/me`, and public pages use tips and hotlines instead of creator contact details.
 5. `/search` · name search across official rescued + missing lists: English or Devanagari, order-independent; "Ram" → 29 (substring matches like "Pramila"), "राम" → 50; min 2 characters.
 6. `/missing` guide · "Do this first" steps, hotlines, hospitals.
 
-Reviewer focus: whether posters should be gated (product decision), search ranking, board card hierarchy (phone chip vs Open/Share look equal).
+Reviewer focus: tip flow and hotline prominence, search ranking, and board card hierarchy (Open/Share actions).
 
 ### F5 · Disasters (incidents) — `ux--incidents-en-mobile.jpg`, `ux--report-incident-en-desktop.jpg`, `admin--09-disasters-pending-tab.jpg`, `admin--10-disaster-edit-dialog.jpg`, `admin--12-disaster-reject-empty-reason.jpg`, `admin--25-public-incidents-after.jpg`
 

@@ -1,4 +1,4 @@
-import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, GetCommand, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { unitFor } from "../lib/goods-taxonomy.js";
 
 export async function putEntry(ddb, tableName, entry) {
@@ -91,6 +91,16 @@ export async function listDistrictEntries(ddb, tableName, district, cursorKey) {
     ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}),
   }));
   return res;
+}
+
+export async function listAllDistrictEntries(ddb, tableName, cursorKey) {
+  return ddb.send(new ScanCommand({
+    TableName: tableName,
+    FilterExpression: "begins_with(gsi1pk, :prefix)",
+    ExpressionAttributeValues: { ":prefix": "GOODS#" },
+    Limit: 50,
+    ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}),
+  }));
 }
 
 export function computeStock(entries) {

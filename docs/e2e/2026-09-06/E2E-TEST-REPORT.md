@@ -6,8 +6,7 @@ Companion documents: [USER-FLOWS.md](USER-FLOWS.md) (flow-by-flow walkthrough fo
 
 **The USP holds where it is implemented.** "Nothing user-submitted is public until a moderator approves it" was verified end to end — through the real UI, then confirmed against the public API — for needs, offers, projects, articles, stories, organizations and disasters: pending items are invisible on every public page and list endpoint, approval flips visibility, rejection (with a required reason) never surfaces, and every decision lands on the public `/audit` page with masked names.
 
-**Two places break the promise (P1):**
-- `VN-01` Missing-person posters have **no moderation step** — a saved poster is on the public board immediately (no `/moderation/missing*` route exists). If this is deliberate (time-critical content), it needs to be stated in the product docs and the privacy policy.
+**One place still breaks the promise (P1):**
 - `VN-02` The public incidents API returns **pending disaster reports** to anonymous callers (`GET /incidents?status=pending`) including the reporter's user id and proof-photo URLs; the page hides them client-side, the API doesn't.
 
 **Everything else that failed is fixable UX/quality work**, not broken flows: a systemic contrast failure of the muted-text token (`VN-03`), an unreadable climate chart (`VN-04`), no 404 page (`VN-05`), and a Turnstile failure path that lets the form submit and then blames the server (`VN-06`). One regression introduced by the dev-only test sign-in (`VN-07`, landing on `/org` instead of the page you came from) was fixed and deployed during this run (`e1fd179`).
@@ -32,13 +31,13 @@ Environment: `https://dev.verifiednepal.com` (Cloudflare Pages) → `https://api
 | Content | Pending hidden (page + API) | Approve → public | Reject → never public | Audit row | Verdict |
 |---|---|---|---|---|---|
 | Need | ✓ | ✓ (populated via API; UI publish in wave 2) | ✓ | ✓ | holds |
-| Offer | ✓ | ✓ UI | ✓ UI (reason) | ✓ | holds; but published offers surface on no public page (`VN-13`) |
+| Offer | ✓ | ✓ UI | ✓ UI (reason) | ✓ | holds; published offers are visible on `/give-help` |
 | Project | ✓ | populated; UI in wave 2 | ✓ | ✓ | holds (creation blocked by Turnstile in automation) |
 | Article | ✓ | ✓ UI (one click) | populated | ✓ | holds |
 | Story | ✓ (+ computed eligibility) | ✓ UI | populated | ✓ | holds |
 | Organization | ✓ ("unverified" gating) | populated; UI in wave 2 | populated | ✓ | holds; copy contradicts model (`VN-31`) |
 | Disaster | page ✓ / **API ✗** | ✓ UI | ✓ UI (reason) | ✓ | **`VN-02`** |
-| Missing poster | **✗ no moderation** | n/a | n/a | — | **`VN-01`** |
+| Missing poster | ✓ pending hidden | ✓ Desk Posters | ✓ reason required | ✓ | fixed: posters are moderated (`VN-01`) |
 
 ## 4. Consolidated defects (deduplicated across runs)
 
@@ -48,7 +47,7 @@ Severity: **P1** = breaks the USP, a task, or WCAG AA broadly · **P2** = degrad
 
 | ID | Issue | Where | Evidence / fix |
 |---|---|---|---|
-| VN-01 | Missing-person posters bypass moderation: no `/moderation/missing*` route, `GET /missing` lists a poster the moment it is saved. | moderator 5d | Product decision: either add a poster queue to the Desk or document posters as the deliberate exception. |
+| VN-01 | Missing-person posters bypass moderation: no `/moderation/missing*` route, `GET /missing` lists a poster the moment it is saved. | moderator 5d | fixed: posters are moderated |
 | VN-02 | `GET /incidents?status=pending` (anonymous) returns pending reports with `createdBy` (OnlyUtils sub), `proofMedia` URLs and `approvedBy`. Page filters client-side only. | admin B1 | Drop `pending` from public statuses; strip `createdBy/approvedBy/rejectionReason` in `handleGetIncidents`; check the frontend `listIncidents()` default (`active,pending`). |
 | VN-03 | `--muted-foreground` = rgb(147,143,138): 3.2:1 on white, 2.95:1 on cream; ~188 occurrences (captions, helper text, timestamps). | ux 1 | Darken token to ≈rgb(112,108,103) (4.6:1). One CSS variable. |
 | VN-04 | Climate ranking bar labels 1.47:1 (dark grey on brand blue). | ux 2 | White labels on bars or labels outside. |
@@ -65,7 +64,7 @@ Severity: **P1** = breaks the USP, a task, or WCAG AA broadly · **P2** = degrad
 | VN-10 | Inconsistent confirmation models: disaster Approve/Archive one click (Archive irreversible), article/story Publish one click, needs/offers need a checkbox, rejects a dialog. Role change has the good confirm dialog — reuse it. | admin B4, moderator nit |
 | VN-11 | Masked name renders "Beta (." for display names containing "(" — queue, public helper label, audit. | moderator |
 | VN-12 | Offers show "W—" (no ward) in the meta line. | moderator |
-| VN-13 | Published offers appear on no public page; `/give-help` board is needs-only while `GET /offers` is public. | moderator |
+| VN-13 | Published offers appear on no public page; `/give-help` board is needs-only while `GET /offers` is public. | moderator | fixed: published offers are visible on the public Offers tab |
 | VN-14 | Reject dialog's Reject button enabled before a reason is chosen. | moderator |
 | VN-15 | `/projects` empty state says "You appear to be offline" while online (`projects.tsx:169` passes `t.offline` unconditionally). | anon B1, ux 12 |
 | VN-16 | "Draft restored from …" banner appears on the same visit / on an empty form. | anon B3 |

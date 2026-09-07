@@ -5,6 +5,7 @@ import {
   addGroupItem,
   claimGroupItem,
   createOffer,
+  getDashboard,
   flagNeed,
   joinGroupApi,
   listMyOrgs,
@@ -428,13 +429,22 @@ export function GiveHelp({ language }: { language: Language }) {
   const [needsRefresh, setNeedsRefresh] = useState(0);
   const [offersDistrict, setOffersDistrict] = useState("");
   const [offersCategory, setOffersCategory] = useState("");
+  const [offersIncidentId, setOffersIncidentId] = useState("");
   const [offers, setOffers] = useState<OfferPublic[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [ownOfferIds, setOwnOfferIds] = useState<Set<string>>(new Set());
   const [flagId, setFlagId] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerSuccess, setOfferSuccess] = useState<string | null>(null);
   // Verified organizations the signed-in person belongs to; they may take a need off the board.
   const [verifiedOrgs, setVerifiedOrgs] = useState<MyOrg[]>([]);
+  useEffect(() => {
+    if (!auth.idToken) {
+      setOwnOfferIds(new Set());
+      return;
+    }
+    getDashboard(auth.idToken).then((dashboard) => setOwnOfferIds(new Set(dashboard.offers.map((offer) => offer.id)))).catch(() => setOwnOfferIds(new Set()));
+  }, [auth.idToken]);
   useEffect(() => {
     if (!auth.idToken) {
       setVerifiedOrgs([]);
@@ -447,6 +457,10 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => { cancelled = true; };
   }, [auth.idToken]);
   const [offerIncidentId, setOfferIncidentId] = useState("");
+  useEffect(() => {
+    if (offersIncidentId && activeIncidents.some((incident) => incident.id === offersIncidentId)) return;
+    setOffersIncidentId(boardIncidentId ?? "");
+  }, [activeIncidents, boardIncidentId, offersIncidentId]);
   useEffect(() => {
     if (offerIncidentId && activeIncidents.some((incident) => incident.id === offerIncidentId)) return;
     const next = activeIncidents.find((incident) => incident.id === currentIncidentId)?.id ?? activeIncidents[0]?.id ?? "";
@@ -480,13 +494,13 @@ export function GiveHelp({ language }: { language: Language }) {
   }, [needsIncidentId, language, needsCategory, needsDistrict, needsRefresh]);
   useEffect(() => {
     let cancelled = false;
-    if (!boardIncidentId) {
+    if (!offersIncidentId) {
       setOffers([]);
       setOffersLoading(false);
       return;
     }
     setOffersLoading(true);
-    listOffers({ district: offersDistrict || undefined, category: offersCategory || undefined, incidentId: boardIncidentId })
+    listOffers({ district: offersDistrict || undefined, category: offersCategory || undefined, incidentId: offersIncidentId })
       .then((response) => {
         if (!cancelled) setOffers(response.items);
       })
@@ -499,7 +513,7 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [boardIncidentId, language, offersCategory, offersDistrict]);
+  }, [offersIncidentId, language, offersCategory, offersDistrict]);
   const filters = (prefix: "needs" | "offers") => {
     const district = prefix === "needs" ? needsDistrict : offersDistrict;
     const category = prefix === "needs" ? needsCategory : offersCategory;
@@ -577,6 +591,12 @@ export function GiveHelp({ language }: { language: Language }) {
           )}
         </TabsContent>
         <TabsContent value="offers" className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="offers-incident">{disaster.incidentPickerLabel}</Label>
+            <NativeSelect id="offers-incident" value={offersIncidentId} onChange={(event) => setOffersIncidentId(event.target.value)}>
+              {activeIncidents.map((incident) => <NativeSelectOption key={incident.id} value={incident.id}>{language === "ne" && incident.nameNe ? incident.nameNe : incident.name}</NativeSelectOption>)}
+            </NativeSelect>
+          </div>
           {filters("offers")}
           {offersLoading ? (
             <LoadingState label={t.giveHelpLoading} />
@@ -584,8 +604,8 @@ export function GiveHelp({ language }: { language: Language }) {
             <EmptyState title={t.giveHelpOffersEmpty} />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {offers.map((offer) => (
-                <OfferCard key={offer.id} language={language} offer={offer} />
+                {offers.map((offer) => (
+                  <OfferCard key={offer.id} language={language} offer={offer} isYours={ownOfferIds.has(offer.id)} />
               ))}
             </div>
           )}
@@ -919,7 +939,7 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
     </Card>
   );
 }
-function OfferCard({ language, offer }: { language: Language; offer: OfferPublic }) {
+function OfferCard({ language, offer, isYours }: { language: Language; offer: OfferPublic; isYours?: boolean }) {
   const t = labels[language];
   return (
     <Card>
@@ -931,6 +951,7 @@ function OfferCard({ language, offer }: { language: Language; offer: OfferPublic
             </Badge>
           ))}
           <StatusBadge tone={toneForStatus(offer.status)}>{statusLabel(offer.status, language)}</StatusBadge>
+          {isYours ? <Badge variant="outline">{t.giveHelpOfferYours}</Badge> : null}
         </div>
         <CardTitle className="text-lg">{offer.helperLabel}</CardTitle>
         <CardDescription>

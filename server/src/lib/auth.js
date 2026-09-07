@@ -14,9 +14,11 @@ export function getItemDistrict(item) {
   if (item.PK && item.PK.startsWith("NEED#")) return item.beneficiary?.district || item.district || "";
   if (item.PK && item.PK.startsWith("OFFER#")) return Array.isArray(item.districts) ? item.districts : [];
   if (item.PK && item.PK.startsWith("PROJECT#")) return item.district || "";
+  if (item.PK && item.PK.startsWith("MISSING#")) return item.district || "";
   if (item.type === "NEED") return item.beneficiary?.district || item.district || "";
   if (item.type === "OFFER") return Array.isArray(item.districts) ? item.districts : [];
   if (item.type === "PROJECT") return item.district || "";
+  if (item.type === "MISSING") return item.district || "";
   return "";
 }
 

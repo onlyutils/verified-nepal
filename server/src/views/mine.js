@@ -26,6 +26,11 @@ export function toMyMissing(m) {
   return rest;
 }
 
+export function toPublicMissing(m) {
+  const { PK, SK, type, gsi1pk, gsi1sk, gsi2pk, gsi2sk, createdBy, phones, email, phone, rejectReason, publicationStatus, ...rest } = m;
+  return { ...rest, publicationStatus: "published" };
+}
+
 export function toMyIncident(i) {
   return {
     id: i.id,

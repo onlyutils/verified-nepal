@@ -16,6 +16,7 @@ export function getTargetLabelForAudit(targetType, item) {
     const helper = item.helperLabel || maskName(item.helperName || "");
     return helper;
   }
+  if (targetType === "MISSING") return maskName(item.name || "");
   if (targetType === "PROJECT") {
     const t = item.title;
     if (t && typeof t === "object") return (t.en || t.ne || "").slice(0, 200);

@@ -42,6 +42,7 @@ export interface PosterStrings {
   boy: string;
   other: string;
   brandUrl: string;
+  publicContactLine: string;
 }
 
 /** A person is still being looked for under "missing"; "found" and "safe" both close the search. */

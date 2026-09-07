@@ -137,7 +137,13 @@ function drawField(
   return drawLines(ctx, wrapText(measure(ctx), value, w, 2), x, y + 32, 40);
 }
 
-export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets: PosterAssets, t: PosterStrings): void {
+export function drawPoster(
+  canvas: HTMLCanvasElement,
+  input: PosterInput,
+  assets: PosterAssets,
+  t: PosterStrings,
+  options: { includeContact?: boolean; pageUrl?: string } = {},
+): void {
   const { width, height } = POSTER_SIZES[input.size];
   canvas.width = width;
   canvas.height = height;
@@ -243,6 +249,9 @@ export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets
     .map((s) => s.trim())
     .filter(Boolean)
     .join("  ·  ");
+  const footerText = options.includeContact === false
+    ? `${t.publicContactLine.replace("{url}", options.pageUrl || "verifiednepal.com/poster")} · Police 100 · Hotline 1234`
+    : phones;
   ctx.fillStyle = p.accent;
   ctx.fillRect(margin, footerY - 24, contentW, 2);
   ctx.fillStyle = p.bannerBg;
@@ -250,7 +259,8 @@ export function drawPoster(canvas: HTMLCanvasElement, input: PosterInput, assets
   ctx.fillStyle = p.bannerText;
   ctx.font = `700 44px ${FAMILY}`;
   ctx.textAlign = "center";
-  ctx.fillText(phones, width / 2, footerY + footerH / 2 - 22);
+  ctx.font = `${options.includeContact === false ? "600 24px" : "700 44px"} ${FAMILY}`;
+  ctx.fillText(footerText, width / 2, footerY + footerH / 2 - (options.includeContact === false ? 12 : 22));
 
   const brandY = height - 48;
   ctx.fillStyle = p.brand;

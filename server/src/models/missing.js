@@ -19,10 +19,24 @@ export async function deleteMissing(ddb, tableName, id) {
 }
 
 /** Newest first. ponytail: no pagination; add a cursor when one status passes ~1 MB of items. */
-export async function listMissingByStatus(ddb, tableName, status) {
+export async function listMissingByModerationStatus(ddb, tableName, status) {
   const res = await ddb.send(new QueryCommand({
     TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk",
     ExpressionAttributeValues: { ":pk": `MISSING#${status}` }, ScanIndexForward: false,
+  }));
+  return res.Items || [];
+}
+
+export async function listPublishedMissing(ddb, tableName) {
+  return listMissingByModerationStatus(ddb, tableName, "published");
+}
+
+export async function listMissingTips(ddb, tableName, id) {
+  const res = await ddb.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+    ExpressionAttributeValues: { ":pk": `MISSING#${id}`, ":prefix": "TIP#" },
+    ScanIndexForward: false,
   }));
   return res.Items || [];
 }

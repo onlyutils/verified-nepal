@@ -5,10 +5,11 @@ import { ALLOWED_PHOTO_TYPES, LANGUAGES, MAX_PHOTO_SIZE } from "../constants.js"
 import { getRefPointer } from "../models/need.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
-import { deleteMissing, getMissingById, listMissingByStatus, putMissing } from "../models/missing.js";
-import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident } from "../views/mine.js";
+import { deleteMissing, getMissingById, listPublishedMissing, listMissingTips, putMissing } from "../models/missing.js";
+import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident, toPublicMissing } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
+import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 
 export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
@@ -23,7 +24,11 @@ export async function handleGetDashboard(event, opts) {
     if (!item) continue;
     if (p.kind === "NEED") out.needs.push(toMyNeed(item));
     else if (p.kind === "OFFER") out.offers.push(toMyOffer(item));
-    else if (p.kind === "MISSING") out.missing.push(toMyMissing(item));
+    else if (p.kind === "MISSING") {
+      const mine = toMyMissing(item);
+      mine.tipsCount = (await listMissingTips(ddb, tableName, item.id)).length;
+      out.missing.push(mine);
+    }
     else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
     else if (p.kind === "INCIDENT") out.incidents.push(toMyIncident(item));
   }
@@ -103,11 +108,28 @@ export async function handlePutMissing(event, opts, id) {
     createdBy: auth.payload.sub,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
-    gsi2pk: `MISSING#${data.status}`,
+    publicationStatus: existing?.publicationStatus || "pending",
+    gsi2pk: `MISSING#${existing?.publicationStatus || "pending"}`,
     gsi2sk: now,
   };
+  const contentChanged = Boolean(existing && (existing.name !== data.name || JSON.stringify(existing.photo || null) !== JSON.stringify(data.photo || null) || existing.story !== data.story));
+  if (contentChanged && existing.publicationStatus === "published") {
+    item.publicationStatus = "pending";
+    item.gsi2pk = "MISSING#pending";
+  }
   if (!item.photo) delete item.photo;
+  if (item.publicationStatus !== "rejected") delete item.rejectReason;
   await putMissing(auth.ddb, auth.tableName, item);
+  if (existing && existing.status !== data.status) {
+    await recordAudit(auth.ddb, auth.tableName, {
+      actorSub: auth.payload.sub,
+      actorName: auth.user?.name || auth.payload.name || "",
+      action: `status:${data.status}`,
+      targetType: "MISSING",
+      targetId: id,
+      targetLabel: getTargetLabelForAudit("MISSING", item),
+    });
+  }
   if (!existing) {
     await putPointer(auth.ddb, auth.tableName, {
       sub: auth.payload.sub,
@@ -137,9 +159,10 @@ const BOARD_STATUSES = ["missing", "found", "safe"];
 export async function handleGetMissing(event, { getDdb, env }) {
   if (!env.TABLE_NAME) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const lists = await Promise.all(BOARD_STATUSES.map((s) => listMissingByStatus(ddb, env.TABLE_NAME, s)));
+  const published = await listPublishedMissing(ddb, env.TABLE_NAME);
+  const lists = BOARD_STATUSES.map((s) => published.filter((item) => item.status === s));
   const counts = Object.fromEntries(BOARD_STATUSES.map((s, i) => [s, lists[i].length]));
-  const body = { items: lists.flat().map(toMyMissing), counts };
+  const body = { items: published.map(toPublicMissing), counts };
   return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
 }
 

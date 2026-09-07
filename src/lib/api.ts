@@ -119,6 +119,8 @@ export interface OfferPublic {
   status: string;
   createdAt: string;
   incidentId?: string;
+  /** True only when the signed-in viewer owns this offer; never supplied by the server. */
+  isYours?: boolean;
 }
 
 export interface OffersListResponse {
@@ -312,6 +314,9 @@ export interface MyMissing {
   district: string;
   photo?: { fileId: string; url: string };
   updatedAt: string;
+  publicationStatus?: "pending" | "published" | "rejected";
+  rejectReason?: string;
+  tipsCount?: number;
   createdAt: string;
   [key: string]: unknown;
 }
@@ -439,6 +444,21 @@ export function getMissing(): Promise<MissingListResponse> {
   return request<MissingListResponse>("/missing");
 }
 
+export interface MissingTip {
+  id: string;
+  message: string;
+  contact?: string;
+  createdAt: string;
+}
+
+export function createMissingTip(id: string, body: { message: string; contact?: string; turnstileToken?: string }): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/missing/${encodeURIComponent(id)}/tips`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function getMissingTips(token: string, id: string): Promise<{ items: MissingTip[]; count: number }> {
+  return request(`/me/missing/${encodeURIComponent(id)}/tips`, { token });
+}
+
 export function deleteMissing(token: string, id: string): Promise<void> {
   return request<void>(`/me/missing/${encodeURIComponent(id)}`, { method: "DELETE", token });
 }
@@ -522,6 +542,21 @@ export function listOffers(
 
 export function getModerationQueue(token: string): Promise<ModerationQueueResponse> {
   return request<ModerationQueueResponse>("/moderation/queue", { token });
+}
+
+export interface ModerationMissingItem extends MyMissing {
+  phone?: string;
+  phones?: string[];
+  email?: string;
+  duplicateHint?: boolean;
+}
+
+export function getModerationMissing(token: string): Promise<{ items: ModerationMissingItem[] }> {
+  return request("/moderation/missing", { token });
+}
+
+export function moderateMissing(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: string }> {
+  return request(`/moderation/missing/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function moderateNeed(
@@ -758,15 +793,18 @@ export function syncClaims(
   return request<{ results: SyncResult[] }>("/claims/sync", { method: "POST", token, body: JSON.stringify(body) });
 }
 
-export function getLedger(params: { district: string; ward?: number }): Promise<LedgerResponse> {
-  const q = new URLSearchParams({ district: params.district });
+export function getLedger(params: { district?: string; ward?: number; cursor?: string }): Promise<LedgerResponse & { cursor?: string }> {
+  const q = new URLSearchParams();
+  if (params.district) q.set("district", params.district);
   if (params.ward != null) q.set("ward", String(params.ward));
+  if (params.cursor) q.set("cursor", params.cursor);
   return request<LedgerResponse>(`/ledger?${q.toString()}`);
 }
 
-export function getLedgerCsvUrl(district: string, ward?: number, turnstileToken?: string): string {
+export function getLedgerCsvUrl(district?: string, ward?: number, turnstileToken?: string): string {
   if (!API_BASE) return "";
-  const q = new URLSearchParams({ district, format: "csv" });
+  const q = new URLSearchParams({ format: "csv" });
+  if (district) q.set("district", district);
   if (ward != null) q.set("ward", String(ward));
   if (turnstileToken) q.set("turnstileToken", turnstileToken);
   return `${API_BASE}/ledger?${q.toString()}`;
@@ -1351,7 +1389,7 @@ export function listCenterEntries(
 export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string }> {
   return request(`/centers/${encodeURIComponent(centerId)}/entries`, { method: "POST", body: JSON.stringify(body), token });
 }
-export function getGoodsLedger(params: { district: string; cursor?: string }): Promise<{ items: GoodsEntry[]; cursor?: string }> {
+export function getGoodsLedger(params: { district?: string; cursor?: string }): Promise<{ items: GoodsEntry[]; cursor?: string }> {
   return request(`/goods-ledger${qs(params)}`);
 }
 export function getModerationOrgs(token: string, status: OrgStatus = "pending"): Promise<{ items: ModerationOrgItem[] }> {

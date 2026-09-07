@@ -26,7 +26,7 @@ export function Ledger({ language }: { language: Language }) {
   const t = communityStrings[language];
   const [district, setDistrict] = useState<string>(() => {
     const value = new URLSearchParams(window.location.search).get("district");
-    return value && districtNames.includes(value as (typeof districtNames)[number]) ? value : districtNames[0] ?? "Rasuwa";
+    return value && districtNames.includes(value as (typeof districtNames)[number]) ? value : "";
   });
   const [ward, setWard] = useState(() => new URLSearchParams(window.location.search).get("ward") ?? "");
   const [items, setItems] = useState<LedgerItem[]>([]);
@@ -40,7 +40,7 @@ export function Ledger({ language }: { language: Language }) {
     setError(null);
     setOffline(false);
     try {
-      setItems((await getLedger({ district, ward: ward ? Number(ward) : undefined })).items);
+    setItems((await getLedger({ district: district || undefined, ward: ward ? Number(ward) : undefined })).items);
     } catch (cause) {
       const api = cause as ApiError;
       setError(apiErrorMessage(cause, language));
@@ -54,12 +54,13 @@ export function Ledger({ language }: { language: Language }) {
   }, [district, ward]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    params.set("district", district);
+    if (district) params.set("district", district);
+    else params.delete("district");
     if (ward) params.set("ward", ward);
     else params.delete("ward");
     window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
   }, [district, ward]);
-  const districtLabel = districtLabels[district as keyof typeof districtLabels]?.[language] ?? district;
+  const districtLabel = district ? districtLabels[district as keyof typeof districtLabels]?.[language] ?? district : t.ledgerAllDistricts;
   const csvUrl = getLedgerCsvUrl(district, ward ? Number(ward) : undefined, turnstileToken);
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -69,6 +70,7 @@ export function Ledger({ language }: { language: Language }) {
           <div className="space-y-2">
             <Label htmlFor="ledger-district">{t.ledgerDistrict}</Label>
             <NativeSelect id="ledger-district" value={district} onChange={(e) => setDistrict(e.target.value)}>
+              <NativeSelectOption value="">{t.ledgerAllDistricts}</NativeSelectOption>
               {districtNames.map((name) => (
                 <NativeSelectOption key={name} value={name}>
                   {districtLabels[name][language]}
@@ -150,7 +152,7 @@ export function Ledger({ language }: { language: Language }) {
               <div key={`${item.maskedName}-${item.redeemedAt}-mobile-${index}`} className="space-y-1 px-4 py-4">
                 <p className="font-semibold">{item.maskedName}</p>
                 <p className="text-sm text-muted-foreground">
-                  {goodsLabel(item.category, language)} · {t.ledgerWard} {item.ward}
+                  {district ? null : `${districtLabels[item.district as keyof typeof districtLabels]?.[language] ?? item.district} · `}{goodsLabel(item.category, language)} · {t.ledgerWard} {item.ward}
                 </p>
                 <p className="text-sm text-muted-foreground">{dateLabel(item.redeemedAt, language)}</p>
                 {item.orgName ? <p className="text-sm text-muted-foreground">{t.ledgerOrg}: {item.orgName}</p> : null}
@@ -162,6 +164,7 @@ export function Ledger({ language }: { language: Language }) {
               <TableHeader>
                 <TableRow className="bg-secondary print:border-black print:bg-background">
                   <TableHead>{t.ledgerName}</TableHead>
+                  <TableHead>{t.ledgerDistrict}</TableHead>
                   <TableHead>{t.ledgerCategory}</TableHead>
                   <TableHead>{t.ledgerWard}</TableHead>
                   <TableHead>{t.ledgerDate}</TableHead>
@@ -172,6 +175,7 @@ export function Ledger({ language }: { language: Language }) {
                 {items.map((item, index) => (
                   <TableRow key={`${item.maskedName}-${item.redeemedAt}-${index}`} className="print:break-inside-avoid print:border-black">
                     <TableCell className="font-medium">{item.maskedName}</TableCell>
+                    <TableCell>{districtLabels[item.district as keyof typeof districtLabels]?.[language] ?? item.district}</TableCell>
                     <TableCell>{goodsLabel(item.category, language)}</TableCell>
                     <TableCell>
                       {t.ledgerWard} {item.ward}

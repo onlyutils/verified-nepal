@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { err } from "../lib/http.js";
 import { maskName } from "../lib/format.js";
 import { isOutOfScope } from "../lib/auth.js";
@@ -59,7 +59,23 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   return at;
 }
 
-export async function queryLedger(ddb, tableName, pk) {
-  const res = await ddb.send(new QueryCommand({ TableName: tableName, KeyConditionExpression: "PK = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
-  return res.Items || [];
+export async function queryLedger(ddb, tableName, pk, cursorKey) {
+  return ddb.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "PK = :pk",
+    ExpressionAttributeValues: { ":pk": pk },
+    ScanIndexForward: false,
+    Limit: 200,
+    ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}),
+  }));
+}
+
+export async function scanAllLedger(ddb, tableName, cursorKey) {
+  return ddb.send(new ScanCommand({
+    TableName: tableName,
+    FilterExpression: "begins_with(PK, :prefix)",
+    ExpressionAttributeValues: { ":prefix": "LEDGER#" },
+    Limit: 200,
+    ...(cursorKey ? { ExclusiveStartKey: cursorKey } : {}),
+  }));
 }

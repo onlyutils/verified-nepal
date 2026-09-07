@@ -9,6 +9,7 @@ export function toPublicOfferListItem(it) {
     description: it.description,
     status: it.status,
     createdAt: it.createdAt,
+    incidentId: it.incidentId,
   };
   if (it.org) o.org = { name: it.org.name };
   return o;

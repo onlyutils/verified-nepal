@@ -331,9 +331,10 @@ describe("GET /ledger", () => {
       assert.equal("householdSize" in it, false);
       assert.deepEqual(Object.keys(it).sort(), ["category","district","maskedName","redeemedAt","ward"]);
     }
-    // district required
+    // no district means all districts
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{}}));
-    assert.equal(res.statusCode, 400);
+    assert.equal(res.statusCode, 200);
+    assert.equal(JSON.parse(res.body).items.length, 3);
     // punctuation in a name is stripped before masking
     const {id:id4} = await createNeed(handler, {name:'Te"st Singh', district:"Gorkha", ward:4});
     const c4 = (await publishNeed(handler, modTok, id4)).claimCode;

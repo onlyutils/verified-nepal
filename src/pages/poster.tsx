@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Check, Download, ExternalLink, Phone, Plus, Search, Share2 } from "lucide-react";
+import { Check, Download, ExternalLink, Plus, Search, Share2 } from "lucide-react";
 import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -8,6 +8,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import {
   getDashboard,
   getMissing,
+  createMissingTip,
   presignMissingPhoto,
   putMissing,
   type MissingBody,
@@ -35,18 +36,20 @@ import { opmcmMissingPersonUrl } from "@/lib/urls";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { TurnstileWidget } from "@/components/turnstile";
 import { PageHeader } from "@/components/page-header";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge, type StatusTone } from "@/components/status-badge";
 
 const DRAFT_KEY = "vn:poster-draft";
+const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 type Draft = { input: PosterInput; photo: string | null };
 
 function readDraft(): Draft | null {
@@ -112,14 +115,14 @@ function posterPhoto(item: MyMissing): { fileId: string; url: string } | null {
 
 const POSTER_TONE: Record<PosterStatus, StatusTone> = { missing: "danger", found: "info", safe: "success" };
 
-async function renderPosterBlob(item: MyMissing, language: Language): Promise<{ blob: Blob; filename: string } | null> {
+async function renderPosterBlob(item: MyMissing, language: Language, includeContact = false): Promise<{ blob: Blob; filename: string } | null> {
   const input = toPosterInput(item, language);
   const t = posterStrings[input.language];
   await loadPosterFonts();
   const savedPhoto = posterPhoto(item);
   const photo = savedPhoto ? await loadImage(savedPhoto.url).catch(() => null) : null;
   const canvas = document.createElement("canvas");
-  drawPoster(canvas, input, { photo }, t);
+  drawPoster(canvas, input, { photo }, t, { includeContact, pageUrl: `${window.location.origin}/poster/${encodeURIComponent(item.id)}` });
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   return blob ? { blob, filename: posterFilename(input) } : null;
 }
@@ -353,10 +356,77 @@ function SectionCard({ number, title, hint, children }: { number: string; title:
 }
 
 /** Board card: summary text plus Open (view the poster picture) and Share (send it directly). */
+function sharePosterPage(id: string, label: string) {
+  const url = `${window.location.origin}/poster/${encodeURIComponent(id)}`;
+  if (navigator.share) void navigator.share({ title: label, url }).catch(() => {});
+  else void navigator.clipboard?.writeText(url);
+}
+
+function TipDialog({ id, language, open, onOpenChange }: { id: string; language: Language; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const t = posterStrings[language];
+  const [message, setMessage] = useState("");
+  const [contact, setContact] = useState("");
+  const [token, setToken] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setMessage("");
+      setContact("");
+      setToken("");
+      setSent(false);
+      setError(null);
+    }
+  }, [open, id]);
+  const submit = async () => {
+    if (!message.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await createMissingTip(id, { message: message.trim(), contact: contact.trim() || undefined, turnstileToken: token || undefined });
+      setSent(true);
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{sent ? t.informationSent : t.informationTitle}</DialogTitle>
+        </DialogHeader>
+        {sent ? (
+          <DialogFooter><Button onClick={() => onOpenChange(false)}>{t.cardOpen}</Button></DialogFooter>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="missing-tip-message">{t.informationMessage}</Label>
+              <Textarea id="missing-tip-message" rows={4} maxLength={1000} value={message} onChange={(event) => setMessage(event.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="missing-tip-contact">{t.informationContact}</Label>
+              <Input id="missing-tip-contact" value={contact} onChange={(event) => setContact(event.target.value)} />
+              <p className="text-sm text-muted-foreground">{t.informationPrivacy}</p>
+            </div>
+            {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} language={language} onToken={setToken} /> : null}
+            {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t.backToCatalogue}</Button>
+              <Button onClick={() => void submit()} disabled={submitting || !message.trim() || Boolean(TURNSTILE_KEY && !token)}>{t.informationSubmit}</Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language: Language; onOpen: () => void }) {
   const t = posterStrings[language];
   const input = toPosterInput(item, language);
-  const phone = input.phones.find((p) => p.trim());
   const photo = posterPhoto(item);
 
   return (
@@ -380,17 +450,7 @@ function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language
           <p className="text-muted-foreground">{lastSeenLine(input, t)}</p>
           {input.story.trim() ? <p className="truncate text-muted-foreground">{input.story.trim()}</p> : null}
           <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-t pt-2">
-            {phone ? (
-              <a
-                href={`tel:${phone}`}
-                className="inline-flex min-h-11 items-center gap-1.5 px-2 -mx-2 font-medium underline-offset-4 hover:underline"
-              >
-                <Phone aria-hidden="true" className="size-3.5" />
-                {phone}
-              </a>
-            ) : (
-              <span />
-            )}
+            <span />
             <div className="flex gap-2">
               <Button type="button" size="sm" variant="outline" className="h-8 rounded-full px-3" onClick={onOpen}>
                 {t.cardOpen}
@@ -400,7 +460,7 @@ function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language
                 size="sm"
                 variant="outline"
                 className="h-8 rounded-full px-3"
-                onClick={() => sharePosterImage(item, language)}
+                onClick={() => sharePosterPage(item.id, posterNameLine(input))}
               >
                 {t.cardShare}
               </Button>
@@ -427,6 +487,8 @@ function PosterViewDialog({
   const t = posterStrings[language];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [assets, setAssets] = useState<PosterAssets>({ photo: null });
+  const [includeContact, setIncludeContact] = useState(true);
+  const [tipOpen, setTipOpen] = useState(false);
   const input = useMemo(() => (item ? toPosterInput(item, language) : null), [item, language]);
 
   useEffect(() => {
@@ -445,10 +507,11 @@ function PosterViewDialog({
 
   useEffect(() => {
     if (!input || !canvasRef.current) return;
-    drawPoster(canvasRef.current, input, assets, posterStrings[input.language]);
-  }, [input, assets]);
-
-  const canShare = typeof navigator !== "undefined" && typeof navigator.canShare === "function";
+    drawPoster(canvasRef.current, input, assets, posterStrings[input.language], {
+      includeContact: canEdit ? includeContact : false,
+      pageUrl: `${window.location.origin}/poster/${encodeURIComponent(item?.id || "")}`,
+    });
+  }, [canEdit, includeContact, input, assets, item?.id]);
 
   return (
     <Dialog open={item !== null} onOpenChange={onOpenChange}>
@@ -470,21 +533,40 @@ function PosterViewDialog({
                   <a href={`/poster/${encodeURIComponent(item.id)}?edit=1`}>{t.editTitle}</a>
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={() => renderPosterBlob(item, language).then((r) => r && downloadBlob(r.blob, r.filename))}
-              >
-                <Download aria-hidden="true" />
-                {t.download}
-              </Button>
-              {canShare ? (
+              {canEdit ? (
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => renderPosterBlob(item, language, includeContact).then((r) => r && downloadBlob(r.blob, r.filename))}
+                >
+                  <Download aria-hidden="true" />
+                  {t.download}
+                </Button>
+              ) : (
+                <Button type="button" className="flex-1" onClick={() => setTipOpen(true)}>
+                  {t.informationButton}
+                </Button>
+              )}
+              {canEdit ? (
                 <Button type="button" variant="secondary" className="flex-1" onClick={() => sharePosterImage(item, language)}>
                   <Share2 aria-hidden="true" />
                   {t.cardShare}
                 </Button>
-              ) : null}
+              ) : (
+                <Button type="button" variant="secondary" className="flex-1" onClick={() => sharePosterPage(item.id, posterNameLine(input))}>
+                  <Share2 aria-hidden="true" />
+                  {t.sharePage}
+                </Button>
+              )}
             </div>
+            <p className="text-sm text-muted-foreground">{t.hotlineLine}</p>
+            {canEdit ? (
+              <label className="flex min-h-11 items-center gap-2 text-sm">
+                <input type="checkbox" checked={includeContact} onChange={(event) => setIncludeContact(event.target.checked)} />
+                {t.includePhone}
+              </label>
+            ) : null}
+            <TipDialog id={item.id} language={language} open={tipOpen} onOpenChange={setTipOpen} />
           </>
         ) : null}
       </DialogContent>
@@ -527,8 +609,7 @@ export function PosterCatalogue({ language, navigate }: { language: Language; na
     return items.filter((m) => {
       if (filter !== "all" && m.status !== filter) return false;
       if (!q) return true;
-      const phones = Array.isArray(m.phones) ? (m.phones as string[]) : [];
-      return [m.name, m.district, ...phones].join(" ").toLowerCase().includes(q);
+      return [m.name, m.district, m.place].join(" ").toLowerCase().includes(q);
     });
   }, [items, filter, query]);
 
@@ -639,7 +720,7 @@ export function PosterRecordPage({ language, navigate, id }: { language: Languag
       auth.idToken ? getDashboard(auth.idToken).catch(() => null) : Promise.resolve(null),
     ]).then(([publicData, dashboard]) => {
       if (cancelled) return;
-      const found = publicData.items.find((candidate) => candidate.id === id) ?? null;
+      const found = publicData.items.find((candidate) => candidate.id === id) ?? dashboard?.missing.find((candidate) => candidate.id === id) ?? null;
       setItem(found);
       setOwner(Boolean(dashboard?.missing.some((candidate) => candidate.id === id)));
       setNotFound(!found);
@@ -651,7 +732,7 @@ export function PosterRecordPage({ language, navigate, id }: { language: Languag
     return () => {
       cancelled = true;
     };
-  }, [auth.idToken, id]);
+    }, [auth.idToken, id]);
 
   if (loading) return <LoadingState label={posterStrings[language].loading} />;
   if (notFound || !item)

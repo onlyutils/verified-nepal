@@ -264,6 +264,9 @@ describe("offers", () => {
     const items = JSON.parse(res.body).items;
     assert.equal(items.length, 1);
     assert.ok(!("phone" in items[0]));
+    assert.ok(!("email" in items[0]));
+    assert.ok(!("helperSub" in items[0]));
+    assert.ok(!("sub" in items[0]));
     assert.equal(items[0].helperLabel, "Helper P.");
     assert.ok(items[0].org);
     // filter

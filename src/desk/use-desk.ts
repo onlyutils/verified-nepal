@@ -24,11 +24,13 @@ import {
   getModerationOrgs,
   getModerationProjects,
   getModerationQueue,
+  getModerationMissing,
   listNeeds,
   listOffers,
   lookupAdminUser,
   moderateDispatch,
   moderateNeed,
+  moderateMissing,
   moderateOrg,
   moderateProject,
   moderateProjectUpdate,
@@ -52,6 +54,7 @@ import {
   type ModerationOrgItem,
   type ModerationProjectItem,
   type ModerationQueueItem,
+  type ModerationMissingItem,
   type NeedPublic,
   type OfferPublic,
   type OrgStatus,
@@ -67,13 +70,13 @@ import { deskStrings } from "@/i18n/desk";
 import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
-export type DeskSection = "queue" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "incidents" | "admin" | "climate";
+export type DeskSection = "queue" | "posters" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "incidents" | "admin" | "climate";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }
   | { kind: "dispatch" | "story"; action: "publish"; id: string }
   | { kind: "flag"; action: "resolve"; id: string; center: boolean };
 
-const sections = new Set<DeskSection>(["queue", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "incidents", "admin", "climate"]);
+const sections = new Set<DeskSection>(["queue", "posters", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "incidents", "admin", "climate"]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
@@ -132,6 +135,9 @@ export function useDesk(language: Language) {
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [claimActionLoading, setClaimActionLoading] = useState<string | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [posters, setPosters] = useState<ModerationMissingItem[]>([]);
+  const [postersLoading, setPostersLoading] = useState(false);
+  const [postersError, setPostersError] = useState<string | null>(null);
 
   const [publishedNeeds, setPublishedNeeds] = useState<NeedPublic[]>([]);
   const [offers, setOffers] = useState<OfferPublic[]>([]);
@@ -291,6 +297,23 @@ export function useDesk(language: Language) {
       setQueueLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadPosters = useCallback(async () => {
+    if (!auth.idToken) return;
+    setPostersLoading(true);
+    setPostersError(null);
+    try {
+      setPosters((await getModerationMissing(auth.idToken)).items);
+    } catch (error) {
+      setPostersError(apiErrorMessage(error, language));
+    } finally {
+      setPostersLoading(false);
+    }
+  }, [auth.idToken, language]);
+  const handlePosterModeration = useCallback(async (id: string, action: "publish" | "reject", reason?: string) => {
+    if (!auth.idToken) return;
+    await moderateMissing(auth.idToken, id, { action, reason });
+    setPosters((items) => items.filter((item) => item.id !== id));
+  }, [auth.idToken]);
   const loadBoards = useCallback(async () => {
     if (!auth.idToken) return;
     setBoardsLoading(true);
@@ -461,14 +484,16 @@ export function useDesk(language: Language) {
   useEffect(() => {
     if (!auth.idToken || !auth.profile || (auth.profile.role !== "moderator" && auth.profile.role !== "admin")) return;
     void loadQueue();
+    void loadPosters();
     void loadBoards();
     void loadFlags();
     void loadCenterFlags();
     void loadOrgCount();
-  }, [auth.idToken, auth.profile?.role, loadBoards, loadCenterFlags, loadFlags, loadOrgCount, loadQueue]);
+  }, [auth.idToken, auth.profile?.role, loadBoards, loadCenterFlags, loadFlags, loadOrgCount, loadPosters, loadQueue]);
   useEffect(() => {
     if (!auth.idToken) return;
     if (activeSection === "projects") void loadProjects();
+    if (activeSection === "posters") void loadPosters();
     if (activeSection === "dispatches") void loadDispatches();
     if (activeSection === "stories") void loadStories();
     if (activeSection === "orgs") void loadOrgs(orgsStatus);
@@ -496,6 +521,7 @@ export function useDesk(language: Language) {
     loadIncidentsAdmin,
     loadOrgs,
     loadProjects,
+    loadPosters,
     orgsStatus,
   ]);
   useEffect(() => {
@@ -1029,6 +1055,11 @@ export function useDesk(language: Language) {
     scopeDistricts,
     scopeLabel,
     queue,
+    posters,
+    postersLoading,
+    postersError,
+    loadPosters,
+    handlePosterModeration,
     filteredQueue,
     queueLoading,
     queueError,

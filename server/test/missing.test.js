@@ -23,8 +23,8 @@ const body = {
 describe("saved missing-person posters", () => {
   beforeEach(() => { clearJwksCache(); if (__clearMediaTokenCache) __clearMediaTokenCache(); });
 
-  it("GET /missing is public, lists every poster and counts missing vs found", async () => {
-    const { handler, token } = setup();
+  it("new posters are pending, moderators publish them, and public output is masked", async () => {
+    const { handler, ddb, token } = setup();
     const a = { authorization: `Bearer ${token("u1")}` };
     await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body, headers: a }));
     await handler(makeEvent({ method: "PUT", path: "/me/missing/p2", body: { ...body, name: "Ram", status: "found" }, headers: a }));
@@ -32,9 +32,23 @@ describe("saved missing-person posters", () => {
     const res = await handler(makeEvent({ method: "GET", path: "/missing" }));
     assert.equal(res.statusCode, 200);
     const out = JSON.parse(res.body);
-    assert.deepEqual(out.counts, { missing: 2, found: 1, safe: 0 });
-    assert.deepEqual(out.items.map((m) => m.id).sort(), ["p1", "p2", "p3"]);
-    assert.ok(out.items.every((m) => m.createdBy === undefined && m.gsi2pk === undefined && m.phones.length === 1));
+    assert.deepEqual(out.counts, { missing: 0, found: 0, safe: 0 });
+    assert.deepEqual(out.items, []);
+    assert.equal(ddb.store.get("MISSING#p1|META").publicationStatus, "pending");
+    ddb.store.set("USER#mod|PROFILE", { PK: "USER#mod", SK: "PROFILE", sub: "mod", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [] });
+    const mod = { authorization: `Bearer ${token("mod")}` };
+    const queue = await handler(makeEvent({ method: "GET", path: "/moderation/missing", headers: mod }));
+    assert.equal(queue.statusCode, 200);
+    assert.equal(JSON.parse(queue.body).items.length, 3);
+    assert.equal(JSON.parse(queue.body).items[0].phones[0], "9841000000");
+    for (const id of ["p1", "p2", "p3"]) {
+      const published = await handler(makeEvent({ method: "POST", path: `/moderation/missing/${id}`, headers: mod, body: { action: "publish" } }));
+      assert.equal(published.statusCode, 200);
+    }
+    const publicItems = JSON.parse((await handler(makeEvent({ method: "GET", path: "/missing" }))).body);
+    assert.deepEqual(publicItems.counts, { missing: 2, found: 1, safe: 0 });
+    assert.deepEqual(publicItems.items.map((m) => m.id).sort(), ["p1", "p2", "p3"]);
+    assert.ok(publicItems.items.every((m) => m.createdBy === undefined && m.gsi2pk === undefined && m.phones === undefined && m.email === undefined));
     // Marking found moves the record between the two lists.
     await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body: { ...body, status: "found" }, headers: a }));
     assert.deepEqual(JSON.parse((await handler(makeEvent({ method: "GET", path: "/missing" }))).body).counts, {
@@ -42,6 +56,59 @@ describe("saved missing-person posters", () => {
       found: 2,
       safe: 0,
     });
+    assert.ok(Array.from(ddb.store.values()).some((item) => item.type === "AUDIT" && item.targetType === "MISSING" && item.action === "status:found"));
+  });
+
+  it("requires a rejection reason and only content edits requeue a published poster", async () => {
+    const { handler, ddb, token } = setup();
+    const owner = { authorization: `Bearer ${token("u1")}` };
+    const moderator = { authorization: `Bearer ${token("mod")}` };
+    ddb.store.set("USER#mod|PROFILE", { PK: "USER#mod", SK: "PROFILE", sub: "mod", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [] });
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body, headers: owner }));
+    let res = await handler(makeEvent({ method: "POST", path: "/moderation/missing/p1", headers: moderator, body: { action: "reject" } }));
+    assert.equal(res.statusCode, 400);
+    res = await handler(makeEvent({ method: "POST", path: "/moderation/missing/p1", headers: moderator, body: { action: "publish" } }));
+    assert.equal(res.statusCode, 200);
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p2", body: { ...body, name: body.name, district: body.district }, headers: owner }));
+    const queue = await handler(makeEvent({ method: "GET", path: "/moderation/missing", headers: moderator }));
+    assert.equal(JSON.parse(queue.body).items.find((item) => item.id === "p2").duplicateHint, true);
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body: { ...body, status: "found" }, headers: owner }));
+    assert.equal(ddb.store.get("MISSING#p1|META").publicationStatus, "published");
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body: { ...body, status: "found", story: "A materially updated account" }, headers: owner }));
+    assert.equal(ddb.store.get("MISSING#p1|META").publicationStatus, "pending");
+    res = await handler(makeEvent({ method: "POST", path: "/moderation/missing/p1", headers: moderator, body: { action: "reject", reason: "Duplicate report" } }));
+    assert.equal(res.statusCode, 200);
+    assert.equal(ddb.store.get("MISSING#p1|META").rejectReason, "Duplicate report");
+    assert.ok(Array.from(ddb.store.values()).some((item) => item.type === "AUDIT" && item.targetType === "MISSING" && item.action === "reject"));
+  });
+
+  it("stores tips, rate limits them, and exposes them only to the owner", async () => {
+    const { handler, ddb, token } = setup();
+    const owner = { authorization: `Bearer ${token("u1")}` };
+    const moderator = { authorization: `Bearer ${token("mod")}` };
+    ddb.store.set("USER#mod|PROFILE", { PK: "USER#mod", SK: "PROFILE", sub: "mod", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [] });
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body, headers: owner }));
+    await handler(makeEvent({ method: "POST", path: "/moderation/missing/p1", headers: moderator, body: { action: "publish" } }));
+    const tipEvent = () => makeEvent({ method: "POST", path: "/missing/p1/tips", headers: { "x-forwarded-for": "198.51.100.10" }, body: { message: "I saw this person near the bus park", contact: "reporter@example.com" } });
+    for (let i = 0; i < 5; i++) assert.equal((await handler(tipEvent())).statusCode, 201);
+    assert.equal((await handler(tipEvent())).statusCode, 429);
+    const tips = await handler(makeEvent({ method: "GET", path: "/me/missing/p1/tips", headers: owner }));
+    assert.equal(tips.statusCode, 200);
+    assert.equal(JSON.parse(tips.body).count, 5);
+    assert.equal(JSON.stringify(JSON.parse(tips.body)).includes("rateKey"), false);
+    assert.equal((await handler(makeEvent({ method: "GET", path: "/me/missing/p1/tips", headers: { authorization: `Bearer ${token("u2")}` } }))).statusCode, 403);
+  });
+
+  it("scopes the moderator queue and actions by district", async () => {
+    const { handler, ddb, token } = setup();
+    const owner = { authorization: `Bearer ${token("u1")}` };
+    const moderator = { authorization: `Bearer ${token("mod")}` };
+    ddb.store.set("USER#mod|PROFILE", { PK: "USER#mod", SK: "PROFILE", sub: "mod", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: ["Rasuwa"] });
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p1", body, headers: owner }));
+    await handler(makeEvent({ method: "PUT", path: "/me/missing/p2", body: { ...body, district: "Kaski", name: "Kaski Person" }, headers: owner }));
+    const queue = await handler(makeEvent({ method: "GET", path: "/moderation/missing", headers: moderator }));
+    assert.deepEqual(JSON.parse(queue.body).items.map((item) => item.id), ["p1"]);
+    assert.equal((await handler(makeEvent({ method: "POST", path: "/moderation/missing/p2", headers: moderator, body: { action: "publish" } }))).statusCode, 403);
   });
 
   it("PUT creates, updates, and refuses another owner", async () => {

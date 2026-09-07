@@ -132,6 +132,8 @@ Anyone can build a poster with no account: name, age, last-seen place and time, 
 photo, and contact numbers. The site draws it live into a shareable image, ready to download
 or send through WhatsApp or similar apps.
 
+- Saved posters start pending and appear publicly only after a moderator publishes them; owners see pending/published/rejected status and rejection reasons in `/me`, while moderators can verify contact details privately.
+- Public posters never expose the creator's phone or email: visitors can send a Turnstile-protected tip, and every public poster shows police 100 and disaster hotline 1234; saved poster images use a page link instead of private contact details (owners may opt into their phone on a private download).
 - Signing in lets you **save** your poster to your account, so you can edit it, delete it, or
   mark it "found" later. Without an account, your draft only lives in your own browser.
 - A separate tool, **Find a Person**, searches two official government lists of missing and

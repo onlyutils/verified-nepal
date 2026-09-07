@@ -328,6 +328,10 @@ describe("orgs Phase1", () => {
     // newest first: distribution should be first (created later)
     assert.equal(res.body.items[0].entryType, "distribution");
     assert.ok(!("createdBy" in res.body.items[0]));
+    res = await call(routeOrgs, "GET", "/goods-ledger", {}, opts);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.items.length, 2);
+    assert.ok(res.body.items.every((item) => item.district === "Rasuwa"));
   });
 
   it("11. GET /moderation/orgs as helper → 403; as moderator lists pending with centersCount and ownerEmail", async () => {

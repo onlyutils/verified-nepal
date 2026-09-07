@@ -5,7 +5,7 @@ import { validateString, validatePhone } from "../lib/validate.js";
 import { isGoodsCategory, unitFor } from "../lib/goods-taxonomy.js";
 import { getOrg, getMembership } from "../models/org.js";
 import { getCenter, saveCenter, listCentersByDistrict, listPublicCenters, centerVisibility, listFlaggedCenterPointers, listCenterFlags } from "../models/center.js";
-import { putEntry, listEntries, listAllEntries, listDistrictEntries, computeStock, deltaFor, getEntryById, putTransferMeta, getTransferMeta, putInbound, deleteInbound, listInbound } from "../models/goods.js";
+import { putEntry, listEntries, listAllEntries, listDistrictEntries, listAllDistrictEntries, computeStock, deltaFor, getEntryById, putTransferMeta, getTransferMeta, putInbound, deleteInbound, listInbound } from "../models/goods.js";
 import { getDonation, listCenterDonationsRaw } from "../models/donation.js";
 import { recordAudit } from "../models/audit.js";
 import { toPublicCenterView, toPrivateCenterView } from "../views/center.js";
@@ -427,18 +427,17 @@ export async function handleCreateEntry(event, opts, centerId) {
 export async function handleGoodsLedger(event, opts) {
   const q = getQuery(event);
   const district = q.district ? String(q.district).trim() : "";
-  if (!district) throw err(400, "district required");
   const cursorRaw = q.cursor ? String(q.cursor).trim() : "";
   const cursorKey = decodeCursor(cursorRaw);
   const ddb = opts.getDdb();
   const tableName = opts.env.TABLE_NAME;
-  const res = await listDistrictEntries(ddb, tableName, district, cursorKey);
+  const res = district ? await listDistrictEntries(ddb, tableName, district, cursorKey) : await listAllDistrictEntries(ddb, tableName, cursorKey);
   // Only surface entries whose center is currently publicly visible: a rejected/
   // suspended org (or closed center) is hidden everywhere else, so its activity
   // must not remain public here. visibility is a stored, status-refreshed field.
   const visCache = new Map();
   const items = [];
-  for (const e of (res.Items || [])) {
+  for (const e of (res.Items || []).filter((entry) => entry.type === "GOODS" && String(entry.gsi1pk || "").startsWith("GOODS#"))) {
     let vis = visCache.get(e.centerId);
     if (vis === undefined) {
       const c = await getCenter(ddb, tableName, e.centerId);

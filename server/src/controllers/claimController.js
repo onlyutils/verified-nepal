@@ -1,6 +1,6 @@
-import { json, err, getQuery, parseBody } from "../lib/http.js";
+import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
 import { isOutOfScope } from "../lib/auth.js";
-import { performRedeem, queryLedger } from "../models/claim.js";
+import { performRedeem, queryLedger, scanAllLedger } from "../models/claim.js";
 import { listNeedsByDistrictStatuses } from "../models/need.js";
 import { toClaimPrintItem } from "../views/need.js";
 import { toLedgerItem, toLedgerCsv } from "../views/ledger.js";
@@ -89,7 +89,7 @@ export async function handleLedger(event, { getDdb, env }) {
   const wardRaw = q.ward ? String(q.ward).trim() : "";
   const format = q.format ? String(q.format).trim().toLowerCase() : "json";
   if (format !== "json" && format !== "csv") throw err(400, "format must be json or csv");
-  if (!district) throw err(400, "district required");
+  const cursorKey = decodeCursor(q.cursor ? String(q.cursor) : "");
   let ward;
   if (wardRaw) {
     ward = Number(wardRaw);
@@ -98,12 +98,37 @@ export async function handleLedger(event, { getDdb, env }) {
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  const pk = ward !== undefined ? `LEDGER#${district}#${ward}` : `LEDGER#${district}`;
-  const rawItems = await queryLedger(ddb, tableName, pk);
-  const items = rawItems.map(toLedgerItem);
+  if (!district) {
+    // A table scan has no ordering guarantee. Collect the public base rows,
+    // sort newest-first, and use an offset cursor so "all districts" remains
+    // deterministic across pages.
+    const all = [];
+    let scanCursor = null;
+    do {
+      const page = await scanAllLedger(ddb, tableName, scanCursor);
+      all.push(...(page.Items || []).filter((item) => String(item.PK || "").startsWith("LEDGER#") && String(item.PK || "").split("#").length === 2));
+      scanCursor = page.LastEvaluatedKey || null;
+    } while (scanCursor);
+    all.sort((a, b) => String(b.redeemedAt || b.SK || "").localeCompare(String(a.redeemedAt || a.SK || "")));
+    const start = cursorKey ? Number(cursorKey.SK) : 0;
+    if (!Number.isInteger(start) || start < 0) throw err(400, "invalid cursor");
+    const pageItems = all.slice(start, start + 200);
+    const items = pageItems.map(toLedgerItem);
+    if (format === "csv") {
+      const csv = toLedgerCsv(all.map(toLedgerItem));
+      return { statusCode: 200, headers: { "content-type": "text/csv", "cache-control": "public, max-age=60" }, body: csv };
+    }
+    const body = { items };
+    if (start + pageItems.length < all.length) body.cursor = encodeCursor({ PK: "LEDGER#ALL", SK: String(start + pageItems.length) });
+    return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
+  }
+  const result = await queryLedger(ddb, tableName, ward !== undefined ? `LEDGER#${district}#${ward}` : `LEDGER#${district}`, cursorKey);
+  const items = (result.Items || []).map(toLedgerItem);
   if (format === "csv") {
     const csv = toLedgerCsv(items);
     return { statusCode: 200, headers: { "content-type": "text/csv", "cache-control": "public, max-age=60" }, body: csv };
   }
-  return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify({ items }) };
+  const body = { items };
+  if (result.LastEvaluatedKey) body.cursor = encodeCursor(result.LastEvaluatedKey);
+  return { statusCode: 200, headers: { "content-type": "application/json", "cache-control": "public, max-age=60" }, body: JSON.stringify(body) };
 }

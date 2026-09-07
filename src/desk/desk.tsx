@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, Camera, Flag, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck, Siren } from "lucide-react";
+import { Building2, Camera, Flag, FileImage, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck, Siren } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Incidents } from "./incidents";
 import { Organizations } from "./orgs";
 import { PrintClaims } from "./print";
 import { Projects } from "./projects";
+import { Posters } from "./posters";
 import { Queue } from "./queue";
 import { Sync } from "./sync";
 import { useDesk, type DeskSection } from "./use-desk";
@@ -64,6 +65,7 @@ export function Desk({
 
   const nav: AppShellNavItem<DeskSection>[] = [
     { key: "queue", label: t.deskQueueNeedsTab, count: model.queue.length, icon: <Inbox /> },
+    { key: "posters", label: model.ds.deskPostersTab, count: model.posters.length, icon: <FileImage /> },
     { key: "boards", label: t.deskBoardsTab, icon: <LayoutList /> },
     { key: "print", label: t.deskPrintTab, icon: <Printer /> },
     { key: "sync", label: t.deskSyncTab, icon: <RefreshCw /> },
@@ -132,6 +134,7 @@ export function Desk({
           </Alert>
         ) : null}
         {model.activeSection === "queue" ? <Queue model={model} /> : null}
+        {model.activeSection === "posters" ? <Posters model={model} /> : null}
         {model.activeSection === "boards" ? <Boards model={model} /> : null}
         {model.activeSection === "print" ? <PrintClaims model={model} /> : null}
         {model.activeSection === "sync" ? <Sync model={model} /> : null}

@@ -16,6 +16,7 @@ import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOff
 import {
   handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
+import { handleGetModerationMissing, handlePostModerationMissing, handlePostMissingTip, handleGetMissingTips } from "./controllers/missingController.js";
 import {
   handleGetModerationQueue, handlePostModeration, handlePostModerationClaim, handlePostModerationRelease,
 } from "./controllers/moderationController.js";
@@ -65,6 +66,8 @@ const routes = [
   ["POST", /^\/moderation\/stories\/([^/]+)$/, withModAck(handlePostModerationStory)],
   ["POST", /^\/me\/needs\/claim$/, withAuth(handlePostNeedClaim)],
   ["GET", /^\/missing$/, handleGetMissing],
+  ["POST", /^\/missing\/([^/]+)\/tips$/, handlePostMissingTip],
+  ["GET", /^\/me\/missing\/([^/]+)\/tips$/, withAuth(handleGetMissingTips)],
   ["POST", /^\/me\/missing\/presign$/, withAuth(handlePostMissingPresign)],
   ["PUT", /^\/me\/missing\/([^/]+)$/, withAuth(handlePutMissing)],
   ["DELETE", /^\/me\/missing\/([^/]+)$/, withAuth(handleDeleteMissing)],
@@ -95,6 +98,8 @@ const routes = [
   ["POST", /^\/offers\/([^/]+)\/status$/, withModAck(handlePostOfferStatus)],
   ["POST", /^\/offers\/([^/]+)\/edit$/, withModAck(handlePostOfferEdit)],
   ["GET", /^\/moderation\/queue$/, withModAck(handleGetModerationQueue)],
+  ["GET", /^\/moderation\/missing$/, withModAck(handleGetModerationMissing)],
+  ["POST", /^\/moderation\/missing\/([^/]+)$/, withModAck(handlePostModerationMissing)],
   ["POST", /^\/moderation\/([^/]+)\/claim$/, withModAck(handlePostModerationClaim)],
   ["POST", /^\/moderation\/([^/]+)\/release$/, withModAck(handlePostModerationRelease)],
   ["POST", /^\/moderation\/([^/]+)$/, withModAck(handlePostModeration)],
