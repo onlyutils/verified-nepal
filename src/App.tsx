@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Dashboard } from "@/pages/home";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { BackToTop } from "@/components/back-to-top";
@@ -21,6 +21,7 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
 import type { Language, Page } from "@/lib/types";
 import { pageFromPath, type AppPage } from "@/lib/page-routing";
+import { isHashOnlyNavigation } from "@/lib/navigation";
 
 export { pageFromPath } from "@/lib/page-routing";
 
@@ -148,7 +149,17 @@ function focusMainAndScroll(sectionId?: string) {
   if (main) {
     (main as HTMLElement).focus({ preventScroll: true });
   }
-  const target = sectionId ? document.getElementById(sectionId) : null;
+  const hash = window.location.hash.slice(1);
+  let hashTargetId = hash;
+  if (hash) {
+    try {
+      hashTargetId = decodeURIComponent(hash);
+    } catch {
+      hashTargetId = hash;
+    }
+  }
+  const targetId = hash ? hashTargetId : sectionId;
+  const target = targetId ? document.getElementById(targetId) : null;
   if (target) {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
@@ -162,6 +173,7 @@ export function App() {
     return stored === "ne" ? "ne" : "en";
   });
   const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname + window.location.search));
+  const lastNavigationUrl = useRef(window.location.pathname + window.location.search + window.location.hash);
 
   useEffect(() => {
     localStorage.setItem("verifiednepal:language", language);
@@ -175,11 +187,15 @@ export function App() {
 
   useEffect(() => {
     const onPopState = () => {
+      const previousUrl = lastNavigationUrl.current;
+      const nextUrl = window.location.pathname + window.location.search + window.location.hash;
+      const hashOnlyNavigation = isHashOnlyNavigation(previousUrl, nextUrl);
+      lastNavigationUrl.current = nextUrl;
       const next = pageFromPath(window.location.pathname + window.location.search);
       setPage(next);
       requestAnimationFrame(() => {
         document.title = `${pageTitle(next, language)} · verifiedNepal`;
-        focusMainAndScroll();
+        if (!hashOnlyNavigation) focusMainAndScroll();
       });
     };
     window.addEventListener("popstate", onPopState);
@@ -203,6 +219,7 @@ export function App() {
   const navigate = useCallback(
     (nextPage: Page, sectionId?: string) => {
       window.history.pushState({}, "", pagePaths[nextPage]);
+      lastNavigationUrl.current = window.location.pathname + window.location.search + window.location.hash;
       setPage(nextPage);
       document.title = `${pageTitle(nextPage, language)} · verifiedNepal`;
       requestAnimationFrame(() => {

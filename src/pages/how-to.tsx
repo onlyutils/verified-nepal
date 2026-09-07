@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowUp, Printer } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUp, Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { howToStrings, type HowToCopyKey } from "@/i18n/how-to";
 import { getHowToSections, type HowToCard, type HowToDefinition, type HowToFigure, type HowToSection } from "@/content/how-to";
@@ -7,14 +7,56 @@ import type { Language } from "@/lib/types";
 
 const TEST_GUIDE_ENABLED = import.meta.env.VITE_ENABLE_TEST_LOGIN === "true";
 
-function Figure({ item, label }: { item: HowToFigure; label: string }) {
+function Figure({ item, label, closeLabel }: { item: HowToFigure; label: string; closeLabel: string }) {
   const [hidden, setHidden] = useState(false);
+  const [open, setOpen] = useState(false);
+  const figureRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const imageSource = `/how-to/${item.name}.jpg`;
+
+  const close = () => {
+    setOpen(false);
+    figureRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   if (hidden) return null;
   const mobile = item.name.includes("mobile") || item.name.includes("ne-");
   return (
-    <figure className={`how-to-figure overflow-hidden rounded-xl border bg-secondary/40 p-2 ${mobile ? "max-w-[360px]" : "max-w-full"}`}>
+    <figure
+      ref={figureRef}
+      role="button"
+      tabIndex={0}
+      aria-haspopup="dialog"
+      aria-label={label}
+      className={`how-to-figure cursor-zoom-in overflow-hidden rounded-xl border bg-secondary/40 p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${mobile ? "max-w-[360px]" : "max-w-full"}`}
+      onClick={() => setOpen(true)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          setOpen(true);
+        }
+      }}
+    >
       <img
-        src={`/how-to/${item.name}.jpg`}
+        src={imageSource}
         alt={label}
         loading="lazy"
         decoding="async"
@@ -22,6 +64,31 @@ function Figure({ item, label }: { item: HowToFigure; label: string }) {
         onError={() => setHidden(true)}
       />
       <figcaption className="px-2 pb-1 pt-3 text-sm leading-6 text-muted-foreground">{label}</figcaption>
+      {open ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) close();
+          }}
+        >
+          <div className="relative flex max-h-[95vh] max-w-[95vw] flex-col items-center" onClick={(event) => event.stopPropagation()}>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="absolute -right-2 -top-2 z-10 flex size-11 items-center justify-center rounded-full bg-background text-foreground shadow-lg transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={closeLabel}
+              onClick={close}
+            >
+              <X aria-hidden="true" className="size-5" />
+            </button>
+            <img src={imageSource} alt={label} className="max-h-[95vh] max-w-[95vw] object-contain" />
+            <p className="mt-3 max-w-[95vw] text-center text-sm leading-6 text-white">{label}</p>
+          </div>
+        </div>
+      ) : null}
     </figure>
   );
 }
@@ -32,7 +99,7 @@ function Figures({ figures, strings }: { figures: readonly HowToFigure[]; string
   return (
     <div className={`mt-5 grid gap-4 ${hasMobileFigure ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"}`}>
       {figures.map((item) => (
-        <Figure key={item.name} item={item} label={strings[item.caption]} />
+        <Figure key={item.name} item={item} label={strings[item.caption]} closeLabel={strings.closeFigure} />
       ))}
     </div>
   );
@@ -43,9 +110,22 @@ function Cards({ cards, strings }: { cards: readonly HowToCard[]; strings: Recor
   return (
     <div className="mt-7 grid gap-4 sm:grid-cols-2">
       {cards.map((card) => (
-        <article key={card.title} className="rounded-xl border bg-secondary/20 p-5">
+        <article key={card.title} className={`rounded-xl border bg-secondary/20 p-5 ${card.title === "signInTitle" ? "sm:col-span-2" : ""}`}>
           <h3 className="text-lg font-bold text-foreground">{strings[card.title]}</h3>
-          <p className="mt-2 leading-7">{strings[card.body]}</p>
+          {card.title === "signInTitle" ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border bg-background p-4">
+                <h4 className="font-semibold text-foreground">{strings.signInRequired}</h4>
+                <p className="mt-2 leading-7 text-muted-foreground">{strings.signInRequiredBody}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-4">
+                <h4 className="font-semibold text-foreground">{strings.signInNotRequired}</h4>
+                <p className="mt-2 leading-7 text-muted-foreground">{strings.signInNotRequiredBody}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 leading-7">{strings[card.body]}</p>
+          )}
           {card.figures ? <Figures figures={card.figures} strings={strings} /> : null}
         </article>
       ))}
@@ -126,9 +206,9 @@ function VerificationPipeline({ strings }: { strings: Record<HowToCopyKey, strin
 
 function Section({ section, strings, index }: { section: HowToSection; strings: Record<HowToCopyKey, string>; index: number }) {
   return (
-    <section id={section.id} className="how-to-section scroll-mt-24 border-t pt-10 first:border-t-0 first:pt-0">
+    <section className="how-to-section border-t pt-10 first:border-t-0 first:pt-0">
       <p className="text-xs font-semibold uppercase tracking-[0.1em] text-primary">{String(index + 1).padStart(2, "0")}</p>
-      <h2 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">{strings[section.title]}</h2>
+      <h2 id={section.id} className="mt-2 scroll-mt-24 text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">{strings[section.title]}</h2>
       <p className="mt-3 text-lg leading-8 text-muted-foreground">{strings[section.summary]}</p>
 
       {section.devOnly ? (
@@ -176,7 +256,7 @@ export function HowTo({ language }: { language: Language }) {
   const strings = howToStrings[language];
   const sections = getHowToSections(TEST_GUIDE_ENABLED);
   return (
-    <div id="top" className="how-to-page mx-auto max-w-6xl">
+    <div id="top" className="how-to-page scroll-mt-24 mx-auto max-w-7xl">
       <div className="mb-10 flex flex-col gap-5 border-b pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-[68ch]">
           <p className="text-xs font-semibold uppercase tracking-[0.1em] text-primary">{strings.eyebrow}</p>
@@ -189,7 +269,7 @@ export function HowTo({ language }: { language: Language }) {
         </Button>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-[13rem_minmax(0,68ch)] lg:items-start lg:gap-14">
+      <div className="grid gap-10 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-14">
         <aside className="how-to-toc lg:sticky lg:top-24" aria-label={strings.contents}>
           <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">{strings.contents}</p>
           <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2 lg:grid lg:gap-2">
@@ -201,7 +281,7 @@ export function HowTo({ language }: { language: Language }) {
           </nav>
         </aside>
 
-        <article className="min-w-0 max-w-[68ch] space-y-12">
+        <article className="min-w-0 max-w-[84ch] space-y-12">
           {sections.map((section, index) => (
             <Section key={section.id} section={section} strings={strings} index={index} />
           ))}
