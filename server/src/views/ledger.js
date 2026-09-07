@@ -5,7 +5,7 @@ export function toLedgerItem(it) {
   const deliveredBy = it.deliveredBy || (it.orgName ? { kind: "org", label: it.orgName } : { kind: "field", label: "Claim code · moderator" });
   const label = deliveredBy?.via?.centerName ? `${deliveredBy.label} via ${deliveredBy.via.centerName}` : deliveredBy?.label;
   const publicDeliveredBy = deliveredBy ? { kind: deliveredBy.kind, label } : undefined;
-  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, municipalityId: it.municipalityId, redeemedAt: it.redeemedAt, households: it.households, receipt: Boolean(it.hasReceipt), ...(it.orgName ? { orgName: it.orgName } : {}), ...(publicDeliveredBy ? { deliveredBy: publicDeliveredBy } : {}), ...(it.confirmedAt ? { confirmedAt: it.confirmedAt } : {}) };
+  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt, ...(it.municipalityId ? { municipalityId: it.municipalityId } : {}), ...(it.households ? { households: it.households } : {}), ...(it.hasReceipt ? { receipt: true } : {}), ...(it.orgName ? { orgName: it.orgName } : {}), ...(publicDeliveredBy ? { deliveredBy: publicDeliveredBy } : {}), ...(it.confirmedAt ? { confirmedAt: it.confirmedAt } : {}) };
 }
 
 export function toLedgerCsv(items) {
