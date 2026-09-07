@@ -64,7 +64,6 @@ export async function handleGetProjects(event, { getDdb, env }) {
   const incidentId = q.incidentId ? String(q.incidentId).trim() : "";
   const statusRaw = q.status ? String(q.status).trim() : "";
   const cursorRaw = q.cursor ? String(q.cursor) : "";
-  if (!incidentId) throw err(400, "incidentId required");
   const cursorKey = decodeCursor(cursorRaw);
   if (statusRaw && !PUBLIC_PROJECT_STATUSES.includes(statusRaw)) throw err(400, `status must be one of ${PUBLIC_PROJECT_STATUSES.join(",")}`);
   const tableName = env.TABLE_NAME;

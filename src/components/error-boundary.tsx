@@ -6,6 +6,7 @@ import type { Language } from "@/lib/types";
 type Props = {
   language: Language;
   children: ReactNode;
+  resetKey?: string;
 };
 
 type State = {
@@ -22,6 +23,12 @@ export class ComponentErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[ComponentErrorBoundary]", error, info.componentStack);
+  }
+
+  componentDidUpdate(previousProps: Props) {
+    if (previousProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
   }
 
   render() {

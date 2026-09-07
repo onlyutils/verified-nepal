@@ -3,7 +3,7 @@ import { ApiError, listProjects, type ProjectPublic, type ProjectStatus, type Pr
 import { apiErrorMessage } from "@/lib/api-error";
 import { communityStrings } from "@/i18n/community";
 import { districtLabels, districtNames } from "@/lib/geo";
-import { useIncidents } from "@/lib/incidents";
+import { GENERAL_INCIDENT_ID, useIncidents } from "@/lib/incidents";
 import { formatNumber } from "@/lib/format";
 import { fillTemplate } from "@/lib/edition";
 import type { Language } from "@/lib/types";
@@ -51,13 +51,14 @@ function coverUrl(project: ProjectPublic): string | null {
 
 export function ProjectsList({ language }: { language: Language }) {
   const t = communityStrings[language];
-  const { incidents, currentIncidentId } = useIncidents();
+  const { incidents, currentIncidentId, loading: incidentsLoading } = useIncidents();
   const activeIncidents = incidents.filter((incident) => incident.status === "active");
   const boardIncidentId = activeIncidents.some((incident) => incident.id === currentIncidentId)
     ? currentIncidentId
     : activeIncidents[0]?.id;
   const [district, setDistrict] = useState("");
   const [status, setStatus] = useState("");
+  const [incidentFilter, setIncidentFilter] = useState<string | undefined>();
   const [items, setItems] = useState<ProjectPublic[]>([]);
   const [nextCursor, setNextCursor] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -70,19 +71,25 @@ export function ProjectsList({ language }: { language: Language }) {
     setError(null);
     setOffline(false);
     try {
-      if (!boardIncidentId) {
-        setItems([]);
-        setNextCursor(undefined);
-        return;
-      }
       const result = await listProjects({
         district: district || undefined,
         status: status || undefined,
         cursor,
-        incidentId: boardIncidentId,
+        incidentId: incidentFilter === undefined ? boardIncidentId : incidentFilter || undefined,
       });
-      setItems((previous) => (append ? [...previous, ...result.items] : result.items));
-      setNextCursor(result.cursor);
+      const shouldUseAllDisasters =
+        incidentFilter === undefined &&
+        Boolean(boardIncidentId) &&
+        !append &&
+        !district &&
+        !status &&
+        result.items.length === 0;
+      const finalResult = shouldUseAllDisasters
+        ? await listProjects({ district: district || undefined, status: status || undefined, cursor })
+        : result;
+      if (shouldUseAllDisasters) setIncidentFilter("");
+      setItems((previous) => (append ? [...previous, ...finalResult.items] : finalResult.items));
+      setNextCursor(finalResult.cursor);
     } catch (cause) {
       setError(apiErrorMessage(cause, language));
       setOffline((cause as ApiError).status === 0 || !navigator.onLine);
@@ -92,8 +99,9 @@ export function ProjectsList({ language }: { language: Language }) {
   };
 
   useEffect(() => {
+    if (incidentsLoading && incidentFilter === undefined) return;
     void fetchList(); /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [boardIncidentId, district, status]);
+  }, [boardIncidentId, district, incidentFilter, incidentsLoading, status]);
 
   const copyLink = async (id: string) => {
     try {
@@ -126,7 +134,19 @@ export function ProjectsList({ language }: { language: Language }) {
         <CardHeader>
           <CardTitle className="text-base">{t.projectsFilters}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
+        <CardContent className="grid gap-4 sm:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="project-incident">{t.projectsIncident}</Label>
+            <NativeSelect id="project-incident" value={incidentFilter ?? boardIncidentId ?? ""} onChange={(event) => setIncidentFilter(event.target.value)}>
+              <NativeSelectOption value="">{t.projectsAllDisasters}</NativeSelectOption>
+              {activeIncidents.map((incident) => (
+                <NativeSelectOption key={incident.id} value={incident.id}>
+                  {language === "ne" ? incident.nameNe || incident.name : incident.name}
+                </NativeSelectOption>
+              ))}
+              <NativeSelectOption value={GENERAL_INCIDENT_ID}>{t.projectsGeneral}</NativeSelectOption>
+            </NativeSelect>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="project-district">{t.districtLabel}</Label>
             <NativeSelect id="project-district" value={district} onChange={(event) => setDistrict(event.target.value)}>

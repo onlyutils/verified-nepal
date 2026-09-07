@@ -1,5 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { createHandler, __clearMediaTokenCache } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
@@ -244,6 +245,33 @@ describe("GET /projects", () => {
     const { handler } = makeHandler();
     const res = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { status: "rejected", incidentId: TEST_INCIDENT_ID } }));
     assert.equal(res.statusCode, 400);
+  });
+
+  it("lists all published projects without an incident filter and general projects with incidentId=general", async () => {
+    const { handler, ddb } = makeHandler();
+    const created = [];
+    for (const district of ["Gorkha", "Kaski", "Rasuwa"]) {
+      const response = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody({ district }) }));
+      const id = JSON.parse(response.body).id;
+      const item = ddb.store.get(`PROJECT#${id}|META`);
+      item.status = "published";
+      item.committee.verified = true;
+      item.incidentId = district === "Kaski" ? "general" : district === "Rasuwa" ? undefined : TEST_INCIDENT_ID;
+      item.gsi1pk = `PROJECT#${item.incidentId ?? "general"}#${district}#published`;
+      item.gsi2pk = "PROJECT#published";
+      await ddb.send(new PutCommand({ TableName: "test-table", Item: item }));
+      created.push(id);
+    }
+
+    let response = await handler(makeEvent({ method: "GET", path: "/projects" }));
+    assert.equal(response.statusCode, 200);
+    let ids = JSON.parse(response.body).items.map((item) => item.id);
+    assert.deepEqual(new Set(ids), new Set(created));
+
+    response = await handler(makeEvent({ method: "GET", path: "/projects", queryStringParameters: { incidentId: "general" } }));
+    assert.equal(response.statusCode, 200);
+    ids = JSON.parse(response.body).items.map((item) => item.id);
+    assert.deepEqual(new Set(ids), new Set([created[1], created[2]]));
   });
 });
 

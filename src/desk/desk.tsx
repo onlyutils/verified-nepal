@@ -22,6 +22,7 @@ import { Posters } from "./posters";
 import { Queue } from "./queue";
 import { Sync } from "./sync";
 import { useDesk, type DeskSection } from "./use-desk";
+import { ComponentErrorBoundary } from "@/components/error-boundary";
 
 export function Desk({
   language,
@@ -133,19 +134,25 @@ export function Desk({
             <AlertDescription>{model.actionMsg}</AlertDescription>
           </Alert>
         ) : null}
-        {model.activeSection === "queue" ? <Queue model={model} /> : null}
-        {model.activeSection === "posters" ? <Posters model={model} /> : null}
-        {model.activeSection === "boards" ? <Boards model={model} /> : null}
-        {model.activeSection === "print" ? <PrintClaims model={model} /> : null}
-        {model.activeSection === "sync" ? <Sync model={model} /> : null}
-        {model.activeSection === "flags" ? <Flags model={model} /> : null}
-        {model.activeSection === "projects" ? <Projects model={model} /> : null}
-        {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
-        {model.activeSection === "stories" ? <Stories model={model} /> : null}
-        {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
-        {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
-        {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
-        {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
+        <ComponentErrorBoundary
+          key={`${window.location.pathname}:${model.activeSection}`}
+          language={language}
+          resetKey={model.activeSection}
+        >
+          {model.activeSection === "queue" ? <Queue model={model} /> : null}
+          {model.activeSection === "posters" ? <Posters model={model} /> : null}
+          {model.activeSection === "boards" ? <Boards model={model} /> : null}
+          {model.activeSection === "print" ? <PrintClaims model={model} /> : null}
+          {model.activeSection === "sync" ? <Sync model={model} /> : null}
+          {model.activeSection === "flags" ? <Flags model={model} /> : null}
+          {model.activeSection === "projects" ? <Projects model={model} /> : null}
+          {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
+          {model.activeSection === "stories" ? <Stories model={model} /> : null}
+          {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
+          {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
+          {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
+          {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
+        </ComponentErrorBoundary>
         <DeskDialogs model={model} />
         <Dialog open={model.districtEditOpen} onOpenChange={model.setDistrictEditOpen}>
           <DialogContent>

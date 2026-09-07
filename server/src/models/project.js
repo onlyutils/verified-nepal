@@ -57,25 +57,23 @@ export async function putProject(ddb, tableName, proj) {
 
 export async function listPublicProjects(ddb, tableName, { incidentId, district, status }) {
   let items = [];
-  if (district && status) {
+  const matchesIncident = (item) => !incidentId || (incidentId === "general" ? (!item.incidentId || item.incidentId === "general") : item.incidentId === incidentId);
+  if (incidentId && incidentId !== "general" && district && status) {
     const pk = `PROJECT#${incidentId}#${district}#${status}`;
     const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
     if (res.Items) items.push(...res.Items);
-  } else if (district && !status) {
+  } else if (incidentId && incidentId !== "general" && district && !status) {
     for (const s of PUBLIC_PROJECT_STATUSES) {
       const pk = `PROJECT#${incidentId}#${district}#${s}`;
       const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI1", KeyConditionExpression: "gsi1pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
       if (res.Items) items.push(...res.Items);
     }
-  } else if (!district && status) {
-    const pk = `PROJECT#${status}`;
-    const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
-    if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
   } else {
     for (const s of PUBLIC_PROJECT_STATUSES) {
+      if (status && status !== s) continue;
       const pk = `PROJECT#${s}`;
       const res = await ddb.send(new QueryCommand({ TableName: tableName, IndexName: "GSI2", KeyConditionExpression: "gsi2pk = :pk", ExpressionAttributeValues: { ":pk": pk }, ScanIndexForward: false }));
-      if (res.Items) items.push(...res.Items.filter((item) => item.incidentId === incidentId));
+      if (res.Items) items.push(...res.Items.filter((item) => matchesIncident(item) && (!district || item.district === district)));
     }
   }
   items.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
