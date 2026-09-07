@@ -40,6 +40,7 @@ import { handlePostStory, handleGetMyStories, handleDeleteStory, handleGetStorie
 import {
   handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
 } from "./controllers/climateController.js";
+import { KITS } from "./lib/kits.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -47,6 +48,11 @@ const withModAck = compose(withModAuth, withGuidelinesAck);
 // project photo/update) decide auth themselves from the request body / committee code.
 const routes = [
   ["GET", /^\/health$/, () => json(200, { ok: true })],
+  ["GET", /^\/kits$/, () => {
+    const response = json(200, { kits: KITS });
+    response.headers["cache-control"] = "public, max-age=86400";
+    return response;
+  }],
   ["POST", /^\/auth\/exchange$/, handleAuthExchange],
   ["POST", /^\/auth\/refresh$/, handleAuthRefresh],
   ["GET", /^\/me$/, handleMe],

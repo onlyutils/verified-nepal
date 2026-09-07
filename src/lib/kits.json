@@ -1,0 +1,91 @@
+{
+  "kits": [
+    {
+      "id": "family-kit",
+      "name": "Family kit",
+      "nameNe": "पारिवारिक किट",
+      "persons": 5,
+      "items": [
+        { "category": "rice", "qty": 30, "unit": "kg" },
+        { "category": "lentils", "qty": 5, "unit": "kg" },
+        { "category": "cooking-oil", "qty": 2, "unit": "litre" },
+        { "category": "salt-sugar", "qty": 1, "unit": "kg" },
+        { "category": "tarpaulin", "qty": 1, "unit": "4x6 m" },
+        { "category": "blanket", "qty": 2, "unit": "piece" },
+        { "category": "jerrycan", "qty": 1, "unit": "20 L" }
+      ],
+      "weightKg": 45,
+      "source": "IFRC items catalogue"
+    },
+    {
+      "id": "hygiene-parcel",
+      "name": "Hygiene parcel",
+      "nameNe": "सरसफाइ पार्सल",
+      "persons": 5,
+      "items": [
+        { "category": "soap", "qty": 6, "unit": "piece" },
+        { "category": "sanitary-pads", "qty": 2, "unit": "packet" },
+        { "category": "toothbrush", "qty": 5, "unit": "piece" },
+        { "category": "toothpaste", "qty": 2, "unit": "piece" },
+        { "category": "bucket", "qty": 1, "unit": "14 L" }
+      ],
+      "weightKg": 6,
+      "source": "IFRC items catalogue"
+    },
+    {
+      "id": "kitchen-set",
+      "name": "Kitchen set",
+      "nameNe": "भान्साको सेट",
+      "persons": 5,
+      "items": [
+        { "category": "pot", "qty": 2, "unit": "piece" },
+        { "category": "pan", "qty": 1, "unit": "piece" },
+        { "category": "plates", "qty": 5, "unit": "piece" },
+        { "category": "cups", "qty": 5, "unit": "piece" },
+        { "category": "spoons", "qty": 5, "unit": "piece" },
+        { "category": "knife", "qty": 1, "unit": "piece" },
+        { "category": "ladle", "qty": 1, "unit": "piece" }
+      ],
+      "weightKg": 5,
+      "source": "IFRC items catalogue"
+    },
+    {
+      "id": "tarpaulin-4x6",
+      "name": "Tarpaulin 4x6 m",
+      "nameNe": "त्रिपाल ४x६ मिटर",
+      "persons": 5,
+      "items": [
+        { "category": "tarpaulin", "qty": 1, "unit": "4x6 m" },
+        { "category": "rope", "qty": 1, "unit": "30 m" }
+      ],
+      "weightKg": 6,
+      "source": "IFRC items catalogue"
+    },
+    {
+      "id": "water-day",
+      "name": "Water for one day",
+      "nameNe": "एक दिनको पानी",
+      "persons": 5,
+      "items": [
+        { "category": "drinking-water", "qty": 75, "unit": "litre" }
+      ],
+      "weightKg": 75,
+      "source": "Sphere 2018"
+    },
+    {
+      "id": "shelter-toolkit",
+      "name": "Shelter toolkit",
+      "nameNe": "आश्रय औजार किट",
+      "persons": 5,
+      "items": [
+        { "category": "shovel", "qty": 1, "unit": "piece" },
+        { "category": "hoe", "qty": 1, "unit": "piece" },
+        { "category": "hammer", "qty": 1, "unit": "piece" },
+        { "category": "nails", "qty": 2, "unit": "kg" },
+        { "category": "saw", "qty": 1, "unit": "piece" }
+      ],
+      "weightKg": 9,
+      "source": "IFRC items catalogue"
+    }
+  ]
+}
