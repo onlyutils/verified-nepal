@@ -3,10 +3,11 @@ import { json, err, parseBody } from "../lib/http.js";
 import { validateString, validateOptionalString, validateDistrict } from "../lib/validate.js";
 import { ALLOWED_PHOTO_TYPES, LANGUAGES, MAX_PHOTO_SIZE } from "../constants.js";
 import { getRefPointer, listNeedsForHandling } from "../models/need.js";
+import { getDonation } from "../models/donation.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, listPublishedMissing, listMissingTips, putMissing } from "../models/missing.js";
-import { toMyMissing, toMyNeed, toMyRegisteredNeed, toMyOffer, toMyGroup, toMyIncident, toMyProject, toPublicMissing, toHandlingContact } from "../views/mine.js";
+import { toMyMissing, toMyNeed, toMyRegisteredNeed, toMyDonation, toMyOffer, toMyGroup, toMyIncident, toMyProject, toPublicMissing, toHandlingContact } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
@@ -15,7 +16,7 @@ export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
   const { ddb, tableName, payload } = auth;
   const pointers = await listPointers(ddb, tableName, payload.sub);
-  const out = { missing: [], needs: [], registeredNeeds: [], projects: [], offers: [], groups: [], incidents: [], handledNeeds: [] };
+  const out = { missing: [], needs: [], registeredNeeds: [], donations: [], projects: [], offers: [], groups: [], incidents: [], handledNeeds: [] };
   // A person owns tens of items, not thousands; one read per pointer keeps this simple.
   for (const p of pointers) {
     const pk = p.kind === "GROUP" ? `NEED#${p.id}` : `${p.kind}#${p.id}`;
@@ -23,21 +24,27 @@ export async function handleGetDashboard(event, opts) {
     const item = res.Item;
     if (!item) continue;
     if (p.kind === "NEED") {
-      if (item.registrantSub === payload.sub) out.registeredNeeds.push(toMyRegisteredNeed(item));
-      else out.needs.push(toMyNeed(item));
+      const donation = item.donationRef ? await getDonation(ddb, tableName, item.donationRef) : undefined;
+      if (item.registrantSub === payload.sub) out.registeredNeeds.push(toMyRegisteredNeed(item, donation));
+      else out.needs.push(toMyNeed(item, donation));
     }
+    else if (p.kind === "DONATION") out.donations.push(toMyDonation(item));
     else if (p.kind === "OFFER") out.offers.push(toMyOffer(item));
     else if (p.kind === "MISSING") {
       const mine = toMyMissing(item);
       mine.tipsCount = (await listMissingTips(ddb, tableName, item.id)).length;
       out.missing.push(mine);
     }
-    else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
+    else if (p.kind === "GROUP") {
+      const donation = item.donationRef ? await getDonation(ddb, tableName, item.donationRef) : undefined;
+      out.groups.push(toMyGroup(item, payload.sub, donation));
+    }
     else if (p.kind === "INCIDENT") out.incidents.push(toMyIncident(item));
     else if (p.kind === "PROJECT") out.projects.push(toMyProject(item));
   }
   for (const need of await listNeedsForHandling(ddb, tableName, payload.sub)) {
-    out.handledNeeds.push({ ...toHandlingContact(need), handler: need.handledBy.label, handlerKind: need.handledBy.kind });
+    const donation = need.donationRef ? await getDonation(ddb, tableName, need.donationRef) : undefined;
+    out.handledNeeds.push({ ...toHandlingContact(need, donation), handler: need.handledBy.label, handlerKind: need.handledBy.kind });
   }
   out.storyRole = await storyRole(ddb, tableName, payload.sub);
   return json(200, out);

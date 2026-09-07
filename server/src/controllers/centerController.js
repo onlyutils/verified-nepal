@@ -7,12 +7,14 @@ import { getOrg, getMembership } from "../models/org.js";
 import { getCenter, saveCenter, listCentersByDistrict, listPublicCenters, centerVisibility, listFlaggedCenterPointers, listCenterFlags } from "../models/center.js";
 import { putEntry, listEntries, listAllEntries, listDistrictEntries, listAllDistrictEntries, computeStock, deltaFor, getEntryById, putTransferMeta, getTransferMeta, putInbound, deleteInbound, listInbound } from "../models/goods.js";
 import { getDonation, listCenterDonationsRaw } from "../models/donation.js";
+import { getNeedById } from "../models/need.js";
+import { putPointer } from "../models/mine.js";
 import { recordAudit } from "../models/audit.js";
 import { toPublicCenterView, toPrivateCenterView } from "../views/center.js";
 import { toPublicEntryView, toPrivateEntryView } from "../views/goods.js";
 import { toPublicDonationView } from "../views/donation.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { generateRefCode } from "../lib/format.js";
+import { generateRefCode, maskName } from "../lib/format.js";
 import { GetCommand, PutCommand, QueryCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 function validateCenterUpdateBody(body) {
@@ -560,7 +562,7 @@ export async function handleReceive(event, opts, transferId) {
 }
 
 
-async function createEntryForCenter({ ddb, tableName, center, auth, entryType, category, qty, note, donationRef }) {
+export async function createEntryForCenter({ ddb, tableName, center, auth, entryType, category, qty, note, donationRef, needId }) {
   const id = randomUUID();
   const now = new Date().toISOString();
   const unit = unitFor(category);
@@ -586,6 +588,7 @@ async function createEntryForCenter({ ddb, tableName, center, auth, entryType, c
   };
   if (note !== undefined) entry.note = note;
   if (donationRef !== undefined) entry.donationRef = donationRef;
+  if (needId !== undefined) entry.needId = needId;
   await putEntry(ddb, tableName, entry);
   const actorName = auth.user?.name || auth.payload.name || "";
   await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "entry.create", targetType: "GOODS", targetId: id, targetLabel: `${entryType} ${category} ${qty}` });
@@ -602,6 +605,19 @@ export async function handleCreateDonation(event, opts, centerId) {
   const categoryRaw = body.category ? String(body.category).trim() : "";
   if (!isGoodsCategory(categoryRaw)) throw err(400, "invalid category");
   const category = categoryRaw;
+  const auth = await getOptionalAuth(event, opts);
+  const needId = body.needId !== undefined && body.needId !== null ? String(body.needId).trim() : "";
+  let linkedNeed;
+  if (needId) {
+    if (!auth) throw err(401, "sign_in_required");
+    linkedNeed = await getNeedById(ddb, tableName, needId);
+    if (!linkedNeed) throw err(404, "not found");
+    const isIndividualTaker = linkedNeed.handledBy?.kind === "helper" && linkedNeed.handledBy.sub === auth.payload.sub;
+    const isGroupMember = linkedNeed.group && Boolean(linkedNeed.groupMembers?.[auth.payload.sub]);
+    if (!isIndividualTaker && !isGroupMember) throw err(403, "not_need_handler");
+    if (linkedNeed.category !== "goods") throw err(400, "need_category_not_goods");
+    if (!Array.isArray(center.accepts) || !center.accepts.includes(category)) throw err(400, "center_does_not_accept_category");
+  }
   const qtyRaw = body.qty;
   if (qtyRaw === undefined || qtyRaw === null) throw err(400, "qty required");
   const qty = Number(qtyRaw);
@@ -612,7 +628,7 @@ export async function handleCreateDonation(event, opts, centerId) {
   if (body.note !== undefined && body.note !== null && String(body.note).trim() !== "") {
     note = validateString(body.note, "note", 1, 500);
   }
-  await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET, { required: opts.env.REQUIRE_TURNSTILE === "1" });
+  if (!auth) await verifyTurnstile(body.turnstileToken, opts.env.TURNSTILE_SECRET, { required: opts.env.REQUIRE_TURNSTILE === "1" });
   let ref = generateRefCode();
   let tries = 0;
   while (tries < 3) {
@@ -638,6 +654,11 @@ export async function handleCreateDonation(event, opts, centerId) {
     status: "declared",
     declaredAt: now,
   };
+  if (linkedNeed) {
+    donation.needId = linkedNeed.id;
+    donation.groupId = linkedNeed.group ? linkedNeed.id : undefined;
+    donation.donorSub = auth.payload.sub;
+  }
   if (note !== undefined) donation.note = note;
   const pointer = {
     PK: `CENTER#${centerId}`,
@@ -654,9 +675,23 @@ export async function handleCreateDonation(event, opts, centerId) {
     status: "declared",
     declaredAt: now,
   };
+  if (linkedNeed) {
+    pointer.needId = linkedNeed.id;
+    pointer.groupId = linkedNeed.group ? linkedNeed.id : undefined;
+  }
   if (note !== undefined) pointer.note = note;
   await ddb.send(new PutCommand({ TableName: tableName, Item: donation }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: pointer }));
+  if (linkedNeed) {
+    await ddb.send(new UpdateCommand({
+      TableName: tableName,
+      Key: { PK: linkedNeed.PK, SK: linkedNeed.SK },
+      UpdateExpression: "SET donationRef = :ref, donationDeclaredAt = :at",
+      ExpressionAttributeValues: { ":ref": ref, ":at": now },
+    }));
+    const members = linkedNeed.group ? Object.keys(linkedNeed.groupMembers || {}) : [auth.payload.sub];
+    await Promise.all(members.map((sub) => putPointer(ddb, tableName, { sub, type: "DONATION", id: ref, createdAt: now })));
+  }
   return json(201, { ref });
 }
 
@@ -674,6 +709,17 @@ export async function handleGetDonation(event, opts, ref) {
     status: donation.status,
     declaredAt: donation.declaredAt,
   };
+  if (donation.needId) {
+    const need = await getNeedById(ddb, tableName, donation.needId);
+    if (need) {
+      out.need = {
+        id: need.id,
+        maskedBeneficiary: maskName(need.beneficiary?.name || ""),
+        category: donation.category,
+        groupSize: Object.keys(need.groupMembers || {}).length || undefined,
+      };
+    }
+  }
   if (donation.note !== undefined) out.note = donation.note;
   if (donation.receivedAt !== undefined) out.receivedAt = donation.receivedAt;
   if (donation.status === "received" && donation.receivedAt) {
@@ -724,7 +770,8 @@ export async function handleListDonations(event, opts, centerId) {
   const raw = await listCenterDonationsRaw(ddb, tableName, centerId);
   const filtered = raw.filter((it) => it.status === filterStatus);
   filtered.sort((a, b) => (b.declaredAt || "").localeCompare(a.declaredAt || ""));
-  const items = filtered.map((d) => {
+  const items = [];
+  for (const d of filtered) {
     const view = {
       ref: d.ref,
       center: { id: d.centerId, name: d.centerName, district: d.district },
@@ -736,8 +783,12 @@ export async function handleListDonations(event, opts, centerId) {
     };
     if (d.note !== undefined) view.note = d.note;
     if (d.receivedAt !== undefined) view.receivedAt = d.receivedAt;
-    return view;
-  });
+    if (d.needId) {
+      const need = await getNeedById(ddb, tableName, d.needId);
+      if (need) view.need = { id: need.id, maskedBeneficiary: maskName(need.beneficiary?.name || ""), category: d.category, groupSize: Object.keys(need.groupMembers || {}).length || undefined };
+    }
+    items.push(view);
+  }
   return json(200, { items });
 }
 

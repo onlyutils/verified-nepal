@@ -25,7 +25,7 @@ import {
   handlePostGroupItemClaim, handlePostGroupItemRelease, handlePostGroupItemDone,
 } from "./controllers/groupController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
-import { handleHelperTakeNeed, handleHelperDeliverNeed, handleGroupTakeNeed, handleGroupReleaseNeed, handleGroupDeliverNeed, handleGetNeedContact, handleReleaseNeed } from "./controllers/needTakeController.js";
+import { handleHelperTakeNeed, handleHelperDeliverNeed, handleGroupTakeNeed, handleGroupReleaseNeed, handleGroupDeliverNeed, handleGetNeedContact, handleReleaseNeed, handleSetNeedDelivery } from "./controllers/needTakeController.js";
 import {
   handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
   handlePostUpdate, handleGetModerationProjects, handlePostModerationProject, handlePostModerationUpdate,
@@ -109,6 +109,7 @@ const routes = [
   ["POST", /^\/needs\/([^/]+)\/take$/, withAuth(handleHelperTakeNeed)],
   ["POST", /^\/needs\/([^/]+)\/release$/, compose(withAuth, withGuidelinesAck)(handleReleaseNeed)],
   ["POST", /^\/needs\/([^/]+)\/deliver$/, withAuth(handleHelperDeliverNeed)],
+  ["POST", /^\/needs\/([^/]+)\/delivery$/, withAuth(handleSetNeedDelivery)],
   ["POST", /^\/needs\/([^/]+)\/group\/take$/, withAuth(handleGroupTakeNeed)],
   ["POST", /^\/needs\/([^/]+)\/group\/release$/, withAuth(handleGroupReleaseNeed)],
   ["POST", /^\/needs\/([^/]+)\/group\/deliver$/, withAuth(handleGroupDeliverNeed)],

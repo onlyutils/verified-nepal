@@ -37,6 +37,7 @@ import { CodeDisplay } from "@/components/code-display";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SignInNudge } from "@/components/sign-in-nudge";
+import { NeedTimeline } from "@/components/need-timeline";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
@@ -1089,6 +1090,7 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
             ) : null}
             {result.deliveredBy ? <p>{ts.deliveredBy.replace("{label}", result.deliveredBy)}</p> : null}
             {result.confirmedAt ? <p className="text-sm text-muted-foreground">{ts.confirmedByBeneficiary}</p> : null}
+            <NeedTimeline steps={result.timeline} language={language} />
             {result.claimCode && (result.status === "published" || result.status === "matched") ? (
               <CodeDisplay
                 code={result.claimCode}

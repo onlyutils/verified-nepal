@@ -1,4 +1,6 @@
-export function toMyGroup(need, sub) {
+import { needTimeline } from "./need-timeline.js";
+
+export function toMyGroup(need, sub, donation) {
   const membership = need.groupMembers?.[sub];
   const myItems = Object.entries(need.groupItems || {})
     .filter(([, item]) => item.claimedBy === sub)
@@ -10,36 +12,59 @@ export function toMyGroup(need, sub) {
     category: need.category,
     joinedAt: membership?.joinedAt,
     myItems,
+    timeline: needTimeline(need, { donation }),
+    ...(need.deliveryChannel ? { deliveryChannel: need.deliveryChannel, centerId: need.centerId } : {}),
     ...(need.status === "matched" && need.handledBy?.kind === "group" ? {
       handling: {
         status: need.status,
         handler: need.handledBy.label,
-        contact: toHandlingContact(need),
+        contact: toHandlingContact(need, donation),
       },
     } : {}),
   };
 }
 
-export function toHandlingContact(need) {
+export function toHandlingContact(need, donation) {
   return {
     id: need.id, status: need.status, category: need.category, description: need.description, createdAt: need.createdAt,
     beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward },
     handledAt: need.handledBy?.at,
+    timeline: needTimeline(need, { donation }),
+    ...(need.deliveryChannel ? { deliveryChannel: need.deliveryChannel, centerId: need.centerId } : {}),
   };
 }
 
-export function toMyNeed(n) {
-  return { id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward, createdAt: n.createdAt, expiresAt: n.expiresAt };
+export function toMyNeed(n, donation) {
+  return {
+    id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward,
+    createdAt: n.createdAt, expiresAt: n.expiresAt, timeline: needTimeline(n, { donation }),
+    ...(n.deliveryChannel ? { deliveryChannel: n.deliveryChannel, centerId: n.centerId } : {}),
+  };
 }
 
-export function toMyRegisteredNeed(n) {
+export function toMyRegisteredNeed(n, donation) {
   return {
-    ...toMyNeed(n),
+    ...toMyNeed(n, donation),
     claimCode: n.claimCode && ["published", "matched", "fulfilled"].includes(n.status) ? n.claimCode : undefined,
     handledBy: n.handledBy?.label || n.handledBy?.orgName,
     handledByKind: n.handledBy?.kind || (n.handledBy?.orgName ? "org" : undefined),
     deliveredBy: n.deliveredBy?.label,
     confirmedAt: n.confirmedAt,
+    timeline: needTimeline(n, { donation }),
+    ...(n.deliveryChannel ? { deliveryChannel: n.deliveryChannel, centerId: n.centerId } : {}),
+  };
+}
+
+export function toMyDonation(donation) {
+  return {
+    ref: donation.ref,
+    center: { id: donation.centerId, name: donation.centerName, district: donation.district },
+    category: donation.category,
+    unit: donation.unit,
+    qty: donation.qty,
+    status: donation.status,
+    declaredAt: donation.declaredAt,
+    ...(donation.receivedAt ? { receivedAt: donation.receivedAt } : {}),
   };
 }
 

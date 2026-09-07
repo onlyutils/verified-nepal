@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { goodsLabel, unitLabel } from "@/lib/goods";
+import { fillTemplate } from "@/lib/edition";
 import { statusTone } from "./use-org";
 import type { OrgController } from "./org-types";
 
@@ -69,6 +70,7 @@ function DonationTable({ controller }: { controller: OrgController }) {
           <TableHead>{controller.t.donorDropsCategory}</TableHead>
           <TableHead>{controller.t.donorDropsQty}</TableHead>
           <TableHead>{controller.t.donationsCenter}</TableHead>
+          <TableHead>{controller.t.donationsNeedContext}</TableHead>
           <TableHead>{controller.t.donorDropsDate}</TableHead>
           <TableHead>{controller.t.donationsStatus}</TableHead>
           <TableHead>{controller.t.donationsActions}</TableHead>
@@ -85,6 +87,9 @@ function DonationTable({ controller }: { controller: OrgController }) {
               {formatNumber(donation.qty, controller.language)} {unitLabel(donation.unit, controller.language)}
             </TableCell>
             <TableCell>{donation.center.name}</TableCell>
+            <TableCell className="max-w-xs text-sm text-muted-foreground">
+              {donation.need ? fillTemplate(controller.t.inboundDonationNeed, { beneficiary: donation.need.maskedBeneficiary, category: goodsLabel(donation.category, controller.language), group: donation.need.groupSize ? fillTemplate(controller.t.inboundDonationGroup, { n: String(donation.need.groupSize) }) : "" }) : controller.t.notAvailable}
+            </TableCell>
             <TableCell className="whitespace-nowrap text-xs">{formatDateTime(donation.declaredAt, controller.language)}</TableCell>
             <TableCell>
               <StatusBadge tone={statusTone(donation.status)}>{controller.t.donationDeclared}</StatusBadge>
@@ -113,6 +118,7 @@ function DonationRow({ donation, controller }: { donation: import("@/lib/api").D
       <p className="text-sm text-muted-foreground">
         {donation.center.name} · {formatDateTime(donation.declaredAt, controller.language)}
       </p>
+      {donation.need ? <p className="text-sm text-muted-foreground">{fillTemplate(controller.t.inboundDonationNeed, { beneficiary: donation.need.maskedBeneficiary, category: goodsLabel(donation.category, controller.language), group: donation.need.groupSize ? fillTemplate(controller.t.inboundDonationGroup, { n: String(donation.need.groupSize) }) : "" })}</p> : null}
       <DonationActions donation={donation} controller={controller} />
     </div>
   );

@@ -1,5 +1,6 @@
 import { maskName } from "../lib/format.js";
 import { toExpiresAt } from "../lib/format.js";
+import { needTimeline } from "./need-timeline.js";
 
 export function toPublicGroup(need, viewerSub) {
   if (!need.group) return undefined;
@@ -20,7 +21,8 @@ export function toPublicGroup(need, viewerSub) {
   };
 }
 
-export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub } = {}) {
+export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub, donation } = {}) {
+  const timeline = needTimeline(it, { donation });
   const out = {
     id: it.id,
     maskedName: maskName(it.beneficiary?.name || it.name || ""),
@@ -34,13 +36,15 @@ export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub }
     ...(it.handledBy ? { handledBy: it.handledBy.label || it.handledBy.orgName, handledByKind: it.handledBy.kind || (it.handledBy.orgName ? "org" : undefined) } : {}),
     ...(it.deliveredBy ? { deliveredBy: it.deliveredBy.label, confirmedAt: it.confirmedAt } : {}),
     ...(it.assignOnly ? { assignOnly: true } : {}),
+    ...(timeline.length ? { timeline } : {}),
+    ...(it.deliveryChannel ? { deliveryChannel: it.deliveryChannel, centerId: it.centerId } : {}),
   };
   if (includeClaimCode && it.claimCode && ["published", "matched", "fulfilled"].includes(it.status)) out.claimCode = it.claimCode;
   if (includeClaimCode && it.matchedOfferId) out.matchedOfferId = it.matchedOfferId;
   return out;
 }
 
-export function toStatusView(need) {
+export function toStatusView(need, { donation, ledgerRow } = {}) {
   const out = {
     status: need.status,
     category: need.category,
@@ -54,6 +58,11 @@ export function toStatusView(need) {
   }
   if (need.deliveredBy) out.deliveredBy = need.deliveredBy.label;
   if (need.confirmedAt) out.confirmedAt = need.confirmedAt;
+  out.timeline = needTimeline(need, { donation, ledgerRow });
+  if (need.deliveryChannel) {
+    out.deliveryChannel = need.deliveryChannel;
+    if (need.centerId) out.centerId = need.centerId;
+  }
   return out;
 }
 

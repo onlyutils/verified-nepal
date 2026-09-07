@@ -20,6 +20,8 @@ import { SignInNudge } from "@/components/sign-in-nudge";
 import { MyStories } from "@/components/my-stories";
 import { PosterGrid } from "@/components/poster-grid";
 import { CodeDisplay } from "@/components/code-display";
+import { NeedTimeline } from "@/components/need-timeline";
+import { goodsLabel, unitLabel } from "@/lib/goods";
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -37,6 +39,9 @@ function categoryLabel(category: Category, language: Language) {
 
 function statusLabel(status: string, language: Language) {
   const t = labels[language] as Record<string, string>;
+  if (status === "declared") return meStrings[language].donationDeclared;
+  if (status === "received") return meStrings[language].donationReceived;
+  if (status === "not_received") return meStrings[language].donationNotReceived;
   const key = `deskNeedsStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`;
   if (status === "in_progress" || status === "in-progress") return t.inProgress;
   return t[key] ?? t.unavailable;
@@ -384,6 +389,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                       {need.handledBy ? <p className="text-sm"><span className="font-medium">{t.takenBy}:</span> {need.handledBy}</p> : null}
                       {need.deliveredBy ? <p className="text-sm text-muted-foreground">{t.delivered}: {need.deliveredBy}</p> : null}
                       {need.confirmedAt ? <p className="text-sm text-muted-foreground">{t.confirmed}: {formatDateTime(need.confirmedAt, language)}</p> : null}
+                      <NeedTimeline steps={need.timeline} language={language} />
                       {(["pending", "published", "matched"] as string[]).includes(need.status) ? (
                         <Button
                           type="button"
@@ -399,6 +405,25 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                           {renewed[need.id] ? t.needRenewed : t.needRenew}
                         </Button>
                       ) : null}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.donationsTitle}</h2>
+            {(data.donations ?? []).length === 0 ? <EmptyState title={t.donationsEmpty} /> : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.donations.map((donation) => (
+                  <Card key={donation.ref}>
+                    <CardHeader>
+                      <CardTitle className="font-mono tracking-widest">{donation.ref}</CardTitle>
+                      <CardDescription>{donation.center.name} · {donation.center.district}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <StatusBadge tone={toneForStatus(donation.status)}>{statusLabel(donation.status, language)}</StatusBadge>
+                      <p className="text-sm">{goodsLabel(donation.category, language)} · {donation.qty} {unitLabel(donation.unit, language)}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -439,6 +464,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                       <p className="text-sm text-muted-foreground">{t.handlingContact}</p>
                       <p className="text-sm">{need.beneficiary.name} · {need.beneficiary.phone || tl.unavailable}</p>
                       <p className="text-sm leading-relaxed">{need.description}</p>
+                      <NeedTimeline steps={need.timeline} language={language} />
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" size="sm" onClick={() => void handlingAction(need.id, need.handlerKind, "deliver")} disabled={busy[need.id]}>
                           {t.handlingDeliver}

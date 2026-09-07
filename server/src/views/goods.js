@@ -23,6 +23,7 @@ export function toPublicEntryView(entry) {
   if (entry.correctsEntryId !== undefined) out.correctsEntryId = entry.correctsEntryId;
   if (entry.correctedByEntryId !== undefined) out.correctedByEntryId = entry.correctedByEntryId;
   if (entry.donationRef !== undefined) out.donationRef = entry.donationRef;
+  if (entry.needId !== undefined) out.needId = entry.needId;
   return out;
 }
 

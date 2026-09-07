@@ -18,6 +18,7 @@ import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { putPointer } from "../models/mine.js";
 import { applyModerationEdits } from "../models/moderation.js";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { getDonation } from "../models/donation.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: optionalAuthResult }) {
@@ -157,7 +158,10 @@ export async function handleGetNeeds(event, { getDdb, env, auth }) {
   const limit = 20;
   const sliced = items.slice(start, start + limit);
   const includeClaimCode = Boolean(auth && ["moderator", "admin"].includes(auth.role) && (auth.role === "admin" || auth.user?.guidelinesAckAt));
-  const publicItems = sliced.map((item) => toPublicNeedListItem(item, { includeClaimCode, viewerSub: auth?.payload?.sub }));
+  const publicItems = await Promise.all(sliced.map(async (item) => {
+    const donation = item.donationRef ? await getDonation(ddb, tableName, item.donationRef) : undefined;
+    return toPublicNeedListItem(item, { includeClaimCode, viewerSub: auth?.payload?.sub, donation });
+  }));
   const body = { items: publicItems };
   if (start + limit < items.length) {
     const last = sliced[sliced.length - 1];
@@ -176,7 +180,8 @@ export async function handleGetStatus(event, { getDdb, env }, refCode) {
   if (!ref) throw err(404, "not found");
   const need = await getNeedById(ddb, tableName, ref.needId);
   if (!need) throw err(404, "not found");
-  return json(200, toStatusView(need));
+  const donation = need.donationRef ? await getDonation(ddb, tableName, need.donationRef) : undefined;
+  return json(200, toStatusView(need, { donation }));
 }
 
 export async function handlePostRenew(event, { getDdb, env }, refCode) {

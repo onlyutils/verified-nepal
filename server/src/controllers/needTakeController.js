@@ -1,7 +1,9 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { json, err, parseBody } from "../lib/http.js";
 import { maskName } from "../lib/format.js";
-import { getNeedById, setNeedStatus, countActiveHelperTakes } from "../models/need.js";
+import { getNeedById, setNeedStatus, countActiveHelperTakes, putNeed } from "../models/need.js";
+import { getCenter } from "../models/center.js";
+import { getDonation } from "../models/donation.js";
 import { deleteHandlingPointer, putHandlingPointer } from "../models/mine.js";
 import { fulfilNeed } from "../models/claim.js";
 import { deleteOrgNeed } from "../models/orgNeed.js";
@@ -103,6 +105,7 @@ export async function handleHelperReleaseNeed(event, opts, needId) {
 export async function handleHelperDeliverNeed(event, opts, needId) {
   const { auth } = opts;
   const need = await requireHelperTake(auth, needId);
+  if (need.deliveryChannel === "center") throw err(409, "goods_not_received");
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
   const label = need.handledBy.label;
@@ -143,6 +146,32 @@ async function requireGroupTake(auth, needId) {
   return need;
 }
 
+export async function handleSetNeedDelivery(event, opts, needId) {
+  const { auth } = opts;
+  const need = await loadNeed(auth, needId);
+  const isHelper = need.handledBy?.kind === "helper" && need.handledBy.sub === auth.payload.sub;
+  const isGroupMember = need.handledBy?.kind === "group" && Boolean(need.groupMembers?.[auth.payload.sub]);
+  if (need.status !== "matched" || (!isHelper && !isGroupMember)) throw err(409, "need_not_handled_by_helper");
+  const body = parseBody(event) || {};
+  const channel = body.deliveryChannel || body.channel;
+  if (!["direct", "center"].includes(channel)) throw err(400, "deliveryChannel must be direct or center");
+  const linkedDonation = need.donationRef ? await getDonation(auth.ddb, auth.tableName, need.donationRef) : null;
+  if (channel === "direct" && linkedDonation?.status === "received") throw err(409, "goods_already_received");
+  let centerId;
+  if (channel === "center") {
+    centerId = body.centerId ? String(body.centerId).trim() : "";
+    if (!centerId) throw err(400, "centerId required");
+    const center = await getCenter(auth.ddb, auth.tableName, centerId);
+    if (!center || center.visibility !== "public") throw err(400, "center not available");
+    if (body.category !== undefined && (!Array.isArray(center.accepts) || !center.accepts.includes(String(body.category).trim()))) throw err(400, "center_does_not_accept_category");
+  }
+  need.deliveryChannel = channel;
+  if (centerId) need.centerId = centerId;
+  else delete need.centerId;
+  await putNeed(auth.ddb, auth.tableName, need);
+  return json(200, { deliveryChannel: channel, ...(centerId ? { centerId } : {}) });
+}
+
 export async function handleGroupReleaseNeed(event, opts, needId) {
   const { auth } = opts;
   const need = await requireGroupTake(auth, needId);
@@ -158,6 +187,7 @@ export async function handleGroupReleaseNeed(event, opts, needId) {
 export async function handleGroupDeliverNeed(event, opts, needId) {
   const { auth } = opts;
   const need = await requireGroupTake(auth, needId);
+  if (need.deliveryChannel === "center") throw err(409, "goods_not_received");
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
   const label = need.handledBy.label;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Flag, Share2 } from "lucide-react";
 import {
   CATEGORIES,
+  declareDonation,
   addGroupItem,
   claimGroupItem,
   createOffer,
@@ -10,14 +11,20 @@ import {
   joinGroupApi,
   listMyOrgs,
   listNeeds,
+  listCenters,
   listOffers,
   markGroupItemDone,
   takeNeed,
   takeNeedAsGroup,
+  setNeedDelivery,
+  deliverNeed,
+  deliverGroupNeed,
   orgClaimNeed,
   releaseGroupItem,
   startGroup,
   type Category,
+  type CenterPublic,
+  type NeedTimelineStep,
   type GroupPublic,
   type MyOrg,
   type NeedPublic,
@@ -50,6 +57,8 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { DistrictPicker } from "@/components/district-picker";
 import { SignInNudge } from "@/components/sign-in-nudge";
+import { NeedTimeline } from "@/components/need-timeline";
+import { goodsLabel, GOODS_CATEGORIES } from "@/lib/goods";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function categoryLabel(category: string, language: Language) {
@@ -680,6 +689,8 @@ function GroupPanel({
   assignOnly,
   taken,
   onNeedHandled,
+  timeline,
+  district,
 }: {
   language: Language;
   needId: string;
@@ -689,6 +700,8 @@ function GroupPanel({
   assignOnly?: boolean;
   taken?: boolean;
   onNeedHandled: (label: string) => void;
+  timeline?: NeedTimelineStep[];
+  district?: string;
 }) {
   const ts = formStrings[language];
   const auth = useGoogleAuth();
@@ -846,11 +859,131 @@ function GroupPanel({
         </div>
       </div>
       {isMember && !assignOnly && !taken ? <Button size="sm" disabled={busy.take} onClick={take}>{ts.groupTake}</Button> : null}
+      {taken ? <DeliveryChoice language={language} needId={needId} category="goods" district={district} handlerKind="group" onMutated={onMutated} /> : null}
+      <NeedTimeline steps={timeline} language={language} />
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
+    </div>
+  );
+}
+
+function DeliveryChoice({
+  language,
+  needId,
+  category,
+  district,
+  handlerKind,
+  currentChannel,
+  currentCenterId,
+  onMutated,
+}: {
+  language: Language;
+  needId: string;
+  category: Category;
+  district?: string;
+  handlerKind: "helper" | "group";
+  currentChannel?: "direct" | "center";
+  currentCenterId?: string;
+  onMutated: () => void;
+}) {
+  const ts = formStrings[language];
+  const auth = useGoogleAuth();
+  const [mode, setMode] = useState<"direct" | "center">(currentChannel ?? "direct");
+  const [centers, setCenters] = useState<CenterPublic[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(currentCenterId ?? "");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [goods, setGoods] = useState("other");
+  const [qty, setQty] = useState("1");
+  const [ref, setRef] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const loadCenters = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await listCenters();
+      const available = result.items.filter((center) => center.accepts.includes(goods));
+      available.sort((a, b) => {
+        if (location && a.lat !== undefined && a.lng !== undefined && b.lat !== undefined && b.lng !== undefined) {
+          const da = (a.lat - location.lat) ** 2 + (a.lng - location.lng) ** 2;
+          const db = (b.lat - location.lat) ** 2 + (b.lng - location.lng) ** 2;
+          return da - db;
+        }
+        return (district && a.district === district ? -1 : 0) - (district && b.district === district ? -1 : 0);
+      });
+      setCenters(available);
+      if (!selected && available[0]) setSelected(available[0].id);
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (!location) return;
+    setCenters((items) => [...items].sort((a, b) => {
+      if (a.lat === undefined || a.lng === undefined) return 1;
+      if (b.lat === undefined || b.lng === undefined) return -1;
+      return (a.lat - location.lat) ** 2 + (a.lng - location.lng) ** 2 - ((b.lat - location.lat) ** 2 + (b.lng - location.lng) ** 2);
+    }));
+  }, [location]);
+  const saveDirect = async () => {
+    if (!auth.idToken) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await setNeedDelivery(auth.idToken, needId, { deliveryChannel: "direct" });
+      if (handlerKind === "group") await deliverGroupNeed(auth.idToken, needId);
+      else await deliverNeed(auth.idToken, needId);
+      onMutated();
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
+    } finally {
+      setLoading(false);
+    }
+  };
+  const saveCenter = async () => {
+    if (!auth.idToken || !selected) return;
+    const amount = Number(qty);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const donation = await declareDonation(selected, { category: goods, qty: amount, needId }, auth.idToken);
+      await setNeedDelivery(auth.idToken, needId, { deliveryChannel: "center", centerId: selected, category: goods });
+      setRef(donation.ref);
+      onMutated();
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language));
+    } finally {
+      setLoading(false);
+    }
+  };
+  const center = centers.find((item) => item.id === selected);
+  return (
+    <div className="space-y-3 rounded-lg border bg-background p-3">
+      <p className="font-medium">{ts.deliveryHow}</p>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={ts.deliveryHow}>
+        <Button type="button" size="sm" variant={mode === "direct" ? "default" : "outline"} onClick={() => setMode("direct")}>{ts.deliveryDirect}</Button>
+        <Button type="button" size="sm" variant={mode === "center" ? "default" : "outline"} onClick={() => { setMode("center"); if (navigator.geolocation && !location) navigator.geolocation.getCurrentPosition((position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }), () => undefined); if (!centers.length) void loadCenters(); }}>{ts.deliveryCenter}</Button>
+      </div>
+      {mode === "direct" ? <Button type="button" size="sm" onClick={() => void saveDirect()} disabled={loading}>{ts.helperDeliver}</Button> : (
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2"><Label htmlFor={`delivery-goods-${needId}`}>{ts.deliveryCategory}</Label><NativeSelect id={`delivery-goods-${needId}`} value={goods} onChange={(event) => { setGoods(event.target.value); setCenters([]); setSelected(""); }}><NativeSelectOption value="">{ts.deliveryCategory}</NativeSelectOption>{GOODS_CATEGORIES.map((item) => <NativeSelectOption key={item.id} value={item.id}>{goodsLabel(item.id, language)}</NativeSelectOption>)}</NativeSelect></div>
+            <div className="space-y-2"><Label htmlFor={`delivery-qty-${needId}`}>{ts.deliveryQuantity}</Label><Input id={`delivery-qty-${needId}`} type="number" min="0.01" step="0.01" value={qty} onChange={(event) => setQty(event.target.value)} /></div>
+          </div>
+          {!centers.length && !loading ? <Button type="button" size="sm" variant="outline" onClick={() => void loadCenters()}>{ts.deliveryCenterSelect}</Button> : null}
+          {loading ? <p className="text-sm text-muted-foreground">{ts.deliveryCenterLoading}</p> : null}
+          {centers.length ? <div className="space-y-2"><Label htmlFor={`delivery-center-${needId}`}>{ts.deliveryCenterSelect}</Label><NativeSelect id={`delivery-center-${needId}`} value={selected} onChange={(event) => setSelected(event.target.value)}>{centers.map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.name} · {item.district}</NativeSelectOption>)}</NativeSelect><Button type="button" size="sm" onClick={() => void saveCenter()} disabled={loading || !selected}>{ts.deliveryConfirm}</Button></div> : null}
+          {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
+          {ref && center ? <div className="space-y-2 rounded-md border-l-2 border-primary pl-3" role="status"><div className="flex flex-wrap items-center gap-2"><p className="font-medium">{ts.deliveryInstructions}</p><StatusBadge tone="warning">{ts.deliverySaved}</StatusBadge></div><p className="text-sm">{center.name}</p><p className="text-sm">{ts.deliveryAddress.replace("{address}", center.address)}</p>{center.hours ? <p className="text-sm">{ts.deliveryHours.replace("{hours}", center.hours)}</p> : null}<p className="text-sm">{ts.deliveryBring}</p><CodeDisplay code={ref} kind="ref" label={ts.deliveryDropCode} copyLabel={ts.deliveryCopy} copiedLabel={ts.deliveryCopied} /></div> : null}
+        </div>
+      )}
+      {mode === "direct" && error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
     </div>
   );
 }
@@ -950,12 +1083,13 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
           <SignInNudge language={language} id={`take-${need.id}`} title={ts.groupSignInTitle} body={ts.groupSignInBody} />
         ) : null}
         {group ? (
-          <GroupPanel language={language} needId={need.id} group={group} assignOnly={need.assignOnly} taken={Boolean(handledBy)} onGroupChange={setGroup} onMutated={onMutated} onNeedHandled={(label) => setHandledBy({ status: "matched", label, kind: "group" })} />
+          <GroupPanel language={language} needId={need.id} district={need.district} timeline={need.timeline} group={group} assignOnly={need.assignOnly} taken={Boolean(handledBy)} onGroupChange={setGroup} onMutated={onMutated} onNeedHandled={(label) => setHandledBy({ status: "matched", label, kind: "group" })} />
         ) : need.status === "published" && auth.idToken && !need.handledBy ? (
           <Button variant="outline" size="sm" disabled={forming} onClick={formGroup}>
             {ts.groupForm}
           </Button>
         ) : null}
+        {handledBy?.kind === "helper" ? <DeliveryChoice language={language} needId={need.id} category={need.category} district={need.district} handlerKind="helper" currentChannel={need.deliveryChannel} currentCenterId={need.centerId} onMutated={onMutated} /> : null}
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>

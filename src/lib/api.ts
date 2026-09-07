@@ -15,6 +15,7 @@ export interface DeliveredBy {
   kind: DeliveredByKind;
   label: string;
   ref?: string;
+  via?: { centerId: string; centerName: string; orgName: string };
 }
 
 export interface GroupItemPublic {
@@ -52,7 +53,13 @@ export interface NeedPublic {
   assignOnly?: boolean;
   matchedOfferId?: string;
   incidentId?: string;
+  timeline?: NeedTimelineStep[];
+  deliveryChannel?: "direct" | "center";
+  centerId?: string;
 }
+
+export type NeedTimelineKey = "taken" | "declared" | "received" | "handed_over" | "confirmed";
+export interface NeedTimelineStep { key: NeedTimelineKey; at: string; label?: string; }
 
 export interface NeedsListResponse {
   items: NeedPublic[];
@@ -70,6 +77,9 @@ export interface StatusResponse {
   handledByKind?: DeliveredByKind;
   deliveredBy?: string;
   confirmedAt?: string;
+  timeline: NeedTimelineStep[];
+  deliveryChannel?: "direct" | "center";
+  centerId?: string;
 }
 
 export interface NeedMediaItem {
@@ -320,6 +330,9 @@ export interface MyNeed {
   handledByKind?: DeliveredByKind;
   deliveredBy?: string;
   confirmedAt?: string;
+  timeline?: NeedTimelineStep[];
+  deliveryChannel?: "direct" | "center";
+  centerId?: string;
 }
 
 export interface MyRegisteredNeed extends MyNeed {}
@@ -372,6 +385,9 @@ export interface MyGroup {
   joinedAt?: string;
   myItems: MyGroupItem[];
   handling?: { status: string; handler: string; contact: NeedContact };
+  timeline?: NeedTimelineStep[];
+  deliveryChannel?: "direct" | "center";
+  centerId?: string;
 }
 
 export interface NeedContact {
@@ -382,6 +398,9 @@ export interface NeedContact {
   createdAt: string;
   beneficiary: { name: string; phone: string | null; district?: string; ward?: number };
   handledAt?: string;
+  timeline?: NeedTimelineStep[];
+  deliveryChannel?: "direct" | "center";
+  centerId?: string;
 }
 
 export interface HandledNeed extends NeedContact {
@@ -410,8 +429,20 @@ export interface DashboardResponse {
   groups: MyGroup[];
   handledNeeds: HandledNeed[];
   incidents: MyIncident[];
+  donations: MyDonation[];
   /** Who the caller may tell a story as; null until they have received or given help. */
   storyRole?: StoryRole | null;
+}
+
+export interface MyDonation {
+  ref: string;
+  center: { id: string; name: string; district: string };
+  category: string;
+  unit: GoodsUnit;
+  qty: number;
+  status: "declared" | "received" | "not_received";
+  declaredAt: string;
+  receivedAt?: string;
 }
 
 export type MissingBody = Omit<PosterInput, "phones"> & {
@@ -604,6 +635,14 @@ export function releaseGroupNeed(token: string, needId: string): Promise<{ statu
 
 export function deliverGroupNeed(token: string, needId: string, note?: string): Promise<{ status: "fulfilled"; redeemedAt: string }> {
   return request(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+}
+
+export function setNeedDelivery(
+  token: string,
+  needId: string,
+  body: { deliveryChannel: "direct" | "center"; centerId?: string; category?: string },
+): Promise<{ deliveryChannel: "direct" | "center"; centerId?: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/delivery`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function getNeedContact(token: string, needId: string): Promise<NeedContact> {
@@ -1331,6 +1370,7 @@ export interface GoodsEntry {
   correctsEntryId?: string;
   correctedByEntryId?: string;
   donationRef?: string;
+  needId?: string;
 }
 export interface CreateEntryBody {
   entryType: "intake" | "distribution" | "transfer_out" | "correction";
@@ -1379,6 +1419,7 @@ export interface DonationStatus {
   declaredAt: string;
   receivedAt?: string;
   sinceReceived?: { distributed: number; transferred: number };
+  need?: { id: string; maskedBeneficiary: string; category: string; groupSize?: number; center?: { id: string; name: string; district: string }; receivedAt?: string };
 }
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -1422,6 +1463,10 @@ export interface OrgNeed {
   createdAt: string;
   beneficiary: { name: string; phone: string | null; district: string; ward: number };
   handledAt?: string;
+  handledBy?: string;
+  handover?: boolean;
+  donation?: DonationStatus["need"];
+  timeline?: NeedTimelineStep[];
 }
 export function listOrgNeeds(token: string, orgId: string): Promise<{ items: OrgNeed[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/needs`, { token });
@@ -1529,9 +1574,10 @@ export function removeOrgMember(token: string, orgId: string, subOrEmail: string
 }
 export function declareDonation(
   centerId: string,
-  body: { category: string; qty: number; note?: string; turnstileToken?: string },
+  body: { category: string; qty: number; note?: string; turnstileToken?: string; needId?: string },
+  token?: string,
 ): Promise<{ ref: string }> {
-  return request(`/centers/${encodeURIComponent(centerId)}/donations`, { method: "POST", body: JSON.stringify(body) });
+  return request(`/centers/${encodeURIComponent(centerId)}/donations`, { method: "POST", body: JSON.stringify(body), ...(token ? { token } : {}) });
 }
 export function getDonation(ref: string): Promise<DonationStatus> {
   return request(`/donations/${encodeURIComponent(ref)}`);
