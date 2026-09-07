@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { meStrings } from "@/i18n/me";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
+import { needTimelineStrings } from "@/i18n/needs";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
@@ -21,8 +22,12 @@ import { MyStories } from "@/components/my-stories";
 import { PosterGrid } from "@/components/poster-grid";
 import { CodeDisplay } from "@/components/code-display";
 import { NeedTimeline } from "@/components/need-timeline";
+import { DeliveryReceiptFields, type ReceiptValue } from "@/components/delivery-receipt-fields";
 import { WorkTally } from "@/components/work-tally";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { goodsLabel, unitLabel } from "@/lib/goods";
+
+const TAKE_TTL_DAYS = 6;
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -69,6 +74,19 @@ function latestTimestamp(values: Array<string | undefined>) {
   return Math.max(0, ...values.map(timestamp));
 }
 
+function eventLabel(event: "taken" | "released" | "delivered" | "expired", label: string | undefined, t: (typeof needTimelineStrings)["en"]) {
+  if (event === "taken") return t.eventTaken.replace("{label}", label ?? "");
+  if (event === "released") return t.eventReleased;
+  if (event === "delivered") return t.eventDelivered.replace("{label}", label ?? "");
+  return t.eventExpired;
+}
+
+function takeExpiryLabel(handledAt: string | undefined, t: (typeof meStrings)["en"]) {
+  if (!handledAt) return null;
+  const days = Math.max(0, TAKE_TTL_DAYS - Math.floor((Date.now() - Date.parse(handledAt)) / 86400000));
+  return days === 0 ? t.takeExpiresToday : t.takeExpiresIn.replace("{days}", String(days));
+}
+
 function UnreadBadge({ count, label }: { count: number; label: string }) {
   if (!count) return null;
   return <Badge variant="destructive" className="min-w-6 justify-center rounded-full px-1.5" aria-label={`${label}: ${count}`}>{count}</Badge>;
@@ -104,6 +122,8 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   const [error, setError] = useState<string | null>(null);
   const [renewed, setRenewed] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [deliveryTarget, setDeliveryTarget] = useState<{ id: string; kind: "helper" | "group" } | null>(null);
+  const [deliveryReceipt, setDeliveryReceipt] = useState<ReceiptValue>({});
   const seenSections = useRef(new Set<ActivitySection>());
 
   const markSeen = useCallback((section: ActivitySection) => {
@@ -121,22 +141,31 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
     seenSections.current.clear();
   }, [auth.idToken]);
 
-  const handlingAction = async (id: string, kind: "helper" | "group", action: "deliver" | "release") => {
-    if (!auth.idToken) return;
-    if (action === "deliver" && !window.confirm(t.handlingConfirm)) return;
+  const handlingAction = async (id: string, kind: "helper" | "group", action: "deliver" | "release", receipt: ReceiptValue = {}) => {
+    if (!auth.idToken) return false;
     setBusy((current) => ({ ...current, [id]: true }));
     setError(null);
     try {
       if (kind === "group") {
-        if (action === "deliver") await deliverGroupNeed(auth.idToken, id);
+        if (action === "deliver") await deliverGroupNeed(auth.idToken, id, receipt);
         else await releaseGroupNeed(auth.idToken, id);
-      } else if (action === "deliver") await deliverNeed(auth.idToken, id);
+      } else if (action === "deliver") await deliverNeed(auth.idToken, id, receipt);
       else await releaseNeed(auth.idToken, id);
       setData((current) => current && { ...current, handledNeeds: current.handledNeeds.filter((need) => need.id !== id) });
+      return true;
     } catch (cause) {
       setError(apiErrorMessage(cause, language) || t.handlingActionFailed);
+      return false;
     } finally {
       setBusy((current) => ({ ...current, [id]: false }));
+    }
+  };
+
+  const confirmDelivery = async () => {
+    if (!deliveryTarget) return;
+    if (await handlingAction(deliveryTarget.id, deliveryTarget.kind, "deliver", deliveryReceipt)) {
+      setDeliveryTarget(null);
+      setDeliveryReceipt({});
     }
   };
 
@@ -434,6 +463,15 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                       {need.handledBy ? <p className="text-sm"><span className="font-medium">{t.takenBy}:</span> {need.handledBy}</p> : null}
                       {need.deliveredBy ? <p className="text-sm text-muted-foreground">{t.delivered}: {need.deliveredBy}</p> : null}
                       {need.confirmedAt ? <p className="text-sm text-muted-foreground">{t.confirmed}: {formatDateTime(need.confirmedAt, language)}</p> : null}
+                      {need.events?.length ? (
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{needTimelineStrings[language].eventsTitle}</p>
+                          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                            {need.events.map((event) => <li key={`${event.event}-${event.at}`}>{eventLabel(event.event, event.label, needTimelineStrings[language])} · {formatDateTime(event.at, language)}</li>)}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {need.deliveryReceipt?.households !== undefined ? <p className="text-sm text-muted-foreground">{needTimelineStrings[language].receiptHouseholdsPublic.replace("{n}", String(need.deliveryReceipt.households))}</p> : null}
                       <NeedTimeline steps={need.timeline} language={language} />
                       {(["pending", "published", "matched"] as string[]).includes(need.status) ? (
                         <Button
@@ -509,9 +547,10 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                       <p className="text-sm text-muted-foreground">{t.handlingContact}</p>
                       <p className="text-sm">{need.beneficiary.name} · {need.beneficiary.phone || tl.unavailable}</p>
                       <p className="text-sm leading-relaxed">{need.description}</p>
+                      {takeExpiryLabel(need.handledAt, t) ? <p className="text-sm text-muted-foreground">{takeExpiryLabel(need.handledAt, t)}</p> : null}
                       <NeedTimeline steps={need.timeline} language={language} />
                       <div className="flex flex-wrap gap-2">
-                        <Button type="button" size="sm" onClick={() => void handlingAction(need.id, need.handlerKind, "deliver")} disabled={busy[need.id]}>
+                        <Button type="button" size="sm" onClick={() => { setDeliveryReceipt({}); setDeliveryTarget({ id: need.id, kind: need.handlerKind }); }} disabled={busy[need.id]}>
                           {t.handlingDeliver}
                         </Button>
                         <Button type="button" size="sm" variant="outline" onClick={() => void handlingAction(need.id, need.handlerKind, "release")} disabled={busy[need.id]}>
@@ -524,6 +563,19 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
               </div>
             )}
           </ActivitySection>
+          <Dialog open={Boolean(deliveryTarget)} onOpenChange={(open) => { if (!open) setDeliveryTarget(null); }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t.handlingConfirm}</DialogTitle>
+              </DialogHeader>
+              {deliveryTarget ? <DeliveryReceiptFields value={deliveryReceipt} onChange={setDeliveryReceipt} language={language} token={auth.idToken} t={t} idPrefix={`delivery-receipt-${deliveryTarget.id}`} /> : null}
+              <DialogFooter>
+                <Button type="button" onClick={() => void confirmDelivery()} disabled={!deliveryTarget || Boolean(deliveryTarget && busy[deliveryTarget.id])}>
+                  {deliveryTarget && busy[deliveryTarget.id] ? t.handlingDeliver : t.handlingDeliver}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           {dashboardSections.map((section) => (
             <Fragment key={section.key}>{section.render()}</Fragment>
           ))}

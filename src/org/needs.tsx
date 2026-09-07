@@ -13,13 +13,23 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { formatDateTime } from "@/lib/format-date";
 import { NeedTimeline } from "@/components/need-timeline";
+import { DeliveryReceiptFields, type ReceiptCopy, type ReceiptValue } from "@/components/delivery-receipt-fields";
 import type { OrgController } from "./org-types";
+
+const TAKE_TTL_DAYS = 6;
+
+function takeExpiryLabel(handledAt: string | undefined, t: Record<string, string>) {
+  if (!handledAt) return null;
+  const days = Math.max(0, TAKE_TTL_DAYS - Math.floor((Date.now() - Date.parse(handledAt)) / 86400000));
+  return days === 0 ? t.takeExpiresToday : t.takeExpiresIn.replace("{days}", String(days));
+}
 
 export function OrgNeeds({ controller, navigate }: { controller: OrgController; navigate: (page: Page) => void }) {
   const { t, language, selectedOrg, auth } = controller;
   const [items, setItems] = useState<OrgNeed[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [receipts, setReceipts] = useState<Record<string, ReceiptValue>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -38,7 +48,7 @@ export function OrgNeeds({ controller, navigate }: { controller: OrgController; 
     setBusy(need.id);
     setError(null);
     try {
-      if (action === "deliver") await orgDeliverNeed(auth.idToken, selectedOrg.id, need.id, notes[need.id]?.trim() || undefined);
+      if (action === "deliver") await orgDeliverNeed(auth.idToken, selectedOrg.id, need.id, { note: notes[need.id]?.trim() || undefined, ...receipts[need.id] });
       else await orgReleaseNeed(auth.idToken, selectedOrg.id, need.id);
       await load();
     } catch (e) {
@@ -66,10 +76,12 @@ export function OrgNeeds({ controller, navigate }: { controller: OrgController; 
       <CardContent className="space-y-3">
         <p className="text-sm leading-relaxed">{need.description}</p>
         {need.handover && need.donation ? <p className="text-sm text-muted-foreground">{fillTemplate(t.needsHandoverHandler, { label: need.handledBy || "" })}</p> : need.beneficiary.phone ? <p className="text-sm">{t.needsPhone}: <a className="underline" href={`tel:${need.beneficiary.phone}`}>{need.beneficiary.phone}</a></p> : null}
+        {takeExpiryLabel(need.handledAt, t) ? <p className="text-sm text-muted-foreground">{takeExpiryLabel(need.handledAt, t)}</p> : null}
         <NeedTimeline steps={need.timeline} language={language} />
         {need.status === "matched" ? (
           <div className="space-y-2">
             <Input value={notes[need.id] ?? ""} onChange={(e) => setNotes((n) => ({ ...n, [need.id]: e.target.value }))} placeholder={t.needsDeliverNote} maxLength={500} />
+            <DeliveryReceiptFields value={receipts[need.id] ?? {}} onChange={(value) => setReceipts((current) => ({ ...current, [need.id]: value }))} language={language} token={auth.idToken as string} t={t as ReceiptCopy} idPrefix={`org-delivery-receipt-${need.id}`} />
             <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={busy === need.id} onClick={() => void act(need, "deliver")}>{busy === need.id ? t.needsDelivering : t.needsDeliver}</Button>
               {!need.handover ? <Button size="sm" variant="outline" disabled={busy === need.id} onClick={() => void act(need, "release")}>{t.needsRelease}</Button> : null}

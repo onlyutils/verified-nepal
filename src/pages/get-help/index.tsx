@@ -120,6 +120,13 @@ function statusLabel(status: string, language: Language) {
   );
 }
 
+function eventLabel(event: "taken" | "released" | "delivered" | "expired", label: string | undefined, t: (typeof needTimelineStrings)["en"]) {
+  if (event === "taken") return t.eventTaken.replace("{label}", label ?? "");
+  if (event === "released") return t.eventReleased;
+  if (event === "delivered") return t.eventDelivered.replace("{label}", label ?? "");
+  return t.eventExpired;
+}
+
 export function GetHelp({ language }: { language: Language }) {
   const t = labels[language];
   const ts = formStrings[language];
@@ -1130,6 +1137,15 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
             ) : null}
             {result.deliveredBy ? <p>{ts.deliveredBy.replace("{label}", result.deliveredBy)}</p> : null}
             {result.confirmedAt ? <p className="text-sm text-muted-foreground">{ts.confirmedByBeneficiary}</p> : null}
+            {result.events?.length ? (
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{needTimelineStrings[language].eventsTitle}</p>
+                <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                  {result.events.map((event) => <li key={`${event.event}-${event.at}`}>{eventLabel(event.event, event.label, needTimelineStrings[language])} · {formatDateTime(event.at, language)}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {result.deliveryReceipt?.households !== undefined ? <p className="text-sm text-muted-foreground">{needTimelineStrings[language].receiptHouseholdsPublic.replace("{n}", String(result.deliveryReceipt.households))}</p> : null}
             <NeedTimeline steps={result.timeline} language={language} />
             {result.claimCode && (result.status === "published" || result.status === "matched") ? (
               <CodeDisplay

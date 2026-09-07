@@ -83,6 +83,8 @@ export interface StatusResponse {
   deliveredBy?: string;
   confirmedAt?: string;
   timeline: NeedTimelineStep[];
+  events?: { event: "taken" | "released" | "delivered" | "expired"; at: string; label?: string }[];
+  deliveryReceipt?: { photo?: NeedMediaItem; households?: number; at: string };
   deliveryChannel?: "direct" | "center";
   centerId?: string;
 }
@@ -325,6 +327,7 @@ export function presignNeedMedia(body: {
   size: number;
   turnstileToken?: string;
   onBehalf?: boolean;
+  purpose?: "receipt";
 }, token?: string): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
   return request(`/needs/media/presign`, { method: "POST", body: JSON.stringify(body), token });
 }
@@ -344,6 +347,8 @@ export interface MyNeed {
   handledByKind?: DeliveredByKind;
   deliveredBy?: string;
   confirmedAt?: string;
+  events?: { event: "taken" | "released" | "delivered" | "expired"; at: string; label?: string }[];
+  deliveryReceipt?: { photo?: NeedMediaItem; households?: number; at: string };
   timeline?: NeedTimelineStep[];
   deliveryChannel?: "direct" | "center";
   centerId?: string;
@@ -665,8 +670,8 @@ export function releaseNeed(token: string, needId: string): Promise<{ status: "p
   return request(`/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
 }
 
-export function deliverNeed(token: string, needId: string, note?: string): Promise<{ status: "fulfilled"; redeemedAt: string }> {
-  return request(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+export function deliverNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function takeNeedAsGroup(token: string, needId: string): Promise<{ status: "matched"; handler: string }> {
@@ -677,8 +682,8 @@ export function releaseGroupNeed(token: string, needId: string): Promise<{ statu
   return request(`/needs/${encodeURIComponent(needId)}/group/release`, { method: "POST", token });
 }
 
-export function deliverGroupNeed(token: string, needId: string, note?: string): Promise<{ status: "fulfilled"; redeemedAt: string }> {
-  return request(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+export function deliverGroupNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function setNeedDelivery(
@@ -1535,12 +1540,12 @@ export function orgDeliverNeed(
   token: string,
   orgId: string,
   needId: string,
-  note?: string,
+  body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {},
 ): Promise<{ status: string; redeemedAt: string }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, {
     method: "POST",
     token,
-    body: JSON.stringify(note ? { note } : {}),
+    body: JSON.stringify(body),
   });
 }
 export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
