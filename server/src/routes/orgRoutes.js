@@ -47,6 +47,10 @@ import {
   handleListOrgPayloadRequests, handleAssignPayloadRequest, handlePlanMission,
   handleFlownMission, handleAbortMission,
 } from "../controllers/droneController.js";
+import {
+  handleCreateAssignment, handleListAssignments, handleAssignmentStatus,
+  handleCreateLog, handleListLog, handleHandover,
+} from "../controllers/assignmentController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -64,6 +68,12 @@ const routes = [
   ["POST", /^\/orgs\/([^\/]+)\/centers$/, withAuth(handleCreateCenter)],
   ["GET", /^\/orgs\/([^\/]+)\/centers$/, withAuth(handleListOrgCenters)],
   ["GET", /^\/orgs\/([^\/]+)\/needs$/, withAuth(handleListOrgNeeds)],
+  ["POST", /^\/orgs\/([^\/]+)\/assignments$/, withAuth(handleCreateAssignment)],
+  ["GET", /^\/orgs\/([^\/]+)\/assignments$/, withAuth(handleListAssignments)],
+  ["POST", /^\/orgs\/([^\/]+)\/assignments\/([^\/]+)\/status$/, withAuth(handleAssignmentStatus)],
+  ["POST", /^\/orgs\/([^\/]+)\/log$/, withAuth(handleCreateLog)],
+  ["GET", /^\/orgs\/([^\/]+)\/log$/, withAuth(handleListLog)],
+  ["GET", /^\/orgs\/([^\/]+)\/handover$/, withAuth(handleHandover)],
   ["POST", /^\/orgs\/([^\/]+)\/distributions$/, withAuth(handlePostDistribution)],
   ["GET", /^\/orgs\/([^\/]+)\/distributions$/, withAuth(handleListOrgDistributions)],
   ["POST", /^\/orgs\/([^\/]+)\/distributions\/([^\/]+)\/complete$/, withAuth(handleCompleteDistribution)],
