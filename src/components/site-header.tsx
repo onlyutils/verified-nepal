@@ -38,6 +38,7 @@ const navPages = [
   ["projects", "projects"],
   ["dispatches", "dispatches"],
   ["ledger", "ledgerTitle"],
+  ["drones", "dronesTitle"],
 ] as const;
 
 export function SiteHeader({

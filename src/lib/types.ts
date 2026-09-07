@@ -15,6 +15,7 @@ export type Page =
   | "giveHelp"
   | "ledger"
   | "coverage"
+  | "drones"
   | "audit"
   | "projects"
   | "projectDetail"

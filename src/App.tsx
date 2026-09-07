@@ -19,6 +19,7 @@ import { ourMessageStrings } from "@/i18n/our-message";
 import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
+import { droneStrings } from "@/i18n/drones";
 import type { Language, Page } from "@/lib/types";
 import { pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
@@ -31,6 +32,7 @@ const GetHelp = lazy(() => import("@/pages/get-help").then((m) => ({ default: m.
 const GiveHelp = lazy(() => import("@/pages/give-help").then((m) => ({ default: m.GiveHelp })));
 const Ledger = lazy(() => import("@/pages/ledger").then((m) => ({ default: m.Ledger })));
 const Coverage = lazy(() => import("@/pages/coverage").then((m) => ({ default: m.Coverage })));
+const Drones = lazy(() => import("@/pages/drones").then((m) => ({ default: m.Drones })));
 const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.AuditPage })));
 const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
@@ -77,6 +79,7 @@ const pagePaths: Record<AppPage, string> = {
   giveHelp: "/give-help",
   ledger: "/ledger",
   coverage: "/coverage",
+  drones: "/drones",
   audit: "/audit",
   dispatches: "/articles",
   dispatchDetail: "/articles/:id",
@@ -124,6 +127,7 @@ function pageTitle(page: AppPage, language: Language): string {
     giveHelp: t.giveHelp,
     ledger: t.ledgerTitle,
     coverage: t.coverageTitle,
+    drones: droneStrings[language].title,
     audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
     dispatches: (t as Record<string, string>).dispatches ?? "Articles",
     dispatchDetail: (t as Record<string, string>).dispatches ?? "Articles",
@@ -330,6 +334,11 @@ export function App() {
               {page === "coverage" ? (
                 <ComponentErrorBoundary language={language}>
                   <Coverage language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "drones" ? (
+                <ComponentErrorBoundary language={language}>
+                  <Drones language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "audit" ? (

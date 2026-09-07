@@ -37,6 +37,7 @@ export function pageFromPath(path: string): AppPage {
   if (pathname.startsWith("/audit")) return "audit";
   if (pathname.startsWith("/coverage")) return "coverage";
   if (pathname.startsWith("/ledger")) return "ledger";
+  if (pathname.startsWith("/drones")) return "drones";
   if (pathname.startsWith("/desk/login")) return "deskLogin";
   if (pathname === "/desk" || pathname.startsWith("/desk/")) return "desk";
   if (pathname.startsWith("/search")) return "search";

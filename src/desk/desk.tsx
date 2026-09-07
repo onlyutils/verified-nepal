@@ -10,6 +10,7 @@ import {
   Inbox,
   LayoutList,
   Newspaper,
+  Plane,
   Printer,
   RefreshCw,
   ShieldCheck,
@@ -40,6 +41,8 @@ import { Sync } from "./sync";
 import { useDesk, type DeskSection } from "./use-desk";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { distributionStrings } from "@/i18n/distributions";
+import { droneStrings } from "@/i18n/drones";
+import { Drones } from "./drones";
 
 export function Desk({
   language,
@@ -93,6 +96,7 @@ export function Desk({
     { key: "stories", label: model.ds.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
     { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
     { key: "distributions", label: distributionStrings[language].nav, count: model.distributionsCount, icon: <ClipboardList /> },
+    { key: "drones", label: droneStrings[language].nav, icon: <Plane /> },
     ...(auth.profile.role === "admin"
       ? [
           { key: "incidents" as DeskSection, label: model.ds.deskIncidentsTab, icon: <Siren /> },
@@ -168,6 +172,7 @@ export function Desk({
           {model.activeSection === "stories" ? <Stories model={model} /> : null}
           {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
           {model.activeSection === "distributions" ? <Distributions model={model} /> : null}
+          {model.activeSection === "drones" ? <Drones model={model} /> : null}
           {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
           {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
           {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}

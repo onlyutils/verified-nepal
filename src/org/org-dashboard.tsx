@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, HandHeart, LayoutDashboard, PackageCheck, Settings, Users, Warehouse } from "lucide-react";
+import { ClipboardList, HandHeart, LayoutDashboard, PackageCheck, Plane, Settings, Users, Warehouse } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import { EmptyState, LoadingState } from "@/components/empty-state";
@@ -22,10 +22,12 @@ import { Team } from "./team";
 import { SettingsSection } from "./settings";
 import { OrgDialogs } from "./dialogs";
 import { distributionStrings } from "@/i18n/distributions";
+import { droneStrings } from "@/i18n/drones";
+import { Drones } from "./drones";
 
 function sectionFromHash(): OrgSection {
   const value = typeof window === "undefined" ? "overview" : window.location.hash.slice(1);
-  return ["overview", "needs", "centers", "donations", "distributions", "team", "settings"].includes(value)
+  return ["overview", "needs", "centers", "donations", "distributions", "drones", "team", "settings"].includes(value)
     ? (value as OrgSection)
     : "overview";
 }
@@ -166,6 +168,7 @@ export function OrgDashboard({
     { key: "centers", label: t.navCenters, icon: <Warehouse /> },
     { key: "donations", label: t.navDonations, icon: <PackageCheck /> },
     { key: "distributions", label: distributionStrings[language].nav, icon: <ClipboardList /> },
+    { key: "drones", label: droneStrings[language].nav, icon: <Plane /> },
     { key: "team", label: t.navTeam, icon: <Users /> },
     { key: "settings", label: t.navSettings, icon: <Settings /> },
   ];
@@ -207,6 +210,7 @@ export function OrgDashboard({
       {active === "centers" ? <Centers controller={controller} /> : null}
       {active === "donations" ? <Donations controller={controller} /> : null}
       {active === "distributions" ? <Distributions controller={controller} /> : null}
+      {active === "drones" ? <Drones controller={controller} /> : null}
       {active === "team" ? <Team controller={controller} /> : null}
       {active === "settings" ? <SettingsSection controller={controller} /> : null}
       <OrgDialogs controller={controller} />

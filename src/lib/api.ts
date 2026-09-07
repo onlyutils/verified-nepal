@@ -34,6 +34,13 @@ export interface GroupPublic {
   isMember?: boolean;
 }
 
+export interface NeedKitSummary {
+  name: string;
+  nameNe: string;
+  households: number;
+  weightKg?: number;
+}
+
 export interface NeedPublic {
   id: string;
   maskedName: string;
@@ -60,6 +67,7 @@ export interface NeedPublic {
   deliveryChannel?: "direct" | "center";
   centerId?: string;
   deliveryDonation?: { ref: string; category: string; status: "declared" | "received" | "not_received"; receivedAt?: string };
+  kit?: NeedKitSummary;
 }
 
 export type NeedTimelineKey = "taken" | "declared" | "received" | "handed_over" | "confirmed";
@@ -92,6 +100,7 @@ export interface StatusResponse {
   deliveryReceipt?: { photo?: NeedMediaItem; households?: number; at: string };
   deliveryChannel?: "direct" | "center";
   centerId?: string;
+  kit?: NeedKitSummary;
 }
 
 export interface NeedMediaItem {
@@ -167,6 +176,7 @@ export interface CreateNeedBody {
   incidentId?: string;
   newIncident?: { name: string; kind: string; district: DistrictName; description: string };
   assignOnly?: boolean;
+  kit?: { kitId: string; households: number };
 }
 
 export interface CreateNeedResponse {
@@ -425,6 +435,7 @@ export interface MyNeed {
   timeline?: NeedTimelineStep[];
   deliveryChannel?: "direct" | "center";
   centerId?: string;
+  kit?: NeedKitSummary;
 }
 
 export interface MyRegisteredNeed extends MyNeed {}
@@ -492,6 +503,7 @@ export interface NeedContact {
   updatedAt?: string;
   beneficiary: { name: string; phone: string | null; district?: string; ward?: number };
   handledAt?: string;
+  kit?: NeedKitSummary;
   timeline?: NeedTimelineStep[];
   deliveryChannel?: "direct" | "center";
   centerId?: string;
@@ -1177,6 +1189,218 @@ export function ddmcLogUrl(district: string, date: string, format: "csv" | "json
   return `${API_BASE}/export/ddmc-log${qs({ district, date, format })}`;
 }
 
+export type DronePermitStatus = "none" | "applied" | "granted";
+export type DroneOperatorStatus = "active" | "inactive";
+export type DroneSurface = "field" | "road" | "roof" | "riverbank" | "other";
+export type DroneSiteStatus = "active" | "closed";
+export type DroneRequestStatus = "open" | "assigned" | "flown" | "delivered" | "cancelled";
+export type DronePriority = "urgent" | "normal";
+export type DroneMissionStatus = "planned" | "flown" | "confirmed" | "aborted";
+
+export interface DroneItem {
+  kitId?: string;
+  households?: number;
+  category: string;
+  qty: number;
+  unit: string;
+}
+
+export interface DroneOperator {
+  id: string;
+  orgId?: string;
+  orgName: string;
+  aircraft: string;
+  payloadKg: number;
+  rangeKm: number;
+  caanUin?: string;
+  permitStatus: DronePermitStatus;
+  permitRef?: string;
+  baseDistrict: string;
+  baseMunicipalityId?: number;
+  contactPhone?: string;
+  status: DroneOperatorStatus;
+  createdAt?: string;
+}
+
+export interface DroneLandingSite {
+  id: string;
+  name: string;
+  district: string;
+  municipalityId: number;
+  municipality?: string;
+  ward: number;
+  lat: number;
+  lng: number;
+  clearanceM: number;
+  surface: DroneSurface;
+  groundContactName?: string;
+  groundContactPhone?: string;
+  status: DroneSiteStatus;
+  photo?: NeedMediaItem;
+}
+
+export interface DronePayloadRequest {
+  id: string;
+  incidentId: string;
+  district: string;
+  municipalityId: number;
+  municipality?: string;
+  ward: number;
+  landingSiteId?: string;
+  items: DroneItem[];
+  weightKg: number;
+  coldChain: boolean;
+  priority: DronePriority;
+  windowStart: string;
+  windowEnd: string;
+  requestedBy?: { kind: "org" | "moderator"; orgId?: string; sub?: string; name?: string };
+  contactPhone?: string;
+  status: DroneRequestStatus;
+  assignedOperatorId?: string;
+  assignedOrgId?: string;
+  assignedOrgName?: string;
+  missionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DroneMission {
+  id: string;
+  requestId: string;
+  operatorId: string;
+  orgId: string;
+  district: string;
+  permitRef?: string;
+  notamRef?: string;
+  etd: string;
+  eta: string;
+  flownAt?: string;
+  dropPhoto?: NeedMediaItem;
+  recipientConfirmedAt?: string;
+  status: DroneMissionStatus;
+  note?: string;
+  createdAt: string;
+  operatorAircraft?: string;
+  org?: string;
+}
+
+export interface DroneBoardResponse {
+  requests: DronePayloadRequest[];
+  sites: DroneLandingSite[];
+  operators: Array<Pick<DroneOperator, "id" | "orgName" | "aircraft" | "payloadKg" | "rangeKm" | "baseDistrict" | "permitStatus">>;
+  flights: Array<Pick<DroneMission, "id" | "district" | "etd" | "eta" | "status"> & { operatorAircraft?: string; org?: string }>;
+}
+
+export interface DroneRequestBody {
+  incidentId: string;
+  district: string;
+  municipalityId: number;
+  ward: number;
+  landingSiteId?: string;
+  items: DroneItem[];
+  weightKg?: number;
+  coldChain: boolean;
+  priority: DronePriority;
+  windowStart: string;
+  windowEnd: string;
+  contactPhone: string;
+}
+
+export interface DroneOperatorBody {
+  aircraft: string;
+  payloadKg: number;
+  rangeKm: number;
+  caanUin?: string;
+  permitStatus: DronePermitStatus;
+  permitRef?: string;
+  baseDistrict: string;
+  baseMunicipalityId?: number;
+  contactPhone: string;
+  status?: DroneOperatorStatus;
+}
+
+export interface DroneLandingSiteBody {
+  name: string;
+  district: string;
+  municipalityId: number;
+  ward: number;
+  lat: number;
+  lng: number;
+  clearanceM: number;
+  surface: DroneSurface;
+  groundContactName: string;
+  groundContactPhone: string;
+  photo?: NeedMediaItem;
+}
+
+export function getDroneBoard(incidentId?: string): Promise<DroneBoardResponse> {
+  return request<DroneBoardResponse>(`/drones/board${incidentId ? `?incidentId=${encodeURIComponent(incidentId)}` : ""}`);
+}
+
+export function listOrgDroneOperators(token: string, orgId: string): Promise<{ items: DroneOperator[] }> {
+  return request<{ items: DroneOperator[] }>(`/orgs/${encodeURIComponent(orgId)}/drones/operators`, { token });
+}
+
+export function createOrgDroneOperator(token: string, orgId: string, body: DroneOperatorBody): Promise<DroneOperator> {
+  return request<DroneOperator>(`/orgs/${encodeURIComponent(orgId)}/drones/operators`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function updateOrgDroneOperator(token: string, orgId: string, id: string, body: Partial<DroneOperatorBody>): Promise<DroneOperator> {
+  return request<DroneOperator>(`/orgs/${encodeURIComponent(orgId)}/drones/operators/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function listOrgDroneSites(token: string, orgId: string): Promise<{ items: DroneLandingSite[] }> {
+  return request<{ items: DroneLandingSite[] }>(`/orgs/${encodeURIComponent(orgId)}/drones/sites`, { token });
+}
+
+export function createOrgDroneSite(token: string, orgId: string, body: DroneLandingSiteBody): Promise<DroneLandingSite> {
+  return request<DroneLandingSite>(`/orgs/${encodeURIComponent(orgId)}/drones/sites`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function createOrgDroneRequest(token: string, orgId: string, body: DroneRequestBody): Promise<DronePayloadRequest> {
+  return request<DronePayloadRequest>(`/orgs/${encodeURIComponent(orgId)}/drones/requests`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function listOrgDroneRequests(token: string, orgId: string): Promise<{ items: DronePayloadRequest[] }> {
+  return request<{ items: DronePayloadRequest[] }>(`/orgs/${encodeURIComponent(orgId)}/drones/requests`, { token });
+}
+
+export function assignDroneRequest(token: string, orgId: string, id: string, operatorId: string): Promise<DronePayloadRequest> {
+  return request<DronePayloadRequest>(`/orgs/${encodeURIComponent(orgId)}/drones/requests/${encodeURIComponent(id)}/assign`, { method: "POST", token, body: JSON.stringify({ operatorId }) });
+}
+
+export function planDroneMission(token: string, orgId: string, requestId: string, body: { etd: string; eta: string; permitRef?: string; notamRef?: string; note?: string }): Promise<DroneMission> {
+  return request<DroneMission>(`/orgs/${encodeURIComponent(orgId)}/drones/requests/${encodeURIComponent(requestId)}/missions`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function markDroneMissionFlown(token: string, orgId: string, missionId: string, body: { dropPhoto?: NeedMediaItem; note?: string }): Promise<DroneMission> {
+  return request<DroneMission>(`/orgs/${encodeURIComponent(orgId)}/drones/missions/${encodeURIComponent(missionId)}/flown`, { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function abortDroneMission(token: string, orgId: string, missionId: string): Promise<DroneMission> {
+  return request<DroneMission>(`/orgs/${encodeURIComponent(orgId)}/drones/missions/${encodeURIComponent(missionId)}/abort`, { method: "POST", token });
+}
+
+export function createModeratorDroneRequest(token: string, body: DroneRequestBody): Promise<DronePayloadRequest> {
+  return request<DronePayloadRequest>("/moderation/drones/requests", { method: "POST", token, body: JSON.stringify(body) });
+}
+
+export function listModeratorDroneRequests(token: string, status: DroneRequestStatus): Promise<{ items: DronePayloadRequest[] }> {
+  return request<{ items: DronePayloadRequest[] }>(`/moderation/drones/requests${qs({ status })}`, { token });
+}
+
+export function confirmDroneRequest(token: string, id: string): Promise<DronePayloadRequest> {
+  return request<DronePayloadRequest>(`/moderation/drones/requests/${encodeURIComponent(id)}/confirm`, { method: "POST", token });
+}
+
+export function cancelDroneRequest(token: string, id: string): Promise<DronePayloadRequest> {
+  return request<DronePayloadRequest>(`/moderation/drones/requests/${encodeURIComponent(id)}/cancel`, { method: "POST", token });
+}
+
+export function createModeratorDroneSite(token: string, body: DroneLandingSiteBody): Promise<DroneLandingSite> {
+  return request<DroneLandingSite>("/moderation/drones/sites", { method: "POST", token, body: JSON.stringify(body) });
+}
+
 export function flagNeed(id: string, body: FlagInput): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>(`/needs/${encodeURIComponent(id)}/flag`, { method: "POST", body: JSON.stringify(body) });
 }
@@ -1722,6 +1946,7 @@ export interface OrgNeed {
   handover?: boolean;
   donation?: DonationStatus["need"];
   timeline?: NeedTimelineStep[];
+  kit?: NeedKitSummary;
 }
 export function listOrgNeeds(token: string, orgId: string): Promise<{ items: OrgNeed[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/needs`, { token });

@@ -90,6 +90,7 @@ export type DeskSection =
   | "stories"
   | "orgs"
   | "distributions"
+  | "drones"
   | "incidents"
   | "admin"
   | "climate";
@@ -110,6 +111,7 @@ const sections = new Set<DeskSection>([
   "stories",
   "orgs",
   "distributions",
+  "drones",
   "incidents",
   "admin",
   "climate",
