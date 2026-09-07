@@ -543,8 +543,9 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
             <MyStories language={language} token={auth.idToken} eligible={!!data.storyRole} />
           </section>
           {work && work.lifetime.total > 0 ? (
-            <section>
-              <WorkTally data={work} t={t} />
+            <section className="space-y-3">
+              <h2 className="text-2xl font-bold tracking-tight">{t.workTitle}</h2>
+              <WorkTally data={work} t={t} showTitle={false} />
             </section>
           ) : null}
           <section className="space-y-3">

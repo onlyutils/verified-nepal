@@ -5,7 +5,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import type { WorkResponse } from "@/lib/api";
 import { meStrings } from "@/i18n/me";
 
-export function WorkTally({ data, t }: { data: WorkResponse; t: (typeof meStrings)["en"] }) {
+export function WorkTally({ data, t, showTitle = true }: { data: WorkResponse; t: (typeof meStrings)["en"]; showTitle?: boolean }) {
   const [selectedMonth, setSelectedMonth] = useState(data.months[0]?.month ?? "");
   const month = data.months.find((item) => item.month === selectedMonth) ?? data.months[0];
   const rows = Object.entries(month?.counts ?? {}).sort(([keyA, countA], [keyB, countB]) => countB - countA || keyA.localeCompare(keyB));
@@ -14,7 +14,7 @@ export function WorkTally({ data, t }: { data: WorkResponse; t: (typeof meString
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.workTitle}</CardTitle>
+        {showTitle ? <CardTitle>{t.workTitle}</CardTitle> : null}
         <CardDescription>{t.workDescription}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
