@@ -332,7 +332,7 @@ describe("GET /ledger", () => {
     for(const it of body.items){
       assert.equal("phone" in it, false);
       assert.equal("householdSize" in it, false);
-      assert.deepEqual(Object.keys(it).sort(), ["category","deliveredBy","district","maskedName","redeemedAt","ward"]);
+      assert.deepEqual(Object.keys(it).sort(), ["category","deliveredBy","district","maskedName","municipalityId","redeemedAt","ward"]);
     }
     // no district means all districts
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{}}));
