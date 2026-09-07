@@ -7,6 +7,7 @@ import { climateStrings } from "@/i18n/climate";
 import { deskStrings } from "@/i18n/desk";
 import { meStrings } from "@/i18n/me";
 import { orgStrings } from "@/i18n/orgs";
+import { ourMessageStrings } from "@/i18n/our-message";
 import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
 import type { Language, Page } from "@/lib/types";
@@ -32,6 +33,7 @@ const navPages = [
   ["dropCenters", "dropCenters"],
   ["incidents", "incidents"],
   ["climate", "climate"],
+  ["ourMessage", "ourMessage"],
   ["info", "info"],
   ["projects", "projects"],
   ["dispatches", "dispatches"],
@@ -144,6 +146,7 @@ function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
   if (page === "climate") return climateStrings[language].navLabel;
+  if (page === "ourMessage") return ourMessageStrings[language].navLabel;
   if (page === "poster") return posterStrings[language].catalogueTitle;
   return t[key] ?? page;
 }

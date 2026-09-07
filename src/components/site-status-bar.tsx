@@ -3,6 +3,7 @@ import { labels } from "@/i18n";
 import { centerStrings } from "@/i18n/centers";
 import { climateStrings } from "@/i18n/climate";
 import { meStrings } from "@/i18n/me";
+import { ourMessageStrings } from "@/i18n/our-message";
 import { shellStrings } from "@/i18n/shell";
 import { posterStrings } from "@/i18n/poster";
 import type { Language, Page } from "@/lib/types";
@@ -22,6 +23,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
     ["poster", posterStrings[language].catalogueTitle],
     ["dropCenters", centerStrings[language].navDropCenters],
     ["climate", climateStrings[language].navLabel],
+    ["ourMessage", ourMessageStrings[language].navLabel],
     ["projects", t.projects],
     ["dispatches", t.dispatches],
     ["ledger", t.ledgerTitle],

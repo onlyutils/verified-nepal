@@ -2,6 +2,7 @@ import type { Language } from "@/lib/types";
 
 export const ourMessageStrings = {
   en: {
+    navLabel: "Our message",
     eyebrow: "Add your voice",
     title: "Your message becomes Nepal's message",
     description:
@@ -26,6 +27,7 @@ export const ourMessageStrings = {
     exportError: "Your browser cannot save the picture. Take a screenshot of the preview instead.",
   },
   ne: {
+    navLabel: "हाम्रो सन्देश",
     eyebrow: "आफ्नो आवाज थप्नुहोस्",
     title: "तपाईंको सन्देश नेपालको सन्देश बन्छ",
     description:
