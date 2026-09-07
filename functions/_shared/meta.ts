@@ -3,10 +3,25 @@
 // is import-only, never a route of its own.
 import type { ShareMeta } from "../../src/lib/og-meta";
 
+const PROD_HOSTS = new Set(["verifiednepal.com", "www.verifiednepal.com"]);
+
+export function isProdHost(hostname: string): boolean {
+  return PROD_HOSTS.has(hostname);
+}
+
 export function apiBase(hostname: string): string {
-  return hostname === "verifiednepal.com" || hostname === "www.verifiednepal.com"
-    ? "https://api.prod.verifiednepal.com"
-    : "https://api.dev.verifiednepal.com";
+  return isProdHost(hostname) ? "https://api.prod.verifiednepal.com" : "https://api.dev.verifiednepal.com";
+}
+
+/**
+ * Canonical/og:url/sitemap links must always point at the production domain,
+ * even when the page is served from dev or a preview host — otherwise every
+ * non-prod deploy publishes itself as a legitimate, self-canonical duplicate
+ * of the real site, which is exactly the kind of thing that gets a brand-name
+ * query split across two indexed domains instead of ranking one clearly.
+ */
+export function canonicalOrigin(hostname: string): string {
+  return isProdHost(hostname) ? `https://${hostname}` : "https://verifiednepal.com";
 }
 
 /** Resolves a site-relative image path (e.g. "/brand/og-poster.png") to an absolute URL. */

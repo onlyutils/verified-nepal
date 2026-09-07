@@ -2,7 +2,7 @@
 // published items pulled live from the API, so new articles/projects/centers/
 // posters show up without a manual edit. Replaces the old hand-written
 // public/sitemap.xml.
-import { apiBase } from "./_shared/meta";
+import { apiBase, canonicalOrigin } from "./_shared/meta";
 
 type Ctx = { request: Request };
 
@@ -37,8 +37,9 @@ function urlEntry(loc: string, changefreq: string, priority: string, lastmod?: s
 export const onRequestGet = async ({ request }: Ctx): Promise<Response> => {
   const url = new URL(request.url);
   const base = apiBase(url.hostname);
+  const origin = canonicalOrigin(url.hostname);
 
-  const entries = STATIC_ROUTES.map((r) => urlEntry(`${url.origin}${r.path}`, r.changefreq, r.priority));
+  const entries = STATIC_ROUTES.map((r) => urlEntry(`${origin}${r.path}`, r.changefreq, r.priority));
 
   const dynamic = await Promise.all(
     DYNAMIC_SOURCES.map(async (source) => {
@@ -50,7 +51,7 @@ export const onRequestGet = async ({ request }: Ctx): Promise<Response> => {
           .filter((item) => item.id)
           .map((item) =>
             urlEntry(
-              `${url.origin}${source.pathPrefix}/${encodeURIComponent(item.id!)}`,
+              `${origin}${source.pathPrefix}/${encodeURIComponent(item.id!)}`,
               source.changefreq,
               source.priority,
               item.updatedAt || item.createdAt,
