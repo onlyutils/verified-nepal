@@ -131,6 +131,8 @@ infra/deploy.sh            Cloudflare Pages deploy (dev/prod, maintainer credent
 
 ## Documentation
 
+Documentation for people: `/how-to` on the site.
+
 | Doc | Covers |
 |---|---|
 | [docs/FEATURES.md](docs/FEATURES.md) | Every feature and flow, plain-English: needs/offers, disasters, missing posters, projects, articles, stories, orgs/centers, moderation, audit |

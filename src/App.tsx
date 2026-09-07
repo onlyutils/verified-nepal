@@ -18,6 +18,7 @@ import { climateStrings } from "@/i18n/climate";
 import { ourMessageStrings } from "@/i18n/our-message";
 import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
+import { howToStrings } from "@/i18n/how-to";
 import type { Language, Page } from "@/lib/types";
 import { pageFromPath, type AppPage } from "@/lib/page-routing";
 
@@ -54,6 +55,7 @@ const OurMessagePage = lazy(() => import("@/pages/our-message").then((m) => ({ d
 const IncidentsPage = lazy(() => import("@/pages/incidents").then((m) => ({ default: m.IncidentsPage })));
 const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
 const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
+const HowTo = lazy(() => import("@/pages/how-to").then((m) => ({ default: m.HowTo })));
 
 const pagePaths: Record<AppPage, string> = {
   dashboard: "/",
@@ -86,6 +88,7 @@ const pagePaths: Record<AppPage, string> = {
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
   climate: "/climate",
+  howTo: "/how-to",
   ourMessage: "/our-message",
   reportIncident: "/report-incident",
   incidents: "/incidents",
@@ -131,6 +134,7 @@ function pageTitle(page: AppPage, language: Language): string {
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
     climate: climateStrings[language].title,
+    howTo: howToStrings[language].pageTitle,
     ourMessage: ourMessageStrings[language].title,
     reportIncident: disasterStrings[language].reportIncidentTitle,
     incidents: disasterStrings[language].incidentsPublicTitle,
@@ -362,6 +366,7 @@ export function App() {
                   <ClimatePage language={language} navigate={navigate} />
                 </ComponentErrorBoundary>
               ) : null}
+              {page === "howTo" ? <HowTo language={language} /> : null}
               {page === "ourMessage" ? (
                 <ComponentErrorBoundary language={language}>
                   <OurMessagePage language={language} />

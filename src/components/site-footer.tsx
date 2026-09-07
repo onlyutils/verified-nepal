@@ -46,6 +46,7 @@ export function SiteFooter({ language, navigate }: { language: Language; navigat
           </FooterColumn>
           <FooterColumn title={ts.footerAbout}>
             {routeLink("info", ts.footerDataSources)}
+            {routeLink("howTo", ts.howToGuide)}
             <a className={linkClass} href={githubUrl} target="_blank" rel="noopener noreferrer">
               {ts.githubLink}
             </a>

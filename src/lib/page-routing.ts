@@ -14,6 +14,7 @@ export function pageFromPath(path: string): AppPage {
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
   if (pathname.startsWith("/climate")) return "climate";
+  if (pathname.startsWith("/how-to")) return "howTo";
   if (pathname.startsWith("/our-message")) return "ourMessage";
   if (pathname.startsWith("/report-incident")) return "reportIncident";
   if (pathname.startsWith("/incidents")) return "incidents";

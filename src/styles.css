@@ -157,6 +157,36 @@ html[data-page="deskLogin"] #onyutils-chat-widget {
   }
 }
 
+/* The How VerifiedNepal works guide is intended to print as a clean handout. */
+@media print {
+  body:has(.how-to-page) header,
+  body:has(.how-to-page) footer,
+  body:has(.how-to-page) .site-status-bar,
+  body:has(.how-to-page) .emergency-bar,
+  body:has(.how-to-page) .how-to-toc,
+  body:has(.how-to-page) .how-to-print-control,
+  body:has(.how-to-page) .how-to-page ~ * {
+    display: none !important;
+  }
+  body:has(.how-to-page) main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .how-to-page {
+    max-width: 68ch !important;
+    color: #000;
+  }
+  .how-to-section {
+    break-before: page;
+  }
+  .how-to-section:first-child {
+    break-before: auto;
+  }
+  .how-to-figure {
+    break-inside: avoid;
+  }
+}
+
 /* --- Leaflet ------------------------------------------------------------ */
 .leaflet-container {
   font-family: inherit;

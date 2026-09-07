@@ -377,6 +377,9 @@ that moderators are accountable, not acting in the dark.
 - **Info & Help** — general information and emergency contact numbers.
 - **Privacy** — the site's privacy policy.
 - **Home** — the landing page: a quick overview and shortcuts into everything above.
+- **How VerifiedNepal works** (`/how-to`) — a presentation-ready guide for people, partners,
+  moderators and volunteers, covering the trust model, codes, workflows, public ledgers and
+  The Desk without requiring an account.
 
 ---
 

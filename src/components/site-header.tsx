@@ -122,6 +122,11 @@ export function SiteHeader({
                   </Button>
                 </SheetClose>
                 <p className="mt-5 px-3 text-xs font-semibold text-muted-foreground">{ts.guidesTitle}</p>
+                <SheetClose asChild>
+                  <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("howTo")}>
+                    {ts.howToGuide}
+                  </Button>
+                </SheetClose>
                 {guideLinks(language).map(([href, label]) => (
                   <a
                     key={href}

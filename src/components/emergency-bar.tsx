@@ -11,7 +11,7 @@ export function EmergencyBar({ language }: { language: Language }) {
   const t = labels[language];
   const ts = shellStrings[language];
   return (
-    <aside aria-label={t.emergencyStripLabel} className="bg-destructive text-destructive-foreground">
+    <aside aria-label={t.emergencyStripLabel} className="emergency-bar bg-destructive text-destructive-foreground">
       <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-center gap-1 px-2 text-[11px] sm:hidden">
         <a
           href="tel:1234"

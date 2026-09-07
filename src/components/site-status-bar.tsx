@@ -30,7 +30,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
   ];
 
   return (
-    <div className="border-b border-primary-soft-border bg-primary-soft">
+    <div className="site-status-bar border-b border-primary-soft-border bg-primary-soft">
       <div className={container}>
         <LiveStatusBadge language={language} />
         <nav aria-label={ts.primaryNavigation} className="hidden items-center gap-3 lg:flex">
