@@ -19,6 +19,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { MyStories } from "@/components/my-stories";
 import { PosterGrid } from "@/components/poster-grid";
+import { CodeDisplay } from "@/components/code-display";
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -333,7 +334,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
               </section>
             ),
           },
-        ].sort((a, b) => Number(b.hasItems) - Number(a.hasItems) || b.latestTimestamp - a.latestTimestamp);
+        ].filter((section) => section.key !== "needs").sort((a, b) => Number(b.hasItems) - Number(a.hasItems) || b.latestTimestamp - a.latestTimestamp);
       })()
     : [];
   return (
@@ -351,6 +352,77 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       {!data && !error ? <LoadingState label={t.loading} /> : null}
       {data ? (
         <>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.registeredNeedsTitle}</h2>
+            {([...data.needs, ...(data.registeredNeeds ?? [])].length === 0) ? (
+              <EmptyState title={t.registeredNeedsEmpty} action={<Button type="button" onClick={() => navigate("getHelp")}>{t.needsNew}</Button>} />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[...data.needs, ...(data.registeredNeeds ?? [])].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt)).map((need) => (
+                  <Card key={need.id}>
+                    <CardHeader>
+                      <CardTitle className="font-mono tracking-widest">{need.refCode}</CardTitle>
+                      <CardDescription>
+                        {need.district ?? tl.unavailable}{need.ward ? ` · ${t.ward} ${need.ward}` : ""}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(need.status, language)}</StatusBadge>
+                        {need.expiresAt ? <span className="text-sm text-muted-foreground">{t.needExpires.replace("{date}", formatDateTime(need.expiresAt, language))}</span> : null}
+                      </div>
+                      {need.claimCode ? (
+                        <CodeDisplay
+                          code={need.claimCode}
+                          kind="claim"
+                          label={t.claimCode}
+                          hint={t.claimCodeHint}
+                          copyLabel={t.claimCodeCopy}
+                          copiedLabel={t.claimCodeCopied}
+                        />
+                      ) : null}
+                      {need.handledBy ? <p className="text-sm"><span className="font-medium">{t.takenBy}:</span> {need.handledBy}</p> : null}
+                      {need.deliveredBy ? <p className="text-sm text-muted-foreground">{t.delivered}: {need.deliveredBy}</p> : null}
+                      {need.confirmedAt ? <p className="text-sm text-muted-foreground">{t.confirmed}: {formatDateTime(need.confirmedAt, language)}</p> : null}
+                      {(["pending", "published", "matched"] as string[]).includes(need.status) ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={renewed[need.id]}
+                          onClick={() =>
+                            renewNeed(need.refCode)
+                              .then(() => setRenewed((current) => ({ ...current, [need.id]: true })))
+                              .catch(() => {})
+                          }
+                        >
+                          {renewed[need.id] ? t.needRenewed : t.needRenew}
+                        </Button>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.projectsTitle}</h2>
+            {(data.projects ?? []).length === 0 ? (
+              <EmptyState title={t.projectsEmpty} />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[...(data.projects ?? [])].sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt)).map((project) => (
+                  <Card key={project.id}>
+                    <CardHeader>
+                      <CardTitle>{project.title[language] || project.title.en}</CardTitle>
+                      <CardDescription>{project.district} · {t.ward} {project.ward}</CardDescription>
+                    </CardHeader>
+                    <CardContent><StatusBadge tone={toneForStatus(project.status)}>{statusLabel(project.status, language)}</StatusBadge></CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.handledNeedsTitle}</h2>
             {data.handledNeeds.length === 0 ? (

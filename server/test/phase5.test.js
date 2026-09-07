@@ -199,7 +199,7 @@ describe("Phase5 district scoping", () => {
         incidentId: TEST_INCIDENT_ID,
         committee: { name: "Com", contactName: "C", phone: "+9779800000001", bank: { bankName: "B", accountName: "A", accountNumber: "1" } }
       };
-      const r = await handler(makeEvent({ method: "POST", path: "/projects", body }));
+      const r = await handler(makeEvent({ method: "POST", path: "/projects", headers: { authorization: `Bearer ${modGTok}` }, body }));
       assert.equal(r.statusCode, 201);
       return JSON.parse(r.body).id;
     }
@@ -353,7 +353,7 @@ describe("Phase5 admin stats and audit", () => {
       incidentId: TEST_INCIDENT_ID,
       committee: { name: "Com", contactName: "C", phone: "+9779800000001", bank: { bankName: "B", accountName: "A", accountNumber: "1" } }
     };
-    let r = await handler(makeEvent({ method: "POST", path: "/projects", body: projBody }));
+    let r = await handler(makeEvent({ method: "POST", path: "/projects", headers: { authorization: `Bearer ${modTok}` }, body: projBody }));
     const projId = JSON.parse(r.body).id;
     await handler(makeEvent({ method: "POST", path: `/moderation/projects/${projId}`, headers: { authorization: `Bearer ${modTok}` }, body: { action: "verify-committee" } }));
     await handler(makeEvent({ method: "POST", path: `/moderation/projects/${projId}`, headers: { authorization: `Bearer ${modTok}` }, body: { action: "publish" } }));

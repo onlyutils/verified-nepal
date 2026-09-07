@@ -74,7 +74,9 @@ export const communityStrings = {
     projectLoading: "Loading project…",
     projectRegisterTitle: "Register a community project",
     projectRegisterLead:
-      "Tell us about your infrastructure need. A moderator will call your committee to verify before publishing. No account needed.",
+      "Tell us about your infrastructure need. Sign in so your committee's project stays connected to your account; a moderator will call before publishing.",
+    projectRegisterSignInTitle: "Sign in to register a project",
+    projectRegisterSignInBody: "Sign in so your project stays connected to you and you can follow its review.",
     projectDetailsCard: "Project details",
     projectResponsibleCard: "Responsible committee",
     projectBankCard: "Committee bank account for donors",
@@ -360,7 +362,9 @@ export const communityStrings = {
     projectLoading: "परियोजना लोड हुँदै…",
     projectRegisterTitle: "सामुदायिक परियोजना दर्ता गर्नुहोस्",
     projectRegisterLead:
-      "तपाईंको पूर्वाधार आवश्यकताबारे बताउनुहोस्। प्रकाशन गर्नुअघि मोडरेटरले समितिलाई फोन गरेर प्रमाणित गर्नेछ। खाता आवश्यक छैन।",
+      "तपाईंको पूर्वाधार आवश्यकताबारे बताउनुहोस्। परियोजना तपाईंको खातासँग जोड्न साइन इन गर्नुहोस्; प्रकाशन गर्नुअघि मोडरेटरले समितिलाई फोन गर्नेछ।",
+    projectRegisterSignInTitle: "परियोजना दर्ता गर्न साइन इन गर्नुहोस्",
+    projectRegisterSignInBody: "तपाईंको परियोजना तपाईंसँग जोडेर समीक्षा पछ्याउन साइन इन गर्नुहोस्।",
     projectDetailsCard: "परियोजना विवरण",
     projectResponsibleCard: "जिम्मेवार समिति",
     projectBankCard: "दाताका लागि समिति बैंक खाता",

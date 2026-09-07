@@ -110,6 +110,7 @@ export interface AdminIncident extends Incident {
 export interface CreateNeedBody {
   onBehalf: boolean;
   registrant: { name: string; phone: string; email?: string } | null;
+  consent?: boolean;
   beneficiary: { name: string; phone?: string; email?: string; district: string; ward: number; householdSize?: number };
   category: Category;
   description: string;
@@ -300,8 +301,9 @@ export function presignNeedMedia(body: {
   contentType: string;
   size: number;
   turnstileToken?: string;
-}): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
-  return request(`/needs/media/presign`, { method: "POST", body: JSON.stringify(body) });
+  onBehalf?: boolean;
+}, token?: string): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
+  return request(`/needs/media/presign`, { method: "POST", body: JSON.stringify(body), token });
 }
 
 export interface MyNeed {
@@ -313,6 +315,22 @@ export interface MyNeed {
   ward?: number;
   createdAt: string;
   expiresAt?: string;
+  claimCode?: string;
+  handledBy?: string;
+  handledByKind?: DeliveredByKind;
+  deliveredBy?: string;
+  confirmedAt?: string;
+}
+
+export interface MyRegisteredNeed extends MyNeed {}
+
+export interface MyProject {
+  id: string;
+  title: { en: string; ne?: string };
+  status: ProjectStatus;
+  district: string;
+  ward: number;
+  createdAt: string;
 }
 
 export interface MyOffer {
@@ -386,6 +404,8 @@ export interface MyIncident {
 export interface DashboardResponse {
   missing: MyMissing[];
   needs: MyNeed[];
+  registeredNeeds: MyRegisteredNeed[];
+  projects: MyProject[];
   offers: MyOffer[];
   groups: MyGroup[];
   handledNeeds: HandledNeed[];
@@ -998,8 +1018,8 @@ export function listProjects(
 export function getProject(id: string): Promise<ProjectDetailResponse> {
   return request<ProjectDetailResponse>(`/projects/${encodeURIComponent(id)}`);
 }
-export function createProject(body: CreateProjectBody): Promise<CreateProjectResponse> {
-  return request<CreateProjectResponse>("/projects", { method: "POST", body: JSON.stringify(body) });
+export function createProject(body: CreateProjectBody, token?: string): Promise<CreateProjectResponse> {
+  return request<CreateProjectResponse>("/projects", { method: "POST", body: JSON.stringify(body), token });
 }
 export function presignProjectPhoto(
   id: string,

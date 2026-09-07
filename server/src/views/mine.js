@@ -32,6 +32,21 @@ export function toMyNeed(n) {
   return { id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward, createdAt: n.createdAt, expiresAt: n.expiresAt };
 }
 
+export function toMyRegisteredNeed(n) {
+  return {
+    ...toMyNeed(n),
+    claimCode: n.claimCode && ["published", "matched", "fulfilled"].includes(n.status) ? n.claimCode : undefined,
+    handledBy: n.handledBy?.label || n.handledBy?.orgName,
+    handledByKind: n.handledBy?.kind || (n.handledBy?.orgName ? "org" : undefined),
+    deliveredBy: n.deliveredBy?.label,
+    confirmedAt: n.confirmedAt,
+  };
+}
+
+export function toMyProject(p) {
+  return { id: p.id, title: p.title, status: p.status, district: p.district, ward: p.ward, createdAt: p.createdAt };
+}
+
 export function toMyOffer(o) {
   return { id: o.id, status: o.status, categories: o.categories, districts: o.districts, createdAt: o.createdAt, expiresAt: o.expiresAt };
 }

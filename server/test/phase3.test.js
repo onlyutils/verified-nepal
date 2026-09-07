@@ -10,8 +10,19 @@ function makeHandler({ envOverrides = {}, ddb, kp, fetchImpl } = {}) {
   seedActiveIncident(d);
   const env = { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "test-table", OU_MEDIA_CLIENT_ID: "ou_client_test", OU_MEDIA_CLIENT_SECRET: "secret123", MEDIA_HOST: "https://media.onlyutils.com", ...envOverrides };
   const fetchJwks = async () => ({ keys: [keyPair.jwk] });
-  const handler = createHandler({ env, ddbClient: d, fetchJwks, fetch: fetchImpl });
-  return { handler, ddb: d, env, kp: keyPair, fetchJwks };
+  const rawHandler = createHandler({ env, ddbClient: d, fetchJwks, fetch: fetchImpl });
+  const handler = async (event) => {
+    const path = event.rawPath ?? event.path ?? event.requestContext?.http?.path ?? "";
+    const method = event.httpMethod ?? event.requestContext?.http?.method ?? event.requestContext?.httpMethod;
+    if (method === "POST" && path === "/projects") {
+      const headers = event.headers || {};
+      if (!headers.authorization && !headers.Authorization) {
+        return rawHandler({ ...event, headers: { ...headers, authorization: `Bearer ${createToken(basePayload({ sub: "project-owner" }), keyPair.privateKey)}` } });
+      }
+    }
+    return rawHandler(event);
+  };
+  return { handler, rawHandler, ddb: d, env, kp: keyPair, fetchJwks };
 }
 
 function projectBody(overrides = {}) {
@@ -40,9 +51,11 @@ describe("POST /projects", () => {
   let kp, fetchJwks;
   beforeEach(() => { clearJwksCache(); kp = makeKeyPair(); fetchJwks = async () => ({ keys: [kp.jwk] }); if (__clearMediaTokenCache) __clearMediaTokenCache(); });
 
-  it("creates project anonymously and returns id+updateCode", async () => {
+  it("requires sign-in and returns id+updateCode for a signed-in registrant", async () => {
     const ddb = new FakeDdb();
-    const { handler } = makeHandler({ envOverrides: { TABLE_NAME: "t" }, ddb, kp });
+    const { handler, rawHandler } = makeHandler({ envOverrides: { TABLE_NAME: "t" }, ddb, kp });
+    const anonymous = await rawHandler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
+    assert.equal(anonymous.statusCode, 401);
     const res = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     assert.equal(res.statusCode, 201);
     const body = JSON.parse(res.body);
@@ -59,6 +72,11 @@ describe("POST /projects", () => {
     assert.equal(item.committee.phone, "+977-9801234567");
     assert.equal(item.gsi1pk, `PROJECT#${TEST_INCIDENT_ID}#Gorkha#pending`);
     assert.equal(item.gsi2pk, `PROJECT#pending`);
+    assert.equal(item.registeredBy, "project-owner");
+    assert.ok(ddb.store.get(`USER#project-owner|PROJECT#${body.id}`));
+    const ownerToken = createToken(basePayload({ sub: "project-owner" }), kp.privateKey);
+    const dashboard = JSON.parse((await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: { authorization: `Bearer ${ownerToken}` } }))).body);
+    assert.equal(dashboard.projects[0].id, body.id);
     const pcodeHash = item.updateCodeHash;
     const pcode = ddb.store.get(`PCODE#${pcodeHash}|META`);
     assert.ok(pcode);
@@ -88,19 +106,18 @@ describe("POST /projects", () => {
     assert.equal(res.statusCode, 400);
   });
 
-  it("supports Turnstile when configured", async () => {
+  it("does not require Turnstile for signed-in project registration", async () => {
     const ddb = new FakeDdb();
-    // without secret, succeeds without token
-    let { handler } = makeHandler({ envOverrides: { TABLE_NAME: "t" }, ddb, kp });
+    let { handler, rawHandler } = makeHandler({ envOverrides: { TABLE_NAME: "t" }, ddb, kp });
     let res = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
     assert.equal(res.statusCode, 201);
-    // with secret, requires token - will attempt fetch and we mock failure? Instead test validation of missing token before fetch
-    // Our verifyTurnstile will require token when secret set, but it will try real fetch; we need to provide fetch that fails. For this test, we set secret and then missing token should 400 without needing fetch success
     const ddb2 = new FakeDdb();
-    handler = makeHandler({ envOverrides: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddb: ddb2, kp }).handler;
+    const setup2 = makeHandler({ envOverrides: { TABLE_NAME: "t", TURNSTILE_SECRET: "secret" }, ddb: ddb2, kp });
+    handler = setup2.handler;
     res = await handler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
-    assert.equal(res.statusCode, 400);
-    assert.match(JSON.parse(res.body).error, /turnstile/i);
+    assert.equal(res.statusCode, 201);
+    res = await setup2.rawHandler(makeEvent({ method: "POST", path: "/projects", body: projectBody() }));
+    assert.equal(res.statusCode, 401);
   });
 
   it("supports NE titles", async () => {

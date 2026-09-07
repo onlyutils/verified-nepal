@@ -2,7 +2,7 @@ import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../l
 import { validateString, validatePhone, validateOptionalEmail, validateDistrict, validateNeedMedia } from "../lib/validate.js";
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { requireAuth, optionalAuth, isOutOfScope } from "../lib/auth.js";
+import { requireAuth, isOutOfScope } from "../lib/auth.js";
 import {
   CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS, GENERAL_INCIDENT_ID,
   ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE,
@@ -20,15 +20,18 @@ import { applyModerationEdits } from "../models/moderation.js";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
 
-export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
+export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: optionalAuthResult }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly, consent } = body;
   const hasIncidentId = incidentId !== undefined && incidentId !== null && incidentId !== "";
   const hasNewIncident = newIncident !== undefined && newIncident !== null;
   if (hasIncidentId && hasNewIncident) throw err(400, "provide at most one of incidentId or newIncident");
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
   if (assignOnly !== undefined && typeof assignOnly !== "boolean") throw err(400, "assignOnly must be boolean");
+  let auth = optionalAuthResult;
+  if (onBehalf && !auth) throw err(401, "sign_in_required");
+  if (onBehalf && consent !== true) throw err(400, "consent required");
   let regName, regPhone, regEmail;
   if (onBehalf) {
     if (!registrant || typeof registrant !== "object") throw err(400, "registrant required when onBehalf is true");
@@ -62,11 +65,10 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const desc = validateString(description, "description", 10, 2000);
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
   const cleanMedia = validateNeedMedia(media);
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  if (!onBehalf) await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
   const ddb = getDdb();
-  let auth;
   let resolvedIncidentId;
   if (hasNewIncident) {
     auth = await requireAuth(event, { fetchJwks, getDdb, env });
@@ -92,22 +94,21 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
     const incident = await getIncidentById(ddb, tableName, incidentId.trim());
     if (!incident || !["active", "pending"].includes(incident.status)) throw err(400, "invalid incident");
     resolvedIncidentId = incident.id;
-    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   } else {
     resolvedIncidentId = GENERAL_INCIDENT_ID;
-    auth = await optionalAuth(event, { fetchJwks, getDdb, env });
   }
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
     incidentId: resolvedIncidentId, district, ward, householdSize, category, description: desc, language, media: cleanMedia,
     registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
+    registrantSub: onBehalf ? auth.payload.sub : undefined,
     assignOnly,
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });
 }
 
-export async function handlePostNeedsMediaPresign(event, { env, fetchImpl }) {
+export async function handlePostNeedsMediaPresign(event, { env, fetchImpl, auth }) {
   if (!env.OU_MEDIA_CLIENT_ID || !env.OU_MEDIA_CLIENT_SECRET) {
     return json(503, { error: "media_not_configured" });
   }
@@ -123,7 +124,8 @@ export async function handlePostNeedsMediaPresign(event, { env, fetchImpl }) {
   if (typeof body.size !== "number" || !Number.isFinite(body.size) || body.size <= 0 || body.size > maxSize) {
     throw err(400, `size must be 1-${maxSize}`);
   }
-  await verifyTurnstile(body.turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  if (body.onBehalf === true && !auth) throw err(401, "sign_in_required");
+  if (body.onBehalf !== true) await verifyTurnstile(body.turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   try {
     const presign = await requestPresign(env, fetchImpl, { filename, contentType: body.contentType });
     return json(200, { ...presign, mediaType: photo ? "photo" : "video" });

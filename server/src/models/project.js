@@ -8,7 +8,7 @@ import { validateString, validatePhone, validateOptionalEmail, validateDistrict,
 export async function createProject(ddb, tableName, {
   titleObj, descObj, type, districtClean, ward, locationTextClean, costClean,
   committeeName, contactName, phone, email, bankName, accountName, accountNumber, esewaId, khaltiId,
-  incidentId,
+  incidentId, registeredBy,
 }) {
   const id = randomUUID();
   const updateCode = generateUpdateCode();
@@ -20,6 +20,7 @@ export async function createProject(ddb, tableName, {
     SK: "META",
     id,
     incidentId,
+    registeredBy,
     title: titleObj,
     description: descObj,
     type,

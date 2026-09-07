@@ -1,6 +1,5 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, stripInternal } from "../lib/http.js";
 import { validateString, validatePhone, validateOptionalEmail, validateTitle, validateDescription, validateDistrict } from "../lib/validate.js";
-import { verifyTurnstile } from "../lib/turnstile.js";
 import { isOutOfScope, verifyCommitteeAuth, authorizeProjectWrite } from "../lib/auth.js";
 import { PROJECT_TYPES, ALLOWED_PHOTO_TYPES, MAX_PHOTO_SIZE } from "../constants.js";
 import {
@@ -13,12 +12,12 @@ import { toPublicProject, toPublishedUpdatesView } from "../views/project.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 import { PUBLIC_PROJECT_STATUSES } from "../constants.js";
 import { getIncidentById } from "../models/incident.js";
+import { putPointer } from "../models/mine.js";
 
-export async function handlePostProject(event, { getDdb, env }) {
+export async function handlePostProject(event, { getDdb, env, auth }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { title, description, type, district, ward, locationText, costEstimateNpr, committee, turnstileToken, incidentId } = body;
-  await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  const { title, description, type, district, ward, locationText, costEstimateNpr, committee, incidentId } = body;
   const titleObj = validateTitle(title, "title");
   const descObj = validateDescription(description, "description");
   if (!PROJECT_TYPES.includes(type)) throw err(400, `type must be one of ${PROJECT_TYPES.join(",")}`);
@@ -53,7 +52,9 @@ export async function handlePostProject(event, { getDdb, env }) {
   const { id, updateCode } = await createProject(ddb, tableName, {
     titleObj, descObj, type, districtClean, ward, locationTextClean, costClean,
     committeeName, contactName, phone, email, bankName, accountName, accountNumber, esewaId, khaltiId, incidentId: incident.id,
+    registeredBy: auth.payload.sub,
   });
+  await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "PROJECT", id });
   return json(201, { id, updateCode });
 }
 

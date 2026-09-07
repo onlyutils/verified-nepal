@@ -65,7 +65,9 @@ This is the heart of the site: `/get-help` and `/give-help`.
 
 - **Asking for help** needs no account. Someone fills in what they need — food, shelter,
   medical help, and so on — where they are, and a short description, in English or Nepali.
-  This is called a **need**.
+  This is called a **need**. Registering a need for someone else requires Google sign-in, so
+  the person you register for can be reached and you can follow their request; the registrant's
+  name, phone and consent are still required.
 - **Offering help** needs a Google sign-in. A helper says what kind of help they can give
   and in which districts. This is called an **offer**.
 
@@ -153,10 +155,14 @@ Signing in uses Google, through a shared login service the site trusts — Verif
 sees your password.
 
 Once signed in, `/me` is your personal dashboard: your saved posters, the needs you
-submitted, and the offers you made, all in one place, private to you.
+submitted, requests you registered for someone else (including their private reference and,
+after publication, claim code), projects you registered, and the offers you made, all in one
+place, private to you. A registrant can renew an eligible request, see who took it and whether
+it was delivered or confirmed; Hand back is only available to helpers and groups.
 
-The rule of thumb: **asking for help never requires an account** (you can stay anonymous),
-but **offering help, running an organization, or managing a project always does.**
+The rule of thumb: **self-registration for help never requires an account** (you can stay
+anonymous), but **registering for someone else, offering help, running an organization, or
+registering/managing a project always does.**
 
 ---
 

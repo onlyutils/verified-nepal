@@ -38,7 +38,7 @@ function claimAlphabetRegex() { return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/
 
 describe("Phase2 claim mint", () => {
   beforeEach(()=> clearJwksCache());
-  it("mints 8-char claimCode on publish, stores pointer, returns in moderation response, visible in /status, never in public /needs", async () => {
+  it("mints 8-char claimCode on publish, stores pointer, returns in moderation response, never in public views", async () => {
     const kp = makeKeyPair();
     const ddb = new FakeDdb();
     const {handler} = makeHandler({ kp, ddb });
@@ -63,10 +63,10 @@ describe("Phase2 claim mint", () => {
     const ptr = ddb.store.get(`CLAIM#${pubRes.claimCode}|META`);
     assert.ok(ptr);
     assert.equal(ptr.needId, id);
-    // status now shows claimCode
+    // the anonymous status page must not show the claim code
     res = await handler(makeEvent({method:"GET", path:`/status/${refCode}`}));
     body = JSON.parse(res.body);
-    assert.equal(body.claimCode, pubRes.claimCode);
+    assert.equal(body.claimCode, undefined);
     // public /needs never exposes claimCode or sensitive fields
     res = await handler(makeEvent({method:"GET", path:`/needs?incidentId=${TEST_INCIDENT_ID}`}));
     const items = JSON.parse(res.body).items;

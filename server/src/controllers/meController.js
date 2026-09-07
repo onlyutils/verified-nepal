@@ -6,7 +6,7 @@ import { getRefPointer, listNeedsForHandling } from "../models/need.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, listPublishedMissing, listMissingTips, putMissing } from "../models/missing.js";
-import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident, toPublicMissing, toHandlingContact } from "../views/mine.js";
+import { toMyMissing, toMyNeed, toMyRegisteredNeed, toMyOffer, toMyGroup, toMyIncident, toMyProject, toPublicMissing, toHandlingContact } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
@@ -15,14 +15,17 @@ export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
   const { ddb, tableName, payload } = auth;
   const pointers = await listPointers(ddb, tableName, payload.sub);
-  const out = { missing: [], needs: [], offers: [], groups: [], incidents: [], handledNeeds: [] };
+  const out = { missing: [], needs: [], registeredNeeds: [], projects: [], offers: [], groups: [], incidents: [], handledNeeds: [] };
   // A person owns tens of items, not thousands; one read per pointer keeps this simple.
   for (const p of pointers) {
     const pk = p.kind === "GROUP" ? `NEED#${p.id}` : `${p.kind}#${p.id}`;
     const res = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: pk, SK: "META" } }));
     const item = res.Item;
     if (!item) continue;
-    if (p.kind === "NEED") out.needs.push(toMyNeed(item));
+    if (p.kind === "NEED") {
+      if (item.registrantSub === payload.sub) out.registeredNeeds.push(toMyRegisteredNeed(item));
+      else out.needs.push(toMyNeed(item));
+    }
     else if (p.kind === "OFFER") out.offers.push(toMyOffer(item));
     else if (p.kind === "MISSING") {
       const mine = toMyMissing(item);
@@ -31,6 +34,7 @@ export async function handleGetDashboard(event, opts) {
     }
     else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
     else if (p.kind === "INCIDENT") out.incidents.push(toMyIncident(item));
+    else if (p.kind === "PROJECT") out.projects.push(toMyProject(item));
   }
   for (const need of await listNeedsForHandling(ddb, tableName, payload.sub)) {
     out.handledNeeds.push({ ...toHandlingContact(need), handler: need.handledBy.label, handlerKind: need.handledBy.kind });

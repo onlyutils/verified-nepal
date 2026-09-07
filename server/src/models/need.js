@@ -7,7 +7,7 @@ import { PUBLIC_NEED_STATUSES } from "../constants.js";
 export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, ward, householdSize,
-  category, description, language, media, incidentId, registeredByStaff,
+  category, description, language, media, incidentId, registeredByStaff, registrantSub,
   assignOnly,
 }) {
   const id = randomUUID();
@@ -41,6 +41,7 @@ export async function createNeed(ddb, tableName, {
     expiresAt,
     incidentId,
     registeredByStaff: registeredByStaff || undefined,
+    registrantSub: onBehalf ? registrantSub : undefined,
     assignOnly: assignOnly === true ? true : undefined,
     gsi1pk: `NEED#${incidentId}#${district}#${status}`,
     gsi1sk: createdAt,
@@ -48,6 +49,7 @@ export async function createNeed(ddb, tableName, {
     gsi2sk: createdAt,
   };
   if (!item.registeredByStaff) delete item.registeredByStaff;
+  if (!item.registrantSub) delete item.registrantSub;
   if (!item.assignOnly) delete item.assignOnly;
   if (!item.registrant) delete item.registrant;
   if (item.registrant && !item.registrant.name) delete item.registrant.name;

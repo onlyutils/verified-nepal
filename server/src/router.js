@@ -87,8 +87,8 @@ const routes = [
   ["GET", /^\/incidents$/, handleGetIncidents],
   ["POST", /^\/incidents\/request$/, withAuth(handlePostIncidentRequest)],
   ["GET", /^\/audit$/, handleGetAudit],
-  ["POST", /^\/needs\/media\/presign$/, handlePostNeedsMediaPresign],
-  ["POST", /^\/needs$/, handlePostNeeds],
+  ["POST", /^\/needs\/media\/presign$/, withOptionalAuth(handlePostNeedsMediaPresign)],
+  ["POST", /^\/needs$/, withOptionalAuth(handlePostNeeds)],
   ["GET", /^\/needs$/, withOptionalAuth(handleGetNeeds)],
   ["GET", /^\/status\/(.*)$/, (event, opts, ref) => {
     if (!ref) throw err(400, "refCode required");
@@ -126,7 +126,7 @@ const routes = [
   ["POST", /^\/needs\/([^/]+)\/flag$/, handlePostFlag],
   ["GET", /^\/moderation\/flags$/, withModAck(handleGetFlags)],
   ["POST", /^\/moderation\/flags\/([^/]+)\/resolve$/, withModAck(handleResolveFlag)],
-  ["POST", /^\/projects$/, handlePostProject],
+  ["POST", /^\/projects$/, withAuth(handlePostProject)],
   ["GET", /^\/projects$/, handleGetProjects],
   ["GET", /^\/projects\/([^/]+)$/, handleGetProject],
   ["POST", /^\/projects\/([^/]+)\/photos\/presign$/, handlePostPresign],

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError, createProject, PROJECT_TYPES, type ProjectType } from "@/lib/api";
-import { apiErrorMessage, isTurnstileError } from "@/lib/api-error";
+import { apiErrorMessage } from "@/lib/api-error";
+import { useGoogleAuth } from "@/lib/auth";
 import { communityStrings } from "@/i18n/community";
 import { disasterStrings } from "@/i18n/disasters";
 import { districtLabels, districtNames } from "@/lib/geo";
@@ -15,9 +16,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { PageHeader } from "@/components/page-header";
 import { CodeDisplay } from "@/components/code-display";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TurnstileWidget } from "@/components/turnstile";
-
-const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+import { SignInNudge } from "@/components/sign-in-nudge";
 
 function typeLabel(type: ProjectType, language: Language) {
   const t = communityStrings[language];
@@ -36,6 +35,7 @@ function typeLabel(type: ProjectType, language: Language) {
 export function ProjectRegister({ language }: { language: Language }) {
   const t = communityStrings[language];
   const disaster = disasterStrings[language];
+  const auth = useGoogleAuth();
   const { incidents, currentIncidentId, setCurrentIncidentId } = useIncidents();
   const activeIncidents = incidents.filter((incident) => incident.status === "active");
   const [titleEn, setTitleEn] = useState("");
@@ -57,9 +57,6 @@ export function ProjectRegister({ language }: { language: Language }) {
   const [accountNumber, setAccountNumber] = useState("");
   const [esewaId, setEsewaId] = useState("");
   const [khaltiId, setKhaltiId] = useState("");
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileError, setTurnstileError] = useState(false);
-  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; updateCode: string } | null>(null);
@@ -73,7 +70,6 @@ export function ProjectRegister({ language }: { language: Language }) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    setTurnstileError(false);
     if (
       !titleEn.trim() ||
       !descEn.trim() ||
@@ -121,18 +117,11 @@ export function ProjectRegister({ language }: { language: Language }) {
           esewaId: esewaId.trim() || undefined,
           khaltiId: khaltiId.trim() || undefined,
         },
-        turnstileToken: turnstileToken || undefined,
         incidentId,
-      });
+      }, auth.idToken || undefined);
       setResult(response);
     } catch (cause) {
-      if (isTurnstileError(cause)) {
-        setTurnstileError(true);
-        setTurnstileToken("");
-        setTurnstileResetKey((key) => key + 1);
-      } else {
-        setError((cause as ApiError).status === 0 ? t.offline : apiErrorMessage(cause, language));
-      }
+      setError((cause as ApiError).status === 0 ? t.offline : apiErrorMessage(cause, language));
     } finally {
       setSubmitting(false);
     }
@@ -172,6 +161,15 @@ export function ProjectRegister({ language }: { language: Language }) {
         </Card>
       </div>
     );
+
+  if (!auth.idToken) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <PageHeader eyebrow={t.communityEyebrow} title={t.projectRegisterTitle} description={t.projectRegisterLead} />
+        <SignInNudge language={language} id="project-register" title={t.projectRegisterSignInTitle} body={t.projectRegisterSignInBody} />
+      </div>
+    );
+  }
 
   const field = (id: string, label: string, control: React.ReactNode, errorText?: string) => (
     <div className="space-y-2">
@@ -368,24 +366,12 @@ export function ProjectRegister({ language }: { language: Language }) {
             </div>
           </CardContent>
         </Card>
-        {TURNSTILE_KEY ? (
-          <TurnstileWidget
-            siteKey={TURNSTILE_KEY}
-            language={language}
-            onToken={(token) => {
-              setTurnstileToken(token);
-              setTurnstileError(false);
-            }}
-            verificationError={turnstileError}
-            resetKey={turnstileResetKey}
-          />
-        ) : null}
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
-        <Button type="submit" size="lg" disabled={submitting || Boolean(TURNSTILE_KEY && !turnstileToken)} className="w-full">
+        <Button type="submit" size="lg" disabled={submitting} className="w-full">
           {submitting ? t.submittingProject : t.submitProject}
         </Button>
       </form>

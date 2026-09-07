@@ -48,9 +48,6 @@ export function toStatusView(need) {
     createdAt: need.createdAt,
     expiresAt: need.expiresAt || toExpiresAt(need.ttl),
   };
-  if (need.claimCode && ["published", "matched", "fulfilled"].includes(need.status)) {
-    out.claimCode = need.claimCode;
-  }
   if (need.handledBy) {
     out.handledBy = need.handledBy.label || need.handledBy.orgName;
     out.handledByKind = need.handledBy.kind || (need.handledBy.orgName ? "org" : undefined);

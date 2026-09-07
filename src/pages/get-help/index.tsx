@@ -171,6 +171,12 @@ export function GetHelp({ language }: { language: Language }) {
   }, [auth.idToken]);
 
   useEffect(() => {
+    if (!onBehalf || !auth.idToken || !auth.profile) return;
+    setRegistrantName((current) => current || auth.profile?.name || auth.profile?.displayName || "");
+    setRegistrantEmail((current) => current || auth.profile?.email || "");
+  }, [auth.idToken, auth.profile, onBehalf]);
+
+  useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
@@ -353,7 +359,8 @@ export function GetHelp({ language }: { language: Language }) {
             contentType: file.type,
             size: file.size,
             turnstileToken: token || undefined,
-          });
+            onBehalf,
+          }, auth.idToken || undefined);
           const headers = {
             ...(presign.headers || {}),
             ...(presign.headers?.["Content-Type"] || presign.headers?.["content-type"] ? {} : { "Content-Type": file.type }),
@@ -394,6 +401,10 @@ export function GetHelp({ language }: { language: Language }) {
     setError(null);
     setTurnstileError(false);
     const next: Partial<Record<FieldKey, string>> = {};
+    if (onBehalf && !auth.idToken) {
+      setError(ts.getHelpSignInRequired);
+      return;
+    }
     if (newIncidentMode) {
       if (!newIncidentName.trim()) next.newIncidentName = disaster.reportIncidentRequired;
       if (!newIncidentKind.trim()) next.newIncidentKind = disaster.reportIncidentRequired;
@@ -447,6 +458,7 @@ export function GetHelp({ language }: { language: Language }) {
       const response = await createNeed(
         {
           onBehalf,
+          consent,
           registrant: onBehalf
             ? { name: registrantName.trim(), phone: registrantPhone.trim(), email: registrantEmail.trim() || undefined }
             : null,
@@ -768,7 +780,7 @@ export function GetHelp({ language }: { language: Language }) {
             <CardTitle>{ts.getHelpContactConsent}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {onBehalf ? (
+            {onBehalf ? (auth.idToken ? (
               <>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field
@@ -815,9 +827,16 @@ export function GetHelp({ language }: { language: Language }) {
                 </div>
               </>
             ) : (
+              <SignInNudge
+                language={language}
+                id="get-help-registrant"
+                title={ts.getHelpRegistrantSignInTitle}
+                body={ts.getHelpRegistrantSignInBody}
+              />
+            )) : (
               <p className="text-sm text-muted-foreground">{t.getHelpConsentHint}</p>
             )}
-            {TURNSTILE_KEY ? (
+            {!onBehalf && TURNSTILE_KEY ? (
               <div>
                 <TurnstileWidget
                   siteKey={TURNSTILE_KEY}

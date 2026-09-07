@@ -70,12 +70,30 @@ describe("POST /needs", () => {
     assert.equal(res.statusCode, 400);
   });
 
-  it("requires registrant when onBehalf true", async () => {
-    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: testDdb(), fetchJwks });
+  it("requires sign-in and consent for on-behalf registration, then owns the request privately", async () => {
+    const ddb = testDdb();
+    const handler = createHandler({ env: { TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
+    assert.equal(res.statusCode, 401);
+    const registrantToken = createToken(basePayload({ sub: "registrant-1" }), kp.privateKey);
+    const base = { onBehalf: true, registrant: { name: "Reg", phone: "+9779800000001", email: "reg@example.com" }, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID };
+    res = await handler(makeEvent({ method: "POST", path: "/needs", headers: { authorization: `Bearer ${registrantToken}` }, body: base }));
     assert.equal(res.statusCode, 400);
-    res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Reg", phone: "98abc" }, beneficiary: { name: "x", district: "Gorkha", ward: 1 }, category: "goods", description: "need description long enough here", language: "en", incidentId: TEST_INCIDENT_ID } }));
-    assert.equal(res.statusCode, 400);
+    res = await handler(makeEvent({ method: "POST", path: "/needs", headers: { authorization: `Bearer ${registrantToken}` }, body: { ...base, consent: true } }));
+    assert.equal(res.statusCode, 201);
+    const created = JSON.parse(res.body);
+    const need = ddb.store.get(`NEED#${created.id}|META`);
+    assert.equal(need.registrantSub, "registrant-1");
+    assert.ok(ddb.store.get(`USER#registrant-1|NEED#${created.id}`));
+    ddb.store.set("USER#mod-1|PROFILE", { PK: "USER#mod-1", SK: "PROFILE", sub: "mod-1", role: "moderator", guidelinesAckAt: "2026-01-01T00:00:00.000Z", districts: [] });
+    const modToken = createToken(basePayload({ sub: "mod-1" }), kp.privateKey);
+    res = await handler(makeEvent({ method: "POST", path: `/moderation/${created.id}`, headers: { authorization: `Bearer ${modToken}` }, body: { action: "publish" } }));
+    assert.equal(res.statusCode, 200);
+    const dashboard = JSON.parse((await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: { authorization: `Bearer ${registrantToken}` } }))).body);
+    assert.equal(dashboard.registeredNeeds.length, 1);
+    assert.equal(dashboard.registeredNeeds[0].refCode, created.refCode);
+    assert.equal(dashboard.registeredNeeds[0].claimCode, JSON.parse(res.body).claimCode);
+    assert.equal(dashboard.needs.length, 0);
   });
 
   it("rejects a malformed optional email but accepts a valid one", async () => {
@@ -117,7 +135,8 @@ describe("GET /needs public board", () => {
     const ddb = testDdb();
     const handler = createHandler({ env: { AUTH_ISSUER: "https://auth.onlyutils.com", TABLE_NAME: "t" }, ddbClient: ddb, fetchJwks });
     // create need with private data
-    let res = await handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: true, registrant: { name: "Registrar Name", phone: "+9779800000001", email: "registrar@example.com" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", email: "rita@example.com", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en", incidentId: TEST_INCIDENT_ID } }));
+    const submitterToken = createToken(basePayload({ sub: "submitter-1" }), kp.privateKey);
+    let res = await handler(makeEvent({ method: "POST", path: "/needs", headers: { authorization: `Bearer ${submitterToken}` }, body: { onBehalf: true, consent: true, registrant: { name: "Registrar Name", phone: "+9779800000001", email: "registrar@example.com" }, beneficiary: { name: "Rita Gurung", phone: "+9779800000002", email: "rita@example.com", district: "Gorkha", ward: 5, householdSize: 4 }, category: "goods", description: "Private household data must never leak to public board view", language: "en", incidentId: TEST_INCIDENT_ID } }));
     const { id, refCode } = JSON.parse(res.body);
     // pending not visible
     res = await handler(makeEvent({ method: "GET", path: `/needs?incidentId=${TEST_INCIDENT_ID}` }));

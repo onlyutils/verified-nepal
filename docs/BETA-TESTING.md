@@ -79,8 +79,8 @@ the public page → action recorded in `/audit`.** That loop not holding for any
 type is a USP-breaking bug.
 
 ### As anyone (no account)
-- [ ] Submit a help request (`/get-help`) — on-behalf (registering someone
-      else) and for-yourself both work; phone required when on-behalf.
+- [ ] Submit a help request (`/get-help`) — self-registration remains anonymous; on-behalf
+      registration requires sign-in and consent; phone is required when on-behalf.
 - [ ] Offer to help (`/give-help`) works signed out where the flow allows it.
 - [ ] Report a missing person poster (`/poster`) — does **not** appear
       publicly until approved.
