@@ -72,6 +72,17 @@ describe("individual and group need takes", () => {
     assert.equal((await call(ctx.handler, "POST", `/orgs/org/needs/${sensitive.id}/claim`, ctx.token("org-member"))).statusCode, 409);
   });
 
+  it("treats absent legacy assignOnly and handledBy fields as false and empty", async () => {
+    const ctx = setup();
+    const need = await published(ctx);
+    const stored = ctx.ddb.store.get(`NEED#${need.id}|META`);
+    delete stored.assignOnly;
+    delete stored.handledBy;
+    const helper = ctx.token("legacy-helper", "Legacy Helper");
+    assert.equal((await call(ctx.handler, "POST", `/needs/${need.id}/take`, helper)).statusCode, 200);
+    assert.equal((await call(ctx.handler, "POST", `/needs/${need.id}/deliver`, helper, {})).statusCode, 200);
+  });
+
   it("lets a group member take and deliver for the group, updates the label, confirms redemption, and grants story eligibility", async () => {
     const ctx = setup();
     const need = await published(ctx);

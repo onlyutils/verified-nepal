@@ -50,6 +50,12 @@ describe("ledger delivery attribution", () => {
     assert.deepEqual(need.deliveredBy, { kind: "field", label: "Claim code · moderator" });
   });
 
+  it("shows the legacy moderator fallback when a ledger row has no deliveredBy", () => {
+    const item = toLedgerItem({ maskedName: "Asha S.", category: "goods", district: "Gorkha", ward: 5, redeemedAt: "2026-01-01T00:00:00.000Z" });
+    assert.deepEqual(item.deliveredBy, { kind: "field", label: "Claim code · moderator" });
+    assert.match(toLedgerCsv([item]), /Claim code · moderator,field,/);
+  });
+
   it("uses organization attribution for an organization delivery", async () => {
     const ddb = new FakeDdb();
     const need = seedClaim(ddb, "org-need", { status: "matched", handledBy: { orgName: "Helping Hands" } });

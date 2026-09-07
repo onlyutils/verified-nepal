@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, DeleteCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 export async function getMissingById(ddb, tableName, id) {
   return (await ddb.send(new GetCommand({
@@ -27,8 +27,35 @@ export async function listMissingByModerationStatus(ddb, tableName, status) {
   return res.Items || [];
 }
 
+export function isPublishedMissing(item) {
+  return item?.publicationStatus === undefined || item.publicationStatus === "published";
+}
+
 export async function listPublishedMissing(ddb, tableName) {
-  return listMissingByModerationStatus(ddb, tableName, "published");
+  const [published, legacy] = await Promise.all([
+    listMissingByModerationStatus(ddb, tableName, "published"),
+    listLegacyMissing(ddb, tableName),
+  ]);
+  const seen = new Set(published.map((item) => `${item.PK}|${item.SK}`));
+  return [...published, ...legacy.filter((item) => !seen.has(`${item.PK}|${item.SK}`))]
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+}
+
+async function listLegacyMissing(ddb, tableName) {
+  const items = [];
+  let ExclusiveStartKey;
+  do {
+    const res = await ddb.send(new ScanCommand({
+      TableName: tableName,
+      FilterExpression: "#type = :type AND attribute_not_exists(publicationStatus)",
+      ExpressionAttributeNames: { "#type": "type" },
+      ExpressionAttributeValues: { ":type": "MISSING" },
+      ...(ExclusiveStartKey ? { ExclusiveStartKey } : {}),
+    }));
+    items.push(...(res.Items || []));
+    ExclusiveStartKey = res.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items.filter((item) => item.type === "MISSING" && item.publicationStatus === undefined);
 }
 
 export async function listMissingTips(ddb, tableName, id) {

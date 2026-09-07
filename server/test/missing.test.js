@@ -23,6 +23,31 @@ const body = {
 describe("saved missing-person posters", () => {
   beforeEach(() => { clearJwksCache(); if (__clearMediaTokenCache) __clearMediaTokenCache(); });
 
+  it("keeps legacy posters public and in the owner's dashboard without putting them in moderation", async () => {
+    const { handler, ddb, token } = setup();
+    const legacy = {
+      PK: "MISSING#legacy", SK: "META", type: "MISSING", id: "legacy", name: "Legacy Person", status: "missing",
+      district: "Rasuwa", place: "Betrawati", createdBy: "u1", createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    ddb.store.set("MISSING#legacy|META", legacy);
+    ddb.store.set("USER#u1|MISSING#legacy", { PK: "USER#u1", SK: "MISSING#legacy", type: "MINE", kind: "MISSING", id: "legacy", sub: "u1" });
+    ddb.store.set("MISSING#pending|META", {
+      ...legacy, PK: "MISSING#pending", SK: "META", id: "pending", publicationStatus: "pending", gsi2pk: "MISSING#pending",
+    });
+    ddb.store.set("USER#mod|PROFILE", { PK: "USER#mod", SK: "PROFILE", sub: "mod", role: "moderator", name: "Mod", guidelinesAckAt: "now", districts: [] });
+
+    const publicList = JSON.parse((await handler(makeEvent({ method: "GET", path: "/missing" }))).body);
+    assert.equal(publicList.items.find((item) => item.id === "legacy").publicationStatus, "published");
+    assert.equal(publicList.counts.missing, 1);
+    assert.equal((await handler(makeEvent({ method: "POST", path: "/missing/legacy/tips", body: { message: "Seen near the bridge" } }))).statusCode, 201);
+
+    const dashboard = JSON.parse((await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: { authorization: `Bearer ${token("u1")}` } }))).body);
+    assert.equal(dashboard.missing[0].publicationStatus, "published");
+
+    const queue = JSON.parse((await handler(makeEvent({ method: "GET", path: "/moderation/missing", headers: { authorization: `Bearer ${token("mod")}` } }))).body);
+    assert.deepEqual(queue.items.map((item) => item.id), ["pending"]);
+  });
+
   it("new posters are pending, moderators publish them, and public output is masked", async () => {
     const { handler, ddb, token } = setup();
     const a = { authorization: `Bearer ${token("u1")}` };

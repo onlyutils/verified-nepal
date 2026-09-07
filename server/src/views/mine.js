@@ -37,8 +37,8 @@ export function toMyOffer(o) {
 }
 
 export function toMyMissing(m) {
-  const { PK, SK, type, gsi1pk, gsi1sk, gsi2pk, gsi2sk, createdBy, ...rest } = m;
-  return rest;
+  const { PK, SK, type, gsi1pk, gsi1sk, gsi2pk, gsi2sk, createdBy, publicationStatus, ...rest } = m;
+  return { ...rest, publicationStatus: publicationStatus || "published" };
 }
 
 export function toPublicMissing(m) {

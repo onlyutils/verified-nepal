@@ -4,7 +4,7 @@ import { json, err, parseBody } from "../lib/http.js";
 import { isOutOfScope } from "../lib/auth.js";
 import { validateOptionalString, validateString } from "../lib/validate.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
-import { getMissingById, listMissingByModerationStatus, listMissingTips } from "../models/missing.js";
+import { getMissingById, isPublishedMissing, listMissingByModerationStatus, listMissingTips } from "../models/missing.js";
 import { putMissing } from "../models/missing.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { stripInternal } from "../lib/http.js";
@@ -19,7 +19,8 @@ function sourceKey(event, token) {
 
 export async function handleGetModerationMissing(event, opts) {
   const { auth } = opts;
-  let items = await listMissingByModerationStatus(auth.ddb, auth.tableName, "pending");
+  let items = (await listMissingByModerationStatus(auth.ddb, auth.tableName, "pending"))
+    .filter((item) => item.publicationStatus === "pending");
   let allVisible = items;
   const published = await listMissingByModerationStatus(auth.ddb, auth.tableName, "published");
   allVisible = [...items, ...published];
@@ -68,7 +69,7 @@ export async function handlePostModerationMissing(event, opts, id) {
 export async function handlePostMissingTip(event, opts, id) {
   if (!ID.test(id)) throw err(400, "invalid id");
   const item = await getMissingById(opts.getDdb(), opts.env.TABLE_NAME, id);
-  if (!item || item.publicationStatus !== "published") throw err(404, "not found");
+  if (!item || !isPublishedMissing(item)) throw err(404, "not found");
   const body = parseBody(event) || {};
   const message = validateString(body.message, "message", 1, 1000);
   const contact = validateOptionalString(body.contact, "contact", 0, 200) || "";

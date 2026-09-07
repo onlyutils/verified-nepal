@@ -33,6 +33,8 @@ pnpm build
 - `pnpm test` — `node --test` with locally generated RSA keypair and fake JWKS/DDB clients (no network).
 - `pnpm build` — esbuild bundle to `dist/index.mjs` (Node 22, ESM, `aws-sdk` external) then `zip` to `dist/lambda.zip`.
 
+For the production-safety migration, run `node server/scripts/backfill-missing-status.mjs --table <TableName>` for a dry run, then add `--apply` to set `publicationStatus=published`, `gsi2pk=MISSING#published`, and `gsi2sk` on legacy MISSING records; set `--region` if needed, and provide AWS credentials through the environment or profile selected by the caller.
+
 ## Routes
 
 Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`), not inside handlers: wrap the handler with `withAuth`, `withOptionalAuth`, or `withModAck` (moderator/admin + guidelines acknowledged) from `src/lib/middleware.js` and read `opts.auth`. Unwrapped handlers are public.
