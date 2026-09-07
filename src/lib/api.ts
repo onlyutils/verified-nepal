@@ -1,5 +1,6 @@
 // Relative .ts import so the Node test runner (no "@/" alias) can load this module.
 import { refreshAccessToken } from "./tokens.ts";
+import { enqueue, isOffline, type OutboxItem } from "./outbox.ts";
 import type { Block, Cover } from "../articles/types.ts";
 import type { PosterInput } from "@/lib/poster";
 import type { DistrictName } from "@/lib/districts";
@@ -245,6 +246,35 @@ export class ApiError extends Error {
   }
 }
 
+export interface QueuedResponse {
+  queued: true;
+  submissionId: string;
+}
+
+function queuedBody(body: BodyInit | null | undefined): unknown {
+  if (typeof body !== "string") return body ?? {};
+  try {
+    return JSON.parse(body);
+  } catch {
+    return {};
+  }
+}
+
+export async function queuedRequest<T>(path: string, init: RequestInit & { token?: string } = {}): Promise<T | QueuedResponse> {
+  try {
+    return await request<T>(path, init);
+  } catch (error) {
+    if (!isOffline(error) || !init.token) throw error;
+    const item: OutboxItem = enqueue({
+      path,
+      method: init.method ?? "GET",
+      body: queuedBody(init.body),
+      needsAuth: true,
+    });
+    return { queued: true, submissionId: item.id };
+  }
+}
+
 async function request<T>(path: string, opts: RequestInit & { token?: string } = {}): Promise<T> {
   if (!API_BASE) throw new ApiError("API not configured", 0, null);
   const url = `${API_BASE}${path}`;
@@ -282,8 +312,9 @@ async function request<T>(path: string, opts: RequestInit & { token?: string } =
   return data as T;
 }
 
-export function createNeed(body: CreateNeedBody, token?: string): Promise<CreateNeedResponse> {
-  return request<CreateNeedResponse>("/needs", { method: "POST", body: JSON.stringify(body), token });
+export function createNeed(body: CreateNeedBody, token?: string): Promise<CreateNeedResponse | QueuedResponse> {
+  const init = { method: "POST", body: JSON.stringify(body), token };
+  return token ? queuedRequest<CreateNeedResponse>("/needs", init) : request<CreateNeedResponse>("/needs", init);
 }
 
 export function listIncidents(status = "active"): Promise<{ items: Incident[] }> {
@@ -691,8 +722,8 @@ export function releaseNeed(token: string, needId: string): Promise<{ status: "p
   return request(`/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
 }
 
-export function deliverNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string }> {
-  return request(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(body) });
+export function deliverNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
+  return queuedRequest(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function takeNeedAsGroup(token: string, needId: string): Promise<{ status: "matched"; handler: string }> {
@@ -703,8 +734,8 @@ export function releaseGroupNeed(token: string, needId: string): Promise<{ statu
   return request(`/needs/${encodeURIComponent(needId)}/group/release`, { method: "POST", token });
 }
 
-export function deliverGroupNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string }> {
-  return request(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(body) });
+export function deliverGroupNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
+  return queuedRequest(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function setNeedDelivery(
@@ -981,15 +1012,15 @@ export function redeemClaim(
   token: string,
   code: string,
   body?: { note?: string; deliveredBy?: Omit<DeliveredBy, "ref"> },
-): Promise<{ status: string; needId: string; redeemedAt: string }> {
-  return request(`/claims/${encodeURIComponent(code)}/redeem`, { method: "POST", token, body: JSON.stringify(body || {}) });
+): Promise<{ status: string; needId: string; redeemedAt: string } | QueuedResponse> {
+  return queuedRequest(`/claims/${encodeURIComponent(code)}/redeem`, { method: "POST", token, body: JSON.stringify(body || {}) });
 }
 
 export function syncClaims(
   token: string,
   body: { redemptions: Array<{ code: string; redeemedAt: string; note?: string }> },
-): Promise<{ results: SyncResult[] }> {
-  return request<{ results: SyncResult[] }>("/claims/sync", { method: "POST", token, body: JSON.stringify(body) });
+): Promise<{ results: SyncResult[] } | QueuedResponse> {
+  return queuedRequest<{ results: SyncResult[] }>("/claims/sync", { method: "POST", token, body: JSON.stringify(body) });
 }
 
 export function getLedger(params: { district?: string; ward?: number; cursor?: string }): Promise<LedgerResponse & { cursor?: string }> {
@@ -1566,8 +1597,8 @@ export function orgDeliverNeed(
   orgId: string,
   needId: string,
   body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {},
-): Promise<{ status: string; redeemedAt: string }> {
-  return request(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, {
+): Promise<{ status: string; redeemedAt: string } | QueuedResponse> {
+  return queuedRequest(`/orgs/${encodeURIComponent(orgId)}/needs/${encodeURIComponent(needId)}/deliver`, {
     method: "POST",
     token,
     body: JSON.stringify(body),
@@ -1599,8 +1630,8 @@ export function listCenterEntries(
 ): Promise<{ items: GoodsEntry[]; cursor?: string }> {
   return request(`/centers/${encodeURIComponent(id)}/entries${qs(params)}`, token ? { token } : {});
 }
-export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string }> {
-  return request(`/centers/${encodeURIComponent(centerId)}/entries`, { method: "POST", body: JSON.stringify(body), token });
+export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string } | QueuedResponse> {
+  return queuedRequest(`/centers/${encodeURIComponent(centerId)}/entries`, { method: "POST", body: JSON.stringify(body), token });
 }
 export function getGoodsLedger(params: { district?: string; cursor?: string }): Promise<{ items: GoodsEntry[]; cursor?: string }> {
   return request(`/goods-ledger${qs(params)}`);

@@ -8,7 +8,7 @@ export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, municipalityId, ward, householdSize,
   category, description, language, media, incidentId, registeredByStaff, registrantSub,
-  assignOnly, source,
+  assignOnly, source, submissionId,
 }) {
   const id = randomUUID();
   let refCode;
@@ -42,6 +42,7 @@ export async function createNeed(ddb, tableName, {
     ttl,
     expiresAt,
     incidentId,
+    submissionId: submissionId || undefined,
     registeredByStaff: registeredByStaff || undefined,
     registrantSub: onBehalf ? registrantSub : undefined,
     assignOnly: assignOnly === true ? true : undefined,
@@ -53,6 +54,7 @@ export async function createNeed(ddb, tableName, {
   if (!item.registeredByStaff) delete item.registeredByStaff;
   if (!item.registrantSub) delete item.registrantSub;
   if (!item.assignOnly) delete item.assignOnly;
+  if (!item.submissionId) delete item.submissionId;
   if (!item.registrant) delete item.registrant;
   if (item.registrant && !item.registrant.name) delete item.registrant.name;
   if (item.registrant && !item.registrant.phone) delete item.registrant.phone;
@@ -62,6 +64,22 @@ export async function createNeed(ddb, tableName, {
   if (!item.beneficiary.email) delete item.beneficiary.email;
   if (!item.media) delete item.media;
   const refItem = { PK: `REF#${refCode}`, SK: "META", type: "REF", refCode, needId: id, ttl, createdAt };
+  if (submissionId) {
+    const submissionItem = { PK: `SUBMISSION#${submissionId}`, SK: "META", needId: id, refCode, createdAt, ttl };
+    try {
+      await ddb.send(new PutCommand({
+        TableName: tableName,
+        Item: submissionItem,
+        ConditionExpression: "attribute_not_exists(PK)",
+      }));
+    } catch (e) {
+      if (e.name === "ConditionalCheckFailedException") {
+        const existing = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `SUBMISSION#${submissionId}`, SK: "META" } }));
+        if (existing.Item?.needId && existing.Item?.refCode) return { id: existing.Item.needId, refCode: existing.Item.refCode, replayed: true };
+      }
+      throw e;
+    }
+  }
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: refItem }));
   return { id, refCode };

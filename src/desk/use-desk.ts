@@ -832,7 +832,12 @@ export function useDesk(language: Language) {
         const [code, ...note] = line.split(/\s+/);
         return { code: code.toUpperCase(), redeemedAt: new Date().toISOString(), note: note.join(" ") || undefined };
       });
-      setSyncResults((await syncClaims(auth.idToken, { redemptions })).results);
+      const syncResponse = await syncClaims(auth.idToken, { redemptions });
+      if ("queued" in syncResponse && syncResponse.queued) {
+        success(t.deskActionSuccess);
+        return;
+      }
+      setSyncResults((syncResponse as { results: SyncResult[] }).results);
       success(t.deskActionSuccess);
       void loadBoards();
     } catch (error) {

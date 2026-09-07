@@ -10,6 +10,7 @@ import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { LiveStatusBadge } from "@/lib/live";
 import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
+import { OutboxBadge } from "@/components/outbox-badge";
 
 const container = "mx-auto flex min-h-9 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8";
 
@@ -33,6 +34,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
     <div className="site-status-bar border-b border-primary-soft-border bg-primary-soft">
       <div className={container}>
         <LiveStatusBadge language={language} />
+        <OutboxBadge language={language} />
         <nav aria-label={ts.primaryNavigation} className="hidden items-center gap-3 lg:flex">
           {links.map(([page, label]) => (
             <Button key={page} type="button" variant="link" size="sm" className="h-auto min-h-11 px-0" onClick={() => navigate(page)}>

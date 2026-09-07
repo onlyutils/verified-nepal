@@ -42,6 +42,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { NeedTimeline } from "@/components/need-timeline";
 import { MunicipalitySelect } from "@/components/municipality-select";
+import { shellStrings } from "@/i18n/shell";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
@@ -163,7 +164,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
-  const [success, setSuccess] = useState<{ id: string; refCode: string } | null>(null);
+  const [success, setSuccess] = useState<{ id: string; refCode?: string; queued?: boolean } | null>(null);
   const [draftTime, setDraftTime] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
@@ -515,13 +516,25 @@ export function GetHelp({ language }: { language: Language }) {
         },
         auth.idToken || undefined,
       );
-      setSuccess(response);
-      setDraftTime(null);
-      try {
-        localStorage.removeItem(DRAFT_KEY);
-        if (!auth.idToken) localStorage.setItem("vn:need-last", response.refCode);
-      } catch {
-        /* ignore */
+      if (Object.prototype.hasOwnProperty.call(response, "queued")) {
+        const queuedResponse = response as { submissionId: string; queued: true };
+        setSuccess({ id: queuedResponse.submissionId, queued: true });
+        setDraftTime(null);
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch {
+          /* ignore */
+        }
+      } else {
+        const createdResponse = response as { id: string; refCode: string };
+        setSuccess(createdResponse);
+        setDraftTime(null);
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+          if (!auth.idToken) localStorage.setItem("vn:need-last", createdResponse.refCode);
+        } catch {
+          /* ignore */
+        }
       }
     } catch (err) {
       if (isTurnstileError(err)) {
@@ -534,7 +547,8 @@ export function GetHelp({ language }: { language: Language }) {
     }
   };
 
-  if (success) return <SuccessScreen language={language} success={success} resetForAnother={resetForAnother} />;
+  if (success?.queued) return <QueuedSuccessScreen language={language} success={success} resetForAnother={resetForAnother} />;
+  if (success?.refCode) return <SuccessScreen language={language} success={{ id: success.id, refCode: success.refCode }} resetForAnother={resetForAnother} />;
   const errorCount = Object.keys(errors).length;
   const summary = errorCount === 1 ? ts.validationSummaryOne : ts.validationSummary.replace("{n}", String(errorCount));
   return (
@@ -1059,6 +1073,49 @@ function SuccessScreen({
       </div>
     </div>
   );
+}
+
+function QueuedSuccessScreen({
+  language,
+  success,
+  resetForAnother,
+}: {
+  language: Language;
+  success: { id: string; queued?: boolean };
+  resetForAnother: () => void;
+}) {
+  const ts = formStrings[language];
+  const shell = shellStrings[language];
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader eyebrow={ts.mutualAidEyebrow} title={shell.getHelpSavedToOutboxTitle} description={shell.getHelpSavedToOutboxBody} />
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle>{shell.getHelpSavedToOutboxTitle}</CardTitle>
+          <CardDescription>{shell.getHelpSavedToOutboxBody}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <CodeDisplay
+            code={success.id}
+            kind="ref"
+            label={shell.getHelpSubmissionId}
+            hint={shell.getHelpSavedToOutboxBody}
+            copyLabel={tCopy(language).copy}
+            copiedLabel={tCopy(language).copied}
+          />
+          <Button type="button" variant="secondary" onClick={resetForAnother} className="w-full">
+            <Check aria-hidden="true" />
+            {ts.registerAnother}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function tCopy(language: Language) {
+  const t = labels[language];
+  return { copy: t.getHelpRefCodeCopy, copied: t.getHelpRefCodeCopied };
 }
 
 function StatusLookup({ language, initialCode = "" }: { language: Language; initialCode?: string }) {

@@ -26,12 +26,15 @@ import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/nee
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: optionalAuthResult }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly, consent } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly, consent, submissionId } = body;
   const hasIncidentId = incidentId !== undefined && incidentId !== null && incidentId !== "";
   const hasNewIncident = newIncident !== undefined && newIncident !== null;
   if (hasIncidentId && hasNewIncident) throw err(400, "provide at most one of incidentId or newIncident");
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
   if (assignOnly !== undefined && typeof assignOnly !== "boolean") throw err(400, "assignOnly must be boolean");
+  if (submissionId !== undefined && (typeof submissionId !== "string" || submissionId.length < 8 || submissionId.length > 64 || !/^[A-Za-z0-9-]+$/.test(submissionId))) {
+    throw err(400, "submissionId must be 8-64 alphanumeric characters or hyphens");
+  }
   let auth = optionalAuthResult;
   if (onBehalf && !auth) throw err(401, "sign_in_required");
   if (onBehalf && consent !== true) throw err(400, "consent required");
@@ -104,14 +107,20 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
   } else {
     resolvedIncidentId = GENERAL_INCIDENT_ID;
   }
-  const { id, refCode } = await createNeed(ddb, tableName, {
+  const created = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
     incidentId: resolvedIncidentId, district, municipalityId, ward, householdSize, category, description: desc, language, media: cleanMedia,
     source: onBehalf ? "on-behalf" : (auth?.role === "moderator" || auth?.role === "admin") ? "staff" : "web",
     registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
     registrantSub: onBehalf ? auth.payload.sub : undefined,
-    assignOnly,
+    assignOnly, submissionId,
   });
+  if (created.replayed) {
+    const replay = json(200, { id: created.id, refCode: created.refCode });
+    replay.headers["x-idempotent-replay"] = "1";
+    return replay;
+  }
+  const { id, refCode } = created;
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   if (onBehalf) {
     try {
