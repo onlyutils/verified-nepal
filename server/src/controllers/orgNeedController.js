@@ -12,6 +12,7 @@ import { maskName } from "../lib/format.js";
 import { needTimeline } from "../views/need-timeline.js";
 import { getMunicipality } from "../lib/adminUnits.js";
 import { notifyRequester } from "../lib/notify.js";
+import { validateDeliveryReceipt } from "../lib/validate.js";
 
 /** A verified organization's member may take a published need, hand it back, or mark it delivered. */
 async function requireVerifiedMember(auth, orgId) {
@@ -114,12 +115,13 @@ export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
   const { need, handover } = await requireHandledByOrg(auth, orgId, needId, true);
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
+  const receipt = validateDeliveryReceipt(body);
   const deliveredBy = handover ? {
     kind: need.handledBy.kind,
     label: need.handledBy.label,
     via: { centerId: handover.center.id, centerName: handover.center.name, orgName: org.name },
   } : undefined;
-  const at = await fulfilNeed(auth.ddb, auth.tableName, { need, note: body.note, ...actor(auth), reason: `org:${org.name}`, orgName: org.name, deliveredBy, expectedStatus: "matched" }).catch((e) => {
+  const at = await fulfilNeed(auth.ddb, auth.tableName, { need, note: body.note, ...actor(auth), reason: `org:${org.name}`, orgName: org.name, deliveredBy, expectedStatus: "matched", receipt }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_handled_by_org");
     throw e;
   });

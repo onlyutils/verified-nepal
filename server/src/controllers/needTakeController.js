@@ -10,6 +10,7 @@ import { deleteOrgNeed } from "../models/orgNeed.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { toHandlingContact } from "../views/mine.js";
 import { notifyRequester } from "../lib/notify.js";
+import { validateDeliveryReceipt } from "../lib/validate.js";
 
 function actorLabel(auth) {
   return maskName(auth.user?.name || auth.payload.name || "") || "Helper";
@@ -114,10 +115,11 @@ export async function handleHelperDeliverNeed(event, opts, needId) {
   if (need.deliveryChannel === "center") throw err(409, "goods_not_received");
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
+  const receipt = validateDeliveryReceipt(body);
   const label = need.handledBy.label;
   const at = await fulfilNeed(auth.ddb, auth.tableName, {
     need, note: body.note, ...auditActor(auth), reason: `helper:${label}`, auditAction: "need.deliver",
-    deliveredBy: { kind: "helper", label, ref: auth.payload.sub }, expectedStatus: "matched",
+    deliveredBy: { kind: "helper", label, ref: auth.payload.sub }, expectedStatus: "matched", receipt,
   }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_handled_by_helper");
     throw e;
@@ -204,10 +206,11 @@ export async function handleGroupDeliverNeed(event, opts, needId) {
   if (need.deliveryChannel === "center") throw err(409, "goods_not_received");
   const body = parseBody(event) || {};
   if (body.note !== undefined && body.note !== null && typeof body.note !== "string") throw err(400, "note must be string");
+  const receipt = validateDeliveryReceipt(body);
   const label = need.handledBy.label;
   const at = await fulfilNeed(auth.ddb, auth.tableName, {
     need, note: body.note, ...auditActor(auth), reason: `group:${need.handledBy.groupId}`, auditAction: "need.deliver",
-    deliveredBy: { kind: "group", label, ref: need.handledBy.groupId }, expectedStatus: "matched",
+    deliveredBy: { kind: "group", label, ref: need.handledBy.groupId }, expectedStatus: "matched", receipt,
   }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_handled_by_group");
     throw e;

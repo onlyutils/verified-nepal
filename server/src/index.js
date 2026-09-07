@@ -2,6 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { route } from "./router.js";
 import { json } from "./lib/http.js";
+import { expireTakes } from "./tasks/expireTakes.js";
 
 export { __clearMediaTokenCache } from "./models/media.js";
 
@@ -30,6 +31,11 @@ export function createHandler(opts = {}) {
   }
   return async (event) => {
     try {
+      if (event && typeof event === "object" && "task" in event && !event.requestContext) {
+        const tableName = env.TABLE_NAME;
+        if (event.task === "expire-takes") return withSecurityHeaders(json(200, await expireTakes(getDdb(), tableName)));
+        return withSecurityHeaders(json(400, { error: "unknown task" }));
+      }
       return withSecurityHeaders(await route(event, { getDdb, env, fetchJwks, fetchImpl }));
     } catch (e) {
       const status = e.status ?? e.statusCode ?? 500;

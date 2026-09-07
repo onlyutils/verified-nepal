@@ -53,7 +53,7 @@ describe("ledger delivery attribution", () => {
   it("shows the legacy moderator fallback when a ledger row has no deliveredBy", () => {
     const item = toLedgerItem({ maskedName: "Asha S.", category: "goods", district: "Gorkha", ward: 5, redeemedAt: "2026-01-01T00:00:00.000Z" });
     assert.deepEqual(item.deliveredBy, { kind: "field", label: "Claim code · moderator" });
-    assert.match(toLedgerCsv([item]), /Claim code · moderator,field$/m);
+    assert.match(toLedgerCsv([item]), /Claim code · moderator,field,,,$/m);
   });
 
   it("uses organization attribution for an organization delivery", async () => {
@@ -77,8 +77,8 @@ describe("ledger delivery attribution", () => {
     assert.deepEqual(item.deliveredBy, { kind: "helper", label: "Asha S." });
     assert.equal(JSON.stringify(item).includes("offer-1"), false);
     const csv = toLedgerCsv([item]);
-    assert.match(csv, /^maskedName,category,district,ward,redeemedAt,orgName,deliveredBy,deliveredByKind\n/);
-    assert.match(csv, /Asha S\.,helper$/m);
+    assert.match(csv, /^maskedName,category,district,ward,redeemedAt,orgName,deliveredBy,deliveredByKind,municipality,households,receipt\n/);
+    assert.match(csv, /Asha S\.,helper,,,$/m);
     assert.equal(csv.includes("offer-1"), false);
     for (const internal of ["ref", "sub", "ou_user"]) {
       assert.equal(JSON.stringify(item).includes(internal), false, internal);

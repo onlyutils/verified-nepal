@@ -139,8 +139,9 @@ export async function handlePostNeedsMediaPresign(event, { env, fetchImpl, auth 
   if (typeof body.size !== "number" || !Number.isFinite(body.size) || body.size <= 0 || body.size > maxSize) {
     throw err(400, `size must be 1-${maxSize}`);
   }
-  if (body.onBehalf === true && !auth) throw err(401, "sign_in_required");
-  if (body.onBehalf !== true) await verifyTurnstile(body.turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
+  const requiresAuth = body.onBehalf === true || body.purpose === "receipt";
+  if (requiresAuth && !auth) throw err(401, "sign_in_required");
+  if (!requiresAuth) await verifyTurnstile(body.turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   try {
     const presign = await requestPresign(env, fetchImpl, { filename, contentType: body.contentType });
     return json(200, { ...presign, mediaType: photo ? "photo" : "video" });

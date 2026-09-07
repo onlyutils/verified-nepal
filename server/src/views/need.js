@@ -65,6 +65,7 @@ export function toStatusView(need, { donation, ledgerRow } = {}) {
   }
   if (need.deliveredBy) out.deliveredBy = need.deliveredBy.label;
   if (need.confirmedAt) out.confirmedAt = need.confirmedAt;
+  if (need.deliveryReceipt) out.deliveryReceipt = { photo: need.deliveryReceipt.photo, households: need.deliveryReceipt.households, at: need.deliveryReceipt.at };
   if (need.events?.length) out.events = need.events;
   out.timeline = needTimeline(need, { donation, ledgerRow });
   if (need.deliveryChannel) {

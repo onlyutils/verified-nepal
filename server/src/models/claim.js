@@ -96,7 +96,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
  * The one place a need becomes "fulfilled": status + GSI keys, public ledger rows, audit.
  * Used by the moderator claim-code redeem and by organizations marking a need delivered.
  */
-export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName, deliveredBy, expectedStatus, auditAction = "redeem" }) {
+export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName, deliveredBy, expectedStatus, auditAction = "redeem", receipt }) {
   const at = redeemedAt || new Date().toISOString();
   const district = need.beneficiary?.district || need.district || "";
   const ward = need.beneficiary?.ward ?? need.ward;
@@ -110,6 +110,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   need.gsi1sk = need.createdAt;
   need.gsi2pk = "NEED#fulfilled";
   need.gsi2sk = need.createdAt;
+  if (receipt) need.deliveryReceipt = { ...receipt, at };
   const params = { TableName: tableName, Item: need };
   if (expectedStatus !== undefined) {
     params.ConditionExpression = "#status = :expectedStatus";
@@ -122,7 +123,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
     if (e.name === "ConditionalCheckFailedException") throw err(409, "need_status_changed");
     throw e;
   }
-  const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, redeemedAt: at, deliveredBy: attribution, ...(need.claimRedeemedAt ? { confirmedAt: need.claimRedeemedAt } : {}) };
+  const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, municipalityId: need.beneficiary?.municipalityId, redeemedAt: at, deliveredBy: attribution, ...(receipt?.households ? { households: receipt.households } : {}), ...(receipt ? { hasReceipt: true } : {}), ...(need.claimRedeemedAt ? { confirmedAt: need.claimRedeemedAt } : {}) };
   if (orgName || attribution.kind === "org") ledgerBase.orgName = orgName || attribution.label;
   if (note !== undefined && note !== null && String(note).trim() !== "") {
     const n = String(note).trim();

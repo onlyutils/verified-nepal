@@ -11,6 +11,7 @@ export const DISTRICTS = [
   "Sindhuli", "Siraha", "Solukhumbu", "Sunsari", "Surkhet", "Syangja", "Tanahun", "Taplejung", "Tehrathum", "Udayapur",
 ];
 export const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
+export const TAKE_TTL_DAYS = 6;
 // Bucket for needs submitted without a specific incident/event.
 export const GENERAL_INCIDENT_ID = "general";
 export const PUBLIC_OFFER_STATUSES = ["published", "matched", "fulfilled"];

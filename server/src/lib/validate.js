@@ -36,6 +36,28 @@ export function validateNeedMedia(media) {
   });
 }
 
+export function validateDeliveryReceipt(body) {
+  const out = {};
+  if (body.photo !== undefined && body.photo !== null) {
+    const [p] = validateNeedMedia([body.photo]);
+    if (p.type !== "photo") throw err(400, "receipt photo must be a photo");
+    out.photo = p;
+  }
+  if (body.households !== undefined && body.households !== null) {
+    const h = body.households;
+    if (typeof h !== "number" || !Number.isInteger(h) || h < 1 || h > 500) throw err(400, "households must be integer 1-500");
+    out.households = h;
+  }
+  const hasLat = body.lat !== undefined && body.lat !== null, hasLng = body.lng !== undefined && body.lng !== null;
+  if (hasLat !== hasLng) throw err(400, "lat and lng must both be provided or neither");
+  if (hasLat) {
+    if (typeof body.lat !== "number" || body.lat < 26 || body.lat > 31) throw err(400, "lat must be 26-31");
+    if (typeof body.lng !== "number" || body.lng < 80 || body.lng > 89) throw err(400, "lng must be 80-89");
+    out.lat = body.lat; out.lng = body.lng;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export function validatePhone(v, name = "phone") {
   if (typeof v !== "string") throw err(400, `${name} must be a string`);
   const t = v.trim();
