@@ -455,6 +455,19 @@ province, district, municipality and ward fields, the BIPAD municipality code, s
 and household count. GeoJSON points use the most specific available administrative centroid.
 Neither format includes beneficiary names or contact details.
 
+## 17. One-door distribution filing
+
+Verified organizations can file a planned distribution once, naming the active incident,
+district, municipality, wards, relief items, transport, staff count and a private contact
+phone. Kit catalogue lines are expanded into their category quantities so the filing can be
+read by the district office and reused in the public DDMC daily log.
+
+Organization members can mark a filing completed with the households reached, or cancel it
+while it is still planned. A moderator or admin can acknowledge a planned filing on behalf of
+the district office; the acknowledgement records the role and time and is included in the
+public audit trail. Public distribution views omit the organization's contact phone and the
+user who filed it. The public DDMC export has one row per ward and includes an HXL metadata row.
+
 ---
 
 *This document describes the platform's features in plain language. For how the code is

@@ -41,6 +41,7 @@ import {
   handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
 } from "./controllers/climateController.js";
 import { KITS } from "./lib/kits.js";
+import { handleGetModerationDistributions, handleAckDistribution, handleGetPublicDistributions, handleGetDdmcLog } from "./controllers/distributionController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -53,6 +54,8 @@ const routes = [
     response.headers["cache-control"] = "public, max-age=86400";
     return response;
   }],
+  ["GET", /^\/distributions$/, handleGetPublicDistributions],
+  ["GET", /^\/export\/ddmc-log$/, handleGetDdmcLog],
   ["POST", /^\/auth\/exchange$/, handleAuthExchange],
   ["POST", /^\/auth\/refresh$/, handleAuthRefresh],
   ["GET", /^\/me$/, handleMe],
@@ -110,6 +113,8 @@ const routes = [
   ["POST", /^\/offers\/([^/]+)\/status$/, withModAck(handlePostOfferStatus)],
   ["POST", /^\/offers\/([^/]+)\/edit$/, withModAck(handlePostOfferEdit)],
   ["GET", /^\/moderation\/queue$/, withModAck(handleGetModerationQueue)],
+  ["GET", /^\/moderation\/distributions$/, withModAck(handleGetModerationDistributions)],
+  ["POST", /^\/moderation\/distributions\/([^/]+)\/ack$/, withModAck(handleAckDistribution)],
   ["GET", /^\/moderation\/missing$/, withModAck(handleGetModerationMissing)],
   ["POST", /^\/moderation\/missing\/([^/]+)$/, withModAck(handlePostModerationMissing)],
   ["POST", /^\/moderation\/([^/]+)\/claim$/, withModAck(handlePostModerationClaim)],

@@ -35,6 +35,12 @@ import {
   handleListDonations,
   handleConfirmDonation,
 } from "../controllers/centerController.js";
+import {
+  handlePostDistribution,
+  handleListOrgDistributions,
+  handleCompleteDistribution,
+  handleCancelDistribution,
+} from "../controllers/distributionController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -52,6 +58,10 @@ const routes = [
   ["POST", /^\/orgs\/([^\/]+)\/centers$/, withAuth(handleCreateCenter)],
   ["GET", /^\/orgs\/([^\/]+)\/centers$/, withAuth(handleListOrgCenters)],
   ["GET", /^\/orgs\/([^\/]+)\/needs$/, withAuth(handleListOrgNeeds)],
+  ["POST", /^\/orgs\/([^\/]+)\/distributions$/, withAuth(handlePostDistribution)],
+  ["GET", /^\/orgs\/([^\/]+)\/distributions$/, withAuth(handleListOrgDistributions)],
+  ["POST", /^\/orgs\/([^\/]+)\/distributions\/([^\/]+)\/complete$/, withAuth(handleCompleteDistribution)],
+  ["POST", /^\/orgs\/([^\/]+)\/distributions\/([^\/]+)\/cancel$/, withAuth(handleCancelDistribution)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/claim$/, withAuth(handleOrgClaimNeed)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/release$/, withAuth(handleOrgReleaseNeed)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/deliver$/, withAuth(handleOrgDeliverNeed)],
