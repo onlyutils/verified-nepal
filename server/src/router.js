@@ -25,6 +25,7 @@ import {
   handlePostGroupItemClaim, handlePostGroupItemRelease, handlePostGroupItemDone,
 } from "./controllers/groupController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
+import { handleGetCoverage, handleGet3w } from "./controllers/coverageController.js";
 import { handleHelperTakeNeed, handleHelperDeliverNeed, handleGroupTakeNeed, handleGroupReleaseNeed, handleGroupDeliverNeed, handleGetNeedContact, handleReleaseNeed, handleSetNeedDelivery } from "./controllers/needTakeController.js";
 import {
   handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
@@ -127,6 +128,8 @@ const routes = [
   ["POST", /^\/claims\/sync$/, withModAck(handleSync)],
   ["GET", /^\/claims\/print$/, withModAck(handlePrint)],
   ["GET", /^\/ledger$/, handleLedger],
+  ["GET", /^\/coverage$/, handleGetCoverage],
+  ["GET", /^\/export\/3w$/, handleGet3w],
   ["POST", /^\/needs\/([^/]+)\/flag$/, handlePostFlag],
   ["GET", /^\/moderation\/flags$/, withModAck(handleGetFlags)],
   ["POST", /^\/moderation\/flags\/([^/]+)\/resolve$/, withModAck(handleResolveFlag)],
