@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, HandHeart, LayoutDashboard, PackageCheck, Plane, Settings, Users, Warehouse } from "lucide-react";
+import { ClipboardCheck, ClipboardList, HandHeart, LayoutDashboard, PackageCheck, Plane, Settings, Users, Warehouse } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import { EmptyState, LoadingState } from "@/components/empty-state";
@@ -24,10 +24,12 @@ import { OrgDialogs } from "./dialogs";
 import { distributionStrings } from "@/i18n/distributions";
 import { droneStrings } from "@/i18n/drones";
 import { Drones } from "./drones";
+import { Work } from "./work";
+import { workStrings } from "@/i18n/org-work";
 
 function sectionFromHash(): OrgSection {
   const value = typeof window === "undefined" ? "overview" : window.location.hash.slice(1);
-  return ["overview", "needs", "centers", "donations", "distributions", "drones", "team", "settings"].includes(value)
+  return ["overview", "needs", "centers", "donations", "distributions", "drones", "work", "team", "settings"].includes(value)
     ? (value as OrgSection)
     : "overview";
 }
@@ -133,6 +135,7 @@ export function OrgDashboard({
   const controller = useOrg(language);
   const { auth, orgs, loadingOrgs, orgsError, t, selectedOrg, selectedId, setSelectedId } = controller;
   const [active, setActive] = useState<OrgSection>(sectionFromHash);
+  const [assignNeedId, setAssignNeedId] = useState<string | null>(null);
 
   useEffect(() => {
     const onHashChange = () => setActive(sectionFromHash());
@@ -147,6 +150,11 @@ export function OrgDashboard({
   const selectSection = (next: OrgSection) => {
     setActive(next);
     window.history.pushState({}, "", `${window.location.pathname}${window.location.search}#${next}`);
+  };
+
+  const openAssignmentForNeed = (needId: string) => {
+    setAssignNeedId(needId);
+    selectSection("work");
   };
 
   if (!auth.idToken) return <Gate controller={controller} navigate={navigate} setLanguage={setLanguage} />;
@@ -169,6 +177,7 @@ export function OrgDashboard({
     { key: "donations", label: t.navDonations, icon: <PackageCheck /> },
     { key: "distributions", label: distributionStrings[language].nav, icon: <ClipboardList /> },
     { key: "drones", label: droneStrings[language].nav, icon: <Plane /> },
+    { key: "work", label: workStrings[language].nav, icon: <ClipboardCheck /> },
     { key: "team", label: t.navTeam, icon: <Users /> },
     { key: "settings", label: t.navSettings, icon: <Settings /> },
   ];
@@ -206,11 +215,12 @@ export function OrgDashboard({
       aside={aside}
     >
       {active === "overview" ? <Overview controller={controller} /> : null}
-      {active === "needs" ? <OrgNeeds controller={controller} navigate={navigate} /> : null}
+      {active === "needs" ? <OrgNeeds controller={controller} navigate={navigate} onAssignNeed={openAssignmentForNeed} /> : null}
       {active === "centers" ? <Centers controller={controller} /> : null}
       {active === "donations" ? <Donations controller={controller} /> : null}
       {active === "distributions" ? <Distributions controller={controller} /> : null}
       {active === "drones" ? <Drones controller={controller} /> : null}
+      {active === "work" ? <Work controller={controller} initialNeedId={assignNeedId} onInitialNeedHandled={() => setAssignNeedId(null)} /> : null}
       {active === "team" ? <Team controller={controller} /> : null}
       {active === "settings" ? <SettingsSection controller={controller} /> : null}
       <OrgDialogs controller={controller} />

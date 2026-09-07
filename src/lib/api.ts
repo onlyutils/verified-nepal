@@ -1969,6 +1969,76 @@ export function orgDeliverNeed(
     body: JSON.stringify(body),
   });
 }
+
+export type AssignmentShift = "day" | "night";
+export type AssignmentStatus = "assigned" | "en_route" | "on_site" | "done" | "cancelled";
+export interface Assignment {
+  id: string;
+  orgId: string;
+  shiftDate: string;
+  shift: AssignmentShift;
+  assigneeSub: string;
+  assigneeName: string;
+  needId?: string;
+  distributionId?: string;
+  siteLabel?: string;
+  task: string;
+  status: AssignmentStatus;
+  statusAt: string;
+  createdBy: string;
+  createdAt: string;
+}
+export interface CreateAssignmentBody {
+  shiftDate: string;
+  shift: AssignmentShift;
+  assigneeSub: string;
+  needId?: string;
+  distributionId?: string;
+  siteLabel?: string;
+  task: string;
+}
+export interface ActivityLogEntry {
+  at: string;
+  bySub: string;
+  byName: string;
+  text: string;
+  needId?: string;
+  assignmentId?: string;
+}
+export interface HandoverResponse {
+  orgName: string;
+  date: string;
+  shift: AssignmentShift;
+  assignments: Array<{ assigneeSub: string; assigneeName: string; assignments: Assignment[] }>;
+  log: ActivityLogEntry[];
+  openNeeds: Array<{ id: string; category: string; description: string; status: string; district: string; municipalityId?: number; municipality?: string; ward?: number; createdAt: string }>;
+  generatedAt: string;
+}
+export function createAssignment(token: string, orgId: string, body: CreateAssignmentBody): Promise<Assignment> {
+  return request<Assignment>(`/orgs/${encodeURIComponent(orgId)}/assignments`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function listAssignments(token: string, orgId: string, date: string): Promise<{ date: string; items: Assignment[] }> {
+  return request<{ date: string; items: Assignment[] }>(`/orgs/${encodeURIComponent(orgId)}/assignments${qs({ date })}`, { token });
+}
+export function updateAssignmentStatus(token: string, orgId: string, id: string, status: AssignmentStatus): Promise<Assignment> {
+  return request<Assignment>(`/orgs/${encodeURIComponent(orgId)}/assignments/${encodeURIComponent(id)}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status }),
+    token,
+  });
+}
+export function createOrgLog(token: string, orgId: string, body: { text: string; needId?: string; assignmentId?: string }): Promise<ActivityLogEntry> {
+  return request<ActivityLogEntry>(`/orgs/${encodeURIComponent(orgId)}/log`, { method: "POST", body: JSON.stringify(body), token });
+}
+export function listOrgLog(token: string, orgId: string, date: string): Promise<{ date: string; items: ActivityLogEntry[] }> {
+  return request<{ date: string; items: ActivityLogEntry[] }>(`/orgs/${encodeURIComponent(orgId)}/log${qs({ date })}`, { token });
+}
+export function getHandover(token: string, orgId: string, date: string, shift: AssignmentShift): Promise<HandoverResponse> {
+  return request<HandoverResponse>(`/orgs/${encodeURIComponent(orgId)}/handover${qs({ date, shift })}`, { token });
+}
+export function getHandoverCsv(token: string, orgId: string, date: string, shift: AssignmentShift): Promise<string> {
+  return request<string>(`/orgs/${encodeURIComponent(orgId)}/handover${qs({ date, shift, format: "csv" })}`, { token });
+}
 export function listOrgCenters(token: string, orgId: string): Promise<{ items: CenterPrivate[] }> {
   return request(`/orgs/${encodeURIComponent(orgId)}/centers`, { token });
 }

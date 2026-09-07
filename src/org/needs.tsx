@@ -15,6 +15,7 @@ import { formatDateTime } from "@/lib/format-date";
 import { NeedTimeline } from "@/components/need-timeline";
 import { DeliveryReceiptFields, type ReceiptCopy, type ReceiptValue } from "@/components/delivery-receipt-fields";
 import { needTimelineStrings } from "@/i18n/needs";
+import { workStrings as assignmentStrings } from "@/i18n/org-work";
 import type { OrgController } from "./org-types";
 
 const TAKE_TTL_DAYS = 6;
@@ -25,7 +26,7 @@ function takeExpiryLabel(handledAt: string | undefined, t: Record<string, string
   return days === 0 ? t.takeExpiresToday : t.takeExpiresIn.replace("{days}", String(days));
 }
 
-export function OrgNeeds({ controller, navigate }: { controller: OrgController; navigate: (page: Page) => void }) {
+export function OrgNeeds({ controller, navigate, onAssignNeed }: { controller: OrgController; navigate: (page: Page) => void; onAssignNeed: (needId: string) => void }) {
   const { t, language, selectedOrg, auth } = controller;
   const needText = needTimelineStrings[language];
   const [items, setItems] = useState<OrgNeed[] | null>(null);
@@ -87,6 +88,7 @@ export function OrgNeeds({ controller, navigate }: { controller: OrgController; 
             <DeliveryReceiptFields value={receipts[need.id] ?? {}} onChange={(value) => setReceipts((current) => ({ ...current, [need.id]: value }))} language={language} token={auth.idToken as string} t={t as ReceiptCopy} idPrefix={`org-delivery-receipt-${need.id}`} />
             <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={busy === need.id} onClick={() => void act(need, "deliver")}>{busy === need.id ? t.needsDelivering : t.needsDeliver}</Button>
+              <Button size="sm" variant="outline" onClick={() => onAssignNeed(need.id)}>{assignmentStrings[language].assign}</Button>
               {!need.handover ? <Button size="sm" variant="outline" disabled={busy === need.id} onClick={() => void act(need, "release")}>{t.needsRelease}</Button> : null}
             </div>
           </div>

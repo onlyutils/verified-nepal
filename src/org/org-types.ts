@@ -13,7 +13,7 @@ import type {
 } from "@/lib/api";
 import type { Language } from "@/lib/types";
 
-export type OrgSection = "overview" | "needs" | "centers" | "donations" | "distributions" | "drones" | "team" | "settings";
+export type OrgSection = "overview" | "needs" | "centers" | "donations" | "distributions" | "drones" | "work" | "team" | "settings";
 export type OrgCopy = Record<string, string>;
 
 export type LogForm = {
@@ -183,6 +183,6 @@ export interface OrgController {
     signIn: () => Promise<void>;
     signOut: () => void;
     error: string | null;
-    profile: { name?: string | null; email?: string | null } | null;
+    profile: { sub?: string; name?: string | null; email?: string | null } | null;
   };
 }
