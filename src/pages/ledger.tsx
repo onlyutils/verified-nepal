@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TurnstileWidget } from "@/components/turnstile";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/format-date";
+import { labels } from "@/i18n";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function dateLabel(value: string, language: Language) {
@@ -73,6 +74,9 @@ export function Ledger({ language }: { language: Language }) {
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <PageHeader eyebrow={t.accountabilityEyebrow} title={t.ledgerTitle} description={t.ledgerLead} />
+      <a href="/coverage" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+        {labels[language].coverageTitle}
+      </a>
       <Card className="print:hidden">
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-2">

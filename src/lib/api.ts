@@ -119,6 +119,23 @@ export interface Incident {
   approvedAt?: string;
 }
 
+export interface CoverageRow {
+  district: string;
+  municipalityId: number | null;
+  municipality: string | null;
+  ward: number | null;
+  open: number;
+  matched: number;
+  fulfilled: number;
+  lastDeliveredAt: string | null;
+}
+
+export interface CoverageResponse {
+  incidentId: string;
+  generatedAt: string;
+  rows: CoverageRow[];
+}
+
 export interface AdminIncident extends Incident {
   proofMedia?: NeedMediaItem[];
   rejectionReason?: string;
@@ -271,6 +288,10 @@ export function createNeed(body: CreateNeedBody, token?: string): Promise<Create
 
 export function listIncidents(status = "active"): Promise<{ items: Incident[] }> {
   return request<{ items: Incident[] }>(`/incidents?status=${encodeURIComponent(status)}`);
+}
+
+export function getCoverage(incidentId: string): Promise<CoverageResponse> {
+  return request<CoverageResponse>(`/coverage?incidentId=${encodeURIComponent(incidentId)}`);
 }
 
 export function getAdminIncidents(token: string, status = "pending"): Promise<{ items: AdminIncident[] }> {
@@ -986,6 +1007,10 @@ export function getLedgerCsvUrl(district?: string, ward?: number, turnstileToken
   if (ward != null) q.set("ward", String(ward));
   if (turnstileToken) q.set("turnstileToken", turnstileToken);
   return `${API_BASE}/ledger?${q.toString()}`;
+}
+
+export function export3wUrl(incidentId: string, format: "csv" | "geojson"): string {
+  return `${API_BASE}/export/3w?incidentId=${encodeURIComponent(incidentId)}&format=${encodeURIComponent(format)}`;
 }
 
 export function flagNeed(id: string, body: FlagInput): Promise<{ ok: boolean }> {

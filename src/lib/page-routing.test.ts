@@ -17,6 +17,7 @@ test("maps public and signed-in routes, while keeping unknown paths not found", 
     "/poster/abc": "posterView",
     "/status/ABC": "getHelp",
     "/donation/XYZ": "donationStatus",
+    "/coverage": "coverage",
     "/unknown": "notFound",
   } as const;
 

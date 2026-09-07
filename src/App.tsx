@@ -30,6 +30,7 @@ const DeskLogin = lazy(() => import("@/desk/login").then((m) => ({ default: m.De
 const GetHelp = lazy(() => import("@/pages/get-help").then((m) => ({ default: m.GetHelp })));
 const GiveHelp = lazy(() => import("@/pages/give-help").then((m) => ({ default: m.GiveHelp })));
 const Ledger = lazy(() => import("@/pages/ledger").then((m) => ({ default: m.Ledger })));
+const Coverage = lazy(() => import("@/pages/coverage").then((m) => ({ default: m.Coverage })));
 const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.AuditPage })));
 const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
@@ -75,6 +76,7 @@ const pagePaths: Record<AppPage, string> = {
   getHelp: "/get-help",
   giveHelp: "/give-help",
   ledger: "/ledger",
+  coverage: "/coverage",
   audit: "/audit",
   dispatches: "/articles",
   dispatchDetail: "/articles/:id",
@@ -121,6 +123,7 @@ function pageTitle(page: AppPage, language: Language): string {
     getHelp: t.getHelp,
     giveHelp: t.giveHelp,
     ledger: t.ledgerTitle,
+    coverage: t.coverageTitle,
     audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
     dispatches: (t as Record<string, string>).dispatches ?? "Articles",
     dispatchDetail: (t as Record<string, string>).dispatches ?? "Articles",
@@ -322,6 +325,11 @@ export function App() {
               {page === "ledger" ? (
                 <ComponentErrorBoundary language={language}>
                   <Ledger language={language} />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "coverage" ? (
+                <ComponentErrorBoundary language={language}>
+                  <Coverage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "audit" ? (

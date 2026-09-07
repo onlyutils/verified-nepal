@@ -14,6 +14,7 @@ export type Page =
   | "getHelp"
   | "giveHelp"
   | "ledger"
+  | "coverage"
   | "audit"
   | "projects"
   | "projectDetail"
