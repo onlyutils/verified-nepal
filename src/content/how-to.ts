@@ -66,6 +66,7 @@ export type HowToStep = {
 export type HowToCard = {
   title: HowToCopyKey;
   body: HowToCopyKey;
+  where?: string;
   figures?: readonly HowToFigure[];
 };
 export type HowToDefinition = { term: HowToCopyKey; body: HowToCopyKey };
@@ -131,6 +132,7 @@ export const howToSections: readonly HowToSection[] = [
       { title: "askSomeone", body: "askSomeoneBody", see: "seeAskSomeone", where: "/get-help", figures: [figure("get-help-onbehalf-nudge", "captionGetHelpOnBehalf")] },
       { title: "askReference", body: "askReferenceBody", see: "seeAskReference", where: "/get-help" },
       { title: "askStatus", body: "askStatusBody", see: "seeAskStatus", where: "/status/:reference-code", figures: [figure("get-help-status", "captionGetHelpStatus")] },
+      { title: "askLocationUpdates", body: "askLocationUpdatesBody", see: "seeAskLocationUpdates", where: "/status/:reference-code" },
       { title: "askRenew", body: "askRenewBody", see: "seeAskRenew", where: "/status/:reference-code" },
     ],
   },
@@ -143,6 +145,7 @@ export const howToSections: readonly HowToSection[] = [
       { title: "giveBoard", body: "giveBoardBody", see: "seeGiveBoard", where: "/give-help", figures: [figure("give-help-board", "captionGiveHelpBoard")] },
       { title: "giveTake", body: "giveTakeBody", see: "seeGiveTake", where: "/give-help", figures: [figure("give-help-group", "captionGiveHelpGroup")] },
       { title: "giveDelivery", body: "giveDeliveryBody", see: "seeGiveDelivery", where: "/give-help", figures: [figure("give-help-dropoff", "captionGiveHelpDropoff")] },
+      { title: "giveTakeLimit", body: "giveTakeLimitBody", see: "seeGiveTakeLimit", where: "/give-help" },
       { title: "giveLedger", body: "giveLedgerBody", see: "seeGiveLedger", where: "/ledger" },
     ],
   },
@@ -209,6 +212,7 @@ export const howToSections: readonly HowToSection[] = [
     summary: "sectionTransparencySummary",
     cards: [
       { title: "transparencyLedger", body: "transparencyLedgerBody", figures: [figure("ledger", "captionLedger")] },
+      { title: "transparencyCoverage", body: "transparencyCoverageBody", where: "/coverage" },
       { title: "transparencyGoods", body: "transparencyGoodsBody" },
       { title: "transparencyAudit", body: "transparencyAuditBody", figures: [figure("audit", "captionAudit")] },
       { title: "transparencyClimate", body: "transparencyClimateBody", figures: [figure("climate", "captionClimate")] },
