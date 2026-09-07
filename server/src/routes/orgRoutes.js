@@ -41,6 +41,12 @@ import {
   handleCompleteDistribution,
   handleCancelDistribution,
 } from "../controllers/distributionController.js";
+import {
+  handleCreateDroneOperator, handleListDroneOperators, handleUpdateDroneOperator,
+  handleCreateLandingSite, handleListLandingSites, handleCreateOrgPayloadRequest,
+  handleListOrgPayloadRequests, handleAssignPayloadRequest, handlePlanMission,
+  handleFlownMission, handleAbortMission,
+} from "../controllers/droneController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -62,6 +68,17 @@ const routes = [
   ["GET", /^\/orgs\/([^\/]+)\/distributions$/, withAuth(handleListOrgDistributions)],
   ["POST", /^\/orgs\/([^\/]+)\/distributions\/([^\/]+)\/complete$/, withAuth(handleCompleteDistribution)],
   ["POST", /^\/orgs\/([^\/]+)\/distributions\/([^\/]+)\/cancel$/, withAuth(handleCancelDistribution)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/operators$/, withAuth(handleCreateDroneOperator)],
+  ["GET", /^\/orgs\/([^\/]+)\/drones\/operators$/, withAuth(handleListDroneOperators)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/operators\/([^\/]+)$/, withAuth(handleUpdateDroneOperator)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/sites$/, withAuth(handleCreateLandingSite)],
+  ["GET", /^\/orgs\/([^\/]+)\/drones\/sites$/, withAuth(handleListLandingSites)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/requests$/, withAuth(handleCreateOrgPayloadRequest)],
+  ["GET", /^\/orgs\/([^\/]+)\/drones\/requests$/, withAuth(handleListOrgPayloadRequests)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/requests\/([^\/]+)\/assign$/, withAuth(handleAssignPayloadRequest)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/requests\/([^\/]+)\/missions$/, withAuth(handlePlanMission)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/missions\/([^\/]+)\/flown$/, withAuth(handleFlownMission)],
+  ["POST", /^\/orgs\/([^\/]+)\/drones\/missions\/([^\/]+)\/abort$/, withAuth(handleAbortMission)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/claim$/, withAuth(handleOrgClaimNeed)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/release$/, withAuth(handleOrgReleaseNeed)],
   ["POST", /^\/orgs\/([^\/]+)\/needs\/([^\/]+)\/deliver$/, withAuth(handleOrgDeliverNeed)],

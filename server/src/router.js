@@ -42,6 +42,10 @@ import {
 } from "./controllers/climateController.js";
 import { KITS } from "./lib/kits.js";
 import { handleGetModerationDistributions, handleAckDistribution, handleGetPublicDistributions, handleGetDdmcLog } from "./controllers/distributionController.js";
+import {
+  handleCreateModeratorPayloadRequest, handleModerationCreateLandingSite, handleModerationListPayloadRequests,
+  handleConfirmPayloadRequest, handleCancelPayloadRequest, handlePublicDroneBoard,
+} from "./controllers/droneController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
 
@@ -56,6 +60,7 @@ const routes = [
   }],
   ["GET", /^\/distributions$/, handleGetPublicDistributions],
   ["GET", /^\/export\/ddmc-log$/, handleGetDdmcLog],
+  ["GET", /^\/drones\/board$/, handlePublicDroneBoard],
   ["POST", /^\/auth\/exchange$/, handleAuthExchange],
   ["POST", /^\/auth\/refresh$/, handleAuthRefresh],
   ["GET", /^\/me$/, handleMe],
@@ -115,6 +120,11 @@ const routes = [
   ["GET", /^\/moderation\/queue$/, withModAck(handleGetModerationQueue)],
   ["GET", /^\/moderation\/distributions$/, withModAck(handleGetModerationDistributions)],
   ["POST", /^\/moderation\/distributions\/([^/]+)\/ack$/, withModAck(handleAckDistribution)],
+  ["POST", /^\/moderation\/drones\/requests$/, withModAck(handleCreateModeratorPayloadRequest)],
+  ["POST", /^\/moderation\/drones\/sites$/, withModAck(handleModerationCreateLandingSite)],
+  ["GET", /^\/moderation\/drones\/requests$/, withModAck(handleModerationListPayloadRequests)],
+  ["POST", /^\/moderation\/drones\/requests\/([^/]+)\/confirm$/, withModAck(handleConfirmPayloadRequest)],
+  ["POST", /^\/moderation\/drones\/requests\/([^/]+)\/cancel$/, withModAck(handleCancelPayloadRequest)],
   ["GET", /^\/moderation\/missing$/, withModAck(handleGetModerationMissing)],
   ["POST", /^\/moderation\/missing\/([^/]+)$/, withModAck(handlePostModerationMissing)],
   ["POST", /^\/moderation\/([^/]+)\/claim$/, withModAck(handlePostModerationClaim)],

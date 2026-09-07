@@ -468,6 +468,19 @@ the district office; the acknowledgement records the role and time and is includ
 public audit trail. Public distribution views omit the organization's contact phone and the
 user who filed it. The public DDMC export has one row per ward and includes an HXL metadata row.
 
+## 18. Drone tasking board
+
+Verified organizations can register drone operators and landing sites, then post payload
+requests for an active incident. A request records its relief items, weight, cold-chain need,
+priority and delivery window. An organization with an active operator can assign the request,
+plan a mission and mark it flown. Moderators can register requests or landing sites on behalf
+of a ward, confirm flown deliveries, and cancel requests within their district scope.
+
+The public `/drones` board shows open tasking, active landing sites, active operators and
+near-term flights. It excludes operator and landing-site contacts, requester names and phone
+numbers, and mission drop photos. Public board responses are cached briefly for field-friendly
+access.
+
 ---
 
 *This document describes the platform's features in plain language. For how the code is
