@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { pageFromPath } from "./page-routing.ts";
+import { pageFromPath, refCodeFromPath } from "./page-routing.ts";
 
 test("maps public and signed-in routes, while keeping unknown paths not found", () => {
   const routes = {
@@ -24,4 +24,9 @@ test("maps public and signed-in routes, while keeping unknown paths not found", 
   for (const [path, expected] of Object.entries(routes)) {
     assert.equal(pageFromPath(path), expected, path);
   }
+});
+
+test("extracts a status reference code from the pathname", () => {
+  assert.equal(refCodeFromPath("/status/abc123"), "ABC123");
+  assert.equal(refCodeFromPath("/get-help"), null);
 });

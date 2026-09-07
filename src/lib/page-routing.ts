@@ -2,6 +2,12 @@ import type { Page } from "./types.ts";
 
 export type AppPage = Page | "myArticles" | "articleEdit" | "posterView";
 
+export function refCodeFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/status\/([^/]+)/);
+  const code = match?.[1].trim().toUpperCase();
+  return code || null;
+}
+
 export function pageFromPath(path: string): AppPage {
   const url = new URL(path, "https://verifiednepal.local");
   const pathname = url.pathname.replace(/\/+$/, "") || "/";

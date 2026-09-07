@@ -25,6 +25,7 @@ import { meStrings } from "@/i18n/me";
 import { needTimelineStrings } from "@/i18n/needs";
 import type { Language } from "@/lib/types";
 import type { DistrictName } from "@/lib/districts";
+import { refCodeFromPath } from "@/lib/page-routing";
 import { TurnstileWidget } from "@/components/turnstile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const sessionMarkerRef = useRef(getSessionMarker());
+  const [statusRefCode] = useState(() => refCodeFromPath(window.location.pathname));
 
   useEffect(() => {
     if (!auth.idToken) return;
@@ -538,6 +540,11 @@ export function GetHelp({ language }: { language: Language }) {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <PageHeader eyebrow={ts.mutualAidEyebrow} title={t.getHelpTitle} description={t.getHelpLead} />
+      {statusRefCode ? (
+        <div id="status" className="print:hidden">
+          <StatusLookup language={language} initialCode={statusRefCode} />
+        </div>
+      ) : null}
       {draftTime ? (
         <Alert>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
@@ -932,7 +939,7 @@ export function GetHelp({ language }: { language: Language }) {
           <p className="text-muted-foreground">{t.getHelpHowPrioritisedFootnote}</p>
         </CardContent>
       </Card>
-      <StatusLookup language={language} />
+      {!statusRefCode ? <StatusLookup language={language} /> : null}
     </div>
   );
 }
@@ -1063,16 +1070,13 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
   const [error, setError] = useState<string | null>(null);
   const [renewing, setRenewing] = useState(false);
   const [renewDone, setRenewDone] = useState(false);
-  useEffect(() => {
-    if (initialCode) setCode(initialCode);
-  }, [initialCode]);
-  const check = async () => {
-    if (!code.trim()) return;
+  const check = async (value = code) => {
+    if (!value.trim()) return;
     setLoading(true);
     setError(null);
     setRenewDone(false);
     try {
-      setResult(await getStatus(code.trim()));
+      setResult(await getStatus(value.trim()));
     } catch (err) {
       setResult(null);
       setError((err as { status?: number }).status === 404 ? t.getHelpStatusUnknown : apiErrorMessage(err, language));
@@ -1080,6 +1084,11 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (!initialCode) return;
+    setCode(initialCode);
+    void check(initialCode);
+  }, [initialCode]);
   const renew = async () => {
     if (!code.trim()) return;
     setRenewing(true);
@@ -1111,7 +1120,7 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               placeholder={t.getHelpCheckStatusPlaceholder}
               className="min-h-11 font-mono"
             />
-            <Button type="button" onClick={check} disabled={loading || !code.trim()}>
+            <Button type="button" onClick={() => void check()} disabled={loading || !code.trim()}>
               {loading ? ts.checking : t.getHelpCheckStatusButton}
             </Button>
           </div>
