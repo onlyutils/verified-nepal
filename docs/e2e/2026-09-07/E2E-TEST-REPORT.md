@@ -54,7 +54,7 @@ enabled on dev.
 | Coverage page lists 8 ward rows for the Melamchi incident, never-delivered first, with 3W downloads | pass | `screenshots/03-coverage.png` |
 | Sign in with the dev test form, My Page shows the handled need with "Returns to the open pool in N days" | pass | `screenshots/04-me-handled.png` |
 | "Mark delivered" opens the dialog with the delivery receipt fields | pass | `screenshots/05-me-deliver-dialog.png` |
-| Opening `/status/<code>` directly loads the status | **fail** | see Finding 2 |
+| Opening `/status/<code>` directly loads the status | pass after fix | see Finding 2; verified on dev at `9807db3` |
 
 ## Findings
 
@@ -66,9 +66,9 @@ already holds the maximum of two secrets, so a new one cannot be minted until th
 in the console. Tracked in the infra repo `HANDOFF.md` ("Dev apply command"). Until then, delivery
 without a photo works; a helper who attaches a photo sees an upload error.
 
-**2. `/status/<code>` opens the Get help page with an empty lookup box.** Pre-existing gap that
-matters more now that requester updates exist. Fix in progress (Codex): read the code from the URL,
-prefill the lookup and fetch on load.
+**2. `/status/<code>` opened the Get help page with an empty lookup box.** Pre-existing gap that
+matters more now that requester updates exist. Fixed the same evening (commit `9807db3`): the code
+is read from the URL, the lookup is prefilled and fetched on load. Re-verified on dev.
 
 **3. Slow first load of My Page.** The dashboard stayed on "Loading your things" for roughly ten
 seconds for the helper account on a cold start. Not new to this slice; noted for the offline slice.
