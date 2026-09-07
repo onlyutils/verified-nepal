@@ -379,7 +379,7 @@ export async function handlePublicDroneBoard(event, { getDdb, env }) {
   const to = today.getTime() + 2 * 86400000;
   const missions = (await listMissions(ddb, env.TABLE_NAME)).filter((mission) => {
     const etd = Date.parse(mission.etd);
-    return ["planned", "flown"].includes(mission.status) && etd >= from && etd < to;
+    return mission.status !== "aborted" && etd >= from && etd < to;
   });
   const operatorById = new Map(allOperators.map((operator) => [operator.id, operator]));
   const response = json(200, {
