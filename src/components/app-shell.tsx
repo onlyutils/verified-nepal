@@ -137,7 +137,7 @@ export function AppShell<K extends string>({
         <nav
           ref={navRef}
           aria-label={title}
-          className="border-b bg-background lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r"
+          className="relative border-b bg-background lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r"
         >
           <div className="hidden px-5 pb-1 pt-5 lg:block">
             <p className="text-base font-bold text-foreground">{title}</p>

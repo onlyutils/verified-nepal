@@ -38,6 +38,7 @@ export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub, 
     ...(it.assignOnly ? { assignOnly: true } : {}),
     ...(timeline.length ? { timeline } : {}),
     ...(it.deliveryChannel ? { deliveryChannel: it.deliveryChannel, centerId: it.centerId } : {}),
+    ...(donation ? { deliveryDonation: { ref: donation.ref, category: donation.category, status: donation.status, ...(donation.receivedAt ? { receivedAt: donation.receivedAt } : {}) } } : {}),
   };
   if (includeClaimCode && it.claimCode && ["published", "matched", "fulfilled"].includes(it.status)) out.claimCode = it.claimCode;
   if (includeClaimCode && it.matchedOfferId) out.matchedOfferId = it.matchedOfferId;

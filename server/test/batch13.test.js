@@ -64,6 +64,9 @@ describe("batch 13 group drop-center delivery", () => {
     assert.equal(before.statusCode, 409);
     assert.equal((await call(ctx, "POST", `/donations/${ref}/confirm`, "org-member", {})).statusCode, 201);
     assert.ok(ctx.ddb.store.get(`NEED#${needId}|META`).updatedAt > afterTake);
+    const publicNeeds = await ctx.handler(makeEvent({ method: "GET", path: "/needs", queryStringParameters: { incidentId: TEST_INCIDENT_ID } }));
+    const publicNeed = JSON.parse(publicNeeds.body).items.find((item) => item.id === needId);
+    assert.deepEqual(publicNeed.deliveryDonation, { ref, category: "rice", status: "received", receivedAt: publicNeed.timeline.find((step) => step.key === "received").at });
     const delivered = await call(ctx, "POST", `/orgs/o1/needs/${needId}/deliver`, "org-member", {});
     assert.equal(delivered.statusCode, 200, delivered.body);
     const need = ctx.ddb.store.get(`NEED#${needId}|META`);

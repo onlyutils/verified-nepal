@@ -438,6 +438,7 @@ export function GiveHelp({ language }: { language: Language }) {
   const [needsLoading, setNeedsLoading] = useState(false);
   const [needsError, setNeedsError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(0);
+  const [restoredNeedId, setRestoredNeedId] = useState<string | null>(null);
   const [offersDistrict, setOffersDistrict] = useState("");
   const [offersCategory, setOffersCategory] = useState("");
   const [offersIncidentId, setOffersIncidentId] = useState("");
@@ -503,6 +504,14 @@ export function GiveHelp({ language }: { language: Language }) {
       cancelled = true;
     };
   }, [needsIncidentId, language, needsCategory, needsDistrict, needsRefresh, auth.idToken]);
+  useEffect(() => {
+    if (needsLoading || !restoredNeedId) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`need-card-${restoredNeedId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setRestoredNeedId(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [needsLoading, needs.length, restoredNeedId]);
   useEffect(() => {
     let cancelled = false;
     if (!offersIncidentId) {
@@ -595,7 +604,10 @@ export function GiveHelp({ language }: { language: Language }) {
                   need={need}
                   orgs={verifiedOrgs}
                   onFlag={() => setFlagId(need.id)}
-                  onMutated={() => setNeedsRefresh((value) => value + 1)}
+                  onMutated={() => {
+                    setRestoredNeedId(need.id);
+                    setNeedsRefresh((value) => value + 1);
+                  }}
                 />
               ))}
             </div>
@@ -691,6 +703,7 @@ function GroupPanel({
   onNeedHandled,
   timeline,
   district,
+  deliveryDonation,
 }: {
   language: Language;
   needId: string;
@@ -702,6 +715,7 @@ function GroupPanel({
   onNeedHandled: (label: string) => void;
   timeline?: NeedTimelineStep[];
   district?: string;
+  deliveryDonation?: NeedPublic["deliveryDonation"];
 }) {
   const ts = formStrings[language];
   const auth = useGoogleAuth();
@@ -859,7 +873,7 @@ function GroupPanel({
         </div>
       </div>
       {isMember && !assignOnly && !taken ? <Button size="sm" disabled={busy.take} onClick={take}>{ts.groupTake}</Button> : null}
-      {taken ? <DeliveryChoice language={language} needId={needId} category="goods" district={district} handlerKind="group" onMutated={onMutated} /> : null}
+      {taken ? <DeliveryChoice language={language} needId={needId} category="goods" district={district} handlerKind="group" deliveryDonation={deliveryDonation} onMutated={onMutated} /> : null}
       <NeedTimeline steps={timeline} language={language} />
       {error ? (
         <Alert variant="destructive">
@@ -878,6 +892,7 @@ function DeliveryChoice({
   handlerKind,
   currentChannel,
   currentCenterId,
+  deliveryDonation,
   onMutated,
 }: {
   language: Language;
@@ -887,6 +902,7 @@ function DeliveryChoice({
   handlerKind: "helper" | "group";
   currentChannel?: "direct" | "center";
   currentCenterId?: string;
+  deliveryDonation?: NeedPublic["deliveryDonation"];
   onMutated: () => void;
 }) {
   const ts = formStrings[language];
@@ -896,9 +912,9 @@ function DeliveryChoice({
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(currentCenterId ?? "");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [goods, setGoods] = useState("other");
+  const [goods, setGoods] = useState(deliveryDonation?.category ?? "other");
   const [qty, setQty] = useState("1");
-  const [ref, setRef] = useState<string | null>(null);
+  const [ref, setRef] = useState<string | null>(deliveryDonation?.ref ?? null);
   const [error, setError] = useState<string | null>(null);
   const loadCenters = async () => {
     setLoading(true);
@@ -922,6 +938,18 @@ function DeliveryChoice({
       setLoading(false);
     }
   };
+  useEffect(() => {
+    setMode(currentChannel ?? "direct");
+    setSelected(currentCenterId ?? "");
+  }, [currentChannel, currentCenterId]);
+  useEffect(() => {
+    if (currentChannel !== "center" || centers.length || loading) return;
+    void loadCenters();
+  }, [currentChannel]);
+  useEffect(() => {
+    setRef(deliveryDonation?.ref ?? null);
+    if (deliveryDonation?.category) setGoods(deliveryDonation.category);
+  }, [deliveryDonation?.category, deliveryDonation?.ref]);
   useEffect(() => {
     if (!location) return;
     setCenters((items) => [...items].sort((a, b) => {
@@ -963,6 +991,8 @@ function DeliveryChoice({
     }
   };
   const center = centers.find((item) => item.id === selected);
+  const received = deliveryDonation?.status === "received";
+  const deliveryRef = ref ?? deliveryDonation?.ref;
   return (
     <div className="space-y-3 rounded-lg border bg-background p-3">
       <p className="font-medium">{ts.deliveryHow}</p>
@@ -978,9 +1008,9 @@ function DeliveryChoice({
           </div>
           {!centers.length && !loading ? <Button type="button" size="sm" variant="outline" onClick={() => void loadCenters()}>{ts.deliveryCenterSelect}</Button> : null}
           {loading ? <p className="text-sm text-muted-foreground">{ts.deliveryCenterLoading}</p> : null}
-          {centers.length ? <div className="space-y-2"><Label htmlFor={`delivery-center-${needId}`}>{ts.deliveryCenterSelect}</Label><NativeSelect id={`delivery-center-${needId}`} value={selected} onChange={(event) => setSelected(event.target.value)}>{centers.map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.name} · {item.district}</NativeSelectOption>)}</NativeSelect><Button type="button" size="sm" onClick={() => void saveCenter()} disabled={loading || !selected}>{ts.deliveryConfirm}</Button></div> : null}
+          {centers.length ? (!deliveryDonation ? <div className="space-y-2"><Label htmlFor={`delivery-center-${needId}`}>{ts.deliveryCenterSelect}</Label><NativeSelect id={`delivery-center-${needId}`} value={selected} onChange={(event) => setSelected(event.target.value)}>{centers.map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.name} · {item.district}</NativeSelectOption>)}</NativeSelect><Button type="button" size="sm" onClick={() => void saveCenter()} disabled={loading || !selected}>{ts.deliveryConfirm}</Button></div> : null) : null}
           {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
-          {ref && center ? <div className="space-y-2 rounded-md border-l-2 border-primary pl-3" role="status"><div className="flex flex-wrap items-center gap-2"><p className="font-medium">{ts.deliveryInstructions}</p><StatusBadge tone="warning">{ts.deliverySaved}</StatusBadge></div><p className="text-sm">{center.name}</p><p className="text-sm">{ts.deliveryAddress.replace("{address}", center.address)}</p>{center.hours ? <p className="text-sm">{ts.deliveryHours.replace("{hours}", center.hours)}</p> : null}<p className="text-sm">{ts.deliveryBring}</p><CodeDisplay code={ref} kind="ref" label={ts.deliveryDropCode} copyLabel={ts.deliveryCopy} copiedLabel={ts.deliveryCopied} /></div> : null}
+          {deliveryRef && center ? <div className="space-y-2 rounded-md border-l-2 border-primary pl-3" role="status"><div className="flex flex-wrap items-center gap-2"><p className="font-medium">{received ? ts.deliveryReceived.replace("{center}", center.name) : ts.deliveryInstructions}</p>{received ? <StatusBadge tone="success">{ts.deliveryReceivedStatus}</StatusBadge> : <StatusBadge tone="warning">{ts.deliverySaved}</StatusBadge>}</div>{!received ? <><p className="text-sm">{center.name}</p><p className="text-sm">{ts.deliveryAddress.replace("{address}", center.address)}</p>{center.hours ? <p className="text-sm">{ts.deliveryHours.replace("{hours}", center.hours)}</p> : null}<p className="text-sm">{ts.deliveryBring}</p><CodeDisplay code={deliveryRef} kind="ref" label={ts.deliveryDropCode} copyLabel={ts.deliveryCopy} copiedLabel={ts.deliveryCopied} /></> : null}</div> : null}
         </div>
       )}
       {mode === "direct" && error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
@@ -1044,7 +1074,7 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
   };
 
   return (
-    <Card>
+    <Card id={`need-card-${need.id}`}>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Badge variant="secondary">{categoryLabel(need.category, language)}</Badge>
@@ -1083,13 +1113,13 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
           <SignInNudge language={language} id={`take-${need.id}`} title={ts.groupSignInTitle} body={ts.groupSignInBody} />
         ) : null}
         {group ? (
-          <GroupPanel language={language} needId={need.id} district={need.district} timeline={need.timeline} group={group} assignOnly={need.assignOnly} taken={Boolean(handledBy)} onGroupChange={setGroup} onMutated={onMutated} onNeedHandled={(label) => setHandledBy({ status: "matched", label, kind: "group" })} />
+          <GroupPanel language={language} needId={need.id} district={need.district} timeline={need.timeline} deliveryDonation={need.deliveryDonation} group={group} assignOnly={need.assignOnly} taken={Boolean(handledBy)} onGroupChange={setGroup} onMutated={onMutated} onNeedHandled={(label) => setHandledBy({ status: "matched", label, kind: "group" })} />
         ) : need.status === "published" && auth.idToken && !need.handledBy ? (
           <Button variant="outline" size="sm" disabled={forming} onClick={formGroup}>
             {ts.groupForm}
           </Button>
         ) : null}
-        {handledBy?.kind === "helper" ? <DeliveryChoice language={language} needId={need.id} category={need.category} district={need.district} handlerKind="helper" currentChannel={need.deliveryChannel} currentCenterId={need.centerId} onMutated={onMutated} /> : null}
+        {handledBy?.kind === "helper" ? <DeliveryChoice language={language} needId={need.id} category={need.category} district={need.district} handlerKind="helper" currentChannel={need.deliveryChannel} currentCenterId={need.centerId} deliveryDonation={need.deliveryDonation} onMutated={onMutated} /> : null}
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>

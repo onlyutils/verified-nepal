@@ -13,6 +13,11 @@ import { fillTemplate } from "@/lib/edition";
 import { statusTone } from "./use-org";
 import type { OrgController } from "./org-types";
 
+function donationUnitLabel(donation: import("@/lib/api").DonationStatus, controller: OrgController) {
+  if (donation.unit === "piece") return donation.qty === 1 ? controller.t.unitPiece : controller.t.unitPieces;
+  return unitLabel(donation.unit, controller.language);
+}
+
 export function Donations({ controller }: { controller: OrgController }) {
   const { centers } = controller;
   useEffect(() => {
@@ -84,7 +89,7 @@ function DonationTable({ controller }: { controller: OrgController }) {
             </TableCell>
             <TableCell>{goodsLabel(donation.category, controller.language)}</TableCell>
             <TableCell className="tabular-nums">
-              {formatNumber(donation.qty, controller.language)} {unitLabel(donation.unit, controller.language)}
+              {formatNumber(donation.qty, controller.language)} {donationUnitLabel(donation, controller)}
             </TableCell>
             <TableCell>{donation.center.name}</TableCell>
             <TableCell className="max-w-xs text-sm text-muted-foreground">
@@ -113,7 +118,7 @@ function DonationRow({ donation, controller }: { donation: import("@/lib/api").D
       </div>
       <p className="font-medium">
         {goodsLabel(donation.category, controller.language)} · {formatNumber(donation.qty, controller.language)}{" "}
-        {unitLabel(donation.unit, controller.language)}
+        {donationUnitLabel(donation, controller)}
       </p>
       <p className="text-sm text-muted-foreground">
         {donation.center.name} · {formatDateTime(donation.declaredAt, controller.language)}

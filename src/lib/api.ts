@@ -56,6 +56,7 @@ export interface NeedPublic {
   timeline?: NeedTimelineStep[];
   deliveryChannel?: "direct" | "center";
   centerId?: string;
+  deliveryDonation?: { ref: string; category: string; status: "declared" | "received" | "not_received"; receivedAt?: string };
 }
 
 export type NeedTimelineKey = "taken" | "declared" | "received" | "handed_over" | "confirmed";
