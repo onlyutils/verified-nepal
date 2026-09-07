@@ -1,2 +1,7 @@
 /dispatches /articles 301
 /dispatches/* /articles/:splat 301
+
+# www serves the identical site instead of redirecting — a second indexable
+# copy of every page. Canonical tags already point to the apex, but a 301 is
+# the stronger signal and avoids relying on crawlers honouring canonical.
+https://www.verifiednepal.com/* https://verifiednepal.com/:splat 301
