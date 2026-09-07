@@ -8,7 +8,7 @@ export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, municipalityId, ward, householdSize,
   category, description, language, media, incidentId, registeredByStaff, registrantSub,
-  assignOnly, source, submissionId,
+  assignOnly, source, submissionId, kit, kitItems, kitWeightKg,
 }) {
   const id = randomUUID();
   let refCode;
@@ -46,6 +46,9 @@ export async function createNeed(ddb, tableName, {
     registeredByStaff: registeredByStaff || undefined,
     registrantSub: onBehalf ? registrantSub : undefined,
     assignOnly: assignOnly === true ? true : undefined,
+    kit,
+    kitItems,
+    kitWeightKg,
     gsi1pk: `NEED#${incidentId}#${district}#${status}`,
     gsi1sk: createdAt,
     gsi2pk: `NEED#${status}`,
@@ -54,6 +57,9 @@ export async function createNeed(ddb, tableName, {
   if (!item.registeredByStaff) delete item.registeredByStaff;
   if (!item.registrantSub) delete item.registrantSub;
   if (!item.assignOnly) delete item.assignOnly;
+  if (!item.kit) delete item.kit;
+  if (!item.kitItems) delete item.kitItems;
+  if (item.kitWeightKg === undefined) delete item.kitWeightKg;
   if (!item.submissionId) delete item.submissionId;
   if (!item.registrant) delete item.registrant;
   if (item.registrant && !item.registrant.name) delete item.registrant.name;

@@ -14,6 +14,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { formatDateTime } from "@/lib/format-date";
 import { NeedTimeline } from "@/components/need-timeline";
 import { DeliveryReceiptFields, type ReceiptCopy, type ReceiptValue } from "@/components/delivery-receipt-fields";
+import { needTimelineStrings } from "@/i18n/needs";
 import type { OrgController } from "./org-types";
 
 const TAKE_TTL_DAYS = 6;
@@ -26,6 +27,7 @@ function takeExpiryLabel(handledAt: string | undefined, t: Record<string, string
 
 export function OrgNeeds({ controller, navigate }: { controller: OrgController; navigate: (page: Page) => void }) {
   const { t, language, selectedOrg, auth } = controller;
+  const needText = needTimelineStrings[language];
   const [items, setItems] = useState<OrgNeed[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -75,6 +77,7 @@ export function OrgNeeds({ controller, navigate }: { controller: OrgController; 
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm leading-relaxed">{need.description}</p>
+        {need.kit ? <p className="text-sm font-medium">{needText.kitSummaryWithWeight.replace("{kit}", language === "ne" ? need.kit.nameNe : need.kit.name).replace("{households}", String(need.kit.households)).replace("{weight}", String(need.kit.weightKg ?? ""))}</p> : null}
         {need.handover && need.donation ? <p className="text-sm text-muted-foreground">{fillTemplate(t.needsHandoverHandler, { label: need.handledBy || "" })}</p> : need.beneficiary.phone ? <p className="text-sm">{t.needsPhone}: <a className="underline" href={`tel:${need.beneficiary.phone}`}>{need.beneficiary.phone}</a></p> : null}
         {takeExpiryLabel(need.handledAt, t) ? <p className="text-sm text-muted-foreground">{takeExpiryLabel(need.handledAt, t)}</p> : null}
         <NeedTimeline steps={need.timeline} language={language} />

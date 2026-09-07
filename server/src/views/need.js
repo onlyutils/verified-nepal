@@ -2,6 +2,18 @@ import { maskName } from "../lib/format.js";
 import { toExpiresAt } from "../lib/format.js";
 import { getMunicipality } from "../lib/adminUnits.js";
 import { needTimeline } from "./need-timeline.js";
+import { getKit } from "../lib/kits.js";
+
+export function toKitSummary(need, { includeWeight = false } = {}) {
+  const kit = need.kit ? getKit(need.kit.kitId) : undefined;
+  if (!kit) return undefined;
+  return {
+    name: kit.name,
+    nameNe: kit.nameNe,
+    households: need.kit.households,
+    ...(includeWeight ? { weightKg: need.kitWeightKg } : {}),
+  };
+}
 
 export function toPublicGroup(need, viewerSub) {
   if (!need.group) return undefined;
@@ -35,6 +47,7 @@ export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub, 
     description: it.description,
     status: it.status,
     createdAt: it.createdAt,
+    ...(toKitSummary(it) ? { kit: toKitSummary(it) } : {}),
     group: toPublicGroup(it, viewerSub),
     ...(it.handledBy ? { handledBy: it.handledBy.label || it.handledBy.orgName, handledByKind: it.handledBy.kind || (it.handledBy.orgName ? "org" : undefined) } : {}),
     ...(it.deliveredBy ? { deliveredBy: it.deliveredBy.label, confirmedAt: it.confirmedAt } : {}),
@@ -58,6 +71,7 @@ export function toStatusView(need, { donation, ledgerRow } = {}) {
     municipality: getMunicipality(need.beneficiary?.municipalityId)?.name,
     createdAt: need.createdAt,
     expiresAt: need.expiresAt || (need.ttl ? toExpiresAt(need.ttl) : undefined),
+    ...(toKitSummary(need) ? { kit: toKitSummary(need) } : {}),
   };
   if (need.handledBy) {
     out.handledBy = need.handledBy.label || need.handledBy.orgName;

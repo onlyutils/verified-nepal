@@ -1,5 +1,6 @@
 import { needTimeline } from "./need-timeline.js";
 import { getMunicipality } from "../lib/adminUnits.js";
+import { toKitSummary } from "./need.js";
 
 export function toMyGroup(need, sub, donation) {
   const membership = need.groupMembers?.[sub];
@@ -15,6 +16,7 @@ export function toMyGroup(need, sub, donation) {
     joinedAt: membership?.joinedAt,
     myItems,
     timeline: needTimeline(need, { donation }),
+    ...(toKitSummary(need, { includeWeight: true }) ? { kit: toKitSummary(need, { includeWeight: true }) } : {}),
     ...(need.deliveryChannel ? { deliveryChannel: need.deliveryChannel, centerId: need.centerId } : {}),
     ...(need.status === "matched" && need.handledBy?.kind === "group" ? {
       handling: {
@@ -32,6 +34,7 @@ export function toHandlingContact(need, donation) {
     beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward, municipalityId: need.beneficiary?.municipalityId, municipality: getMunicipality(need.beneficiary?.municipalityId)?.name },
     handledAt: need.handledBy?.at,
     timeline: needTimeline(need, { donation }),
+    ...(toKitSummary(need, { includeWeight: true }) ? { kit: toKitSummary(need, { includeWeight: true }) } : {}),
     ...(need.deliveryChannel ? { deliveryChannel: need.deliveryChannel, centerId: need.centerId } : {}),
   };
 }
@@ -40,6 +43,7 @@ export function toMyNeed(n, donation) {
   return {
     id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward, municipalityId: n.beneficiary?.municipalityId, municipality: getMunicipality(n.beneficiary?.municipalityId)?.name,
     createdAt: n.createdAt, updatedAt: n.updatedAt || n.createdAt, expiresAt: n.expiresAt, timeline: needTimeline(n, { donation }),
+    ...(toKitSummary(n, { includeWeight: true }) ? { kit: toKitSummary(n, { includeWeight: true }) } : {}),
     ...(n.deliveryChannel ? { deliveryChannel: n.deliveryChannel, centerId: n.centerId } : {}),
   };
 }

@@ -43,6 +43,7 @@ import { SignInNudge } from "@/components/sign-in-nudge";
 import { NeedTimeline } from "@/components/need-timeline";
 import { MunicipalitySelect } from "@/components/municipality-select";
 import { shellStrings } from "@/i18n/shell";
+import { KITS } from "@/lib/kits";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 const DRAFT_KEY = "vn:need-draft";
@@ -83,7 +84,8 @@ type FieldKey =
   | "newIncidentKind"
   | "newIncidentDistrict"
   | "newIncidentDescription"
-  | "media";
+  | "media"
+  | "kitHouseholds";
 
 function categoryLabel(category: Category, language: Language) {
   const t = labels[language];
@@ -149,6 +151,8 @@ export function GetHelp({ language }: { language: Language }) {
   const [ward, setWard] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
+  const [kitId, setKitId] = useState("");
+  const [kitHouseholds, setKitHouseholds] = useState("1");
   const [assignOnly, setAssignOnly] = useState(false);
   const [newIncidentMode, setNewIncidentMode] = useState(false);
   const [newIncidentName, setNewIncidentName] = useState("");
@@ -211,6 +215,8 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.ward === "string") setWard(draft.ward);
       if (typeof draft.category === "string" && CATEGORIES.includes(draft.category as Category)) setCategory(draft.category as Category);
       if (typeof draft.description === "string") setDescription(draft.description);
+      if (typeof draft.kitId === "string") setKitId(draft.kitId);
+      if (typeof draft.kitHouseholds === "string") setKitHouseholds(draft.kitHouseholds);
       if (typeof draft.assignOnly === "boolean") setAssignOnly(draft.assignOnly);
       if (typeof draft.newIncidentMode === "boolean") setNewIncidentMode(draft.newIncidentMode);
       if (typeof draft.incidentId === "string") saveSelectedIncidentId(draft.incidentId);
@@ -241,6 +247,8 @@ export function GetHelp({ language }: { language: Language }) {
       ward,
       category,
       description,
+      kitId,
+      kitHouseholds,
       assignOnly,
       incidentId: newIncidentMode ? undefined : currentIncidentId,
       newIncidentMode,
@@ -282,6 +290,8 @@ export function GetHelp({ language }: { language: Language }) {
     category,
     consent,
     description,
+    kitHouseholds,
+    kitId,
     assignOnly,
     district,
     municipalityId,
@@ -318,6 +328,8 @@ export function GetHelp({ language }: { language: Language }) {
     setBeneficiaryEmail("");
     setMunicipalityId("");
     setDescription("");
+    setKitId("");
+    setKitHouseholds("1");
     setAssignOnly(false);
     setNewIncidentMode(false);
     setNewIncidentName("");
@@ -448,6 +460,8 @@ export function GetHelp({ language }: { language: Language }) {
       if (!registrantPhone.trim()) next.registrantPhone = ts.validationRegistrantPhoneRequired;
       else if (!isValidPhone(registrantPhone.trim())) next.registrantPhone = ts.validationPhoneInvalid;
       if (!consent) next.consent = ts.validationConsent;
+      if (kitId && (!/^\d+$/.test(kitHouseholds.trim()) || Number(kitHouseholds) < 1 || Number(kitHouseholds) > 100000))
+        next.kitHouseholds = needText.validationKitHouseholds;
     }
     if (registrantEmail.trim() && !isValidEmail(registrantEmail.trim())) next.registrantEmail = ts.validationEmailInvalid;
     if (beneficiaryEmail.trim() && !isValidEmail(beneficiaryEmail.trim())) next.beneficiaryEmail = ts.validationEmailInvalid;
@@ -461,6 +475,7 @@ export function GetHelp({ language }: { language: Language }) {
         "municipality",
         "ward",
         "description",
+        "kitHouseholds",
         "registrantName",
         "registrantPhone",
         "consent",
@@ -500,6 +515,7 @@ export function GetHelp({ language }: { language: Language }) {
           category,
           description: description.trim(),
           assignOnly,
+          ...(onBehalf && kitId ? { kit: { kitId, households: Number(kitHouseholds) } } : {}),
           language,
           turnstileToken: turnstileToken || undefined,
           media: mediaItems.length ? mediaItems : undefined,
@@ -798,6 +814,39 @@ export function GetHelp({ language }: { language: Language }) {
               <FieldError id="description-error" error={errors.description} />
               <p className="text-sm text-muted-foreground">{errors.description ? "" : t.getHelpDescriptionHint}</p>
             </div>
+            {onBehalf ? (
+              <div className="space-y-2 rounded-lg border border-dashed p-4">
+                <Label htmlFor="kit">{needText.getHelpKit}</Label>
+                <NativeSelect id="kit" value={kitId} onChange={(event) => setKitId(event.target.value)}>
+                  <NativeSelectOption value="">{needText.getHelpSelectKit}</NativeSelectOption>
+                  {KITS.map((kit) => (
+                    <NativeSelectOption key={kit.id} value={kit.id}>
+                      {language === "ne" ? kit.nameNe : kit.name}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                {kitId ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="kit-households">{needText.getHelpKitHouseholds}</Label>
+                    <Input
+                      id="kit-households"
+                      type="number"
+                      min="1"
+                      max="100000"
+                      value={kitHouseholds}
+                      onChange={(event) => {
+                        setKitHouseholds(event.target.value);
+                        clearError("kitHouseholds");
+                      }}
+                      aria-invalid={Boolean(errors.kitHouseholds)}
+                      aria-describedby={errors.kitHouseholds ? "kit-households-error" : "kit-households-hint"}
+                    />
+                    <p id="kit-households-hint" className="text-sm text-muted-foreground">{needText.getHelpKitHint}</p>
+                    <FieldError id="kit-households-error" error={errors.kitHouseholds} />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="need-media">
                 {ts.getHelpMediaLabel} {newIncidentMode ? "*" : ""}
@@ -1121,6 +1170,7 @@ function tCopy(language: Language) {
 function StatusLookup({ language, initialCode = "" }: { language: Language; initialCode?: string }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const needText = needTimelineStrings[language];
   const [code, setCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<StatusResponse | null>(null);
@@ -1194,6 +1244,13 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               {categoryLabel(result.category, language)} ·{" "}
               {districtLabels[result.district as keyof typeof districtLabels]?.[language] ?? result.district}
             </p>
+            {result.kit ? (
+              <p>
+                {needText.kitSummary
+                  .replace("{kit}", language === "ne" ? result.kit.nameNe : result.kit.name)
+                  .replace("{households}", String(result.kit.households))}
+              </p>
+            ) : null}
             {result.handledBy ? (
               <p>{result.handledByKind === "helper"
                 ? ts.helperTaken.replace("{label}", result.handledBy)

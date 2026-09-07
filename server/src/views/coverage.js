@@ -42,7 +42,7 @@ function orgLabel(need) {
 }
 
 export const HXL_COLUMNS = [
-  ["org", "#org+name"], ["sector", "#sector+name"], ["activity", "#activity+name"],
+  ["org", "#org+name"], ["sector", "#sector+name"], ["kit", "#item+kit"], ["kit_households", "#reached+households+planned"], ["activity", "#activity+name"],
   ["province", "#adm1+name"], ["district", "#adm2+name"], ["municipality", "#adm3+name"], ["municipality_code", "#adm3+code"], ["ward", "#adm4+name"],
   ["status", "#status"], ["registered", "#date+start"], ["delivered", "#date+end"], ["households", "#reached+households"], ["need_id", "#meta+id"],
 ];
@@ -51,7 +51,7 @@ export function to3wRows(needs) {
   const header = HXL_COLUMNS.map(([c]) => c), hxl = HXL_COLUMNS.map(([, h]) => h);
   const rows = needs.map((need) => {
     const l = loc(need);
-    return [orgLabel(need), need.category || "", "relief delivery", PROVINCE_OF[l.district] || "", l.district, l.municipality || "", l.municipalityId ?? "", l.ward ?? "",
+    return [orgLabel(need), need.category || "", need.kit?.kitId || "", need.kit?.households ?? "", "relief delivery", PROVINCE_OF[l.district] || "", l.district, l.municipality || "", l.municipalityId ?? "", l.ward ?? "",
       STATUS_LABEL[need.status] || need.status, need.createdAt || "", need.redeemedAt || "", need.deliveryReceipt?.households ?? "", need.id].map(String);
   });
   return { header, hxl, rows };

@@ -481,6 +481,26 @@ near-term flights. It excludes operator and landing-site contacts, requester nam
 numbers, and mission drop photos. Public board responses are cached briefly for field-friendly
 access.
 
+## 19. Standard kit requests
+
+When registering a request on behalf of another household, a signed-in user can choose a
+standard relief kit and the number of households it should cover. VerifiedNepal expands the
+catalogue into private item quantities and calculates the estimated weight for organizations.
+Public request lists and status pages show only the bilingual kit name and planned household
+count, while the 3W export adds the kit id and planned households without exposing the item list.
+
+### Staff assignments and shift handover
+
+Organization owners and staff can assign a team member to a need, distribution or field
+site for a day or night shift. Assignments move forward through Assigned, En route, On site
+and Done, with cancellation available at any point. The owner or assigned staff member can
+update the status, and each change writes a private activity line for the team.
+
+The organization log accepts short handover notes linked to a need or assignment. A private
+handover sheet groups the day's assignments by assignee, includes that day's activity lines,
+and lists the organization's matched needs that are still open. It is also available as a
+two-section CSV for shift briefings.
+
 ---
 
 *This document describes the platform's features in plain language. For how the code is

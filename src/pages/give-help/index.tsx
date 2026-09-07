@@ -59,6 +59,7 @@ import { DistrictPicker } from "@/components/district-picker";
 import { SignInNudge } from "@/components/sign-in-nudge";
 import { NeedTimeline } from "@/components/need-timeline";
 import { goodsLabel, GOODS_CATEGORIES } from "@/lib/goods";
+import { needTimelineStrings } from "@/i18n/needs";
 
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 function categoryLabel(category: string, language: Language) {
@@ -1021,6 +1022,7 @@ function DeliveryChoice({
 function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Language; need: NeedPublic; orgs: MyOrg[]; onFlag: () => void; onMutated: () => void }) {
   const t = labels[language];
   const ts = formStrings[language];
+  const needText = needTimelineStrings[language];
   const auth = useGoogleAuth();
   const [group, setGroup] = useState<GroupPublic | undefined>(need.group);
   const [forming, setForming] = useState(false);
@@ -1088,6 +1090,7 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-base leading-relaxed">{need.description}</p>
+        {need.kit ? <p className="text-sm font-medium">{needText.kitSummary.replace("{kit}", language === "ne" ? need.kit.nameNe : need.kit.name).replace("{households}", String(need.kit.households))}</p> : null}
         {handledBy ? (
           <p className="text-sm text-muted-foreground" role="status">
             {handledBy.status === "fulfilled" && need.deliveredBy

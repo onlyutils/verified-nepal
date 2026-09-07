@@ -13,6 +13,7 @@ import { needTimeline } from "../views/need-timeline.js";
 import { getMunicipality } from "../lib/adminUnits.js";
 import { notifyRequester } from "../lib/notify.js";
 import { validateDeliveryReceipt } from "../lib/validate.js";
+import { toKitSummary } from "../views/need.js";
 
 /** A verified organization's member may take a published need, hand it back, or mark it delivered. */
 async function requireVerifiedMember(auth, orgId) {
@@ -32,6 +33,7 @@ function contactView(need) {
   return {
     id: need.id, status: need.status, category: need.category, description: need.description, createdAt: need.createdAt,
     beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward, municipalityId: need.beneficiary?.municipalityId, municipality: getMunicipality(need.beneficiary?.municipalityId)?.name },
+    ...(toKitSummary(need, { includeWeight: true }) ? { kit: toKitSummary(need, { includeWeight: true }) } : {}),
     handledAt: need.handledBy?.at,
   };
 }

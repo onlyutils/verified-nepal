@@ -16,6 +16,7 @@ It never publishes anything that could identify a beneficiary.
 | Beneficiary phone | Never | Not included in any public response |
 | District, municipality, ward | Public | |
 | Category and status of need | Public | open / in progress / delivered |
+| Standard kit and planned households | Public | Kit name and the number of households requested; line items stay private |
 | Household count served | Public | |
 | Delivery receipt photo | Private | Moderators only |
 | Delivery location detail beyond ward | Private | Moderators only |
@@ -108,6 +109,8 @@ hide it from display.
 |---|---|---|
 | `org` | `#org+name` | Delivering organization, helper group, "Helper", or "Moderator" |
 | `sector` | `#sector+name` | Need category |
+| `kit` | `#item+kit` | Standard kit id, blank for requests without a kit |
+| `kit_households` | `#reached+households+planned` | Households covered by the requested standard kit |
 | `activity` | `#activity+name` | Always `"relief delivery"` |
 | `province` | `#adm1+name` | Province, looked up from district |
 | `district` | `#adm2+name` | District name |

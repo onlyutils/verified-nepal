@@ -22,11 +22,12 @@ import { applyModerationEdits } from "../models/moderation.js";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getDonation } from "../models/donation.js";
 import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/need.js";
+import { expandKit, getKit } from "../lib/kits.js";
 
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: optionalAuthResult }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly, consent, submissionId } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly, consent, submissionId, kit: requestedKit } = body;
   const hasIncidentId = incidentId !== undefined && incidentId !== null && incidentId !== "";
   const hasNewIncident = newIncident !== undefined && newIncident !== null;
   if (hasIncidentId && hasNewIncident) throw err(400, "provide at most one of incidentId or newIncident");
@@ -75,6 +76,20 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
   const desc = validateString(description, "description", 10, 2000);
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
   const cleanMedia = validateNeedMedia(media);
+  let kit;
+  let kitItems;
+  let kitWeightKg;
+  if (requestedKit !== undefined && requestedKit !== null) {
+    if (typeof requestedKit !== "object" || Array.isArray(requestedKit)) throw err(400, "kit must be an object");
+    const kitId = validateString(requestedKit.kitId, "kit.kitId", 1, 100);
+    if (!getKit(kitId)) throw err(400, "kit.kitId is unknown");
+    const households = requestedKit.households;
+    if (!Number.isInteger(households) || households < 1 || households > 100000) throw err(400, "kit.households must be integer 1-100000");
+    const expanded = expandKit(kitId, households);
+    kit = { kitId, households };
+    kitItems = expanded.items;
+    kitWeightKg = expanded.weightKg;
+  }
   if (!onBehalf) await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET, { required: env.REQUIRE_TURNSTILE === "1" });
   const tableName = env.TABLE_NAME;
   if (!tableName) throw err(500, "TABLE_NAME not configured");
@@ -113,7 +128,7 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
     source: onBehalf ? "on-behalf" : (auth?.role === "moderator" || auth?.role === "admin") ? "staff" : "web",
     registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
     registrantSub: onBehalf ? auth.payload.sub : undefined,
-    assignOnly, submissionId,
+    assignOnly, submissionId, kit, kitItems, kitWeightKg,
   });
   if (created.replayed) {
     const replay = json(200, { id: created.id, refCode: created.refCode });
