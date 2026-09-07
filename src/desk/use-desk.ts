@@ -16,6 +16,7 @@ import {
   getAdminUsers,
   getClaimsPrint,
   getModerationCenterFlags,
+  listModerationDistributions,
   getModerationDispatches,
   getModerationStories,
   moderateStory,
@@ -35,6 +36,7 @@ import {
   moderateOrg,
   moderateProject,
   moderateProjectUpdate,
+  acknowledgeDistribution,
   publishIncident,
   rejectIncident,
   redeemClaim,
@@ -63,6 +65,8 @@ import {
   type OrgTier,
   type SyncResult,
   type DeliveredBy,
+  type Distribution,
+  type DistributionStatus,
   type WorkResponse,
 } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
@@ -74,13 +78,42 @@ import { deskStrings } from "@/i18n/desk";
 import { deskOrgStrings } from "@/i18n/desk-orgs";
 import type { Language } from "@/lib/types";
 
-export type DeskSection = "queue" | "posters" | "boards" | "print" | "sync" | "flags" | "projects" | "dispatches" | "stories" | "orgs" | "incidents" | "admin" | "climate";
+export type DeskSection =
+  | "queue"
+  | "posters"
+  | "boards"
+  | "print"
+  | "sync"
+  | "flags"
+  | "projects"
+  | "dispatches"
+  | "stories"
+  | "orgs"
+  | "distributions"
+  | "incidents"
+  | "admin"
+  | "climate";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }
   | { kind: "dispatch" | "story"; action: "publish"; id: string }
   | { kind: "flag"; action: "resolve"; id: string; center: boolean };
 
-const sections = new Set<DeskSection>(["queue", "posters", "boards", "print", "sync", "flags", "projects", "dispatches", "stories", "orgs", "incidents", "admin", "climate"]);
+const sections = new Set<DeskSection>([
+  "queue",
+  "posters",
+  "boards",
+  "print",
+  "sync",
+  "flags",
+  "projects",
+  "dispatches",
+  "stories",
+  "orgs",
+  "distributions",
+  "incidents",
+  "admin",
+  "climate",
+]);
 
 function initialSection(): DeskSection {
   if (typeof window !== "undefined") {
@@ -113,9 +146,10 @@ export function useDesk(language: Language) {
     if (typeof window === "undefined") return null;
     return new URLSearchParams(window.location.search).get("incident") || loadSelectedIncidentId();
   });
-  const boardIncidentId = selectedBoardIncidentId === GENERAL_INCIDENT_ID || activeIncidents.some((incident) => incident.id === selectedBoardIncidentId)
-    ? selectedBoardIncidentId
-    : incidentState.currentIncidentId || activeIncidents[0]?.id || GENERAL_INCIDENT_ID;
+  const boardIncidentId =
+    selectedBoardIncidentId === GENERAL_INCIDENT_ID || activeIncidents.some((incident) => incident.id === selectedBoardIncidentId)
+      ? selectedBoardIncidentId
+      : incidentState.currentIncidentId || activeIncidents[0]?.id || GENERAL_INCIDENT_ID;
   const t = labels[language] as Record<string, string>;
   const ds = deskStrings[language] as Record<string, string>;
   const dos = deskOrgStrings[language] as Record<string, string>;
@@ -207,6 +241,11 @@ export function useDesk(language: Language) {
   const [orgSuspendId, setOrgSuspendId] = useState<string | null>(null);
   const [orgSuspendReason, setOrgSuspendReason] = useState("");
   const [orgSuspendError, setOrgSuspendError] = useState<string | null>(null);
+
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [distributionsLoading, setDistributionsLoading] = useState(false);
+  const [distributionsError, setDistributionsError] = useState<string | null>(null);
+  const [distributionActionLoading, setDistributionActionLoading] = useState<string | null>(null);
 
   const [incidentsAdmin, setIncidentsAdmin] = useState<AdminIncident[]>([]);
   const [incidentsAdminStatus, setIncidentsAdminStatus] = useState("pending");
@@ -337,11 +376,14 @@ export function useDesk(language: Language) {
       setPostersLoading(false);
     }
   }, [auth.idToken, language]);
-  const handlePosterModeration = useCallback(async (id: string, action: "publish" | "reject", reason?: string) => {
-    if (!auth.idToken) return;
-    await moderateMissing(auth.idToken, id, { action, reason });
-    setPosters((items) => items.filter((item) => item.id !== id));
-  }, [auth.idToken]);
+  const handlePosterModeration = useCallback(
+    async (id: string, action: "publish" | "reject", reason?: string) => {
+      if (!auth.idToken) return;
+      await moderateMissing(auth.idToken, id, { action, reason });
+      setPosters((items) => items.filter((item) => item.id !== id));
+    },
+    [auth.idToken],
+  );
   const loadBoards = useCallback(async () => {
     if (!auth.idToken) return;
     setBoardsLoading(true);
@@ -496,6 +538,42 @@ export function useDesk(language: Language) {
       setAdminStatsLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadDistributions = useCallback(async () => {
+    if (!auth.idToken) return;
+    setDistributionsLoading(true);
+    setDistributionsError(null);
+    try {
+      const responses = await Promise.all(
+        (["planned", "acknowledged", "completed"] as DistributionStatus[]).map((status) =>
+          listModerationDistributions(auth.idToken!, status),
+        ),
+      );
+      const byId = new Map<string, Distribution>();
+      responses.flatMap((response) => response.items).forEach((item) => byId.set(item.id, item));
+      setDistributions(
+        [...byId.values()].sort((a, b) => b.plannedDate.localeCompare(a.plannedDate) || b.createdAt.localeCompare(a.createdAt)),
+      );
+    } catch (error) {
+      setDistributionsError(apiErrorMessage(error, language));
+    } finally {
+      setDistributionsLoading(false);
+    }
+  }, [auth.idToken, language]);
+  const handleDistributionAck = useCallback(
+    async (id: string, note?: string) => {
+      if (!auth.idToken) return;
+      setDistributionActionLoading(id);
+      try {
+        const updated = await acknowledgeDistribution(auth.idToken, id, note);
+        setDistributions((items) => items.map((item) => (item.id === id ? updated : item)));
+      } catch (error) {
+        setDistributionsError(apiErrorMessage(error, language));
+      } finally {
+        setDistributionActionLoading(null);
+      }
+    },
+    [auth.idToken, language],
+  );
   const loadClimateStats = useCallback(async () => {
     if (!auth.idToken) return;
     setClimateStatsLoading(true);
@@ -517,7 +595,8 @@ export function useDesk(language: Language) {
     void loadFlags();
     void loadCenterFlags();
     void loadOrgCount();
-  }, [auth.idToken, auth.profile?.role, loadBoards, loadCenterFlags, loadFlags, loadOrgCount, loadPosters, loadQueue]);
+    void loadDistributions();
+  }, [auth.idToken, auth.profile?.role, loadBoards, loadCenterFlags, loadDistributions, loadFlags, loadOrgCount, loadPosters, loadQueue]);
   useEffect(() => {
     if (!auth.idToken || !auth.profile || (auth.profile.role !== "moderator" && auth.profile.role !== "admin")) {
       setWork(null);
@@ -532,6 +611,7 @@ export function useDesk(language: Language) {
     if (activeSection === "dispatches") void loadDispatches();
     if (activeSection === "stories") void loadStories();
     if (activeSection === "orgs") void loadOrgs(orgsStatus);
+    if (activeSection === "distributions") void loadDistributions();
     if (activeSection === "incidents") void loadIncidentsAdmin();
     if (activeSection === "flags") {
       void loadFlags();
@@ -555,6 +635,7 @@ export function useDesk(language: Language) {
     loadFlags,
     loadIncidentsAdmin,
     loadOrgs,
+    loadDistributions,
     loadProjects,
     loadPosters,
     orgsStatus,
@@ -656,7 +737,9 @@ export function useDesk(language: Language) {
     try {
       await releaseQueueItem(auth.idToken, id);
       setQueue((items) =>
-        items.map((item) => (item.id === id ? { ...item, claimedBy: undefined, claimedByName: undefined, claimExpiresAt: undefined } : item)),
+        items.map((item) =>
+          item.id === id ? { ...item, claimedBy: undefined, claimedByName: undefined, claimExpiresAt: undefined } : item,
+        ),
       );
     } catch (error) {
       setActionError(apiErrorMessage(error, language));
@@ -693,19 +776,22 @@ export function useDesk(language: Language) {
     }
   };
 
-  const openRedeem = useCallback((need: NeedPublic, claimCode: string) => {
-    const offerId = need.matchedOfferId || selectedOfferId[need.id];
-    const offer = offerId ? offers.find((item) => item.id === offerId) : undefined;
-    const deliveredBy: RedeemDeliveredBy = need.handledBy
-      ? { kind: "org", label: need.handledBy }
-      : offer
-        ? { kind: "helper", label: offer.helperLabel }
-        : need.group
-          ? { kind: "group", label: ds.redeemDeliveredByGroupDefault.replace("{n}", String(need.group.memberCount)) }
-          : { kind: "field", label: ds.redeemDeliveredByFieldDefault };
-    setRedeemCode(claimCode);
-    setRedeemDeliveredBy(deliveredBy);
-  }, [ds, offers, selectedOfferId]);
+  const openRedeem = useCallback(
+    (need: NeedPublic, claimCode: string) => {
+      const offerId = need.matchedOfferId || selectedOfferId[need.id];
+      const offer = offerId ? offers.find((item) => item.id === offerId) : undefined;
+      const deliveredBy: RedeemDeliveredBy = need.handledBy
+        ? { kind: "org", label: need.handledBy }
+        : offer
+          ? { kind: "helper", label: offer.helperLabel }
+          : need.group
+            ? { kind: "group", label: ds.redeemDeliveredByGroupDefault.replace("{n}", String(need.group.memberCount)) }
+            : { kind: "field", label: ds.redeemDeliveredByFieldDefault };
+      setRedeemCode(claimCode);
+      setRedeemDeliveredBy(deliveredBy);
+    },
+    [ds, offers, selectedOfferId],
+  );
   const handleOfferStatus = async (offerId: string, status: "matched" | "fulfilled" | "archived") => {
     if (!auth.idToken) return;
     clearFeedback();
@@ -720,7 +806,15 @@ export function useDesk(language: Language) {
   };
   const openEditNeed = (need: NeedPublic) => {
     setEditTarget({ kind: "need", id: need.id });
-    setEditFields({ description: need.description, category: need.category, district: need.district, ward: String(need.ward ?? ""), name: "", phone: "", assignOnly: String(Boolean(need.assignOnly)) });
+    setEditFields({
+      description: need.description,
+      category: need.category,
+      district: need.district,
+      ward: String(need.ward ?? ""),
+      name: "",
+      phone: "",
+      assignOnly: String(Boolean(need.assignOnly)),
+    });
     setEditError(null);
   };
   const openEditOffer = (offer: OfferPublic) => {
@@ -758,10 +852,19 @@ export function useDesk(language: Language) {
     setEditSaving(true);
     setEditError(null);
     const f = editFields;
-    const list = (value: string) => value.split(",").map((s) => s.trim()).filter(Boolean);
+    const list = (value: string) =>
+      value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     try {
       if (editTarget.kind === "need") {
-        const edits: Record<string, unknown> = { description: f.description, category: f.category, district: f.district, assignOnly: f.assignOnly === "true" };
+        const edits: Record<string, unknown> = {
+          description: f.description,
+          category: f.category,
+          district: f.district,
+          assignOnly: f.assignOnly === "true",
+        };
         if (f.ward) edits.ward = Number(f.ward);
         const beneficiary: Record<string, unknown> = {};
         if (f.name) beneficiary.name = f.name;
@@ -770,13 +873,22 @@ export function useDesk(language: Language) {
         await editNeed(auth.idToken, editTarget.id, edits);
         void loadBoards();
       } else if (editTarget.kind === "offer") {
-        await editOffer(auth.idToken, editTarget.id, { description: f.description, categories: list(f.categories), districts: list(f.districts) });
+        await editOffer(auth.idToken, editTarget.id, {
+          description: f.description,
+          categories: list(f.categories),
+          districts: list(f.districts),
+        });
         void loadBoards();
       } else if (editTarget.kind === "project") {
         const edits: Record<string, unknown> = { locationText: f.locationText, district: f.district };
         if (f.costEstimateNpr) edits.costEstimateNpr = Number(f.costEstimateNpr);
         if (f.ward) edits.ward = Number(f.ward);
-        edits.committee = { name: f.committeeName, contactName: f.committeeContactName, phone: f.committeePhone, email: f.committeeEmail || undefined };
+        edits.committee = {
+          name: f.committeeName,
+          contactName: f.committeeContactName,
+          phone: f.committeePhone,
+          email: f.committeeEmail || undefined,
+        };
         await moderateProject(auth.idToken, editTarget.id, { action: "edit", edits });
         void loadProjects();
       } else if (editTarget.kind === "incident") {
@@ -1264,6 +1376,13 @@ export function useDesk(language: Language) {
     orgSuspendError,
     setOrgSuspendError,
     handleOrg,
+    distributions,
+    distributionsLoading,
+    distributionsError,
+    distributionsCount: distributions.filter((item) => item.status === "planned").length,
+    loadDistributions,
+    distributionActionLoading,
+    handleDistributionAck,
     incidentsAdmin,
     incidentsAdminStatus,
     setIncidentsAdminStatus,

@@ -63,7 +63,11 @@ export interface NeedPublic {
 }
 
 export type NeedTimelineKey = "taken" | "declared" | "received" | "handed_over" | "confirmed";
-export interface NeedTimelineStep { key: NeedTimelineKey; at: string; label?: string; }
+export interface NeedTimelineStep {
+  key: NeedTimelineKey;
+  at: string;
+  label?: string;
+}
 
 export interface NeedsListResponse {
   items: NeedPublic[];
@@ -321,6 +325,20 @@ export function listIncidents(status = "active"): Promise<{ items: Incident[] }>
   return request<{ items: Incident[] }>(`/incidents?status=${encodeURIComponent(status)}`);
 }
 
+export interface KitCatalogueItem {
+  id: string;
+  name: string;
+  nameNe: string;
+  persons: number;
+  items: Array<{ category: string; qty: number; unit: string }>;
+  weightKg: number;
+  source: string;
+}
+
+export function listKits(): Promise<{ kits: KitCatalogueItem[] }> {
+  return request<{ kits: KitCatalogueItem[] }>("/kits");
+}
+
 export function getCoverage(incidentId: string): Promise<CoverageResponse> {
   return request<CoverageResponse>(`/coverage?incidentId=${encodeURIComponent(incidentId)}`);
 }
@@ -373,14 +391,17 @@ export function requestIncident(body: RequestIncidentBody, token: string): Promi
   });
 }
 
-export function presignNeedMedia(body: {
-  filename: string;
-  contentType: string;
-  size: number;
-  turnstileToken?: string;
-  onBehalf?: boolean;
-  purpose?: "receipt";
-}, token?: string): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
+export function presignNeedMedia(
+  body: {
+    filename: string;
+    contentType: string;
+    size: number;
+    turnstileToken?: string;
+    onBehalf?: boolean;
+    purpose?: "receipt";
+  },
+  token?: string,
+): Promise<PresignResponse & { mediaType: "photo" | "video" }> {
   return request(`/needs/media/presign`, { method: "POST", body: JSON.stringify(body), token });
 }
 
@@ -637,7 +658,10 @@ export interface MissingTip {
   createdAt: string;
 }
 
-export function createMissingTip(id: string, body: { message: string; contact?: string; turnstileToken?: string }): Promise<{ ok: boolean }> {
+export function createMissingTip(
+  id: string,
+  body: { message: string; contact?: string; turnstileToken?: string },
+): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>(`/missing/${encodeURIComponent(id)}/tips`, { method: "POST", body: JSON.stringify(body) });
 }
 
@@ -722,7 +746,11 @@ export function releaseNeed(token: string, needId: string): Promise<{ status: "p
   return request(`/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
 }
 
-export function deliverNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
+export function deliverNeed(
+  token: string,
+  needId: string,
+  body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {},
+): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
   return queuedRequest(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
@@ -734,7 +762,11 @@ export function releaseGroupNeed(token: string, needId: string): Promise<{ statu
   return request(`/needs/${encodeURIComponent(needId)}/group/release`, { method: "POST", token });
 }
 
-export function deliverGroupNeed(token: string, needId: string, body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {}): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
+export function deliverGroupNeed(
+  token: string,
+  needId: string,
+  body: { note?: string; households?: number; photo?: NeedMediaItem; lat?: number; lng?: number } = {},
+): Promise<{ status: "fulfilled"; redeemedAt: string } | QueuedResponse> {
   return queuedRequest(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
@@ -777,7 +809,11 @@ export function getModerationMissing(token: string): Promise<{ items: Moderation
   return request("/moderation/missing", { token });
 }
 
-export function moderateMissing(token: string, id: string, body: { action: "publish" | "reject"; reason?: string }): Promise<{ status: string }> {
+export function moderateMissing(
+  token: string,
+  id: string,
+  body: { action: "publish" | "reject"; reason?: string },
+): Promise<{ status: string }> {
   return request(`/moderation/missing/${encodeURIComponent(id)}`, { method: "POST", token, body: JSON.stringify(body) });
 }
 
@@ -858,7 +894,10 @@ export function getMe(token: string): Promise<MeResponse> {
   return request<MeResponse>("/me", { token });
 }
 
-export function markSectionSeen(token: string, section: ActivitySection): Promise<{ section: ActivitySection; lastSeen: Partial<Record<ActivitySection, string>>; activity: DashboardActivity }> {
+export function markSectionSeen(
+  token: string,
+  section: ActivitySection,
+): Promise<{ section: ActivitySection; lastSeen: Partial<Record<ActivitySection, string>>; activity: DashboardActivity }> {
   return request(`/me/seen`, { method: "POST", token, body: JSON.stringify({ section }) });
 }
 
@@ -1042,6 +1081,100 @@ export function getLedgerCsvUrl(district?: string, ward?: number, turnstileToken
 
 export function export3wUrl(incidentId: string, format: "csv" | "geojson"): string {
   return `${API_BASE}/export/3w?incidentId=${encodeURIComponent(incidentId)}&format=${encodeURIComponent(format)}`;
+}
+
+export type DistributionStatus = "planned" | "acknowledged" | "completed" | "cancelled";
+export type DistributionTransport = "vehicle" | "drone" | "porter" | "helicopter" | "other";
+export interface DistributionItem {
+  kitId?: string;
+  households?: number;
+  category: string;
+  qty: number;
+  unit: string;
+}
+export interface Distribution {
+  id: string;
+  orgId: string;
+  orgName: string;
+  orgTier?: OrgTier;
+  incidentId: string;
+  district: string;
+  municipalityId: number;
+  municipality?: string;
+  wards: number[];
+  plannedDate: string;
+  items: DistributionItem[];
+  transport: DistributionTransport;
+  staffCount: number;
+  notes?: string;
+  status: DistributionStatus;
+  ackBy?: { sub?: string; name?: string; role?: string };
+  ackAt?: string;
+  ackNote?: string;
+  completedAt?: string;
+  completedNote?: string;
+  householdsReached?: number;
+  contactPhone?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface CreateDistributionBody {
+  incidentId: string;
+  district: string;
+  municipalityId: number;
+  wards: number[];
+  plannedDate: string;
+  items: DistributionItem[];
+  transport: DistributionTransport;
+  staffCount: number;
+  contactPhone: string;
+  notes?: string;
+}
+export function createDistribution(token: string, orgId: string, body: CreateDistributionBody): Promise<Distribution> {
+  return request<Distribution>(`/orgs/${encodeURIComponent(orgId)}/distributions`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    token,
+  });
+}
+export function listOrgDistributions(token: string, orgId: string): Promise<{ items: Distribution[] }> {
+  return request<{ items: Distribution[] }>(`/orgs/${encodeURIComponent(orgId)}/distributions`, { token });
+}
+export function completeDistribution(
+  token: string,
+  orgId: string,
+  id: string,
+  body: { householdsReached: number; note?: string },
+): Promise<Distribution> {
+  return request<Distribution>(`/orgs/${encodeURIComponent(orgId)}/distributions/${encodeURIComponent(id)}/complete`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    token,
+  });
+}
+export function cancelDistribution(token: string, orgId: string, id: string): Promise<Distribution> {
+  return request<Distribution>(`/orgs/${encodeURIComponent(orgId)}/distributions/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({}),
+    token,
+  });
+}
+export function listModerationDistributions(token: string, status: DistributionStatus): Promise<{ items: Distribution[] }> {
+  return request<{ items: Distribution[] }>(`/moderation/distributions${qs({ status })}`, { token });
+}
+export function acknowledgeDistribution(token: string, id: string, note?: string): Promise<Distribution> {
+  return request<Distribution>(`/moderation/distributions/${encodeURIComponent(id)}/ack`, {
+    method: "POST",
+    body: JSON.stringify(note ? { note } : {}),
+    token,
+  });
+}
+export function listPublicDistributions(params: { incidentId: string; district?: string }): Promise<{ items: Distribution[] }> {
+  return request<{ items: Distribution[] }>(`/distributions${qs(params)}`);
+}
+export function ddmcLogUrl(district: string, date: string, format: "csv" | "json" = "csv"): string {
+  return `${API_BASE}/export/ddmc-log${qs({ district, date, format })}`;
 }
 
 export function flagNeed(id: string, body: FlagInput): Promise<{ ok: boolean }> {
@@ -1534,7 +1667,14 @@ export interface DonationStatus {
   declaredAt: string;
   receivedAt?: string;
   sinceReceived?: { distributed: number; transferred: number };
-  need?: { id: string; maskedBeneficiary: string; category: string; groupSize?: number; center?: { id: string; name: string; district: string }; receivedAt?: string };
+  need?: {
+    id: string;
+    maskedBeneficiary: string;
+    category: string;
+    groupSize?: number;
+    center?: { id: string; name: string; district: string };
+    receivedAt?: string;
+  };
 }
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -1630,7 +1770,11 @@ export function listCenterEntries(
 ): Promise<{ items: GoodsEntry[]; cursor?: string }> {
   return request(`/centers/${encodeURIComponent(id)}/entries${qs(params)}`, token ? { token } : {});
 }
-export function createEntry(token: string, centerId: string, body: CreateEntryBody): Promise<{ id: string; transferId?: string } | QueuedResponse> {
+export function createEntry(
+  token: string,
+  centerId: string,
+  body: CreateEntryBody,
+): Promise<{ id: string; transferId?: string } | QueuedResponse> {
   return queuedRequest(`/centers/${encodeURIComponent(centerId)}/entries`, { method: "POST", body: JSON.stringify(body), token });
 }
 export function getGoodsLedger(params: { district?: string; cursor?: string }): Promise<{ items: GoodsEntry[]; cursor?: string }> {
@@ -1692,7 +1836,11 @@ export function declareDonation(
   body: { category: string; qty: number; note?: string; turnstileToken?: string; needId?: string },
   token?: string,
 ): Promise<{ ref: string }> {
-  return request(`/centers/${encodeURIComponent(centerId)}/donations`, { method: "POST", body: JSON.stringify(body), ...(token ? { token } : {}) });
+  return request(`/centers/${encodeURIComponent(centerId)}/donations`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    ...(token ? { token } : {}),
+  });
 }
 export function getDonation(ref: string): Promise<DonationStatus> {
   return request(`/donations/${encodeURIComponent(ref)}`);

@@ -1,5 +1,20 @@
 import { useEffect, useState } from "react";
-import { Building2, Camera, Flag, FileImage, FolderKanban, Globe, Inbox, LayoutList, Newspaper, Printer, RefreshCw, ShieldCheck, Siren } from "lucide-react";
+import {
+  Building2,
+  Camera,
+  ClipboardList,
+  Flag,
+  FileImage,
+  FolderKanban,
+  Globe,
+  Inbox,
+  LayoutList,
+  Newspaper,
+  Printer,
+  RefreshCw,
+  ShieldCheck,
+  Siren,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +26,7 @@ import { Boards } from "./boards";
 import { ClimateStats } from "./climate";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
+import { Distributions } from "./distributions";
 import { Stories } from "./stories";
 import { AuthGate, DistrictCheckboxes, DistrictGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
 import { Flags } from "./flags";
@@ -23,6 +39,7 @@ import { Queue } from "./queue";
 import { Sync } from "./sync";
 import { useDesk, type DeskSection } from "./use-desk";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
+import { distributionStrings } from "@/i18n/distributions";
 
 export function Desk({
   language,
@@ -75,6 +92,7 @@ export function Desk({
     { key: "dispatches", label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
     { key: "stories", label: model.ds.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
     { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
+    { key: "distributions", label: distributionStrings[language].nav, count: model.distributionsCount, icon: <ClipboardList /> },
     ...(auth.profile.role === "admin"
       ? [
           { key: "incidents" as DeskSection, label: model.ds.deskIncidentsTab, icon: <Siren /> },
@@ -149,6 +167,7 @@ export function Desk({
           {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
           {model.activeSection === "stories" ? <Stories model={model} /> : null}
           {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
+          {model.activeSection === "distributions" ? <Distributions model={model} /> : null}
           {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
           {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
           {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}

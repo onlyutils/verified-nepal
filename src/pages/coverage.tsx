@@ -8,9 +8,10 @@ import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { coverageStrings } from "@/i18n/coverage";
 import { districtLabels } from "@/lib/geo";
-import { export3wUrl, getCoverage, listIncidents, type CoverageRow, type Incident } from "@/lib/api";
+import { ddmcLogUrl, export3wUrl, getCoverage, listIncidents, type CoverageRow, type Incident } from "@/lib/api";
 import { loadSelectedIncidentId } from "@/lib/incidents";
 import { formatDateTime } from "@/lib/format-date";
+import { districtNames } from "@/lib/districts";
 import type { Language } from "@/lib/types";
 
 export function Coverage({ language }: { language: Language }) {
@@ -18,6 +19,8 @@ export function Coverage({ language }: { language: Language }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [incidentId, setIncidentId] = useState<string>(loadSelectedIncidentId() ?? "");
   const [district, setDistrict] = useState("");
+  const [ddmcDistrict, setDdmcDistrict] = useState("");
+  const [ddmcDate, setDdmcDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [data, setData] = useState<{ generatedAt: string; rows: CoverageRow[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +56,7 @@ export function Coverage({ language }: { language: Language }) {
     if ((Date.now() - Date.parse(row.lastDeliveredAt)) / 86400000 > 7) return "bg-warning/10";
     return "";
   };
-  const incidentLabel = (incident: Incident) => language === "ne" && incident.nameNe ? incident.nameNe : incident.name;
+  const incidentLabel = (incident: Incident) => (language === "ne" && incident.nameNe ? incident.nameNe : incident.name);
   const districtLabel = (value: string) => districtLabels[value as keyof typeof districtLabels]?.[language] ?? value;
 
   return (
@@ -100,6 +103,46 @@ export function Coverage({ language }: { language: Language }) {
               </a>
             </div>
           ) : null}
+          <div className="flex flex-col gap-4 border-t pt-4 sm:col-span-2 lg:col-span-4">
+            <div>
+              <h2 className="text-base font-semibold">{t.ddmcDownloadTitle}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t.ddmcDownloadDescription}</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="ddmc-district">{t.ddmcDistrict}</Label>
+                <NativeSelect id="ddmc-district" value={ddmcDistrict} onChange={(event) => setDdmcDistrict(event.target.value)}>
+                  <NativeSelectOption value="">{t.ddmcSelectDistrict}</NativeSelectOption>
+                  {districtNames.map((value) => (
+                    <NativeSelectOption key={value} value={value}>
+                      {districtLabel(value)}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ddmc-date">{t.ddmcDate}</Label>
+                <input
+                  id="ddmc-date"
+                  type="date"
+                  value={ddmcDate}
+                  onChange={(event) => setDdmcDate(event.target.value)}
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                {ddmcDistrict && ddmcDate ? (
+                  <a
+                    href={ddmcLogUrl(ddmcDistrict, ddmcDate)}
+                    download
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-input px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                  >
+                    {t.ddmcDownload}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
       {error ? (
@@ -138,7 +181,9 @@ export function Coverage({ language }: { language: Language }) {
           </Table>
         </div>
       ) : null}
-      {data ? <p className="text-sm text-muted-foreground">{t.generatedAt.replace("{time}", formatDateTime(data.generatedAt, language))}</p> : null}
+      {data ? (
+        <p className="text-sm text-muted-foreground">{t.generatedAt.replace("{time}", formatDateTime(data.generatedAt, language))}</p>
+      ) : null}
     </div>
   );
 }
