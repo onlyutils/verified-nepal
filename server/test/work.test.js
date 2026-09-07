@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const gorkhaMunicipalityId = listMunicipalities("Gorkha")[0].id;
 
 function setup() {
   const kp = makeKeyPair();
@@ -29,7 +32,7 @@ describe("work tally", () => {
     const created = await handler(makeEvent({
       method: "POST", path: "/needs", body: {
         onBehalf: false,
-        beneficiary: { name: "Rita Gurung", phone: "+9779800000001", district: "Gorkha", ward: 5 },
+        beneficiary: { name: "Rita Gurung", phone: "+9779800000001", district: "Gorkha", municipalityId: gorkhaMunicipalityId, ward: 5 },
         category: "goods", description: "Need food and water for this moderation test", language: "en", incidentId: TEST_INCIDENT_ID,
       },
     }));
@@ -53,7 +56,7 @@ describe("work tally", () => {
       method: "POST", path: "/needs", headers: { authorization: `Bearer ${token("helper-1")}` }, body: {
         onBehalf: true, consent: true,
         registrant: { name: "Helper One", phone: "+9779800000001" },
-        beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5 },
+        beneficiary: { name: "Rita Gurung", district: "Gorkha", municipalityId: gorkhaMunicipalityId, ward: 5 },
         category: "goods", description: "Need food and water for this helper test", language: "en", incidentId: TEST_INCIDENT_ID,
       },
     }));

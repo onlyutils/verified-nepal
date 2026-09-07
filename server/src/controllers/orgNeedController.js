@@ -10,6 +10,7 @@ import { putOrgNeed, deleteOrgNeed, listOrgNeeds } from "../models/orgNeed.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { maskName } from "../lib/format.js";
 import { needTimeline } from "../views/need-timeline.js";
+import { getMunicipality } from "../lib/adminUnits.js";
 
 /** A verified organization's member may take a published need, hand it back, or mark it delivered. */
 async function requireVerifiedMember(auth, orgId) {
@@ -28,7 +29,7 @@ function actor(auth) {
 function contactView(need) {
   return {
     id: need.id, status: need.status, category: need.category, description: need.description, createdAt: need.createdAt,
-    beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward },
+    beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward, municipalityId: need.beneficiary?.municipalityId, municipality: getMunicipality(need.beneficiary?.municipalityId)?.name },
     handledAt: need.handledBy?.at,
   };
 }

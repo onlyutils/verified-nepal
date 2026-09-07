@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor, getAuthToken } from "../lib/http.js";
 import { requireAuth, requireModAuth } from "../lib/auth.js";
 import { validateString, validatePhone } from "../lib/validate.js";
+import { municipalityInDistrict, wardInMunicipality } from "../lib/adminUnits.js";
 import { isGoodsCategory, unitFor } from "../lib/goods-taxonomy.js";
 import { getOrg, getMembership } from "../models/org.js";
 import { getCenter, saveCenter, listCentersByDistrict, listPublicCenters, centerVisibility, listFlaggedCenterPointers, listCenterFlags } from "../models/center.js";
@@ -17,14 +18,23 @@ import { verifyTurnstile } from "../lib/turnstile.js";
 import { generateRefCode, maskName } from "../lib/format.js";
 import { GetCommand, PutCommand, QueryCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
-function validateCenterUpdateBody(body) {
+function validateCenterUpdateBody(body, currentDistrict) {
   const out = {};
   if (body.name !== undefined) out.name = validateString(body.name, "name", 1, 100);
   if (body.district !== undefined) out.district = validateString(body.district, "district", 1, 100);
+  if (body.municipalityId !== undefined) {
+    const id = body.municipalityId;
+    if (typeof id !== "number" || !Number.isInteger(id)) throw err(400, "municipalityId must be an integer");
+    const district = out.district ?? currentDistrict ?? body.district;
+    if (!municipalityInDistrict(id, district)) throw err(400, "municipalityId: municipality is not in that district");
+    out.municipalityId = id;
+  }
   if (body.ward !== undefined) {
     const w = body.ward;
     if (typeof w !== "number" || !Number.isInteger(w)) throw err(400, "ward must be integer");
-    if (w < 1 || w > 33) throw err(400, "ward must be 1-33");
+    if (out.municipalityId !== undefined || body.municipalityId !== undefined) {
+      if (!wardInMunicipality(out.municipalityId ?? body.municipalityId, w)) throw err(400, "ward out of range for municipality");
+    } else if (w < 1 || w > 33) throw err(400, "ward must be 1-33");
     out.ward = w;
   }
   if (body.address !== undefined) out.address = validateString(body.address, "address", 1, 300);
@@ -150,7 +160,7 @@ export async function handleUpdateCenter(event, opts, centerId) {
   if (!mem || mem.role !== "owner") throw err(403, "Forbidden");
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const validated = validateCenterUpdateBody(body);
+  const validated = validateCenterUpdateBody(body, center.district);
   const keys = Object.keys(validated);
   if (keys.length === 0) throw err(400, "no fields to update");
   const oldDistrict = center.district;

@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
 import { MAX_NEED_MEDIA_ITEMS } from "../src/constants.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const gorkhaMunicipalityId = listMunicipalities("Gorkha")[0].id;
 
 function makeHandler(opts = {}) {
   const ddb = opts.ddb ?? new FakeDdb();
@@ -15,7 +18,7 @@ function makeHandler(opts = {}) {
 function needBody(extra = {}) {
   return {
     onBehalf: false,
-    beneficiary: { name: "Rita Gurung", phone: "+9779800000001", district: "Gorkha", ward: 5 },
+    beneficiary: { name: "Rita Gurung", phone: "+9779800000001", district: "Gorkha", municipalityId: gorkhaMunicipalityId, ward: 5 },
     category: "goods",
     description: "Need food and shelter for testing media support",
     language: "en",

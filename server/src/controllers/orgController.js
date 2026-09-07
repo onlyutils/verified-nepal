@@ -11,6 +11,7 @@ import { recordAudit } from "../models/audit.js";
 import { toPrivateOrgView, toModerationOrgView, toMyOrgView } from "../views/org.js";
 import { toPrivateCenterView } from "../views/center.js";
 import { pingIndexNow } from "../lib/indexnow.js";
+import { municipalityInDistrict, wardInMunicipality } from "../lib/adminUnits.js";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 const ORG_TYPES = ["ngo", "community", "company", "religious", "government", "other"];
 const TIERS = ["known", "vouched", "self_declared"];
@@ -73,10 +74,19 @@ function validateCenterBody(body, isUpdate = false) {
   if (!isUpdate || body.district !== undefined) {
     out.district = validateDistrict(body.district, "district");
   }
+  if (!isUpdate || body.municipalityId !== undefined) {
+    const id = body.municipalityId;
+    if (typeof id !== "number" || !Number.isInteger(id)) throw err(400, "municipalityId must be an integer");
+    const district = out.district ?? body.district;
+    if (!municipalityInDistrict(id, district)) throw err(400, "municipalityId: municipality is not in that district");
+    out.municipalityId = id;
+  }
   if (body.ward !== undefined) {
     const w = body.ward;
     if (typeof w !== "number" || !Number.isInteger(w)) throw err(400, "ward must be integer");
-    if (w < 1 || w > 33) throw err(400, "ward must be 1-33");
+    if (out.municipalityId !== undefined || body.municipalityId !== undefined) {
+      if (!wardInMunicipality(out.municipalityId ?? body.municipalityId, w)) throw err(400, "ward out of range for municipality");
+    } else if (w < 1 || w > 33) throw err(400, "ward must be 1-33");
     out.ward = w;
   }
   if (!isUpdate || body.address !== undefined) {
@@ -274,6 +284,7 @@ export async function handleCreateCenter(event, opts, orgId) {
     orgStatus: org.status,
     name: validated.name,
     district: validated.district,
+    municipalityId: validated.municipalityId,
     address: validated.address,
     contactPhone: validated.contactPhone,
     accepts: validated.accepts,

@@ -1,3 +1,5 @@
+import { getMunicipality } from "../lib/adminUnits.js";
+
 export function toPublicCenterView(center) {
   const org = {
     id: center.orgId,
@@ -9,6 +11,8 @@ export function toPublicCenterView(center) {
     id: center.id,
     name: center.name,
     district: center.district,
+    municipalityId: center.municipalityId,
+    municipality: getMunicipality(center.municipalityId)?.name,
     address: center.address,
     contactPhone: center.contactPhone,
     accepts: center.accepts,

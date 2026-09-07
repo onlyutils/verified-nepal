@@ -3,6 +3,7 @@ import { validateString, validatePhone, validateOptionalEmail, validateDistrict,
 import { maskName } from "../lib/format.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { requireAuth, isOutOfScope } from "../lib/auth.js";
+import { getMunicipality, municipalityInDistrict, wardInMunicipality } from "../lib/adminUnits.js";
 import {
   CATEGORIES, LANGUAGES, FLAG_REASONS, MOD_STATUS, GENERAL_INCIDENT_ID,
   ALLOWED_PHOTO_TYPES, ALLOWED_VIDEO_TYPES, MAX_PHOTO_SIZE, MAX_VIDEO_SIZE,
@@ -56,8 +57,12 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
   }
   const benEmail = validateOptionalEmail(beneficiary.email, "beneficiary.email");
   const district = validateDistrict(beneficiary.district, "beneficiary.district");
+  const municipalityId = beneficiary.municipalityId;
+  if (typeof municipalityId !== "number" || !Number.isInteger(municipalityId)) throw err(400, "beneficiary.municipalityId must be an integer");
+  if (!municipalityInDistrict(municipalityId, district)) throw err(400, "beneficiary.municipalityId: municipality is not in that district");
   const ward = beneficiary.ward;
-  if (typeof ward !== "number" || !Number.isInteger(ward) || ward < 1 || ward > 33) throw err(400, "beneficiary.ward must be integer 1-33");
+  const muni = getMunicipality(municipalityId);
+  if (typeof ward !== "number" || !Number.isInteger(ward) || !wardInMunicipality(municipalityId, ward)) throw err(400, `beneficiary.ward must be 1-${muni.wards} for ${muni.name}`);
   let householdSize;
   if (beneficiary.householdSize !== undefined && beneficiary.householdSize !== null) {
     if (typeof beneficiary.householdSize !== "number" || !Number.isInteger(beneficiary.householdSize) || beneficiary.householdSize < 1 || beneficiary.householdSize > 30) throw err(400, "beneficiary.householdSize must be integer 1-30");
@@ -101,7 +106,8 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
   }
   const { id, refCode } = await createNeed(ddb, tableName, {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
-    incidentId: resolvedIncidentId, district, ward, householdSize, category, description: desc, language, media: cleanMedia,
+    incidentId: resolvedIncidentId, district, municipalityId, ward, householdSize, category, description: desc, language, media: cleanMedia,
+    source: onBehalf ? "on-behalf" : (auth?.role === "moderator" || auth?.role === "admin") ? "staff" : "web",
     registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
     registrantSub: onBehalf ? auth.payload.sub : undefined,
     assignOnly,

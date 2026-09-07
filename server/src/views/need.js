@@ -1,5 +1,6 @@
 import { maskName } from "../lib/format.js";
 import { toExpiresAt } from "../lib/format.js";
+import { getMunicipality } from "../lib/adminUnits.js";
 import { needTimeline } from "./need-timeline.js";
 
 export function toPublicGroup(need, viewerSub) {
@@ -28,6 +29,8 @@ export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub, 
     maskedName: maskName(it.beneficiary?.name || it.name || ""),
     district: it.beneficiary?.district || it.district || "",
     ward: it.beneficiary?.ward ?? it.ward,
+    municipalityId: it.beneficiary?.municipalityId,
+    municipality: getMunicipality(it.beneficiary?.municipalityId)?.name,
     category: it.category,
     description: it.description,
     status: it.status,
@@ -50,6 +53,9 @@ export function toStatusView(need, { donation, ledgerRow } = {}) {
     status: need.status,
     category: need.category,
     district: need.beneficiary?.district || need.district,
+    ward: need.beneficiary?.ward ?? need.ward,
+    municipalityId: need.beneficiary?.municipalityId,
+    municipality: getMunicipality(need.beneficiary?.municipalityId)?.name,
     createdAt: need.createdAt,
     expiresAt: need.expiresAt || toExpiresAt(need.ttl),
   };

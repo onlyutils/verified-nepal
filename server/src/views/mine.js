@@ -1,4 +1,5 @@
 import { needTimeline } from "./need-timeline.js";
+import { getMunicipality } from "../lib/adminUnits.js";
 
 export function toMyGroup(need, sub, donation) {
   const membership = need.groupMembers?.[sub];
@@ -28,7 +29,7 @@ export function toMyGroup(need, sub, donation) {
 export function toHandlingContact(need, donation) {
   return {
     id: need.id, status: need.status, category: need.category, description: need.description, createdAt: need.createdAt, updatedAt: need.updatedAt || need.createdAt,
-    beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward },
+    beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward, municipalityId: need.beneficiary?.municipalityId, municipality: getMunicipality(need.beneficiary?.municipalityId)?.name },
     handledAt: need.handledBy?.at,
     timeline: needTimeline(need, { donation }),
     ...(need.deliveryChannel ? { deliveryChannel: need.deliveryChannel, centerId: need.centerId } : {}),
@@ -37,7 +38,7 @@ export function toHandlingContact(need, donation) {
 
 export function toMyNeed(n, donation) {
   return {
-    id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward,
+    id: n.id, refCode: n.refCode, status: n.status, category: n.category, district: n.beneficiary?.district, ward: n.beneficiary?.ward, municipalityId: n.beneficiary?.municipalityId, municipality: getMunicipality(n.beneficiary?.municipalityId)?.name,
     createdAt: n.createdAt, updatedAt: n.updatedAt || n.createdAt, expiresAt: n.expiresAt, timeline: needTimeline(n, { donation }),
     ...(n.deliveryChannel ? { deliveryChannel: n.deliveryChannel, centerId: n.centerId } : {}),
   };

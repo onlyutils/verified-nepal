@@ -4,6 +4,9 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent } from "./helpers.js";
 import { routeOrgs } from "../src/routes/orgRoutes.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const rasuwaMunicipalityId = listMunicipalities("Rasuwa")[0].id;
 
 function seedUser(fake, sub, role, email) {
   const item = {
@@ -45,6 +48,7 @@ function validCenterBody(overrides = {}) {
   const base = {
     name: "Rasuwa Drop Center",
     district: "Rasuwa",
+    municipalityId: rasuwaMunicipalityId,
     address: "Ward 5, Rasuwa Bazar",
     contactPhone: "+977-9801234567",
     accepts: ["rice", "blanket"],

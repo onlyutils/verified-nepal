@@ -5,6 +5,9 @@ import { needTimeline } from "../src/views/need-timeline.js";
 import { toLedgerItem } from "../src/views/ledger.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const gorkhaMunicipalityId = listMunicipalities("Gorkha")[0].id;
 
 function setup() {
   const kp = makeKeyPair();
@@ -22,7 +25,7 @@ function setup() {
 }
 
 async function published(ctx) {
-  const created = await ctx.handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5, phone: "+9779800000001" }, category: "goods", description: "Need food and blankets for a family after the flood", language: "en", incidentId: TEST_INCIDENT_ID } }));
+  const created = await ctx.handler(makeEvent({ method: "POST", path: "/needs", body: { onBehalf: false, beneficiary: { name: "Rita Gurung", district: "Gorkha", municipalityId: gorkhaMunicipalityId, ward: 5, phone: "+9779800000001" }, category: "goods", description: "Need food and blankets for a family after the flood", language: "en", incidentId: TEST_INCIDENT_ID } }));
   assert.equal(created.statusCode, 201, created.body);
   const id = JSON.parse(created.body).id;
   const publishedResponse = await ctx.handler(makeEvent({ method: "POST", path: `/moderation/${id}`, headers: { authorization: ctx.token("mod") }, body: { action: "publish" } }));

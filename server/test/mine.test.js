@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const rasuwaMunicipalityId = listMunicipalities("Rasuwa")[0].id;
 
 function setup() {
   const kp = makeKeyPair();
@@ -14,7 +17,7 @@ function setup() {
 }
 const needBody = {
   onBehalf: false,
-  beneficiary: { name: "Rita Gurung", district: "Rasuwa", ward: 5, phone: "+9779800000001" },
+  beneficiary: { name: "Rita Gurung", district: "Rasuwa", municipalityId: rasuwaMunicipalityId, ward: 5, phone: "+9779800000001" },
   category: "goods",
   description: "Need description long enough for the dashboard tests",
   language: "en",

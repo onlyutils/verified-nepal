@@ -6,9 +6,9 @@ import { PUBLIC_NEED_STATUSES } from "../constants.js";
 
 export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
-  benName, benPhone, benEmail, district, ward, householdSize,
+  benName, benPhone, benEmail, district, municipalityId, ward, householdSize,
   category, description, language, media, incidentId, registeredByStaff, registrantSub,
-  assignOnly,
+  assignOnly, source,
 }) {
   const id = randomUUID();
   let refCode;
@@ -30,7 +30,8 @@ export async function createNeed(ddb, tableName, {
     refCode,
     onBehalf,
     registrant: onBehalf ? { name: regName, phone: regPhone, email: regEmail } : (regName || regPhone || regEmail ? { name: regName, phone: regPhone, email: regEmail } : undefined),
-    beneficiary: { name: benName, phone: benPhone, email: benEmail, district, ward, householdSize },
+    beneficiary: { name: benName, phone: benPhone, email: benEmail, district, municipalityId, ward, householdSize },
+    source: source || "web",
     category,
     description,
     language,

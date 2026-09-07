@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
 
 function makeHandler(opts = {}) {
   const kp = opts.kp ?? makeKeyPair();
@@ -14,9 +15,10 @@ function makeHandler(opts = {}) {
   return { handler, ddb, kp, env, fetchJwks };
 }
 async function createNeed(handler, overrides={}) {
+  const district = overrides.district || "Gorkha";
   const body = {
     onBehalf: false,
-    beneficiary: { name: overrides.name || "Rita Gurung", district: overrides.district || "Gorkha", ward: overrides.ward ?? 5, householdSize: 4, phone: "+9779800000001" },
+    beneficiary: { name: overrides.name || "Rita Gurung", district, municipalityId: overrides.municipalityId ?? listMunicipalities(district)[0].id, ward: overrides.ward ?? 5, householdSize: 4, phone: "+9779800000001" },
     registrant: { name: "Reg Name", phone: "+9779800000002" },
     category: overrides.category || "goods",
     description: overrides.description || "Need food and shelter for testing phase two long enough description",

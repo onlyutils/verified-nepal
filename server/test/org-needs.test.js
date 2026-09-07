@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createHandler } from "../src/index.js";
 import { clearJwksCache } from "../src/verify.js";
 import { makeKeyPair, createToken, basePayload, FakeDdb, makeEvent, seedActiveIncident, TEST_INCIDENT_ID } from "./helpers.js";
+import { listMunicipalities } from "../src/lib/adminUnits.js";
+
+const gorkhaMunicipalityId = listMunicipalities("Gorkha")[0].id;
 
 function setup() {
   const kp = makeKeyPair();
@@ -23,7 +26,7 @@ const post = (h, kp, sub, path, body) => h(makeEvent({ method: "POST", path, hea
 async function publishedNeed(handler, kp) {
   const res = await handler(makeEvent({ method: "POST", path: "/needs", body: {
     onBehalf: false, category: "goods", language: "en", description: "Need food and blankets for a family of four after the flood",
-    beneficiary: { name: "Rita Gurung", district: "Gorkha", ward: 5, householdSize: 4, phone: "+9779800000001" },
+    beneficiary: { name: "Rita Gurung", district: "Gorkha", municipalityId: gorkhaMunicipalityId, ward: 5, householdSize: 4, phone: "+9779800000001" },
     incidentId: TEST_INCIDENT_ID,
   } }));
   assert.equal(res.statusCode, 201, res.body);
