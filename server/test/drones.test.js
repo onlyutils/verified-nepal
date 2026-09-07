@@ -104,8 +104,8 @@ describe("drone tasking board", () => {
     assert.equal(board.requests[0].requestedBy, undefined);
     assert.equal(board.sites[0].groundContactName, undefined);
     assert.equal(board.sites[0].groundContactPhone, undefined);
-    assert.equal(board.sites[0].lat, undefined);
-    assert.equal(board.sites[0].lng, undefined);
+    assert.equal(board.sites[0].lat, 28);
+    assert.equal(board.sites[0].lng, 84);
     assert.equal(board.operators[0].contactPhone, undefined);
     assert.equal(board.operators[0].name, undefined);
     assert.equal(board.requests[0].id, request.id);
