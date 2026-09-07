@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { GetCommand, PutCommand, DeleteCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, DeleteCommand, QueryCommand, UpdateCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { err } from "../lib/http.js";
 import { ttlSeconds, toExpiresAt, generateRefCode } from "../lib/format.js";
 import { PUBLIC_NEED_STATUSES } from "../constants.js";
@@ -8,6 +8,7 @@ export async function createNeed(ddb, tableName, {
   onBehalf, regName, regPhone, regEmail,
   benName, benPhone, benEmail, district, ward, householdSize,
   category, description, language, media, incidentId, registeredByStaff,
+  assignOnly,
 }) {
   const id = randomUUID();
   let refCode;
@@ -40,12 +41,14 @@ export async function createNeed(ddb, tableName, {
     expiresAt,
     incidentId,
     registeredByStaff: registeredByStaff || undefined,
+    assignOnly: assignOnly === true ? true : undefined,
     gsi1pk: `NEED#${incidentId}#${district}#${status}`,
     gsi1sk: createdAt,
     gsi2pk: `NEED#${status}`,
     gsi2sk: createdAt,
   };
   if (!item.registeredByStaff) delete item.registeredByStaff;
+  if (!item.assignOnly) delete item.assignOnly;
   if (!item.registrant) delete item.registrant;
   if (item.registrant && !item.registrant.name) delete item.registrant.name;
   if (item.registrant && !item.registrant.phone) delete item.registrant.phone;
@@ -58,6 +61,21 @@ export async function createNeed(ddb, tableName, {
   await ddb.send(new PutCommand({ TableName: tableName, Item: item }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: refItem }));
   return { id, refCode };
+}
+
+export async function listNeedsForHandling(ddb, tableName, sub) {
+  const result = await ddb.send(new ScanCommand({ TableName: tableName }));
+  return (result.Items || []).filter((item) => {
+    if (item.type !== "NEED") return false;
+    if (item.status !== "matched") return false;
+    if (item.handledBy?.kind === "helper") return item.handledBy.sub === sub;
+    return item.handledBy?.kind === "group" && Boolean(item.groupMembers?.[sub]);
+  });
+}
+
+export async function countActiveHelperTakes(ddb, tableName, sub) {
+  const result = await ddb.send(new ScanCommand({ TableName: tableName }));
+  return (result.Items || []).filter((item) => item.type === "NEED" && item.status === "matched" && item.handledBy?.kind === "helper" && item.handledBy.sub === sub).length;
 }
 
 export async function listPublicNeeds(ddb, tableName, { incidentId, district, category }) {

@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { err } from "../lib/http.js";
 import { maskName } from "../lib/format.js";
 import { isOutOfScope } from "../lib/auth.js";
@@ -34,6 +34,19 @@ export async function deriveDeliveredBy(ddb, tableName, need) {
   return { kind: "field", label: "Claim code · moderator" };
 }
 
+async function confirmLedger(ddb, tableName, need, confirmedAt) {
+  const district = need.beneficiary?.district || need.district || "";
+  const ward = need.beneficiary?.ward ?? need.ward;
+  for (const pk of [`LEDGER#${district}#${ward}`, `LEDGER#${district}`]) {
+    await ddb.send(new UpdateCommand({
+      TableName: tableName,
+      Key: { PK: pk, SK: `${need.redeemedAt}#${need.id}` },
+      UpdateExpression: "SET confirmedAt = :confirmedAt",
+      ExpressionAttributeValues: { ":confirmedAt": confirmedAt },
+    }));
+  }
+}
+
 export async function performRedeem(ddb, tableName, { claimCode, providedRedeemedAt, note, user, actorSub, actorName, deliveredBy }) {
   const claim = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CLAIM#${claimCode}`, SK: "META" } }))).Item;
   if (!claim) return { status: "unknown" };
@@ -41,10 +54,39 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
   const need = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `NEED#${needId}`, SK: "META" } }))).Item;
   if (!need) return { status: "unknown" };
   if (isOutOfScope(user, need)) throw err(403, "out_of_scope");
+  if (providedRedeemedAt && Number.isNaN(new Date(providedRedeemedAt).getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
   if (need.redeemedAt) {
+    if (need.deliveredBy?.kind === "helper" || need.deliveredBy?.kind === "group") {
+      if (!need.confirmedAt) {
+        const confirmedAt = new Date().toISOString();
+        need.confirmedAt = confirmedAt;
+        let confirmed = true;
+        await ddb.send(new PutCommand({ TableName: tableName, Item: need, ConditionExpression: "attribute_not_exists(confirmedAt)" })).catch((e) => {
+          if (e.name === "ConditionalCheckFailedException") confirmed = false;
+          else throw e;
+        });
+        if (confirmed) {
+          await confirmLedger(ddb, tableName, need, confirmedAt);
+          await recordAudit(ddb, tableName, { actorSub, actorName, action: "need.confirm", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason: "claim code redeemed" });
+        }
+      }
+      return { status: "confirmed", needId, redeemedAt: need.redeemedAt, confirmedAt: need.confirmedAt };
+    }
     return { status: "already_redeemed", needId, redeemedAt: need.redeemedAt };
   }
-  if (providedRedeemedAt && Number.isNaN(new Date(providedRedeemedAt).getTime())) throw err(400, "redeemedAt must be valid ISO datetime");
+  if (need.claimRedeemedAt) return { status: "already_redeemed", needId, redeemedAt: need.claimRedeemedAt };
+  if (need.status === "matched" && (need.handledBy?.kind === "helper" || need.handledBy?.kind === "group")) {
+    const redeemedAt = providedRedeemedAt || new Date().toISOString();
+    need.claimRedeemedAt = redeemedAt;
+    try {
+      await ddb.send(new PutCommand({ TableName: tableName, Item: need, ConditionExpression: "attribute_not_exists(claimRedeemedAt)" }));
+    } catch (e) {
+      if (e.name === "ConditionalCheckFailedException") return { status: "already_redeemed", needId, redeemedAt: need.claimRedeemedAt };
+      throw e;
+    }
+    await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason: "redeem" });
+    return { status: "redeemed", needId, redeemedAt };
+  }
   const redeemedAt = await fulfilNeed(ddb, tableName, { need, redeemedAt: providedRedeemedAt, note, actorSub, actorName, reason: "redeem", expectedStatus: need.status, deliveredBy });
   return { status: "redeemed", needId, redeemedAt };
 }
@@ -53,7 +95,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
  * The one place a need becomes "fulfilled": status + GSI keys, public ledger rows, audit.
  * Used by the moderator claim-code redeem and by organizations marking a need delivered.
  */
-export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName, deliveredBy, expectedStatus }) {
+export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actorSub, actorName, reason, orgName, deliveredBy, expectedStatus, auditAction = "redeem" }) {
   const at = redeemedAt || new Date().toISOString();
   const district = need.beneficiary?.district || need.district || "";
   const ward = need.beneficiary?.ward ?? need.ward;
@@ -78,7 +120,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
     if (e.name === "ConditionalCheckFailedException") throw err(409, "need_status_changed");
     throw e;
   }
-  const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, redeemedAt: at, deliveredBy: attribution };
+  const ledgerBase = { type: "LEDGER", needId: need.id, claimCode: need.claimCode, maskedName: maskName(need.beneficiary?.name || ""), category: need.category, district, ward, redeemedAt: at, deliveredBy: attribution, ...(need.claimRedeemedAt ? { confirmedAt: need.claimRedeemedAt } : {}) };
   if (orgName || attribution.kind === "org") ledgerBase.orgName = orgName || attribution.label;
   if (note !== undefined && note !== null && String(note).trim() !== "") {
     const n = String(note).trim();
@@ -87,7 +129,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   }
   await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: `LEDGER#${district}#${ward}`, SK: `${at}#${need.id}`, ...ledgerBase } }));
   await ddb.send(new PutCommand({ TableName: tableName, Item: { PK: `LEDGER#${district}`, SK: `${at}#${need.id}`, ...ledgerBase } }));
-  await recordAudit(ddb, tableName, { actorSub, actorName, action: "redeem", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason });
+  await recordAudit(ddb, tableName, { actorSub, actorName, action: auditAction, targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason });
   return at;
 }
 

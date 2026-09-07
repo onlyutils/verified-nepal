@@ -2,7 +2,7 @@ import { csvEscape } from "../lib/http.js";
 
 export function toLedgerItem(it) {
   const deliveredBy = it.deliveredBy || (it.orgName ? { kind: "org", label: it.orgName } : undefined);
-  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt, ...(it.orgName ? { orgName: it.orgName } : {}), ...(deliveredBy ? { deliveredBy } : {}) };
+  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt, ...(it.orgName ? { orgName: it.orgName } : {}), ...(deliveredBy ? { deliveredBy } : {}), ...(it.confirmedAt ? { confirmedAt: it.confirmedAt } : {}) };
 }
 
 export function toLedgerCsv(items) {

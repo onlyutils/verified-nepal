@@ -25,6 +25,7 @@ import {
   handlePostGroupItemClaim, handlePostGroupItemRelease, handlePostGroupItemDone,
 } from "./controllers/groupController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
+import { handleHelperTakeNeed, handleHelperDeliverNeed, handleGroupTakeNeed, handleGroupReleaseNeed, handleGroupDeliverNeed, handleGetNeedContact, handleReleaseNeed } from "./controllers/needTakeController.js";
 import {
   handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
   handlePostUpdate, handleGetModerationProjects, handlePostModerationProject, handlePostModerationUpdate,
@@ -51,6 +52,7 @@ const routes = [
   ["POST", /^\/me\/ack-guidelines$/, withAuth(handleAckGuidelines)],
   ["POST", /^\/me\/districts$/, withAuth(handleSetMyDistricts)],
   ["GET", /^\/me\/dashboard$/, withAuth(handleGetDashboard)],
+  ["GET", /^\/me\/needs\/([^/]+)\/contact$/, withAuth(handleGetNeedContact)],
   ["POST", /^\/me\/articles$/, withAuth(handlePostArticle)],
   ["GET", /^\/me\/articles$/, withAuth(handleGetMyArticles)],
   ["POST", /^\/me\/articles\/media\/presign$/, withAuth(handlePostArticlePresign)],
@@ -104,6 +106,12 @@ const routes = [
   ["POST", /^\/moderation\/([^/]+)\/release$/, withModAck(handlePostModerationRelease)],
   ["POST", /^\/moderation\/([^/]+)$/, withModAck(handlePostModeration)],
   ["POST", /^\/needs\/([^/]+)\/status$/, withModAck(handlePostNeedStatus)],
+  ["POST", /^\/needs\/([^/]+)\/take$/, withAuth(handleHelperTakeNeed)],
+  ["POST", /^\/needs\/([^/]+)\/release$/, compose(withAuth, withGuidelinesAck)(handleReleaseNeed)],
+  ["POST", /^\/needs\/([^/]+)\/deliver$/, withAuth(handleHelperDeliverNeed)],
+  ["POST", /^\/needs\/([^/]+)\/group\/take$/, withAuth(handleGroupTakeNeed)],
+  ["POST", /^\/needs\/([^/]+)\/group\/release$/, withAuth(handleGroupReleaseNeed)],
+  ["POST", /^\/needs\/([^/]+)\/group\/deliver$/, withAuth(handleGroupDeliverNeed)],
   ["POST", /^\/needs\/([^/]+)\/edit$/, withModAck(handlePostNeedEdit)],
   ["POST", /^\/needs\/([^/]+)\/group$/, withAuth(handlePostGroup)],
   ["POST", /^\/needs\/([^/]+)\/group\/join$/, withAuth(handlePostGroupJoin)],

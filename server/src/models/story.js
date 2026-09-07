@@ -1,4 +1,4 @@
-import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, GetCommand, PutCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { listPointers, putPointer, deletePointer } from "./mine.js";
 import { listUserMemberships } from "./org.js";
 import { listOrgCenterPointers } from "./center.js";
@@ -15,6 +15,13 @@ export const STORY_ROLES = ["needy", "helper", "org"];
  */
 export async function storyRole(ddb, tableName, sub) {
   let helper = false;
+  const handled = await ddb.send(new ScanCommand({ TableName: tableName }));
+  for (const item of handled.Items || []) {
+    if (item.type !== "NEED" || item.status !== "fulfilled") continue;
+    if (item.deliveredBy?.kind === "helper" && item.deliveredBy.ref === sub) helper = true;
+    if (item.deliveredBy?.kind === "group" && item.groupMembers?.[sub]) helper = true;
+  }
+  if (helper) return "helper";
   for (const p of await listPointers(ddb, tableName, sub)) {
     if (!["NEED", "OFFER", "GROUP"].includes(p.kind)) continue;
     const pk = p.kind === "GROUP" ? `NEED#${p.id}` : `${p.kind}#${p.id}`;

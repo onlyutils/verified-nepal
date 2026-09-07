@@ -23,11 +23,12 @@ import { toPublicNeedListItem, toStatusView, toFlagListItem } from "../views/nee
 export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
   const body = parseBody(event);
   if (!body || typeof body !== "object") throw err(400, "invalid body");
-  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident } = body;
+  const { onBehalf, registrant, beneficiary, category, description, language, turnstileToken, media, incidentId, newIncident, assignOnly } = body;
   const hasIncidentId = incidentId !== undefined && incidentId !== null && incidentId !== "";
   const hasNewIncident = newIncident !== undefined && newIncident !== null;
   if (hasIncidentId && hasNewIncident) throw err(400, "provide at most one of incidentId or newIncident");
   if (typeof onBehalf !== "boolean") throw err(400, "onBehalf must be boolean");
+  if (assignOnly !== undefined && typeof assignOnly !== "boolean") throw err(400, "assignOnly must be boolean");
   let regName, regPhone, regEmail;
   if (onBehalf) {
     if (!registrant || typeof registrant !== "object") throw err(400, "registrant required when onBehalf is true");
@@ -100,6 +101,7 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks }) {
     onBehalf, regName, regPhone, regEmail, benName, benPhone, benEmail,
     incidentId: resolvedIncidentId, district, ward, householdSize, category, description: desc, language, media: cleanMedia,
     registeredByStaff: auth?.role === "moderator" || auth?.role === "admin",
+    assignOnly,
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
   return json(201, { id, refCode });
@@ -153,7 +155,7 @@ export async function handleGetNeeds(event, { getDdb, env, auth }) {
   const limit = 20;
   const sliced = items.slice(start, start + limit);
   const includeClaimCode = Boolean(auth && ["moderator", "admin"].includes(auth.role) && (auth.role === "admin" || auth.user?.guidelinesAckAt));
-  const publicItems = sliced.map((item) => toPublicNeedListItem(item, { includeClaimCode }));
+  const publicItems = sliced.map((item) => toPublicNeedListItem(item, { includeClaimCode, viewerSub: auth?.payload?.sub }));
   const body = { items: publicItems };
   if (start + limit < items.length) {
     const last = sliced[sliced.length - 1];

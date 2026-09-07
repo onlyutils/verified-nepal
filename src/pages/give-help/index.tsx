@@ -12,6 +12,8 @@ import {
   listNeeds,
   listOffers,
   markGroupItemDone,
+  takeNeed,
+  takeNeedAsGroup,
   orgClaimNeed,
   releaseGroupItem,
   startGroup,
@@ -475,7 +477,7 @@ export function GiveHelp({ language }: { language: Language }) {
     }
     setNeedsLoading(true);
     setNeedsError(null);
-    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined, incidentId: needsIncidentId })
+    listNeeds({ district: needsDistrict || undefined, category: needsCategory || undefined, incidentId: needsIncidentId }, auth.idToken || undefined)
       .then((response) => {
         if (!cancelled) setNeeds(response.items);
       })
@@ -491,7 +493,7 @@ export function GiveHelp({ language }: { language: Language }) {
     return () => {
       cancelled = true;
     };
-  }, [needsIncidentId, language, needsCategory, needsDistrict, needsRefresh]);
+  }, [needsIncidentId, language, needsCategory, needsDistrict, needsRefresh, auth.idToken]);
   useEffect(() => {
     let cancelled = false;
     if (!offersIncidentId) {
@@ -675,12 +677,18 @@ function GroupPanel({
   group,
   onGroupChange,
   onMutated,
+  assignOnly,
+  taken,
+  onNeedHandled,
 }: {
   language: Language;
   needId: string;
   group: GroupPublic;
   onGroupChange: (group: GroupPublic) => void;
   onMutated: () => void;
+  assignOnly?: boolean;
+  taken?: boolean;
+  onNeedHandled: (label: string) => void;
 }) {
   const ts = formStrings[language];
   const auth = useGoogleAuth();
@@ -688,6 +696,7 @@ function GroupPanel({
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [showSignInNudge, setShowSignInNudge] = useState(false);
+  const [isMember, setIsMember] = useState(Boolean(group.isMember));
 
   const requireSignIn = () => {
     rememberReturnTo();
@@ -768,7 +777,19 @@ function GroupPanel({
         return;
       }
       await joinGroupApi(auth.idToken, needId);
-      onGroupChange({ ...group, memberCount: group.memberCount + 1 });
+      setIsMember(true);
+      onGroupChange({ ...group, memberCount: group.memberCount + 1, isMember: true });
+      onMutated();
+    });
+
+  const take = () =>
+    run("take", async () => {
+      if (!auth.idToken) {
+        requireSignIn();
+        return;
+      }
+      const result = await takeNeedAsGroup(auth.idToken, needId);
+      onNeedHandled(result.handler);
       onMutated();
     });
 
@@ -820,10 +841,11 @@ function GroupPanel({
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{ts.groupMemberCount.replace("{n}", String(group.memberCount))}</span>
-        <Button size="sm" variant="ghost" disabled={busy.join} onClick={join}>
-          {ts.groupJoin}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {!isMember ? <Button size="sm" variant="ghost" disabled={busy.join} onClick={join}>{ts.groupJoin}</Button> : null}
+        </div>
       </div>
+      {isMember && !assignOnly && !taken ? <Button size="sm" disabled={busy.take} onClick={take}>{ts.groupTake}</Button> : null}
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -840,7 +862,7 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
   const [group, setGroup] = useState<GroupPublic | undefined>(need.group);
   const [forming, setForming] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [handledBy, setHandledBy] = useState<{ status: string; org: string } | null>(need.handledBy ? { status: need.status, org: need.handledBy } : null);
+  const [handledBy, setHandledBy] = useState<{ status: string; label: string; kind?: string } | null>(need.handledBy ? { status: need.status, label: need.handledBy, kind: need.handledByKind } : null);
   const [taking, setTaking] = useState(false);
 
   const takeForOrg = async (org: MyOrg) => {
@@ -849,7 +871,22 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
     setFormError(null);
     try {
       await orgClaimNeed(auth.idToken, org.id, need.id);
-      setHandledBy({ status: "matched", org: org.name });
+      setHandledBy({ status: "matched", label: org.name, kind: "org" });
+      onMutated();
+    } catch (err) {
+      setFormError(apiErrorMessage(err, language));
+    } finally {
+      setTaking(false);
+    }
+  };
+
+  const takeForHelper = async () => {
+    if (!auth.idToken) return;
+    setTaking(true);
+    setFormError(null);
+    try {
+      const result = await takeNeed(auth.idToken, need.id);
+      setHandledBy({ status: "matched", label: result.handler, kind: "helper" });
       onMutated();
     } catch (err) {
       setFormError(apiErrorMessage(err, language));
@@ -864,7 +901,7 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
     setFormError(null);
     try {
       const result = await startGroup(auth.idToken, need.id);
-      setGroup({ name: result.name, items: [], memberCount: 1 });
+      setGroup({ name: result.name, items: [], memberCount: 1, isMember: true });
       onMutated();
     } catch (err) {
       setFormError(apiErrorMessage(err, language));
@@ -890,21 +927,30 @@ function NeedCard({ language, need, orgs, onFlag, onMutated }: { language: Langu
         <p className="text-base leading-relaxed">{need.description}</p>
         {handledBy ? (
           <p className="text-sm text-muted-foreground" role="status">
-            {handledBy.status === "matched" && orgs.some((org) => org.name === handledBy.org)
-              ? ts.orgHandled.replace("{org}", handledBy.org)
-              : (handledBy.status === "fulfilled" ? ts.orgFulfilledBy : ts.orgHandledBy).replace("{org}", handledBy.org)}
+            {handledBy.status === "fulfilled" && need.deliveredBy
+              ? ts.deliveredBy.replace("{label}", need.deliveredBy)
+              : handledBy.status === "matched" && handledBy.kind === "helper"
+              ? ts.helperTaken.replace("{label}", handledBy.label)
+              : handledBy.status === "matched" && handledBy.kind === "group"
+                ? ts.groupTaken.replace("{label}", handledBy.label)
+                : (handledBy.status === "fulfilled" ? ts.orgFulfilledBy : ts.orgHandledBy).replace("{org}", handledBy.label)}
           </p>
-        ) : need.status === "published" && orgs.length && !group ? (
+        ) : need.status === "published" && !need.assignOnly && auth.idToken ? (
           <div className="flex flex-wrap gap-2">
-            {orgs.map((org) => (
+            <Button size="sm" disabled={taking} onClick={() => void takeForHelper()}>{ts.helperTake}</Button>
+            {!group ? orgs.map((org) => (
               <Button key={org.id} size="sm" disabled={taking} onClick={() => void takeForOrg(org)}>
                 {ts.orgHandle.replace("{org}", org.name)}
               </Button>
-            ))}
+            )) : null}
           </div>
+        ) : need.status === "published" && need.assignOnly ? (
+          <p className="text-sm text-muted-foreground">{ts.assignOnlyNotice}</p>
+        ) : need.status === "published" && !auth.idToken ? (
+          <SignInNudge language={language} id={`take-${need.id}`} title={ts.groupSignInTitle} body={ts.groupSignInBody} />
         ) : null}
         {group ? (
-          <GroupPanel language={language} needId={need.id} group={group} onGroupChange={setGroup} onMutated={onMutated} />
+          <GroupPanel language={language} needId={need.id} group={group} assignOnly={need.assignOnly} taken={Boolean(handledBy)} onGroupChange={setGroup} onMutated={onMutated} onNeedHandled={(label) => setHandledBy({ status: "matched", label, kind: "group" })} />
         ) : need.status === "published" && auth.idToken && !need.handledBy ? (
           <Button variant="outline" size="sm" disabled={forming} onClick={formGroup}>
             {ts.groupForm}

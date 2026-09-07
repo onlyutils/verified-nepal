@@ -4,7 +4,7 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
-import { getDashboard, listMyOrgs, renewNeed, type Category, type DashboardResponse, type IncidentStatus } from "@/lib/api";
+import { deliverGroupNeed, deliverNeed, getDashboard, listMyOrgs, releaseGroupNeed, releaseNeed, renewNeed, type Category, type DashboardResponse, type IncidentStatus } from "@/lib/api";
 import { districtLabels } from "@/lib/districts";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
@@ -72,6 +72,25 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   const [error, setError] = useState<string | null>(null);
   const [renewed, setRenewed] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+
+  const handlingAction = async (id: string, kind: "helper" | "group", action: "deliver" | "release") => {
+    if (!auth.idToken) return;
+    if (action === "deliver" && !window.confirm(t.handlingConfirm)) return;
+    setBusy((current) => ({ ...current, [id]: true }));
+    setError(null);
+    try {
+      if (kind === "group") {
+        if (action === "deliver") await deliverGroupNeed(auth.idToken, id);
+        else await releaseGroupNeed(auth.idToken, id);
+      } else if (action === "deliver") await deliverNeed(auth.idToken, id);
+      else await releaseNeed(auth.idToken, id);
+      setData((current) => current && { ...current, handledNeeds: current.handledNeeds.filter((need) => need.id !== id) });
+    } catch (cause) {
+      setError(apiErrorMessage(cause, language) || t.handlingActionFailed);
+    } finally {
+      setBusy((current) => ({ ...current, [id]: false }));
+    }
+  };
 
   useEffect(() => {
     if (!auth.idToken) {
@@ -332,6 +351,36 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       {!data && !error ? <LoadingState label={t.loading} /> : null}
       {data ? (
         <>
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{t.handledNeedsTitle}</h2>
+            {data.handledNeeds.length === 0 ? (
+              <EmptyState title={t.handledNeedsEmpty} />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.handledNeeds.map((need) => (
+                  <Card key={need.id}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{need.handler}</CardTitle>
+                      <CardDescription>{need.beneficiary.district ?? tl.unavailable}{need.beneficiary.ward ? ` · ${t.ward} ${need.beneficiary.ward}` : ""}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3">
+                      <p className="text-sm text-muted-foreground">{t.handlingContact}</p>
+                      <p className="text-sm">{need.beneficiary.name} · {need.beneficiary.phone || tl.unavailable}</p>
+                      <p className="text-sm leading-relaxed">{need.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" onClick={() => void handlingAction(need.id, need.handlerKind, "deliver")} disabled={busy[need.id]}>
+                          {t.handlingDeliver}
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => void handlingAction(need.id, need.handlerKind, "release")} disabled={busy[need.id]}>
+                          {t.handlingRelease}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
           {dashboardSections.map((section) => (
             <Fragment key={section.key}>{section.render()}</Fragment>
           ))}

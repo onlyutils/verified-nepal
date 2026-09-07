@@ -12,6 +12,10 @@ export function apiErrorMessage(err: unknown, language: Language): string {
     if (code === "story_not_eligible") return t.errStoryNotEligible;
     if (code === "self_verification_forbidden") return t.errSelfVerificationForbidden;
     if (code === "no vouches recorded") return t.errNoVouchesRecorded;
+    if (code === "assign_only") return t.errAssignOnly;
+    if (code === "take_limit") return t.errTakeLimit;
+    if (code === "need_not_available") return t.errNeedNotAvailable;
+    if (code === "not_need_handler") return t.errNotNeedHandler;
     if (err.status === 0 || err.status === 502 || err.status === 503 || err.status === 504) return t.errOffline;
     if (err.status === 401) return t.errSignedOut;
     if (err.status === 429) return t.errRateLimited;

@@ -37,6 +37,7 @@ import {
   publishIncident,
   rejectIncident,
   redeemClaim,
+  releaseNeed,
   releaseQueueItem,
   setAdminUserRole,
   syncClaims,
@@ -650,6 +651,18 @@ export function useDesk(language: Language) {
     }
   };
 
+  const handleReleaseNeed = async (needId: string) => {
+    if (!auth.idToken) return;
+    clearFeedback();
+    try {
+      await releaseNeed(auth.idToken, needId);
+      success(t.deskActionSuccess);
+      void loadBoards();
+    } catch (error) {
+      setActionError(apiErrorMessage(error, language));
+    }
+  };
+
   const openRedeem = useCallback((need: NeedPublic, claimCode: string) => {
     const offerId = need.matchedOfferId || selectedOfferId[need.id];
     const offer = offerId ? offers.find((item) => item.id === offerId) : undefined;
@@ -677,7 +690,7 @@ export function useDesk(language: Language) {
   };
   const openEditNeed = (need: NeedPublic) => {
     setEditTarget({ kind: "need", id: need.id });
-    setEditFields({ description: need.description, category: need.category, district: need.district, ward: String(need.ward ?? ""), name: "", phone: "" });
+    setEditFields({ description: need.description, category: need.category, district: need.district, ward: String(need.ward ?? ""), name: "", phone: "", assignOnly: String(Boolean(need.assignOnly)) });
     setEditError(null);
   };
   const openEditOffer = (offer: OfferPublic) => {
@@ -718,7 +731,7 @@ export function useDesk(language: Language) {
     const list = (value: string) => value.split(",").map((s) => s.trim()).filter(Boolean);
     try {
       if (editTarget.kind === "need") {
-        const edits: Record<string, unknown> = { description: f.description, category: f.category, district: f.district };
+        const edits: Record<string, unknown> = { description: f.description, category: f.category, district: f.district, assignOnly: f.assignOnly === "true" };
         if (f.ward) edits.ward = Number(f.ward);
         const beneficiary: Record<string, unknown> = {};
         if (f.name) beneficiary.name = f.name;
@@ -1127,6 +1140,7 @@ export function useDesk(language: Language) {
     setRedeemDeliveredBy,
     openRedeem,
     handleNeedStatus,
+    handleReleaseNeed,
     handleOfferStatus,
     editTarget,
     editFields,

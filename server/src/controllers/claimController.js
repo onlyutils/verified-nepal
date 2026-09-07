@@ -27,7 +27,7 @@ export async function handleRedeem(event, opts, code) {
   if (result.status === "already_redeemed") {
     return json(409, { error: "already_redeemed", redeemedAt: result.redeemedAt });
   }
-  return json(200, { status: "redeemed", needId: result.needId, redeemedAt: result.redeemedAt });
+  return json(200, { status: result.status, needId: result.needId, redeemedAt: result.redeemedAt, ...(result.confirmedAt ? { confirmedAt: result.confirmedAt } : {}) });
 }
 
 export async function handleSync(event, opts) {
@@ -65,7 +65,7 @@ export async function handleSync(event, opts) {
     });
     if (res.status === "unknown") results.push({ code, status: "unknown" });
     else if (res.status === "already_redeemed") results.push({ code, status: "already_redeemed", needId: res.needId });
-    else results.push({ code, status: "redeemed", needId: res.needId });
+    else results.push({ code, status: res.status, needId: res.needId, ...(res.confirmedAt ? { confirmedAt: res.confirmedAt } : {}) });
   }
   return json(200, { results });
 }

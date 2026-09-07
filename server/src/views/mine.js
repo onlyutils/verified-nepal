@@ -10,6 +10,21 @@ export function toMyGroup(need, sub) {
     category: need.category,
     joinedAt: membership?.joinedAt,
     myItems,
+    ...(need.status === "matched" && need.handledBy?.kind === "group" ? {
+      handling: {
+        status: need.status,
+        handler: need.handledBy.label,
+        contact: toHandlingContact(need),
+      },
+    } : {}),
+  };
+}
+
+export function toHandlingContact(need) {
+  return {
+    id: need.id, status: need.status, category: need.category, description: need.description, createdAt: need.createdAt,
+    beneficiary: { name: need.beneficiary?.name || "", phone: need.beneficiary?.phone || null, district: need.beneficiary?.district || need.district, ward: need.beneficiary?.ward ?? need.ward },
+    handledAt: need.handledBy?.at,
   };
 }
 

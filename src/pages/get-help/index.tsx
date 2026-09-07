@@ -64,6 +64,7 @@ type FieldKey =
   | "district"
   | "ward"
   | "description"
+  | "assignOnly"
   | "registrantName"
   | "registrantPhone"
   | "consent"
@@ -132,6 +133,7 @@ export function GetHelp({ language }: { language: Language }) {
   const [ward, setWard] = useState("");
   const [category, setCategory] = useState<Category>("goods");
   const [description, setDescription] = useState("");
+  const [assignOnly, setAssignOnly] = useState(false);
   const [newIncidentMode, setNewIncidentMode] = useState(false);
   const [newIncidentName, setNewIncidentName] = useState("");
   const [newIncidentKind, setNewIncidentKind] = useState("");
@@ -185,6 +187,7 @@ export function GetHelp({ language }: { language: Language }) {
       if (typeof draft.ward === "string") setWard(draft.ward);
       if (typeof draft.category === "string" && CATEGORIES.includes(draft.category as Category)) setCategory(draft.category as Category);
       if (typeof draft.description === "string") setDescription(draft.description);
+      if (typeof draft.assignOnly === "boolean") setAssignOnly(draft.assignOnly);
       if (typeof draft.newIncidentMode === "boolean") setNewIncidentMode(draft.newIncidentMode);
       if (typeof draft.incidentId === "string") saveSelectedIncidentId(draft.incidentId);
       if (typeof draft.newIncidentName === "string") setNewIncidentName(draft.newIncidentName);
@@ -213,6 +216,7 @@ export function GetHelp({ language }: { language: Language }) {
       ward,
       category,
       description,
+      assignOnly,
       incidentId: newIncidentMode ? undefined : currentIncidentId,
       newIncidentMode,
       newIncidentName,
@@ -252,6 +256,7 @@ export function GetHelp({ language }: { language: Language }) {
     category,
     consent,
     description,
+    assignOnly,
     district,
     onBehalf,
     registrantEmail,
@@ -285,6 +290,7 @@ export function GetHelp({ language }: { language: Language }) {
     setBeneficiaryPhone("");
     setBeneficiaryEmail("");
     setDescription("");
+    setAssignOnly(false);
     setNewIncidentMode(false);
     setNewIncidentName("");
     setNewIncidentKind("");
@@ -453,6 +459,7 @@ export function GetHelp({ language }: { language: Language }) {
           },
           category,
           description: description.trim(),
+          assignOnly,
           language,
           turnstileToken: turnstileToken || undefined,
           media: mediaItems.length ? mediaItems : undefined,
@@ -749,6 +756,10 @@ export function GetHelp({ language }: { language: Language }) {
                   ))}
                 </ul>
               ) : null}
+            </div>
+            <div className="flex items-start gap-3">
+              <Checkbox id="assign-only" checked={assignOnly} onCheckedChange={(checked) => setAssignOnly(checked === true)} />
+              <Label htmlFor="assign-only" className="font-normal leading-relaxed">{ts.getHelpAssignOnly}</Label>
             </div>
           </CardContent>
         </Card>
@@ -1051,8 +1062,14 @@ function StatusLookup({ language, initialCode = "" }: { language: Language; init
               {districtLabels[result.district as keyof typeof districtLabels]?.[language] ?? result.district}
             </p>
             {result.handledBy ? (
-              <p>{(result.status === "fulfilled" ? formStrings[language].orgFulfilledBy : formStrings[language].orgHandledBy).replace("{org}", result.handledBy)}</p>
+              <p>{result.handledByKind === "helper"
+                ? ts.helperTaken.replace("{label}", result.handledBy)
+                : result.handledByKind === "group"
+                  ? ts.groupTaken.replace("{label}", result.handledBy)
+                  : (result.status === "fulfilled" ? ts.orgFulfilledBy : ts.orgHandledBy).replace("{org}", result.handledBy)}</p>
             ) : null}
+            {result.deliveredBy ? <p>{ts.deliveredBy.replace("{label}", result.deliveredBy)}</p> : null}
+            {result.confirmedAt ? <p className="text-sm text-muted-foreground">{ts.confirmedByBeneficiary}</p> : null}
             {result.claimCode && (result.status === "published" || result.status === "matched") ? (
               <CodeDisplay
                 code={result.claimCode}

@@ -167,6 +167,7 @@ export function Ledger({ language }: { language: Language }) {
                   <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <span>{t.ledgerOrg}: {deliveredBy(item)?.label}</span>
                     <span className="rounded-full border px-2 py-0.5 text-xs">{deliveredByKindLabel(deliveredBy(item)?.kind || "field", t)}</span>
+                    {item.confirmedAt ? <span className="rounded-full border px-2 py-0.5 text-xs">{t.ledgerConfirmed}</span> : null}
                   </p>
                 ) : null}
               </div>
@@ -199,6 +200,7 @@ export function Ledger({ language }: { language: Language }) {
                         <div className="flex flex-wrap items-center gap-2">
                           <span>{deliveredBy(item)?.label}</span>
                           <span className="rounded-full border px-2 py-0.5 text-xs">{deliveredByKindLabel(deliveredBy(item)?.kind || "field", t)}</span>
+                          {item.confirmedAt ? <span className="rounded-full border px-2 py-0.5 text-xs">{t.ledgerConfirmed}</span> : null}
                         </div>
                       ) : null}
                     </TableCell>

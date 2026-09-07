@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { CATEGORIES } from "@/lib/api";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { DeskModel } from "./use-desk";
 
 function EditField({ id, label, value, onChange, textarea }: { id: string; label: string; value: string; onChange: (v: string) => void; textarea?: boolean }) {
@@ -43,6 +44,10 @@ function EditDialogFields({ model }: { model: DeskModel }) {
         <EditField id="edit-ward" label={model.ds.editFieldWard} value={f.ward || ""} onChange={set("ward")} />
         <EditField id="edit-name" label={model.ds.editFieldBeneficiaryName} value={f.name || ""} onChange={set("name")} />
         <EditField id="edit-phone" label={model.ds.editFieldPhone} value={f.phone || ""} onChange={set("phone")} />
+        <div className="flex items-start gap-3">
+          <Checkbox id="edit-assign-only" checked={f.assignOnly === "true"} onCheckedChange={(checked) => set("assignOnly")(checked === true ? "true" : "false")} />
+          <Label htmlFor="edit-assign-only" className="font-normal leading-relaxed">{model.ds.editFieldAssignOnly}</Label>
+        </div>
       </>
     );
   }

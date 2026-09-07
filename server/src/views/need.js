@@ -1,7 +1,7 @@
 import { maskName } from "../lib/format.js";
 import { toExpiresAt } from "../lib/format.js";
 
-export function toPublicGroup(need) {
+export function toPublicGroup(need, viewerSub) {
   if (!need.group) return undefined;
   const items = Object.entries(need.groupItems || {})
     .map(([itemId, item]) => ({
@@ -16,10 +16,11 @@ export function toPublicGroup(need) {
     name: need.group.name,
     items,
     memberCount: Object.keys(need.groupMembers || {}).length,
+    ...(viewerSub ? { isMember: Boolean(need.groupMembers?.[viewerSub]) } : {}),
   };
 }
 
-export function toPublicNeedListItem(it, { includeClaimCode = false } = {}) {
+export function toPublicNeedListItem(it, { includeClaimCode = false, viewerSub } = {}) {
   const out = {
     id: it.id,
     maskedName: maskName(it.beneficiary?.name || it.name || ""),
@@ -29,8 +30,10 @@ export function toPublicNeedListItem(it, { includeClaimCode = false } = {}) {
     description: it.description,
     status: it.status,
     createdAt: it.createdAt,
-    group: toPublicGroup(it),
-    ...(it.handledBy?.orgName ? { handledBy: it.handledBy.orgName } : {}),
+    group: toPublicGroup(it, viewerSub),
+    ...(it.handledBy ? { handledBy: it.handledBy.label || it.handledBy.orgName, handledByKind: it.handledBy.kind || (it.handledBy.orgName ? "org" : undefined) } : {}),
+    ...(it.deliveredBy ? { deliveredBy: it.deliveredBy.label, confirmedAt: it.confirmedAt } : {}),
+    ...(it.assignOnly ? { assignOnly: true } : {}),
   };
   if (includeClaimCode && it.claimCode && ["published", "matched", "fulfilled"].includes(it.status)) out.claimCode = it.claimCode;
   if (includeClaimCode && it.matchedOfferId) out.matchedOfferId = it.matchedOfferId;
@@ -48,7 +51,12 @@ export function toStatusView(need) {
   if (need.claimCode && ["published", "matched", "fulfilled"].includes(need.status)) {
     out.claimCode = need.claimCode;
   }
-  if (need.handledBy?.orgName) out.handledBy = need.handledBy.orgName;
+  if (need.handledBy) {
+    out.handledBy = need.handledBy.label || need.handledBy.orgName;
+    out.handledByKind = need.handledBy.kind || (need.handledBy.orgName ? "org" : undefined);
+  }
+  if (need.deliveredBy) out.deliveredBy = need.deliveredBy.label;
+  if (need.confirmedAt) out.confirmedAt = need.confirmedAt;
   return out;
 }
 

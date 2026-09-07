@@ -50,6 +50,9 @@ function NeedActions({ model, need, claimCode, status }: { model: DeskModel; nee
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
+        {need.handledBy && status === "matched" ? (
+          <Button variant="outline" onClick={() => void model.handleReleaseNeed(needId)}>{model.t.deskRelease}</Button>
+        ) : null}
         <Button variant="outline" onClick={() => model.setFulfillId(needId)}>
           {model.t.deskFulfill}
         </Button>
@@ -117,6 +120,7 @@ export function Boards({ model }: { model: DeskModel }) {
                 <TableRow>
                   <TableHead>{model.ds.deskTableItem}</TableHead>
                   <TableHead>{model.ds.deskTableStatus}</TableHead>
+                  <TableHead>{model.ds.deskTableHandler}</TableHead>
                   <TableHead>{model.ds.deskTableLocation}</TableHead>
                   <TableHead>{model.ds.deskTableCreated}</TableHead>
                   <TableHead>{model.ds.deskTableActions}</TableHead>
@@ -133,6 +137,7 @@ export function Boards({ model }: { model: DeskModel }) {
                     <TableCell>
                       <StatusBadge tone={toneForStatus(need.status)}>{statusLabel(model.t, need.status)}</StatusBadge>
                     </TableCell>
+                    <TableCell>{need.handledBy || "—"}</TableCell>
                     <TableCell>
                       {need.district} · W{need.ward}
                     </TableCell>
@@ -154,6 +159,7 @@ export function Boards({ model }: { model: DeskModel }) {
                   <CardDescription>
                     {need.district}{need.ward != null ? ` · W${need.ward}` : ""} · {formatDateTime(need.createdAt, model.language)}
                   </CardDescription>
+                  {need.handledBy ? <p className="text-sm text-muted-foreground">{model.ds.deskTableHandler}: {need.handledBy}</p> : null}
                   {need.claimCode ? (
                     <CodeDisplay code={need.claimCode} kind="claim" label={model.t.deskClaimCode} hint={model.t.deskClaimCodeHint} />
                   ) : null}

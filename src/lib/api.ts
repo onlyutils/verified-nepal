@@ -29,6 +29,7 @@ export interface GroupPublic {
   name: string;
   items: GroupItemPublic[];
   memberCount: number;
+  isMember?: boolean;
 }
 
 export interface NeedPublic {
@@ -45,6 +46,10 @@ export interface NeedPublic {
   group?: GroupPublic;
   /** Name of the verified organization delivering this need, once one has taken it. */
   handledBy?: string;
+  handledByKind?: DeliveredByKind;
+  deliveredBy?: string;
+  confirmedAt?: string;
+  assignOnly?: boolean;
   matchedOfferId?: string;
   incidentId?: string;
 }
@@ -62,6 +67,9 @@ export interface StatusResponse {
   expiresAt: string;
   claimCode?: string;
   handledBy?: string;
+  handledByKind?: DeliveredByKind;
+  deliveredBy?: string;
+  confirmedAt?: string;
 }
 
 export interface NeedMediaItem {
@@ -110,6 +118,7 @@ export interface CreateNeedBody {
   media?: NeedMediaItem[];
   incidentId?: string;
   newIncident?: { name: string; kind: string; district: DistrictName; description: string };
+  assignOnly?: boolean;
 }
 
 export interface CreateNeedResponse {
@@ -344,6 +353,22 @@ export interface MyGroup {
   category: Category;
   joinedAt?: string;
   myItems: MyGroupItem[];
+  handling?: { status: string; handler: string; contact: NeedContact };
+}
+
+export interface NeedContact {
+  id: string;
+  status: string;
+  category: Category;
+  description: string;
+  createdAt: string;
+  beneficiary: { name: string; phone: string | null; district?: string; ward?: number };
+  handledAt?: string;
+}
+
+export interface HandledNeed extends NeedContact {
+  handler: string;
+  handlerKind: "helper" | "group";
 }
 
 export type StoryRole = "needy" | "helper" | "org";
@@ -363,6 +388,7 @@ export interface DashboardResponse {
   needs: MyNeed[];
   offers: MyOffer[];
   groups: MyGroup[];
+  handledNeeds: HandledNeed[];
   incidents: MyIncident[];
   /** Who the caller may tell a story as; null until they have received or given help. */
   storyRole?: StoryRole | null;
@@ -534,6 +560,34 @@ export function releaseGroupItem(token: string, needId: string, itemId: string):
 
 export function markGroupItemDone(token: string, needId: string, itemId: string): Promise<{ doneAt: string }> {
   return request(`/needs/${encodeURIComponent(needId)}/group/items/${encodeURIComponent(itemId)}/done`, { method: "POST", token });
+}
+
+export function takeNeed(token: string, needId: string): Promise<{ status: "matched"; handler: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/take`, { method: "POST", token });
+}
+
+export function releaseNeed(token: string, needId: string): Promise<{ status: "published" }> {
+  return request(`/needs/${encodeURIComponent(needId)}/release`, { method: "POST", token });
+}
+
+export function deliverNeed(token: string, needId: string, note?: string): Promise<{ status: "fulfilled"; redeemedAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+}
+
+export function takeNeedAsGroup(token: string, needId: string): Promise<{ status: "matched"; handler: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/take`, { method: "POST", token });
+}
+
+export function releaseGroupNeed(token: string, needId: string): Promise<{ status: "published" }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/release`, { method: "POST", token });
+}
+
+export function deliverGroupNeed(token: string, needId: string, note?: string): Promise<{ status: "fulfilled"; redeemedAt: string }> {
+  return request(`/needs/${encodeURIComponent(needId)}/group/deliver`, { method: "POST", token, body: JSON.stringify(note ? { note } : {}) });
+}
+
+export function getNeedContact(token: string, needId: string): Promise<NeedContact> {
+  return request<NeedContact>(`/me/needs/${encodeURIComponent(needId)}/contact`, { token });
 }
 
 export function listOffers(
@@ -743,6 +797,7 @@ export interface LedgerItem {
   redeemedAt: string;
   orgName?: string;
   deliveredBy?: DeliveredBy;
+  confirmedAt?: string;
 }
 
 export interface LedgerResponse {

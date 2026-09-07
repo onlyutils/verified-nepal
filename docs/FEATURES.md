@@ -80,6 +80,8 @@ flowchart LR
     B -->|moderator approves| C[published<br/>visible to everyone]
     B -->|moderator rejects| R[rejected]
     C -->|moderator pairs with an offer| D[matched]
+    C -->|signed-in helper takes| H[matched<br/>helper/group]
+    H -->|helper/group delivers| E[fulfilled]
     D -->|help is delivered| E[fulfilled]
     C -.public can flag as fake.-> F[flagged for review]
 ```
@@ -89,8 +91,10 @@ Two secret codes make this work without needing an account:
 - A **reference code**, given right away, works like a receipt — the person who asked for
   help can use it later to check on their request or renew it before it expires.
 - A **claim code**, created only once a need is published, is meant to be printed and handed
-  out in the field. When help actually arrives, someone redeems the code, which marks the
-  need "fulfilled" and writes a permanent line into the public ledger.
+  out in the field. For a moderator or field worker, redeeming the code marks the need
+  "fulfilled" and writes a permanent line into the public ledger. For a helper or helper
+  group take, delivery does that work; redeeming the code confirms the delivery, whether it
+  happens before or after.
 
 Every need, offer, and project belongs to exactly one **disaster** — see the next section.
 
@@ -227,7 +231,10 @@ board — a staff member claims it, sees the beneficiary's contact details in th
 and either marks it delivered (which writes the public ledger under the org's name, the same
 outcome as a claim-code redemption) or hands it back to the open pool. This is a second path to
 "fulfilled" alongside the claim-code system, sharing the same underlying code so a need can
-only ever be marked fulfilled once.
+only ever be marked fulfilled once. Individual signed-in helpers and helper groups can now use
+the same owner-approved path: take a published need, see its private contact details, and
+deliver or release it. A moderator can still match a need directly, and a requester can mark a
+need **assign-only** when only a moderator or verified organization should choose the helper.
 
 *(Note: "group" is used two different ways in this codebase. An **organization** is a
 formally verified team. A **group**, described at the end of this document, is a much more
@@ -367,12 +374,17 @@ Nepali side by side, and a language switch just changes which set of text is sho
 ## 15. Helper groups
 
 When one need is too big for a single volunteer — say, a family that lost their house needs
-shelter *and* food *and* transport — a helper can split that published need into smaller
-pieces on the Give-help board, and other helpers each claim one piece, coordinating as an
-informal group. No custom group branding is allowed (this is disaster relief, not a
-marketplace), and it never changes how the original request gets marked "delivered" — that
-part still only happens through the claim-code or org-fulfillment system described above.
-A helper who finishes their piece of a group counts as "helper" for the Stories feature.
+shelter *and* food *and* transport — a helper can form a group for that published need, and
+other helpers can join it. Any member may take the need for the group, view the private
+beneficiary contact, deliver it, or hand it back. The public handler label stays generic and
+shows the current member count (for example, “Helper group (3)”).
+
+No custom group branding is allowed (this is disaster relief, not a marketplace). Group and
+individual takes are mutually exclusive with organization takes: a published need has one
+handler, and delivery writes one ledger row through the shared fulfilment path. If the
+beneficiary redeems the claim code before or after helper delivery, the ledger records the
+beneficiary confirmation. A helper who delivers individually, or any member of a group that
+delivers, is eligible for the Stories feature.
 
 ---
 

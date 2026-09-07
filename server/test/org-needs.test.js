@@ -75,11 +75,12 @@ describe("organizations handling needs", () => {
     assert.equal((await post(handler, kp, "member", `/orgs/o1/needs/${id}/release`)).statusCode, 409);
   });
 
-  it("does not allow an organization claim and helper group to take the same need", async () => {
+  it("keeps organization, helper, and group takes mutually exclusive", async () => {
     const { handler, kp } = setup();
     const groupedId = await publishedNeed(handler, kp);
     assert.equal((await post(handler, kp, "member", `/needs/${groupedId}/group`)).statusCode, 201);
-    assert.equal((await post(handler, kp, "member", `/orgs/o1/needs/${groupedId}/claim`)).statusCode, 409);
+    assert.equal((await post(handler, kp, "member", `/orgs/o1/needs/${groupedId}/claim`)).statusCode, 200);
+    assert.equal((await post(handler, kp, "member", `/needs/${groupedId}/group/take`)).statusCode, 409);
 
     const orgTakenId = await publishedNeed(handler, kp);
     assert.equal((await post(handler, kp, "member", `/orgs/o1/needs/${orgTakenId}/claim`)).statusCode, 200);

@@ -63,6 +63,11 @@ export async function getPendingItemByIdEitherType(ddb, tableName, id) {
 }
 
 export function applyModerationEdits(type, item, edits) {
+  if (edits.assignOnly !== undefined && type === "NEED") {
+    if (typeof edits.assignOnly !== "boolean") throw err(400, "edits.assignOnly must be boolean");
+    if (edits.assignOnly) item.assignOnly = true;
+    else delete item.assignOnly;
+  }
   if (edits.description !== undefined) item.description = validateString(edits.description, "edits.description", 10, 2000);
   if (edits.category !== undefined) {
     if (!CATEGORIES.includes(edits.category)) throw err(400, "invalid category in edits");

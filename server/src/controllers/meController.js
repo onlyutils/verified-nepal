@@ -2,11 +2,11 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { json, err, parseBody } from "../lib/http.js";
 import { validateString, validateOptionalString, validateDistrict } from "../lib/validate.js";
 import { ALLOWED_PHOTO_TYPES, LANGUAGES, MAX_PHOTO_SIZE } from "../constants.js";
-import { getRefPointer } from "../models/need.js";
+import { getRefPointer, listNeedsForHandling } from "../models/need.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
 import { deleteMissing, getMissingById, listPublishedMissing, listMissingTips, putMissing } from "../models/missing.js";
-import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident, toPublicMissing } from "../views/mine.js";
+import { toMyMissing, toMyNeed, toMyOffer, toMyGroup, toMyIncident, toPublicMissing, toHandlingContact } from "../views/mine.js";
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
@@ -15,7 +15,7 @@ export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
   const { ddb, tableName, payload } = auth;
   const pointers = await listPointers(ddb, tableName, payload.sub);
-  const out = { missing: [], needs: [], offers: [], groups: [], incidents: [] };
+  const out = { missing: [], needs: [], offers: [], groups: [], incidents: [], handledNeeds: [] };
   // A person owns tens of items, not thousands; one read per pointer keeps this simple.
   for (const p of pointers) {
     const pk = p.kind === "GROUP" ? `NEED#${p.id}` : `${p.kind}#${p.id}`;
@@ -31,6 +31,9 @@ export async function handleGetDashboard(event, opts) {
     }
     else if (p.kind === "GROUP") out.groups.push(toMyGroup(item, payload.sub));
     else if (p.kind === "INCIDENT") out.incidents.push(toMyIncident(item));
+  }
+  for (const need of await listNeedsForHandling(ddb, tableName, payload.sub)) {
+    out.handledNeeds.push({ ...toHandlingContact(need), handler: need.handledBy.label, handlerKind: need.handledBy.kind });
   }
   out.storyRole = await storyRole(ddb, tableName, payload.sub);
   return json(200, out);
