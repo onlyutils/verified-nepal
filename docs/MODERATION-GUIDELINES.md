@@ -80,6 +80,7 @@ Every publish, reject, match, fulfill, redeem, sync, role change and governance 
 - The audit page at `/audit` is public. Your name is on every action you take.
 - `targetLabel` is masked (`need → maskedName + ward`, `project → title`, `dispatch → title`, `user → masked email like r***@domain`). Never write private fields into `targetLabel` or `reason`.
 - Audit months are keyed `AUDIT#YYYY-MM`, newest first, cursor-paginated and cacheable.
+- Every audited action also increments your private monthly work tally shown on the Desk. Rejections and edits count the same as publishes; this tally is not a score, so do not publish faster to raise it.
 
 Assume the community will read the audit. Moderate as if you are on the public record — because you are.
 

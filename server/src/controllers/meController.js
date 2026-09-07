@@ -13,6 +13,7 @@ import { pingIndexNow } from "../lib/indexnow.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { ACTIVITY_SECTIONS, getActivity } from "../models/activity.js";
 import { saveUserProfile } from "../models/user.js";
+import { getWork } from "../models/work.js";
 
 export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
@@ -52,6 +53,11 @@ export async function handleGetDashboard(event, opts) {
   const lastSeen = auth.user?.lastSeen && typeof auth.user.lastSeen === "object" ? auth.user.lastSeen : {};
   out.activity = await getActivity(ddb, tableName, payload.sub, lastSeen);
   return json(200, out);
+}
+
+export async function handleGetMyWork(event, opts) {
+  const { auth } = opts;
+  return json(200, await getWork(auth.ddb, auth.tableName, auth.payload.sub));
 }
 
 export async function handlePostSeen(event, opts) {

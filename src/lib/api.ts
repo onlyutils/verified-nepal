@@ -467,6 +467,25 @@ export function getDashboard(token: string): Promise<DashboardResponse> {
   return request<DashboardResponse>("/me/dashboard", { token });
 }
 
+export interface WorkMonth {
+  month: string;
+  counts: Record<string, number>;
+  total: number;
+}
+
+export interface WorkResponse {
+  months: WorkMonth[];
+  lifetime: { counts: Record<string, number>; total: number };
+}
+
+export function getMyWork(token: string): Promise<WorkResponse> {
+  return request<WorkResponse>("/me/work", { token });
+}
+
+export function getUserWork(token: string, sub: string): Promise<WorkResponse> {
+  return request<WorkResponse>(`/admin/work/${encodeURIComponent(sub)}`, { token });
+}
+
 // ---- Stories: one photo or video plus a caption, from people who received or gave help ----
 export interface StoryMedia {
   type: "photo" | "video";

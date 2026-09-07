@@ -15,6 +15,7 @@ import {
   listFlaggedPointers, listFlagsForNeed,
 } from "../models/need.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
+import { tallyWork } from "../models/work.js";
 import { putPointer } from "../models/mine.js";
 import { applyModerationEdits } from "../models/moderation.js";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -106,6 +107,13 @@ export async function handlePostNeeds(event, { getDdb, env, fetchJwks, auth: opt
     assignOnly,
   });
   if (auth) await putPointer(ddb, tableName, { sub: auth.payload.sub, type: "NEED", id });
+  if (onBehalf) {
+    try {
+      await tallyWork(ddb, tableName, auth.payload.sub, "need.register", new Date().toISOString());
+    } catch (e) {
+      console.error("work tally failed", e);
+    }
+  }
   return json(201, { id, refCode });
 }
 

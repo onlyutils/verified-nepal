@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { maskName, maskEmail } from "../lib/format.js";
+import { tallyWork } from "./work.js";
 
 export function getNeedTargetLabel(need) {
   const masked = maskName(need?.beneficiary?.name || need?.name || "");
@@ -65,6 +66,11 @@ export async function recordAudit(ddb, tableName, { actorSub, actorName, action,
   const ts = new Date().toISOString();
   const entry = buildAuditEntry({ actorSub, actorName, action, targetType, targetId, targetLabel, reason, ts });
   await writeAudit(ddb, tableName, entry);
+  try {
+    await tallyWork(ddb, tableName, actorSub, action, ts);
+  } catch (e) {
+    console.error("work tally failed", e);
+  }
   return entry;
 }
 

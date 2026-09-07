@@ -4,7 +4,7 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
-import { deliverGroupNeed, deliverNeed, getDashboard, listMyOrgs, markSectionSeen, releaseGroupNeed, releaseNeed, renewNeed, type ActivitySection, type Category, type DashboardActivity, type DashboardResponse, type IncidentStatus } from "@/lib/api";
+import { deliverGroupNeed, deliverNeed, getDashboard, getMyWork, listMyOrgs, markSectionSeen, releaseGroupNeed, releaseNeed, renewNeed, type ActivitySection, type Category, type DashboardActivity, type DashboardResponse, type IncidentStatus, type WorkResponse } from "@/lib/api";
 import { districtLabels } from "@/lib/districts";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
@@ -21,6 +21,7 @@ import { MyStories } from "@/components/my-stories";
 import { PosterGrid } from "@/components/poster-grid";
 import { CodeDisplay } from "@/components/code-display";
 import { NeedTimeline } from "@/components/need-timeline";
+import { WorkTally } from "@/components/work-tally";
 import { goodsLabel, unitLabel } from "@/lib/goods";
 
 function categoryLabel(category: Category, language: Language) {
@@ -98,6 +99,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   const tl = labels[language];
   const auth = useGoogleAuth();
   const [data, setData] = useState<DashboardResponse | null>(null);
+  const [work, setWork] = useState<WorkResponse | null>(null);
   const [orgCount, setOrgCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [renewed, setRenewed] = useState<Record<string, boolean>>({});
@@ -141,16 +143,19 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   useEffect(() => {
     if (!auth.idToken) {
       setData(null);
+      setWork(null);
       return;
     }
     let cancelled = false;
     setData(null);
+    setWork(null);
     setError(null);
-    Promise.all([getDashboard(auth.idToken), listMyOrgs(auth.idToken).catch(() => ({ items: [] }))])
-      .then(([dash, orgs]) => {
+    Promise.all([getDashboard(auth.idToken), listMyOrgs(auth.idToken).catch(() => ({ items: [] })), getMyWork(auth.idToken).catch(() => null)])
+      .then(([dash, orgs, workResponse]) => {
         if (cancelled) return;
         setData(dash);
         setOrgCount(orgs.items.length);
+        setWork(workResponse);
       })
       .catch((e) => {
         if (!cancelled) setError(apiErrorMessage(e, language) || t.loadError);
@@ -537,6 +542,11 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
             <h2 className="text-2xl font-bold tracking-tight">{t.storyTitle}</h2>
             <MyStories language={language} token={auth.idToken} eligible={!!data.storyRole} />
           </section>
+          {work && work.lifetime.total > 0 ? (
+            <section>
+              <WorkTally data={work} t={t} />
+            </section>
+          ) : null}
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.shortcutsTitle}</h2>
             <div className="flex flex-wrap gap-3">

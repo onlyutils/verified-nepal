@@ -2,7 +2,7 @@ import { json, err, dispatch } from "./lib/http.js";
 import { compose, withAuth, withOptionalAuth, withModAuth, withGuidelinesAck } from "./lib/middleware.js";
 import { routeOrgs } from "./routes/orgRoutes.js";
 import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines, handleSetMyDistricts } from "./controllers/authController.js";
-import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole } from "./controllers/adminController.js";
+import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole, handleGetUserWork } from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
   handleGetIncidents, handleGetAdminIncidents, handlePostAdminIncident, handlePostIncidentRequest,
@@ -14,7 +14,7 @@ import {
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
-  handleGetDashboard, handlePostSeen, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
+  handleGetDashboard, handleGetMyWork, handlePostSeen, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
 import { handleGetModerationMissing, handlePostModerationMissing, handlePostMissingTip, handleGetMissingTips } from "./controllers/missingController.js";
 import {
@@ -52,6 +52,7 @@ const routes = [
   ["POST", /^\/me\/ack-guidelines$/, withAuth(handleAckGuidelines)],
   ["POST", /^\/me\/districts$/, withAuth(handleSetMyDistricts)],
   ["GET", /^\/me\/dashboard$/, withAuth(handleGetDashboard)],
+  ["GET", /^\/me\/work$/, withAuth(handleGetMyWork)],
   ["POST", /^\/me\/seen$/, withAuth(handlePostSeen)],
   ["GET", /^\/me\/needs\/([^/]+)\/contact$/, withAuth(handleGetNeedContact)],
   ["POST", /^\/me\/articles$/, withAuth(handlePostArticle)],
@@ -76,6 +77,7 @@ const routes = [
   ["DELETE", /^\/me\/missing\/([^/]+)$/, withAuth(handleDeleteMissing)],
   ["GET", /^\/admin\/users\/lookup$/, withAuth(handleAdminUsersLookup)],
   ["GET", /^\/admin\/users$/, withAuth(handleAdminUsersList)],
+  ["GET", /^\/admin\/work\/([^/]+)$/, withAuth(handleGetUserWork)],
   ["GET", /^\/admin\/stats$/, withAuth(handleAdminStats)],
   ["GET", /^\/admin\/climate$/, withAuth(handleGetAdminClimate)],
   ["GET", /^\/admin\/incidents$/, withAuth(handleGetAdminIncidents)],

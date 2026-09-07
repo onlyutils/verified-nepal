@@ -5,6 +5,7 @@ import { listUsersByRoles, getEmailPointer, getUserProfile, setUserRole } from "
 import { getAdminStats } from "../models/stats.js";
 import { recordAudit } from "../models/audit.js";
 import { toAdminUserView } from "../views/user.js";
+import { getWork } from "../models/work.js";
 
 export async function handleAdminUsersList(event, opts) {
   const { auth } = opts;
@@ -84,4 +85,10 @@ export async function handleAdminStats(event, opts) {
   if (auth.role !== "admin") throw err(403, "Forbidden");
   const stats = await getAdminStats(auth.ddb, auth.tableName);
   return json(200, stats);
+}
+
+export async function handleGetUserWork(event, opts, sub) {
+  const { auth } = opts;
+  if (auth.role !== "admin") throw err(403, "Forbidden");
+  return json(200, await getWork(auth.ddb, auth.tableName, sub));
 }

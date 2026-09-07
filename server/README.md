@@ -35,12 +35,15 @@ pnpm build
 
 For the production-safety migration, run `node server/scripts/backfill-missing-status.mjs --table <TableName>` for a dry run, then add `--apply` to set `publicationStatus=published`, `gsi2pk=MISSING#published`, and `gsi2sk` on legacy MISSING records; set `--region` if needed, and provide AWS credentials through the environment or profile selected by the caller.
 
+To rebuild monthly work tallies, run `node server/scripts/backfill-work.mjs --table <TableName> [--from=YYYY-MM] [--region <region>] [--dry-run|--apply]`; `--from` defaults to `2026-08`, and dry-run is the default.
+
 ## Routes
 
 Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`), not inside handlers: wrap the handler with `withAuth`, `withOptionalAuth`, or `withModAck` (moderator/admin + guidelines acknowledged) from `src/lib/middleware.js` and read `opts.auth`. Unwrapped handlers are public.
 
 - `GET /health` → `{ok:true}`
 - `GET /me` → `Authorization: Bearer <OnlyUtils ID token>` required. Verifies `RS256` against `AUTH_JWKS_URL` (cached), checks `iss` (`AUTH_ISSUER`), `aud` (`AUTH_AUDIENCE` when set), `exp`. OnlyUtils access tokens carry no email/name claims (`iss, sub, aud, exp, iat, jti, tid, cid, typ, scp, email_verified`). On first login (no `USER` item) fetches `GET ${AUTH_HOST}/userinfo` with the same Bearer token, uses `email ?? primary_email ?? emails[0]` and `name ?? display_name` from the userinfo response for the stored `USER` item and `ADMIN_EMAILS`/`MODERATOR_EMAILS` role bootstrap; userinfo failure returns `502 {error:'userinfo'}`. Existing users keep stored `email`/`role` without a userinfo call; missing fields are omitted from the stored item. Returns `{sub,email,name,role}`.
+- `GET /me/work` → signed-in; `{months:[{month,counts,total}],lifetime:{counts,total}}`, with months newest first
 - `POST /auth/exchange` → `{code, code_verifier, redirect_uri}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=authorization_code`, `client_id=OU_CLIENT_ID`, `client_secret` when set)
 - `POST /auth/refresh` → `{refresh_token}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=refresh_token`, `client_id`/`secret` same rule)
 - `POST /projects` → anonymous (+ Turnstile) create project → `201 {id, updateCode}` (12-char base32, `updateCode` shown once, stored as `sha256` `updateCodeHash`; pointer `PCODE#<hash>`) 
@@ -89,6 +92,7 @@ Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`)
 - `GET /audit?month=YYYY-MM&cursor=` → anonymous public audit log (masked targetLabel, `actorName` public)
 - `POST /me/ack-guidelines` → authenticated (Bearer) acknowledge moderation guidelines → `200 {guidelinesAckAt}`
 - `GET /admin/users?role=&cursor=` → admin list users by role
+- `GET /admin/work/{sub}` → admin; `{months:[{month,counts,total}],lifetime:{counts,total}}`, with months newest first
 - `GET /admin/users/lookup?email=` → admin lookup user by email
 - `POST /admin/users/{sub}/role` → admin set `role` + `districts` (self-demotion blocked, writes `AUDIT`)
 - `GET /admin/stats` → admin counts for needs/offers/projects/dispatches by status, moderators, oldest pending age

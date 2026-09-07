@@ -7,6 +7,7 @@ import {
   editIncident,
   editNeed,
   editOffer,
+  getMyWork,
   setMyDistricts,
   claimQueueItem,
   getAdminClimate,
@@ -62,6 +63,7 @@ import {
   type OrgTier,
   type SyncResult,
   type DeliveredBy,
+  type WorkResponse,
 } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
 import { GENERAL_INCIDENT_ID, loadSelectedIncidentId, saveSelectedIncidentId, useIncidents } from "@/lib/incidents";
@@ -132,6 +134,7 @@ export function useDesk(language: Language) {
   const [districtError, setDistrictError] = useState<string | null>(null);
 
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
+  const [work, setWork] = useState<WorkResponse | null>(null);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [queueDistrict, setQueueDistrict] = useState("");
@@ -314,6 +317,14 @@ export function useDesk(language: Language) {
       setQueueLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadWork = useCallback(async () => {
+    if (!auth.idToken) return;
+    try {
+      setWork(await getMyWork(auth.idToken));
+    } catch {
+      setWork(null);
+    }
+  }, [auth.idToken]);
   const loadPosters = useCallback(async () => {
     if (!auth.idToken) return;
     setPostersLoading(true);
@@ -507,6 +518,13 @@ export function useDesk(language: Language) {
     void loadCenterFlags();
     void loadOrgCount();
   }, [auth.idToken, auth.profile?.role, loadBoards, loadCenterFlags, loadFlags, loadOrgCount, loadPosters, loadQueue]);
+  useEffect(() => {
+    if (!auth.idToken || !auth.profile || (auth.profile.role !== "moderator" && auth.profile.role !== "admin")) {
+      setWork(null);
+      return;
+    }
+    void loadWork();
+  }, [auth.idToken, auth.profile?.role, loadWork]);
   useEffect(() => {
     if (!auth.idToken) return;
     if (activeSection === "projects") void loadProjects();
@@ -1098,6 +1116,7 @@ export function useDesk(language: Language) {
     scopeDistricts,
     scopeLabel,
     queue,
+    work,
     posters,
     postersLoading,
     postersError,

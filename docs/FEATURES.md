@@ -183,6 +183,9 @@ it was delivered or confirmed; Hand back is only available to helpers and groups
 Activity badges on each linked-help section, and on the account avatar, show updates since
 that section was last opened.
 
+My Page also shows a private **Your work** tally per month with a lifetime sum — needs
+registered for others, taken, delivered, and other counted actions.
+
 The rule of thumb: **self-registration for help never requires an account** (you can stay
 anonymous), but **registering for someone else, offering help, running an organization, or
 registering/managing a project always does.**
@@ -194,6 +197,9 @@ registering/managing a project always does.**
 The Desk is the review room. Only moderators and admins can get in — everyone else is
 redirected elsewhere. It has one queue for pending needs and offers, plus tabs for projects,
 articles, organizations, flagged posts, and (for admins only) assigning roles.
+
+At the top of the queue, moderators see their own monthly tally of publishes, rejections,
+edits and other actions. Admins can view any user's tally.
 
 ```mermaid
 flowchart TD

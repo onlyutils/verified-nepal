@@ -1,3 +1,4 @@
+import { Fragment, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,38 @@ import { DistrictPicker } from "@/components/district-picker";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
 import { formatDateTime, formatNumber } from "@/lib/format-date";
+import { getUserWork, type WorkResponse } from "@/lib/api";
+import { meStrings } from "@/i18n/me";
+import { WorkTally } from "@/components/work-tally";
 
 export function Admin({ model }: { model: DeskModel }) {
+  const workT = meStrings[model.language];
+  const [workBySub, setWorkBySub] = useState<Record<string, WorkResponse>>({});
+  const [expandedWork, setExpandedWork] = useState<string | null>(null);
+  const [workLoading, setWorkLoading] = useState<Record<string, boolean>>({});
+
+  const toggleWork = async (sub: string) => {
+    if (expandedWork === sub) {
+      setExpandedWork(null);
+      return;
+    }
+    if (workBySub[sub]) {
+      setExpandedWork(sub);
+      return;
+    }
+    if (!model.auth.idToken) return;
+    setWorkLoading((current) => ({ ...current, [sub]: true }));
+    try {
+      const work = await getUserWork(model.auth.idToken, sub);
+      setWorkBySub((current) => ({ ...current, [sub]: work }));
+      setExpandedWork(sub);
+    } catch {
+      setExpandedWork(null);
+    } finally {
+      setWorkLoading((current) => ({ ...current, [sub]: false }));
+    }
+  };
+
   return (
     <SectionFrame
       title={model.t.deskAdminTab}
@@ -153,17 +184,32 @@ export function Admin({ model }: { model: DeskModel }) {
                     <TableHead>{model.ds.deskAdminModeratorRole}</TableHead>
                     <TableHead>{model.ds.deskAdminModeratorDistricts}</TableHead>
                     <TableHead>{model.ds.deskAdminModeratorCreated}</TableHead>
+                    <TableHead>{workT.workTitle}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {model.adminModerators.map((moderator) => (
-                    <TableRow key={moderator.sub}>
-                      <TableCell>{moderator.email}</TableCell>
-                      <TableCell>{moderator.name || model.t.unavailable}</TableCell>
-                      <TableCell>{moderator.role}</TableCell>
-                      <TableCell>{moderator.districts.join(", ") || model.t.deskScopeAll}</TableCell>
-                      <TableCell>{formatDateTime(moderator.createdAt, model.language)}</TableCell>
-                    </TableRow>
+                    <Fragment key={moderator.sub}>
+                      <TableRow>
+                        <TableCell>{moderator.email}</TableCell>
+                        <TableCell>{moderator.name || model.t.unavailable}</TableCell>
+                        <TableCell>{moderator.role}</TableCell>
+                        <TableCell>{moderator.districts.join(", ") || model.t.deskScopeAll}</TableCell>
+                        <TableCell>{formatDateTime(moderator.createdAt, model.language)}</TableCell>
+                        <TableCell>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => void toggleWork(moderator.sub)} disabled={workLoading[moderator.sub]}>
+                            {workLoading[moderator.sub] ? "…" : workT.workTitle}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      {expandedWork === moderator.sub && workBySub[moderator.sub] ? (
+                        <TableRow>
+                          <TableCell colSpan={6}>
+                            <WorkTally data={workBySub[moderator.sub]} t={workT} />
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>

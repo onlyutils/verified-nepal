@@ -13,6 +13,8 @@ import type { DeskModel } from "./use-desk";
 import { formatDateTime } from "@/lib/format-date";
 import { districtNames } from "@/lib/geo";
 import { useIncidents } from "@/lib/incidents";
+import { meStrings } from "@/i18n/me";
+import { WorkTally } from "@/components/work-tally";
 
 function categoryLabel(t: Record<string, string>, category: string) {
   const key = `category${category.charAt(0).toUpperCase()}${category.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`;
@@ -33,6 +35,7 @@ export function Queue({ model }: { model: DeskModel }) {
       refresh={model.loadQueue}
       refreshLabel={model.ds.deskRefresh}
     >
+      {model.work && model.work.lifetime.total > 0 ? <WorkTally data={model.work} t={meStrings[model.language]} /> : null}
       <div className="grid gap-4 rounded-xl border bg-background p-4 sm:grid-cols-[minmax(12rem,0.4fr)_minmax(16rem,1fr)]">
         <div className="space-y-2">
           <Label htmlFor="queue-district">{model.ds.deskQueueDistrictFilter}</Label>
