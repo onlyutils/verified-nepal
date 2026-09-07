@@ -196,3 +196,13 @@ Six Codex batches, each typechecked, built and run against the 199 server tests 
 | Nits | mostly fixed | stats labels, duplicate "Role updated", image fallback, hero caps, share count optimistic, declined invites kept, group/org exclusivity, sign-in nudge for anonymous group actions, badge tones, print sheet mobile, reject-dialog copy |
 
 Still open for a decision in the morning: VN-01, VN-13, VN-17, VN-33, VN-34, the mobile menu grouping, the public phone numbers on posters, and the search substring matching.
+
+
+## 10. Morning follow-ups (2026-09-07)
+
+Decided with the owner and shipped via Codex batches 7–8 (`bbc20b0`, ledger attribution commit after it):
+- **Posters are moderated** (VN-01): saved posters start pending, a Desk "Posters" section publishes/rejects them (district-scoped, duplicate hint, audit rows); owners see status and reasons on `/me`. Five existing dev posters were left pending so the queue has content.
+- **Poster privacy**: public poster pages show no phone/email; visitors send a Turnstile-protected tip that lands on the owner's `/me`; police 100 and hotline 1234 print on every public poster; the PNG download is owner-only (anonymous local-only builders unchanged); the saved poster image carries the page link instead of contact details.
+- **Published offers are public** (VN-13): the give-help "Offers" tab lists published offers for the selected disaster with masked helper labels; a test asserts no phone/email/sub leaks.
+- **Ledger**: defaults to *All districts* with a district column and paginated API/CSV; every fulfilment now records **who delivered** — organization, matched helper (masked), helper group (N), or field redemption — chosen/overridable by the moderator in the redeem dialog; 42 existing rows backfilled (org 12, helper 6, group 4, field 20).
+- Open: self-service take/deliver for individual helpers and helper groups (today a group can finish its items but cannot receive the contact or mark the need delivered without a moderator) — awaiting the owner's decision.
