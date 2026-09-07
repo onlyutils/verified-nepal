@@ -77,7 +77,6 @@ export async function handleOrgClaimNeed(event, opts, orgId, needId) {
   });
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "matched", at });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.claim", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
-  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
   await notifyRequester(auth.ddb, auth.tableName, need, "taken", { label: org.name });
   return json(200, contactView(need));
 }
@@ -104,7 +103,6 @@ export async function handleOrgReleaseNeed(event, opts, orgId, needId) {
   });
   await deleteOrgNeed(auth.ddb, auth.tableName, { orgId, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.release", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
-  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
   await notifyRequester(auth.ddb, auth.tableName, need, "released", { label: org.name });
   return json(200, { status: "published" });
 }
@@ -137,7 +135,6 @@ export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
     }
   }
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "fulfilled", at });
-  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
   await notifyRequester(auth.ddb, auth.tableName, need, "delivered", { label: deliveredBy?.label || org.name });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }

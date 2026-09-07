@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { route } from "./router.js";
 import { json } from "./lib/http.js";
 import { expireTakes } from "./tasks/expireTakes.js";
+import { configureSms } from "./lib/sms.js";
 
 export { __clearMediaTokenCache } from "./models/media.js";
 
@@ -22,6 +23,7 @@ export function createHandler(opts = {}) {
   const env = opts.env ?? process.env;
   const fetchJwks = opts.fetchJwks;
   const fetchImpl = opts.fetch ?? opts.fetchImpl ?? globalThis.fetch;
+  configureSms(env, fetchImpl);
   let ddbClient = opts.ddbClient ?? null;
   function getDdb() {
     if (ddbClient) return ddbClient;

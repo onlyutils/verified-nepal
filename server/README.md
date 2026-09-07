@@ -19,6 +19,9 @@ Standalone Lambda for API Gateway HTTP API v2 (`Node 22`, ESM).
 | `OU_MEDIA_CLIENT_SECRET` | yes (for Phase 3) | OnlyUtils media service client secret (cached until `expires_in`) |
 | `MEDIA_HOST` | no | Media service host (default `https://media.onlyutils.com`; used as `${MEDIA_HOST}/v1/clients/{OU_MEDIA_CLIENT_ID}/media/files`) |
 | `MEDIA_PUBLIC_BASE` | no | Public CDN base for `publicUrl` override (when set, `publicUrl` is `${MEDIA_PUBLIC_BASE}/{fileId}`) |
+| `SPARROW_TOKEN` | no | Sparrow SMS API token; SMS is skipped when unset |
+| `SPARROW_FROM` | no | Sparrow sender name (default `VerifiedNP`) |
+| `PUBLIC_SITE_BASE` | no | Public site base used in requester SMS status links (default `https://verifiednepal.com`) |
 
 ## Run
 

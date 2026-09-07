@@ -32,7 +32,6 @@ export async function expireTakes(ddb, tableName, { now = new Date() } = {}) {
     if (h.kind === "helper" && h.sub) await deleteHandlingPointer(ddb, tableName, { sub: h.sub, needId: need.id });
     if (h.orgId) await deleteOrgNeed(ddb, tableName, { orgId: h.orgId, needId: need.id });
     await recordAudit(ddb, tableName, { actorSub: "system", actorName: "system", action: "take_expired", targetType: "NEED", targetId: releasedNeed.id, targetLabel: getTargetLabelForAudit("NEED", releasedNeed), reason: `take by ${label} older than ${TAKE_TTL_DAYS} days` });
-    // TODO(sms): Sparrow SMS to registrant.phone once provisioned
     await notifyRequester(ddb, tableName, releasedNeed, "expired", { label });
     expired.push(releasedNeed.id);
   }
