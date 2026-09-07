@@ -60,6 +60,7 @@ import {
   type OrgStatus,
   type OrgTier,
   type SyncResult,
+  type DeliveredBy,
 } from "@/lib/api";
 import { useGoogleAuth } from "@/lib/auth";
 import { useIncidents } from "@/lib/incidents";
@@ -98,6 +99,8 @@ function rejectReason(code: string, detail: string) {
   const notes = detail.trim();
   return notes ? `${reason}: ${notes}` : reason;
 }
+
+type RedeemDeliveredBy = Omit<DeliveredBy, "ref">;
 
 export function useDesk(language: Language) {
   const auth = useGoogleAuth();
@@ -154,6 +157,7 @@ export function useDesk(language: Language) {
   const [fulfillId, setFulfillId] = useState<string | null>(null);
   const [redeemCode, setRedeemCode] = useState<string | null>(null);
   const [redeemNote, setRedeemNote] = useState("");
+  const [redeemDeliveredBy, setRedeemDeliveredBy] = useState<RedeemDeliveredBy>({ kind: "field", label: ds.redeemDeliveredByFieldDefault });
 
   const [projects, setProjects] = useState<ModerationProjectItem[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
@@ -645,6 +649,20 @@ export function useDesk(language: Language) {
       setActionError(apiErrorMessage(error, language));
     }
   };
+
+  const openRedeem = useCallback((need: NeedPublic, claimCode: string) => {
+    const offerId = need.matchedOfferId || selectedOfferId[need.id];
+    const offer = offerId ? offers.find((item) => item.id === offerId) : undefined;
+    const deliveredBy: RedeemDeliveredBy = need.handledBy
+      ? { kind: "org", label: need.handledBy }
+      : offer
+        ? { kind: "helper", label: offer.helperLabel }
+        : need.group
+          ? { kind: "group", label: ds.redeemDeliveredByGroupDefault.replace("{n}", String(need.group.memberCount)) }
+          : { kind: "field", label: ds.redeemDeliveredByFieldDefault };
+    setRedeemCode(claimCode);
+    setRedeemDeliveredBy(deliveredBy);
+  }, [ds, offers, selectedOfferId]);
   const handleOfferStatus = async (offerId: string, status: "matched" | "fulfilled" | "archived") => {
     if (!auth.idToken) return;
     clearFeedback();
@@ -737,7 +755,7 @@ export function useDesk(language: Language) {
     if (!auth.idToken || !redeemCode) return;
     clearFeedback();
     try {
-      await redeemClaim(auth.idToken, redeemCode, { note: redeemNote || undefined });
+      await redeemClaim(auth.idToken, redeemCode, { note: redeemNote || undefined, deliveredBy: redeemDeliveredBy });
       success(t.deskRedeemSuccess);
       setRedeemCode(null);
       setRedeemNote("");
@@ -1105,6 +1123,9 @@ export function useDesk(language: Language) {
     setRedeemCode,
     redeemNote,
     setRedeemNote,
+    redeemDeliveredBy,
+    setRedeemDeliveredBy,
+    openRedeem,
     handleNeedStatus,
     handleOfferStatus,
     editTarget,

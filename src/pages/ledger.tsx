@@ -22,6 +22,14 @@ function dateLabel(value: string, language: Language) {
   return formatDateTime(value, language);
 }
 
+function deliveredBy(item: LedgerItem) {
+  return item.deliveredBy || (item.orgName ? { kind: "org" as const, label: item.orgName } : undefined);
+}
+
+function deliveredByKindLabel(kind: string, t: typeof communityStrings.en) {
+  return kind === "org" ? t.ledgerDeliveredByOrg : kind === "helper" ? t.ledgerDeliveredByHelper : kind === "group" ? t.ledgerDeliveredByGroup : t.ledgerDeliveredByField;
+}
+
 export function Ledger({ language }: { language: Language }) {
   const t = communityStrings[language];
   const [district, setDistrict] = useState<string>(() => {
@@ -155,7 +163,12 @@ export function Ledger({ language }: { language: Language }) {
                   {district ? null : `${districtLabels[item.district as keyof typeof districtLabels]?.[language] ?? item.district} · `}{goodsLabel(item.category, language)} · {t.ledgerWard} {item.ward}
                 </p>
                 <p className="text-sm text-muted-foreground">{dateLabel(item.redeemedAt, language)}</p>
-                {item.orgName ? <p className="text-sm text-muted-foreground">{t.ledgerOrg}: {item.orgName}</p> : null}
+                {deliveredBy(item) ? (
+                  <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span>{t.ledgerOrg}: {deliveredBy(item)?.label}</span>
+                    <span className="rounded-full border px-2 py-0.5 text-xs">{deliveredByKindLabel(deliveredBy(item)?.kind || "field", t)}</span>
+                  </p>
+                ) : null}
               </div>
             ))}
           </div>
@@ -181,7 +194,14 @@ export function Ledger({ language }: { language: Language }) {
                       {t.ledgerWard} {item.ward}
                     </TableCell>
                     <TableCell>{dateLabel(item.redeemedAt, language)}</TableCell>
-                    <TableCell>{item.orgName ?? ""}</TableCell>
+                    <TableCell>
+                      {deliveredBy(item) ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>{deliveredBy(item)?.label}</span>
+                          <span className="rounded-full border px-2 py-0.5 text-xs">{deliveredByKindLabel(deliveredBy(item)?.kind || "field", t)}</span>
+                        </div>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -314,7 +314,7 @@ describe("GET /ledger", () => {
     assert.match(res.headers["content-type"], /csv/);
     const csv = res.body;
     const lines = csv.split("\n");
-    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName");
+    assert.equal(lines[0], "maskedName,category,district,ward,redeemedAt,orgName,deliveredBy,deliveredByKind,deliveredByRef");
     // second line should be for newest in ward 4 (Sita K.)
     assert.ok(lines[1].includes("Sita K."));
     const ramLine = lines.find(l=>l.includes("Ram B."));
@@ -329,7 +329,7 @@ describe("GET /ledger", () => {
     for(const it of body.items){
       assert.equal("phone" in it, false);
       assert.equal("householdSize" in it, false);
-      assert.deepEqual(Object.keys(it).sort(), ["category","district","maskedName","redeemedAt","ward"]);
+      assert.deepEqual(Object.keys(it).sort(), ["category","deliveredBy","district","maskedName","redeemedAt","ward"]);
     }
     // no district means all districts
     res = await handler(makeEvent({method:"GET", path:"/ledger", queryStringParameters:{}}));

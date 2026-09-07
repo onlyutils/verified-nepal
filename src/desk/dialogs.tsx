@@ -379,6 +379,34 @@ export function DeskDialogs({ model }: { model: DeskModel }) {
                 placeholder={model.ds.redeemNotePlaceholder}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="redeem-delivered-by-kind">{model.ds.redeemDeliveredByKindLabel}</Label>
+              <NativeSelect
+                id="redeem-delivered-by-kind"
+                value={model.redeemDeliveredBy.kind}
+                onChange={(event) =>
+                  model.setRedeemDeliveredBy((current) => ({
+                    ...current,
+                    kind: event.target.value as typeof current.kind,
+                  }))
+                }
+              >
+                <NativeSelectOption value="org">{model.ds.redeemDeliveredByOrg}</NativeSelectOption>
+                <NativeSelectOption value="helper">{model.ds.redeemDeliveredByHelper}</NativeSelectOption>
+                <NativeSelectOption value="group">{model.ds.redeemDeliveredByGroup}</NativeSelectOption>
+                <NativeSelectOption value="field">{model.ds.redeemDeliveredByField}</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="redeem-delivered-by-label">{model.ds.redeemDeliveredByLabel}</Label>
+              <Input
+                id="redeem-delivered-by-label"
+                value={model.redeemDeliveredBy.label}
+                maxLength={80}
+                onChange={(event) => model.setRedeemDeliveredBy((current) => ({ ...current, label: event.target.value }))}
+              />
+              <p className="text-sm text-muted-foreground">{model.ds.redeemDeliveredByHint}</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => model.setRedeemCode(null)}>

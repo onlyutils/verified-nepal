@@ -33,6 +33,7 @@ export function toPublicNeedListItem(it, { includeClaimCode = false } = {}) {
     ...(it.handledBy?.orgName ? { handledBy: it.handledBy.orgName } : {}),
   };
   if (includeClaimCode && it.claimCode && ["published", "matched", "fulfilled"].includes(it.status)) out.claimCode = it.claimCode;
+  if (includeClaimCode && it.matchedOfferId) out.matchedOfferId = it.matchedOfferId;
   return out;
 }
 

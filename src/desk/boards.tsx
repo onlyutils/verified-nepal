@@ -60,7 +60,7 @@ function NeedActions({ model, need, claimCode, status }: { model: DeskModel; nee
           {model.t.deskArchive}
         </Button>
         {claimCode && (status === "published" || status === "matched") ? (
-          <Button onClick={() => model.setRedeemCode(claimCode)}>{model.t.deskRedeem}</Button>
+          <Button onClick={() => model.openRedeem(need, claimCode)}>{model.t.deskRedeem}</Button>
         ) : null}
       </div>
       {model.filteredOffers.length === 0 ? <p className="text-sm text-muted-foreground">{model.t.deskNoOffersHint}</p> : null}

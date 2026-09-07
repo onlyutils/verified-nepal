@@ -1,6 +1,6 @@
 import { json, err, getQuery, parseBody, encodeCursor, decodeCursor } from "../lib/http.js";
 import { isOutOfScope } from "../lib/auth.js";
-import { performRedeem, queryLedger, scanAllLedger } from "../models/claim.js";
+import { performRedeem, queryLedger, scanAllLedger, validateDeliveredBy } from "../models/claim.js";
 import { listNeedsByDistrictStatuses } from "../models/need.js";
 import { toClaimPrintItem } from "../views/need.js";
 import { toLedgerItem, toLedgerCsv } from "../views/ledger.js";
@@ -15,11 +15,13 @@ export async function handleRedeem(event, opts, code) {
     if (t.length > 500) throw err(400, "note too long");
     if (t) note = t;
   }
+  const deliveredBy = validateDeliveredBy(body.deliveredBy, auth.payload.sub);
   if (!code || typeof code !== "string" || !code.trim()) throw err(400, "code required");
   const claimCode = code.trim().toUpperCase();
   const result = await performRedeem(auth.ddb, auth.tableName, {
     claimCode, providedRedeemedAt: undefined, note, user: auth.user,
     actorSub: auth.payload.sub, actorName: auth.user?.name || auth.payload.name || "",
+    deliveredBy,
   });
   if (result.status === "unknown") throw err(404, "unknown claim code");
   if (result.status === "already_redeemed") {
@@ -55,9 +57,11 @@ export async function handleSync(event, opts) {
       if (t.length > 500) throw err(400, "note too long");
       if (t) note = t;
     }
+    const deliveredBy = validateDeliveredBy(r.deliveredBy, auth.payload.sub);
     const res = await performRedeem(auth.ddb, auth.tableName, {
       claimCode: code, providedRedeemedAt: iso, note, user: auth.user,
       actorSub: auth.payload.sub, actorName,
+      deliveredBy,
     });
     if (res.status === "unknown") results.push({ code, status: "unknown" });
     else if (res.status === "already_redeemed") results.push({ code, status: "already_redeemed", needId: res.needId });

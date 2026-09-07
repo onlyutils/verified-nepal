@@ -10,6 +10,13 @@ export const API_BASE =
 export type Category = "goods" | "shelter" | "transport" | "medical" | "skilled-labor" | "funds-guidance";
 export const CATEGORIES: Category[] = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 
+export type DeliveredByKind = "org" | "helper" | "group" | "field";
+export interface DeliveredBy {
+  kind: DeliveredByKind;
+  label: string;
+  ref?: string;
+}
+
 export interface GroupItemPublic {
   itemId: string;
   description: string;
@@ -38,6 +45,7 @@ export interface NeedPublic {
   group?: GroupPublic;
   /** Name of the verified organization delivering this need, once one has taken it. */
   handledBy?: string;
+  matchedOfferId?: string;
   incidentId?: string;
 }
 
@@ -734,6 +742,7 @@ export interface LedgerItem {
   ward: number;
   redeemedAt: string;
   orgName?: string;
+  deliveredBy?: DeliveredBy;
 }
 
 export interface LedgerResponse {
@@ -781,7 +790,7 @@ export function getClaimsPrint(token: string, params: { district: string; ward: 
 export function redeemClaim(
   token: string,
   code: string,
-  body?: { note?: string },
+  body?: { note?: string; deliveredBy?: Omit<DeliveredBy, "ref"> },
 ): Promise<{ status: string; needId: string; redeemedAt: string }> {
   return request(`/claims/${encodeURIComponent(code)}/redeem`, { method: "POST", token, body: JSON.stringify(body || {}) });
 }

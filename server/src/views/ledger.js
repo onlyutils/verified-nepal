@@ -1,11 +1,12 @@
 import { csvEscape } from "../lib/http.js";
 
 export function toLedgerItem(it) {
-  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt, ...(it.orgName ? { orgName: it.orgName } : {}) };
+  const deliveredBy = it.deliveredBy || (it.orgName ? { kind: "org", label: it.orgName } : undefined);
+  return { maskedName: it.maskedName, category: it.category, district: it.district, ward: it.ward, redeemedAt: it.redeemedAt, ...(it.orgName ? { orgName: it.orgName } : {}), ...(deliveredBy ? { deliveredBy } : {}) };
 }
 
 export function toLedgerCsv(items) {
-  const header = ["maskedName", "category", "district", "ward", "redeemedAt", "orgName"].map(csvEscape).join(",");
-  const rows = items.map((it) => [it.maskedName, it.category, it.district, String(it.ward), it.redeemedAt, it.orgName || ""].map(csvEscape).join(","));
+  const header = ["maskedName", "category", "district", "ward", "redeemedAt", "orgName", "deliveredBy", "deliveredByKind", "deliveredByRef"].map(csvEscape).join(",");
+  const rows = items.map((it) => [it.maskedName, it.category, it.district, String(it.ward), it.redeemedAt, it.orgName || "", it.deliveredBy?.label || it.orgName || "", it.deliveredBy?.kind || (it.orgName ? "org" : ""), it.deliveredBy?.ref || ""].map(csvEscape).join(","));
   return [header, ...rows].join("\n");
 }
