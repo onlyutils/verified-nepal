@@ -11,6 +11,7 @@ import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { maskName } from "../lib/format.js";
 import { needTimeline } from "../views/need-timeline.js";
 import { getMunicipality } from "../lib/adminUnits.js";
+import { notifyRequester } from "../lib/notify.js";
 
 /** A verified organization's member may take a published need, hand it back, or mark it delivered. */
 async function requireVerifiedMember(auth, orgId) {
@@ -75,6 +76,8 @@ export async function handleOrgClaimNeed(event, opts, orgId, needId) {
   });
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "matched", at });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.claim", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "taken", { label: org.name });
   return json(200, contactView(need));
 }
 
@@ -100,6 +103,8 @@ export async function handleOrgReleaseNeed(event, opts, orgId, needId) {
   });
   await deleteOrgNeed(auth.ddb, auth.tableName, { orgId, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...actor(auth), action: "org.release", targetType: "NEED", targetId: needId, targetLabel: getTargetLabelForAudit("NEED", need), reason: org.name });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "released", { label: org.name });
   return json(200, { status: "published" });
 }
 
@@ -130,6 +135,8 @@ export async function handleOrgDeliverNeed(event, opts, orgId, needId) {
     }
   }
   await putOrgNeed(auth.ddb, auth.tableName, { orgId, needId, status: "fulfilled", at });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "delivered", { label: deliveredBy?.label || org.name });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }
 

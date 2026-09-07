@@ -9,6 +9,7 @@ import { fulfilNeed } from "../models/claim.js";
 import { deleteOrgNeed } from "../models/orgNeed.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
 import { toHandlingContact } from "../views/mine.js";
+import { notifyRequester } from "../lib/notify.js";
 
 function actorLabel(auth) {
   return maskName(auth.user?.name || auth.payload.name || "") || "Helper";
@@ -80,6 +81,8 @@ export async function handleHelperTakeNeed(event, opts, needId) {
   }
   await putHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.take", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "taken", { label });
   return json(200, { status: "matched", handler: label });
 }
 
@@ -92,6 +95,7 @@ async function requireHelperTake(auth, needId) {
 export async function handleHelperReleaseNeed(event, opts, needId) {
   const { auth } = opts;
   const need = await requireHelperTake(auth, needId);
+  const label = need.handledBy.label;
   delete need.handledBy;
   await setNeedStatus(auth.ddb, auth.tableName, { need, status: "published", expectedStatus: "matched" }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_handled_by_helper");
@@ -99,6 +103,8 @@ export async function handleHelperReleaseNeed(event, opts, needId) {
   });
   await deleteHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.release", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "released", { label });
   return json(200, { status: "published" });
 }
 
@@ -117,6 +123,8 @@ export async function handleHelperDeliverNeed(event, opts, needId) {
     throw e;
   });
   await deleteHandlingPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, needId });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "delivered", { label });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }
 
@@ -137,6 +145,8 @@ export async function handleGroupTakeNeed(event, opts, needId) {
     throw e;
   }
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.take", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason: label });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "taken", { label });
   return json(200, { status: "matched", handler: label });
 }
 
@@ -176,12 +186,15 @@ export async function handleSetNeedDelivery(event, opts, needId) {
 export async function handleGroupReleaseNeed(event, opts, needId) {
   const { auth } = opts;
   const need = await requireGroupTake(auth, needId);
+  const label = need.handledBy.label;
   delete need.handledBy;
   await setNeedStatus(auth.ddb, auth.tableName, { need, status: "published", expectedStatus: "matched" }).catch((e) => {
     if (e.status === 409) throw err(409, "need_not_handled_by_group");
     throw e;
   });
   await recordAudit(auth.ddb, auth.tableName, { ...auditActor(auth), action: "need.release", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need) });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "released", { label });
   return json(200, { status: "published" });
 }
 
@@ -199,6 +212,8 @@ export async function handleGroupDeliverNeed(event, opts, needId) {
     if (e.status === 409) throw err(409, "need_not_handled_by_group");
     throw e;
   });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "delivered", { label });
   return json(200, { status: "fulfilled", redeemedAt: at });
 }
 
@@ -224,6 +239,8 @@ export async function handleModeratorReleaseNeed(event, opts, needId) {
     await deleteOrgNeed(auth.ddb, auth.tableName, { orgId: previousHandler.orgId, needId });
   }
   await recordAudit(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, actorName: auth.user?.name || auth.payload.name || "", action: "need.release", targetType: "NEED", targetId: need.id, targetLabel: getTargetLabelForAudit("NEED", need), reason: `moderator release: ${previous}` });
+  // TODO(sms): Sparrow SMS to registrant.phone once provisioned
+  await notifyRequester(auth.ddb, auth.tableName, need, "released", { label: previous });
   return json(200, { status: "published" });
 }
 

@@ -57,7 +57,7 @@ export function toStatusView(need, { donation, ledgerRow } = {}) {
     municipalityId: need.beneficiary?.municipalityId,
     municipality: getMunicipality(need.beneficiary?.municipalityId)?.name,
     createdAt: need.createdAt,
-    expiresAt: need.expiresAt || toExpiresAt(need.ttl),
+    expiresAt: need.expiresAt || (need.ttl ? toExpiresAt(need.ttl) : undefined),
   };
   if (need.handledBy) {
     out.handledBy = need.handledBy.label || need.handledBy.orgName;
@@ -65,6 +65,7 @@ export function toStatusView(need, { donation, ledgerRow } = {}) {
   }
   if (need.deliveredBy) out.deliveredBy = need.deliveredBy.label;
   if (need.confirmedAt) out.confirmedAt = need.confirmedAt;
+  if (need.events?.length) out.events = need.events;
   out.timeline = needTimeline(need, { donation, ledgerRow });
   if (need.deliveryChannel) {
     out.deliveryChannel = need.deliveryChannel;

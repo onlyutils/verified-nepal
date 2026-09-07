@@ -52,6 +52,7 @@ export function toMyRegisteredNeed(n, donation) {
     handledByKind: n.handledBy?.kind || (n.handledBy?.orgName ? "org" : undefined),
     deliveredBy: n.deliveredBy?.label,
     confirmedAt: n.confirmedAt,
+    events: n.events,
     timeline: needTimeline(n, { donation }),
     ...(n.deliveryChannel ? { deliveryChannel: n.deliveryChannel, centerId: n.centerId } : {}),
   };
