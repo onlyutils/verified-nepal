@@ -193,6 +193,16 @@ export const howToSections: readonly HowToSection[] = [
     ],
   },
   {
+    id: "field-coordination",
+    title: "sectionCoordination",
+    summary: "sectionCoordinationSummary",
+    cards: [
+      { title: "oneDoorFiling", body: "oneDoorFilingBody", where: "/org" },
+      { title: "droneBoard", body: "droneBoardBody", where: "/drones" },
+      { title: "teamWork", body: "teamWorkBody", where: "/org" },
+    ],
+  },
+  {
     id: "the-desk",
     title: "sectionDesk",
     summary: "sectionDeskSummary",

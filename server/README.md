@@ -132,3 +132,30 @@ Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`)
 - `POST /centers/{id}/flag` → public + Turnstile flag center → `201 {ok:true}` (reason not_real|closed|misuse|other, details ≤500, increments flagCount)
 - `GET /moderation/center-flags` → moderator list flagged centers → `{items:[{centerId, name, district, orgName, flagCount, reasons:[{reason, details?, createdAt}]}]}`
 - `POST /orgs/{id}/vouch` → owner of verified org vouch for pending org → `200 {ok:true}` (one per voucher org, audit org.vouch)
+- `GET /kits` → public standard-kit catalogue → `{kits:[{id,name,nameNe,persons,items,weightKg,source}]}`; cached for 24 hours
+- `GET /distributions?incidentId=&district=` → public distribution plans for an incident, without contact phones or filing-user identity; cached for 5 minutes
+- `GET /export/ddmc-log?district=&date=&format=csv|json` → public DDMC daily log; CSV has one row per distribution × ward, an HXL row, and attachment filename `verifiednepal-ddmc-<district>-<date>.csv`
+- `GET /drones/board?incidentId=` → public drone board with open/assigned/flown requests, active landing sites, active operators and near-term flights; contacts, requester names and drop photos are omitted; cached for 2 minutes
+- `POST /orgs/{id}/distributions` → verified organization member file a planned distribution → `201` private distribution view
+- `GET /orgs/{id}/distributions` → verified organization member list private distributions
+- `POST /orgs/{id}/distributions/{distributionId}/complete` → member complete a planned or acknowledged distribution with `{householdsReached,note?}`
+- `POST /orgs/{id}/distributions/{distributionId}/cancel` → member cancel a planned or acknowledged distribution
+- `GET /moderation/distributions?status=planned` → moderator/admin list in-scope distributions with private fields
+- `POST /moderation/distributions/{distributionId}/ack` → moderator/admin acknowledge on behalf of the district office with `{note?}`
+- `POST /orgs/{id}/drones/operators` and `GET /orgs/{id}/drones/operators` → create and list private organization operators
+- `POST /orgs/{id}/drones/operators/{operatorId}` → update a private organization operator
+- `POST /orgs/{id}/drones/sites` and `GET /orgs/{id}/drones/sites` → create and list private organization landing sites
+- `POST /orgs/{id}/drones/requests` and `GET /orgs/{id}/drones/requests` → create and list private organization payload requests
+- `POST /orgs/{id}/drones/requests/{requestId}/assign` → assign an open request to the organization's active operator
+- `POST /orgs/{id}/drones/requests/{requestId}/missions` → plan a mission with `{etd,eta,permitRef?,notamRef?,note?}`
+- `POST /orgs/{id}/drones/missions/{missionId}/flown` → mark a mission flown with optional `{dropPhoto?,note?}`
+- `POST /orgs/{id}/drones/missions/{missionId}/abort` → abort a planned or flown mission
+- `POST /moderation/drones/requests` → moderator/admin post a payload request on behalf of an in-scope ward
+- `POST /moderation/drones/sites` → moderator/admin register a landing site in scope
+- `GET /moderation/drones/requests?status=` → moderator/admin list private payload requests in scope
+- `POST /moderation/drones/requests/{requestId}/confirm` → moderator/admin confirm a flown request as delivered
+- `POST /moderation/drones/requests/{requestId}/cancel` → moderator/admin cancel an in-scope request
+- `POST /orgs/{id}/assignments` and `GET /orgs/{id}/assignments?date=` → create and list private team assignments for a date
+- `POST /orgs/{id}/assignments/{assignmentId}/status` → owner or assignee move status forward through `assigned`, `en_route`, `on_site`, `done`, or `cancelled`
+- `POST /orgs/{id}/log` and `GET /orgs/{id}/log?date=` → add and list private activity or handover notes
+- `GET /orgs/{id}/handover?date=&shift=&format=csv` → private grouped handover JSON, or two-section assignments/log CSV

@@ -203,6 +203,86 @@ Cache: `public, max-age=60`. Response: `{ "items": [...], "cursor": "..." }`.
 curl "$BASE/audit?month=2026-09"
 ```
 
+### 2.6 GET /distributions
+
+Public planned-distribution records for coordination. Filter by an active incident and,
+optionally, district.
+
+| Param | Required | Notes |
+|---|---|---|
+| `incidentId` | yes | Incident to list |
+| `district` | no | District filter |
+
+Response: `{ "items": [...] }`. Items include the organization and trust tier, district,
+municipality id and name, wards, planned date, expanded item lines, transport, staff count,
+status, acknowledgement role and time, completion time, and households reached. Public views
+omit contact phones, the filing user's identity and acknowledgement names; any notes included
+by the filing are treated as public coordination notes. Cache: `public, max-age=300`.
+
+```bash
+curl "$BASE/distributions?incidentId=YOUR-INCIDENT-ID&district=Sindhupalchok"
+```
+
+### 2.7 GET /export/ddmc-log
+
+The DDMC daily log is a public, district-scoped export of distributions planned for one date.
+It produces one row per distribution and ward, with two CSV header rows: plain column names
+and HXL tags. JSON returns the same rows under `rows`.
+
+| Param | Required | Values | Default |
+|---|---|---|---|
+| `district` | yes | VerifiedNepal district name | — |
+| `date` | yes | `YYYY-MM-DD` planned date | — |
+| `format` | no | `csv`, `json` | `csv` |
+
+CSV columns are `date`, `district`, `municipality`, `ward`, `organization`, `tier`, `items`,
+`transport`, `staff`, `status`, `acknowledged_by`, `acknowledged_at`, and
+`households_reached`. The acknowledgement field contains only `moderator`, `admin`, or blank.
+The CSV filename is `verifiednepal-ddmc-<district>-<date>.csv`; cache:
+`public, max-age=300`.
+
+```bash
+curl "$BASE/export/ddmc-log?district=Sindhupalchok&date=2026-09-08&format=csv" -o ddmc.csv
+curl "$BASE/export/ddmc-log?district=Sindhupalchok&date=2026-09-08&format=json"
+```
+
+### 2.8 GET /drones/board
+
+The public drone tasking board combines open, assigned and flown payload requests, active
+landing sites, active operators, and non-aborted flights scheduled from yesterday through
+the next two days. Pass `incidentId` to limit payload requests to one incident.
+
+```json
+{
+  "requests": [],
+  "sites": [],
+  "operators": [],
+  "flights": []
+}
+```
+
+Requests include location, expanded items, weight, cold-chain flag, priority, delivery window
+and assignment status. Sites include their public infrastructure coordinates, surface and
+clearance. Operators include organization, aircraft, payload, range, base district and permit
+status. Flights include district, times, aircraft, organization and status. No response includes
+beneficiary or requester names, phone numbers, operator or ground-contact details, or drop
+photos. Cache: `public, max-age=120`.
+
+```bash
+curl "$BASE/drones/board?incidentId=YOUR-INCIDENT-ID"
+```
+
+### 2.9 GET /kits
+
+The public standard-kit catalogue. It returns `{ "kits": [...] }`, cached for one day. Each
+kit includes `id`, bilingual names, intended household size where applicable, line items with
+category, quantity and unit, estimated `weightKg`, and its source. Kit line items are also
+expanded privately when used in a distribution, drone payload request, or on-behalf need.
+
+```bash
+curl "$BASE/kits"
+```
+
 ## 3. Administrative codes
 
 Verified Nepal's municipality and district list is built from Nepal's
@@ -270,8 +350,10 @@ recognizes the HXL hashtag row automatically.
 
 ## 5. Limits
 
-- Coverage and 3W export are cached 5 minutes (`public, max-age=300`).
-  Ledger and audit are cached 1 minute (`public, max-age=60`).
+- Coverage, 3W export, public distributions and the DDMC log are cached 5 minutes
+  (`public, max-age=300`). The drone board is cached 2 minutes (`public, max-age=120`),
+  and the kit catalogue 1 day (`public, max-age=86400`). Ledger and audit are cached 1 minute
+  (`public, max-age=60`).
 - Coverage and 3W export are computed per request, over every district in
   the incident's `affectedDistricts`. There is no pre-built export file;
   each request re-reads and re-aggregates the underlying need records for
