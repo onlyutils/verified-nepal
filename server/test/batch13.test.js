@@ -45,8 +45,11 @@ describe("batch 13 group drop-center delivery", () => {
     assert.equal(anonymousDonation.donorSub, undefined);
     const group = await call(ctx, "POST", `/needs/${needId}/group`, "founder");
     assert.equal(group.statusCode, 201, group.body);
+    const beforeTake = ctx.ddb.store.get(`NEED#${needId}|META`).updatedAt;
     assert.equal((await call(ctx, "POST", `/needs/${needId}/group/join`, "member")).statusCode, 200);
     assert.equal((await call(ctx, "POST", `/needs/${needId}/group/take`, "member")).statusCode, 200);
+    const afterTake = ctx.ddb.store.get(`NEED#${needId}|META`).updatedAt;
+    assert.ok(afterTake > beforeTake);
     const denied = await call(ctx, "POST", "/centers/c1/donations", "stranger", { category: "rice", qty: 4, needId });
     assert.equal(denied.statusCode, 403);
     const linked = await call(ctx, "POST", "/centers/c1/donations", "member", { category: "rice", qty: 4, needId });
@@ -60,6 +63,7 @@ describe("batch 13 group drop-center delivery", () => {
     const before = await call(ctx, "POST", `/orgs/o1/needs/${needId}/deliver`, "org-member", {});
     assert.equal(before.statusCode, 409);
     assert.equal((await call(ctx, "POST", `/donations/${ref}/confirm`, "org-member", {})).statusCode, 201);
+    assert.ok(ctx.ddb.store.get(`NEED#${needId}|META`).updatedAt > afterTake);
     const delivered = await call(ctx, "POST", `/orgs/o1/needs/${needId}/deliver`, "org-member", {});
     assert.equal(delivered.statusCode, 200, delivered.body);
     const need = ctx.ddb.store.get(`NEED#${needId}|META`);

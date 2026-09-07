@@ -200,6 +200,11 @@ Still open for a decision in the morning: VN-01, VN-13, VN-17, VN-33, VN-34, the
 
 ## 10. Morning follow-ups (2026-09-07)
 
+- **Batches 12–14:** added signed-in on-behalf ownership and private `/me` registrant views,
+  direct/drop-center delivery chains with linked donation and timeline records, read-time
+  activity badges, updated need timestamps, bilingual dashboard copy, and realistic dev review
+  data for the complete delivery chain.
+
 Decided with the owner and shipped via Codex batches 7–8 (`bbc20b0`, ledger attribution commit after it):
 - **Posters are moderated** (VN-01): saved posters start pending, a Desk "Posters" section publishes/rejects them (district-scoped, duplicate hint, audit rows); owners see status and reasons on `/me`. Five existing dev posters were left pending so the queue has content.
 - **Poster privacy**: public poster pages show no phone/email; visitors send a Turnstile-protected tip that lands on the owner's `/me`; police 100 and hotline 1234 print on every public poster; the PNG download is owner-only (anonymous local-only builders unchanged); the saved poster image carries the page link instead of contact details.

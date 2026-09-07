@@ -324,6 +324,7 @@ export interface MyNeed {
   district?: string;
   ward?: number;
   createdAt: string;
+  updatedAt?: string;
   expiresAt?: string;
   claimCode?: string;
   handledBy?: string;
@@ -379,6 +380,7 @@ export interface MyGroupItem {
 
 export interface MyGroup {
   id: string;
+  updatedAt?: string;
   groupName?: string;
   district?: string;
   category: Category;
@@ -396,6 +398,7 @@ export interface NeedContact {
   category: Category;
   description: string;
   createdAt: string;
+  updatedAt?: string;
   beneficiary: { name: string; phone: string | null; district?: string; ward?: number };
   handledAt?: string;
   timeline?: NeedTimelineStep[];
@@ -432,10 +435,19 @@ export interface DashboardResponse {
   donations: MyDonation[];
   /** Who the caller may tell a story as; null until they have received or given help. */
   storyRole?: StoryRole | null;
+  activity: DashboardActivity;
+}
+
+export type ActivitySection = "registered" | "handling" | "groups" | "donations";
+export interface DashboardActivity {
+  lastSeen: Partial<Record<ActivitySection, string>>;
+  counts: Record<ActivitySection, number>;
+  total: number;
 }
 
 export interface MyDonation {
   ref: string;
+  updatedAt?: string;
   center: { id: string; name: string; district: string };
   category: string;
   unit: GoodsUnit;
@@ -749,10 +761,16 @@ export interface MeResponse {
   districts?: string[];
   guidelinesAckAt?: string;
   user?: MeResponse;
+  lastSeen?: Partial<Record<ActivitySection, string>>;
+  activity?: DashboardActivity;
 }
 
 export function getMe(token: string): Promise<MeResponse> {
   return request<MeResponse>("/me", { token });
+}
+
+export function markSectionSeen(token: string, section: ActivitySection): Promise<{ section: ActivitySection; lastSeen: Partial<Record<ActivitySection, string>>; activity: DashboardActivity }> {
+  return request(`/me/seen`, { method: "POST", token, body: JSON.stringify({ section }) });
 }
 
 export function ackGuidelines(token: string): Promise<{ guidelinesAckAt: string }> {

@@ -16,13 +16,14 @@ export async function startGroup(ddb, tableName, { need, actorSub, actorName }) 
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: { PK: need.PK, SK: need.SK },
-      UpdateExpression: "SET #grp = :group, groupItems = :items, groupMembers = :members",
+      UpdateExpression: "SET #grp = :group, groupItems = :items, groupMembers = :members, updatedAt = :now",
       ConditionExpression: "attribute_not_exists(#grp)",
       ExpressionAttributeNames: { "#grp": "group" },
       ExpressionAttributeValues: {
         ":group": { name, createdBy: actorSub, createdAt: now },
         ":items": {},
         ":members": { [actorSub]: { name: actorName, joinedAt: now } },
+        ":now": now,
       },
     }));
   } catch (e) {
@@ -39,10 +40,10 @@ export async function addGroupItem(ddb, tableName, { needId, description, actorS
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: needKey(needId),
-      UpdateExpression: "SET groupItems.#id = :item",
+      UpdateExpression: "SET groupItems.#id = :item, updatedAt = :now",
       ConditionExpression: "attribute_exists(#grp)",
       ExpressionAttributeNames: { "#grp": "group", "#id": itemId },
-      ExpressionAttributeValues: { ":item": { description, status: "open", addedBy: actorSub, createdAt: now } },
+      ExpressionAttributeValues: { ":item": { description, status: "open", addedBy: actorSub, createdAt: now }, ":now": now },
     }));
   } catch (e) {
     if (e.name === "ConditionalCheckFailedException") throw err(409, "no_group");
@@ -57,10 +58,10 @@ export async function joinGroup(ddb, tableName, { needId, actorSub, actorName })
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: needKey(needId),
-      UpdateExpression: "SET groupMembers.#sub = if_not_exists(groupMembers.#sub, :member)",
+      UpdateExpression: "SET groupMembers.#sub = if_not_exists(groupMembers.#sub, :member), updatedAt = :now",
       ConditionExpression: "attribute_exists(#grp)",
       ExpressionAttributeNames: { "#grp": "group", "#sub": actorSub },
-      ExpressionAttributeValues: { ":member": { name: actorName, joinedAt: now } },
+      ExpressionAttributeValues: { ":member": { name: actorName, joinedAt: now }, ":now": now },
     }));
   } catch (e) {
     if (e.name === "ConditionalCheckFailedException") throw err(400, "no_group");
@@ -76,7 +77,7 @@ export async function claimGroupItem(ddb, tableName, { needId, itemId, actorSub,
       Key: needKey(needId),
       UpdateExpression:
         "SET groupItems.#id.claimedBy = :sub, groupItems.#id.claimedByName = :name, groupItems.#id.claimedAt = :now, " +
-        "groupItems.#id.#st = :claimed, groupMembers.#sub = if_not_exists(groupMembers.#sub, :member)",
+        "groupItems.#id.#st = :claimed, groupMembers.#sub = if_not_exists(groupMembers.#sub, :member), updatedAt = :now",
       ConditionExpression: "attribute_not_exists(groupItems.#id.claimedBy) OR groupItems.#id.claimedBy = :sub",
       ExpressionAttributeNames: { "#id": itemId, "#st": "status", "#sub": actorSub },
       ExpressionAttributeValues: {
@@ -92,14 +93,15 @@ export async function claimGroupItem(ddb, tableName, { needId, itemId, actorSub,
 }
 
 export async function releaseGroupItem(ddb, tableName, { needId, itemId, actorSub }) {
+  const now = new Date().toISOString();
   try {
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: needKey(needId),
-      UpdateExpression: "REMOVE groupItems.#id.claimedBy, groupItems.#id.claimedByName, groupItems.#id.claimedAt SET groupItems.#id.#st = :open",
+      UpdateExpression: "REMOVE groupItems.#id.claimedBy, groupItems.#id.claimedByName, groupItems.#id.claimedAt SET groupItems.#id.#st = :open, updatedAt = :now",
       ConditionExpression: "groupItems.#id.claimedBy = :sub",
       ExpressionAttributeNames: { "#id": itemId, "#st": "status" },
-      ExpressionAttributeValues: { ":sub": actorSub, ":open": "open" },
+      ExpressionAttributeValues: { ":sub": actorSub, ":open": "open", ":now": now },
     }));
   } catch (e) {
     if (e.name === "ConditionalCheckFailedException") throw err(409, "not_claim_owner");
@@ -113,7 +115,7 @@ export async function markGroupItemDone(ddb, tableName, { needId, itemId, actorS
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: needKey(needId),
-      UpdateExpression: "SET groupItems.#id.#st = :done, groupItems.#id.doneAt = :now",
+      UpdateExpression: "SET groupItems.#id.#st = :done, groupItems.#id.doneAt = :now, updatedAt = :now",
       ConditionExpression: "groupItems.#id.claimedBy = :sub AND groupItems.#id.#st = :claimed",
       ExpressionAttributeNames: { "#id": itemId, "#st": "status" },
       ExpressionAttributeValues: { ":sub": actorSub, ":claimed": "claimed", ":done": "done", ":now": now },

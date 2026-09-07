@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { meStrings } from "@/i18n/me";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { labels } from "@/i18n";
 import { orgStrings } from "@/i18n/orgs";
 import { useGoogleAuth } from "@/lib/auth";
-import { deliverGroupNeed, deliverNeed, getDashboard, listMyOrgs, releaseGroupNeed, releaseNeed, renewNeed, type Category, type DashboardResponse, type IncidentStatus } from "@/lib/api";
+import { deliverGroupNeed, deliverNeed, getDashboard, listMyOrgs, markSectionSeen, releaseGroupNeed, releaseNeed, renewNeed, type ActivitySection, type Category, type DashboardActivity, type DashboardResponse, type IncidentStatus } from "@/lib/api";
 import { districtLabels } from "@/lib/districts";
 import { apiErrorMessage } from "@/lib/api-error";
 import { formatDateTime } from "@/lib/format";
@@ -68,6 +68,30 @@ function latestTimestamp(values: Array<string | undefined>) {
   return Math.max(0, ...values.map(timestamp));
 }
 
+function UnreadBadge({ count, label }: { count: number; label: string }) {
+  if (!count) return null;
+  return <Badge variant="destructive" className="min-w-6 justify-center rounded-full px-1.5" aria-label={`${label}: ${count}`}>{count}</Badge>;
+}
+
+function ActivitySection({ section, onSeen, className, children }: { section: ActivitySection; onSeen: (section: ActivitySection) => void; className: string; children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    if (typeof IntersectionObserver === "undefined") {
+      onSeen(section);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      onSeen(section);
+      observer.disconnect();
+    }, { threshold: 0.2 });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [onSeen, section]);
+  return <section ref={ref} id={`activity-${section}`} className={className}>{children}</section>;
+}
+
 export function MePage({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = meStrings[language];
   const articleT = articlesEditorStrings[language];
@@ -78,6 +102,22 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
   const [error, setError] = useState<string | null>(null);
   const [renewed, setRenewed] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const seenSections = useRef(new Set<ActivitySection>());
+
+  const markSeen = useCallback((section: ActivitySection) => {
+    if (!auth.idToken || seenSections.current.has(section)) return;
+    seenSections.current.add(section);
+    markSectionSeen(auth.idToken, section)
+      .then((result) => {
+        setData((current) => current ? { ...current, activity: result.activity } : current);
+        window.dispatchEvent(new CustomEvent<DashboardActivity>("verifiednepal:activity", { detail: result.activity }));
+      })
+      .catch(() => seenSections.current.delete(section));
+  }, [auth.idToken]);
+
+  useEffect(() => {
+    seenSections.current.clear();
+  }, [auth.idToken]);
 
   const handlingAction = async (id: string, kind: "helper" | "group", action: "deliver" | "release") => {
     if (!auth.idToken) return;
@@ -201,8 +241,8 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
               data.groups.flatMap((group) => [group.joinedAt, ...group.myItems.flatMap((item) => [item.claimedAt, item.doneAt])]),
             ),
             render: () => (
-              <section className="space-y-3">
-                <h2 className="text-2xl font-bold tracking-tight">{t.groupsTitle}</h2>
+              <ActivitySection section="groups" onSeen={markSeen} className="space-y-3">
+                <div className="flex items-center gap-2"><h2 className="text-2xl font-bold tracking-tight">{t.groupsTitle}</h2><UnreadBadge count={data.activity?.counts.groups ?? 0} label={t.activityUnread} /></div>
                 {groups.length === 0 ? (
                   <EmptyState title={t.groupsEmpty} />
                 ) : (
@@ -233,7 +273,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                     ))}
                   </div>
                 )}
-              </section>
+              </ActivitySection>
             ),
           },
           {
@@ -357,8 +397,8 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
       {!data && !error ? <LoadingState label={t.loading} /> : null}
       {data ? (
         <>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.registeredNeedsTitle}</h2>
+          <ActivitySection section="registered" onSeen={markSeen} className="space-y-3">
+            <div className="flex items-center gap-2"><h2 className="text-2xl font-bold tracking-tight">{t.registeredNeedsTitle}</h2><UnreadBadge count={data.activity?.counts.registered ?? 0} label={t.activityUnread} /></div>
             {([...data.needs, ...(data.registeredNeeds ?? [])].length === 0) ? (
               <EmptyState title={t.registeredNeedsEmpty} action={<Button type="button" onClick={() => navigate("getHelp")}>{t.needsNew}</Button>} />
             ) : (
@@ -410,9 +450,9 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 ))}
               </div>
             )}
-          </section>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.donationsTitle}</h2>
+          </ActivitySection>
+          <ActivitySection section="donations" onSeen={markSeen} className="space-y-3">
+            <div className="flex items-center gap-2"><h2 className="text-2xl font-bold tracking-tight">{t.donationsTitle}</h2><UnreadBadge count={data.activity?.counts.donations ?? 0} label={t.activityUnread} /></div>
             {(data.donations ?? []).length === 0 ? <EmptyState title={t.donationsEmpty} /> : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {data.donations.map((donation) => (
@@ -429,7 +469,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 ))}
               </div>
             )}
-          </section>
+          </ActivitySection>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.projectsTitle}</h2>
             {(data.projects ?? []).length === 0 ? (
@@ -448,8 +488,8 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
               </div>
             )}
           </section>
-          <section className="space-y-3">
-            <h2 className="text-2xl font-bold tracking-tight">{t.handledNeedsTitle}</h2>
+          <ActivitySection section="handling" onSeen={markSeen} className="space-y-3">
+            <div className="flex items-center gap-2"><h2 className="text-2xl font-bold tracking-tight">{t.handledNeedsTitle}</h2><UnreadBadge count={data.activity?.counts.handling ?? 0} label={t.activityUnread} /></div>
             {data.handledNeeds.length === 0 ? (
               <EmptyState title={t.handledNeedsEmpty} />
             ) : (
@@ -478,7 +518,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 ))}
               </div>
             )}
-          </section>
+          </ActivitySection>
           {dashboardSections.map((section) => (
             <Fragment key={section.key}>{section.render()}</Fragment>
           ))}

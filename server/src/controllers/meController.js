@@ -11,6 +11,8 @@ import { toMyMissing, toMyNeed, toMyRegisteredNeed, toMyDonation, toMyOffer, toM
 import { storyRole } from "../models/story.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 import { recordAudit, getTargetLabelForAudit } from "../models/audit.js";
+import { ACTIVITY_SECTIONS, getActivity } from "../models/activity.js";
+import { saveUserProfile } from "../models/user.js";
 
 export async function handleGetDashboard(event, opts) {
   const { auth } = opts;
@@ -47,7 +49,20 @@ export async function handleGetDashboard(event, opts) {
     out.handledNeeds.push({ ...toHandlingContact(need, donation), handler: need.handledBy.label, handlerKind: need.handledBy.kind });
   }
   out.storyRole = await storyRole(ddb, tableName, payload.sub);
+  const lastSeen = auth.user?.lastSeen && typeof auth.user.lastSeen === "object" ? auth.user.lastSeen : {};
+  out.activity = await getActivity(ddb, tableName, payload.sub, lastSeen);
   return json(200, out);
+}
+
+export async function handlePostSeen(event, opts) {
+  const { auth } = opts;
+  const body = parseBody(event);
+  if (!body || typeof body !== "object" || !ACTIVITY_SECTIONS.includes(body.section)) throw err(400, "section must be registered, handling, groups, or donations");
+  if (!auth.user) throw err(409, "profile not initialized; call GET /me first");
+  const at = new Date().toISOString();
+  auth.user.lastSeen = { ...(auth.user.lastSeen || {}), [body.section]: at };
+  await saveUserProfile(auth.ddb, auth.tableName, auth.user);
+  return json(200, { section: body.section, lastSeen: auth.user.lastSeen, activity: await getActivity(auth.ddb, auth.tableName, auth.payload.sub, auth.user.lastSeen) });
 }
 
 export async function handlePostNeedClaim(event, opts) {

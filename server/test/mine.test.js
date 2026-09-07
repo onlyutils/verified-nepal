@@ -79,6 +79,22 @@ describe("ownership pointers and dashboard", () => {
     assert.equal(anon.statusCode, 401);
   });
 
+  it("POST /me/seen stores the section timestamp and clears its unread count", async () => {
+    const { handler, ddb, token } = setup();
+    const auth = { authorization: `Bearer ${token("seen-user")}` };
+    const created = JSON.parse((await handler(makeEvent({ method: "POST", path: "/needs", body: needBody, headers: auth }))).body);
+    ddb.store.set("USER#seen-user|PROFILE", { PK: "USER#seen-user", SK: "PROFILE", sub: "seen-user", role: "helper", districts: [], createdAt: "2026-01-01T00:00:00.000Z", gsi2pk: "USER#helper", gsi2sk: "2026-01-01T00:00:00.000Z" });
+    let res = await handler(makeEvent({ method: "GET", path: "/me/dashboard", headers: auth }));
+    assert.equal(JSON.parse(res.body).activity.counts.registered, 1);
+    res = await handler(makeEvent({ method: "POST", path: "/me/seen", body: { section: "registered" }, headers: auth }));
+    assert.equal(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+    assert.equal(body.activity.counts.registered, 0);
+    assert.ok(ddb.store.get("USER#seen-user|PROFILE").lastSeen.registered);
+    assert.equal(body.lastSeen.registered, ddb.store.get(`USER#seen-user|PROFILE`).lastSeen.registered);
+    assert.equal(created.id, ddb.store.get(`NEED#${created.id}|META`).id);
+  });
+
   it("POST /incidents/request writes a pointer and GET /me/dashboard lists it", async () => {
     const { handler, ddb, token } = setup();
     const auth = { authorization: `Bearer ${token("u4")}` };

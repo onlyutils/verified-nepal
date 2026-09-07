@@ -98,6 +98,7 @@ export const meStrings = {
     incidentStatusRejected: "Not approved",
     incidentStatusArchived: "Archived",
     incidentRejectionReason: "Reason: {reason}",
+    activityUnread: "Unread activity",
   },
   ne: {
     title: "मेरो खाता",
@@ -196,5 +197,6 @@ export const meStrings = {
     incidentStatusRejected: "स्वीकृत भएन",
     incidentStatusArchived: "अभिलेखमा राखियो",
     incidentRejectionReason: "कारण: {reason}",
+    activityUnread: "नपढिएको गतिविधि",
   },
 } satisfies Record<Language, Record<string, string>>;

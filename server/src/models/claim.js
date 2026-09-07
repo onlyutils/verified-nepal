@@ -60,6 +60,7 @@ export async function performRedeem(ddb, tableName, { claimCode, providedRedeeme
       if (!need.confirmedAt) {
         const confirmedAt = new Date().toISOString();
         need.confirmedAt = confirmedAt;
+        need.updatedAt = confirmedAt;
         let confirmed = true;
         await ddb.send(new PutCommand({ TableName: tableName, Item: need, ConditionExpression: "attribute_not_exists(confirmedAt)" })).catch((e) => {
           if (e.name === "ConditionalCheckFailedException") confirmed = false;
@@ -101,6 +102,7 @@ export async function fulfilNeed(ddb, tableName, { need, redeemedAt, note, actor
   const ward = need.beneficiary?.ward ?? need.ward;
   if (!district || ward === undefined) throw err(500, "need missing district/ward");
   const attribution = deliveredBy || (orgName ? { kind: "org", label: orgName } : await deriveDeliveredBy(ddb, tableName, need));
+  need.updatedAt = new Date().toISOString();
   need.status = "fulfilled";
   need.redeemedAt = at;
   need.deliveredBy = attribution;

@@ -37,6 +37,7 @@ export async function createNeed(ddb, tableName, {
     media: media && media.length ? media : undefined,
     status,
     createdAt,
+    updatedAt: createdAt,
     ttl,
     expiresAt,
     incidentId,
@@ -141,6 +142,7 @@ export async function renewNeed(ddb, tableName, { ref, need }) {
 
 export async function setNeedStatus(ddb, tableName, { need, status, offerId, expectedStatus }) {
   need.status = status;
+  need.updatedAt = new Date().toISOString();
   const district = need.beneficiary?.district || need.district || "";
   need.gsi1pk = `NEED#${need.incidentId}#${district}#${status}`;
   need.gsi1sk = need.createdAt;

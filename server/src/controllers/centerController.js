@@ -653,6 +653,7 @@ export async function handleCreateDonation(event, opts, centerId) {
     qty,
     status: "declared",
     declaredAt: now,
+    updatedAt: now,
   };
   if (linkedNeed) {
     donation.needId = linkedNeed.id;
@@ -686,7 +687,7 @@ export async function handleCreateDonation(event, opts, centerId) {
     await ddb.send(new UpdateCommand({
       TableName: tableName,
       Key: { PK: linkedNeed.PK, SK: linkedNeed.SK },
-      UpdateExpression: "SET donationRef = :ref, donationDeclaredAt = :at",
+      UpdateExpression: "SET donationRef = :ref, donationDeclaredAt = :at, updatedAt = :at",
       ExpressionAttributeValues: { ":ref": ref, ":at": now },
     }));
     const members = linkedNeed.group ? Object.keys(linkedNeed.groupMembers || {}) : [auth.payload.sub];
@@ -805,7 +806,9 @@ export async function handleConfirmDonation(event, opts, ref) {
   if (donation.status !== "declared") throw err(400, "already confirmed");
   const body = parseBody(event);
   if (body && typeof body === "object" && body.action === "not_received") {
+    const now = new Date().toISOString();
     donation.status = "not_received";
+    donation.updatedAt = now;
     const pointerSK = `DONATION#${donation.declaredAt}#${ref}`;
     const ptrRes = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CENTER#${donation.centerId}`, SK: pointerSK } }));
     let pointer = ptrRes.Item;
@@ -835,6 +838,7 @@ export async function handleConfirmDonation(event, opts, ref) {
   const now = res.now;
   donation.status = "received";
   donation.receivedAt = now;
+  donation.updatedAt = now;
   donation.intakeEntryId = res.id;
   const pointerSK = `DONATION#${donation.declaredAt}#${ref}`;
   const ptrRes = await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `CENTER#${donation.centerId}`, SK: pointerSK } }));
@@ -846,6 +850,14 @@ export async function handleConfirmDonation(event, opts, ref) {
     await ddb.send(new PutCommand({ TableName: tableName, Item: pointer }));
   }
   await ddb.send(new PutCommand({ TableName: tableName, Item: donation }));
+  if (donation.needId) {
+    await ddb.send(new UpdateCommand({
+      TableName: tableName,
+      Key: { PK: `NEED#${donation.needId}`, SK: "META" },
+      UpdateExpression: "SET updatedAt = :at",
+      ExpressionAttributeValues: { ":at": now },
+    }));
+  }
   const actorName = auth.user?.name || auth.payload.name || "";
   await recordAudit(ddb, tableName, { actorSub: auth.payload.sub, actorName, action: "donation.confirm", targetType: "DONATION", targetId: ref, targetLabel: `donation ${ref}` });
   return json(201, { entryId: res.id });

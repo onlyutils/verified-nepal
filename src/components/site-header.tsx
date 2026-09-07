@@ -169,15 +169,14 @@ function AccountButton({ language, navigate }: { language: Language; navigate: (
   const t = meStrings[language];
   if (!auth.clientId || !auth.idToken) return null;
   const displayName = auth.profile?.name || auth.profile?.displayName || auth.profile?.email;
+  const unread = auth.profile?.activity?.total ?? 0;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={t.navAccount}>
-          <span
-            className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
-            aria-hidden="true"
-          >
+        <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={unread > 0 ? `${t.navAccount} · ${t.activityUnread}: ${unread}` : t.navAccount}>
+          <span className="relative flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground" aria-hidden="true">
             {(auth.profile?.name || auth.profile?.email || "?").slice(0, 1)}
+            {unread > 0 ? <span className="absolute -right-2 -top-2 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-4 text-destructive-foreground">{unread}</span> : null}
           </span>
           <span className="hidden truncate sm:inline">{displayName}</span>
         </Button>

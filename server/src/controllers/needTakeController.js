@@ -166,6 +166,7 @@ export async function handleSetNeedDelivery(event, opts, needId) {
     if (body.category !== undefined && (!Array.isArray(center.accepts) || !center.accepts.includes(String(body.category).trim()))) throw err(400, "center_does_not_accept_category");
   }
   need.deliveryChannel = channel;
+  need.updatedAt = new Date().toISOString();
   if (centerId) need.centerId = centerId;
   else delete need.centerId;
   await putNeed(auth.ddb, auth.tableName, need);

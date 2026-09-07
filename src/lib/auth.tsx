@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE, getMe } from "@/lib/api";
+import { API_BASE, getMe, type DashboardActivity } from "@/lib/api";
 import { clearTokens, isTokenExpired, loadTokens, refreshAccessToken, saveTokens, TOKENS_EVENT } from "@/lib/tokens";
 
 export interface DeskProfile {
@@ -10,6 +10,7 @@ export interface DeskProfile {
   email?: string;
   districts?: string[];
   guidelinesAckAt?: string;
+  activity?: DashboardActivity;
 }
 
 const AUTH_HOST = "https://auth.onlyutils.com";
@@ -85,6 +86,16 @@ export function useGoogleAuth() {
       window.removeEventListener(TOKENS_EVENT, sync);
       window.removeEventListener("storage", sync);
     };
+  }, []);
+
+  useEffect(() => {
+    const syncActivity = (event: Event) => {
+      const activity = (event as CustomEvent<DashboardActivity>).detail;
+      if (!activity) return;
+      setProfile((current) => current ? { ...current, activity } : current);
+    };
+    window.addEventListener("verifiednepal:activity", syncActivity);
+    return () => window.removeEventListener("verifiednepal:activity", syncActivity);
   }, []);
 
   const signIn = useCallback(async () => {

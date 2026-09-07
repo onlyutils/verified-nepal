@@ -100,6 +100,26 @@ Two secret codes make this work without needing an account:
 
 Every need, offer, and project belongs to exactly one **disaster** — see the next section.
 
+## 1b. How help reaches the family
+
+Once a published need is taken, there are two delivery channels. **Direct** means the
+individual helper, helper group, or verified organization takes the goods to the family.
+**Via a drop center** means the helper or group declares the linked donation at a verified
+center; the center records receipt, then a verified organization hands those goods to the
+family. Both channels end in the same public fulfilment ledger and private dashboard view.
+
+The shared four-step timeline is:
+
+1. **Taken** — a helper, group, or organization accepts the published need.
+2. **Declared** — for the center channel, the helper or group records the linked donation.
+3. **Received** — the drop center confirms the goods and adds them to its stock.
+4. **Handed over** — the goods reach the family and the public ledger records the delivery;
+   redeeming the claim code can add the beneficiary's confirmation.
+
+The direct channel moves from Taken to Handed over without the center's Declared and Received
+steps. The request owner can follow these milestones on `/me`, and public viewers can verify
+the final fulfilment without seeing private contact details.
+
 ---
 
 ## 2. More than one disaster
@@ -159,6 +179,9 @@ submitted, requests you registered for someone else (including their private ref
 after publication, claim code), projects you registered, and the offers you made, all in one
 place, private to you. A registrant can renew an eligible request, see who took it and whether
 it was delivered or confirmed; Hand back is only available to helpers and groups.
+
+Activity badges on each linked-help section, and on the account avatar, show updates since
+that section was last opened.
 
 The rule of thumb: **self-registration for help never requires an account** (you can stay
 anonymous), but **registering for someone else, offering help, running an organization, or
@@ -234,8 +257,9 @@ donations.
 
 A verified organization can also **take on a published need** directly from the Give-help
 board — a staff member claims it, sees the beneficiary's contact details in the org dashboard,
-and either marks it delivered (which writes the public ledger under the org's name, the same
-outcome as a claim-code redemption) or hands it back to the open pool. This is a second path to
+and either chooses direct delivery or routes linked goods through a drop center before marking
+it delivered (which writes the public ledger under the org's name, the same outcome as a
+claim-code redemption; see §1b) or hands it back to the open pool. This is a second path to
 "fulfilled" alongside the claim-code system, sharing the same underlying code so a need can
 only ever be marked fulfilled once. Individual signed-in helpers and helper groups can now use
 the same owner-approved path: take a published need, see its private contact details, and
@@ -257,7 +281,12 @@ accepts (rice, tents, blankets, medicine, and so on).
 
 Every time goods move — arriving at a center, leaving it, or transferring between two
 centers — it's written into the **goods ledger**. The ledger is completely public, needs no
-login, and can be browsed by district or downloaded as a spreadsheet at `/ledger`.
+login, and can be browsed by district or downloaded as a spreadsheet at `/ledger` (see §1b for
+the need-to-family delivery chain).
+
+When a helper or group links a donation to a need, the center's Declared → Received → Handed
+over timeline makes that chain visible from the need and the donor's private dashboard; the
+public ledgers retain the goods movement and fulfilment records.
 
 ```mermaid
 flowchart LR
@@ -384,6 +413,10 @@ shelter *and* food *and* transport — a helper can form a group for that publis
 other helpers can join it. Any member may take the need for the group, view the private
 beneficiary contact, deliver it, or hand it back. The public handler label stays generic and
 shows the current member count (for example, “Helper group (3)”).
+
+Groups can choose direct delivery or link their goods to a verified drop center (see §1b). In the latter
+case, the same four-step Taken → Declared → Received → Handed over timeline is shown to group
+members and to the person who registered the request.
 
 No custom group branding is allowed (this is disaster relief, not a marketplace). Group and
 individual takes are mutually exclusive with organization takes: a published need has one

@@ -4,6 +4,7 @@ import { logAuthFail } from "../lib/auth.js";
 import { getUserProfile, createUserProfile, createEmailPointer, ensureUserBackfill, saveUserProfile } from "../models/user.js";
 import { validateDistrict } from "../lib/validate.js";
 import { toMeView } from "../views/user.js";
+import { getActivity } from "../models/activity.js";
 
 function getTokenEndpoint(env) {
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
@@ -37,10 +38,11 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     const name = existing.name ?? "";
     const districts = Array.isArray(existing.districts) ? existing.districts : [];
     const guidelinesAckAt = existing.guidelinesAckAt;
+    const lastSeen = existing.lastSeen && typeof existing.lastSeen === "object" ? existing.lastSeen : {};
     const emailResolved = Boolean(email);
     try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
     await ensureUserBackfill({ ddb, tableName, user: existing, payload });
-    return json(200, toMeView({ sub: payload.sub, email, name, role, districts, guidelinesAckAt }));
+    return json(200, toMeView({ sub: payload.sub, email, name, role, districts, guidelinesAckAt, lastSeen, activity: await getActivity(ddb, tableName, payload.sub, lastSeen) }));
   }
   const fetchFn = fetchImpl ?? globalThis.fetch;
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
@@ -83,7 +85,7 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   const createRes = await createUserProfile(ddb, tableName, item);
   if (!createRes.ok) return json(500, { error: "storage" });
   if (email) await createEmailPointer(ddb, tableName, { sub: payload.sub, email, createdAt: nowIso });
-  return json(200, toMeView({ sub: payload.sub, email: email ?? "", name: name ?? "", role, districts: [], guidelinesAckAt: undefined }));
+  return json(200, toMeView({ sub: payload.sub, email: email ?? "", name: name ?? "", role, districts: [], guidelinesAckAt: undefined, activity: await getActivity(ddb, tableName, payload.sub) }));
 }
 
 export async function handleAckGuidelines(event, opts) {

@@ -62,10 +62,14 @@ Sign-in is Google via OnlyUtils in production; on dev a second "Test account sig
 
 ### F1 · Ask for help (anonymous need) — `screenshots/ux--get-help-en-mobile.jpg`, `anon--gethelp-d-02-validation.jpg`, `anon--gethelp-d-03-onbehalf-fields.jpg`, `anon--gethelp-d-04-after-submit.jpg`
 
-Entry: home CTA "Get help", nav, or direct link. No account.
+Entry: home CTA "Get help", nav, or direct link. No account for a request for yourself; a
+request on behalf of someone else requires sign-in and appears in the registrant's `/me` page.
 
 1. `/get-help` · read the intro — *"No account needed. A moderator will review before anything appears publicly"* sets the USP expectation up-front (good).
-2. "Who is this for?" · choose **Myself** or **Someone else** · on-behalf reveals registrant name/phone/email + a consent checkbox; the beneficiary phone becomes optional, the registrant phone required.
+2. "Who is this for?" · choose **Myself** or **Someone else** · on-behalf first asks the
+   visitor to sign in, then reveals registrant name/phone/email + a consent checkbox; the
+   beneficiary phone becomes optional, the registrant phone required. The signed-in registrant
+   later sees the request, claim code and delivery timeline on `/me`.
 3. Fill category, disaster (or "my emergency isn't listed" → inline new-disaster report), district/ward, description (EN or NE), optional photo.
 4. Submit with errors · inline "7 fields need attention" + per-field messages, focus and aria wired (good).
 5. Solve Turnstile · submit · **reference code** shown; the need is now *pending* and invisible everywhere public.
@@ -164,8 +168,8 @@ Reviewer focus: title input has no visible border; required-ness of cover/source
 1. `/register-organization` · name, districts (77 checkboxes — `VN-20`), contacts · submit → org dashboard reads *"Unverified — publicly visible as unverified"* (`VN-31`: contradicts the model).
 2. Moderator Desk → Organizations · verify → trust tier (self-declared / vouched / known).
 3. Verified org: invite staff (team tab), create drop centers (address, hours, accepted goods), log stock entries/transfers/receipts → public `/drop-centers/:id` stock and `/goods-ledger`.
-4. Org takes a published need from the board (Needs tab, gated until verified) → sees private contact → **Deliver** (writes the public ledger) or hand back.
-5. Public donates goods at a center (Turnstile) → donation code → `/donation/:code` shows received/re-distributed.
+4. Org takes a published need from the board (Needs tab, gated until verified) → sees private contact → chooses direct delivery or routes linked goods via a drop center; the need timeline shows taken, declared, received and handed over.
+5. Public donates goods at a center (Turnstile) → donation code → `/donation/:code` shows received/re-distributed; linked helper or group donations also move through declared → received → hand-over on the need timeline.
 6. `/ledger` (fulfilments) and `/goods-ledger` (stock movements) are public, filter by district, CSV/print; the ledger page carries a Turnstile widget inline with filters (`VN-32`).
 
 ### F10 · Moderator Desk — `moderator--01-guidelines-gate.jpg`, `moderator--04-district-gate.jpg`, `moderator--09-queue-desktop.jpg`, `moderator--10-offer1-claimed.jpg`, `moderator--13b-reject-dialog-filled.jpg`, `moderator--15-boards.jpg`, `moderator--24-edit-offer-dialog.jpg`, `moderator--16-print.jpg`, `moderator--26-print-list.jpg`, `moderator--17-paper-sync.jpg`, `moderator--31-mobile-queue.jpg`, `moderator--35-public-audit.jpg`
@@ -193,7 +197,7 @@ Mobile Desk: sections become a clipped horizontal strip ("Print cla…") and the
 
 ### F12 · Helper groups (split a big need)
 
-On a published need on the board, a helper splits it into items; others join and claim items; "done" per item; the original need is still only fulfilled via claim code or org delivery. Not exercised in wave 1 (no published needs existed); the dev dataset now covers it for the human review.
+On a published need on the board, a helper splits it into items; others join and claim items; "done" per item; the original need is still only fulfilled via claim code or org delivery. A group can deliver directly or link a donation through a verified drop center, where the shared taken → declared → received → handed-over timeline is visible on `/me` and the need status. Not exercised in wave 1 (no published needs existed); the dev dataset now covers it for the human review.
 
 ### F13 · Cross-cutting
 

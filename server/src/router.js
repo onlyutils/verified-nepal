@@ -14,7 +14,7 @@ import {
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
-  handleGetDashboard, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
+  handleGetDashboard, handlePostSeen, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
 } from "./controllers/meController.js";
 import { handleGetModerationMissing, handlePostModerationMissing, handlePostMissingTip, handleGetMissingTips } from "./controllers/missingController.js";
 import {
@@ -52,6 +52,7 @@ const routes = [
   ["POST", /^\/me\/ack-guidelines$/, withAuth(handleAckGuidelines)],
   ["POST", /^\/me\/districts$/, withAuth(handleSetMyDistricts)],
   ["GET", /^\/me\/dashboard$/, withAuth(handleGetDashboard)],
+  ["POST", /^\/me\/seen$/, withAuth(handlePostSeen)],
   ["GET", /^\/me\/needs\/([^/]+)\/contact$/, withAuth(handleGetNeedContact)],
   ["POST", /^\/me\/articles$/, withAuth(handlePostArticle)],
   ["GET", /^\/me\/articles$/, withAuth(handleGetMyArticles)],
