@@ -20,6 +20,7 @@ import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
 import { droneStrings } from "@/i18n/drones";
+import { floodReliefStrings } from "@/i18n/flood-relief";
 import type { Language, Page } from "@/lib/types";
 import { pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
@@ -60,6 +61,7 @@ const IncidentsPage = lazy(() => import("@/pages/incidents").then((m) => ({ defa
 const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
 const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
 const HowTo = lazy(() => import("@/pages/how-to").then((m) => ({ default: m.HowTo })));
+const FloodReliefPage = lazy(() => import("@/pages/flood-relief").then((m) => ({ default: m.FloodReliefPage })));
 
 const pagePaths: Record<AppPage, string> = {
   dashboard: "/",
@@ -93,6 +95,7 @@ const pagePaths: Record<AppPage, string> = {
   dropCenters: "/drop-centers",
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
+  floodRelief: "/flood-relief",
   climate: "/climate",
   howTo: "/how-to",
   ourMessage: "/our-message",
@@ -141,6 +144,7 @@ function pageTitle(page: AppPage, language: Language): string {
     dropCenters: centerStrings[language].dropCentersTitle,
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
+    floodRelief: floodReliefStrings[language].pageTitle,
     climate: climateStrings[language].title,
     howTo: howToStrings[language].pageTitle,
     ourMessage: ourMessageStrings[language].title,
@@ -151,20 +155,21 @@ function pageTitle(page: AppPage, language: Language): string {
   return map[page] ?? t.brand ?? "verifiedNepal";
 }
 
+function decodeHashTargetId(hash: string) {
+  try {
+    return decodeURIComponent(hash);
+  } catch {
+    return hash;
+  }
+}
+
 function focusMainAndScroll(sectionId?: string) {
   const main = document.getElementById("main");
   if (main) {
     (main as HTMLElement).focus({ preventScroll: true });
   }
   const hash = window.location.hash.slice(1);
-  let hashTargetId = hash;
-  if (hash) {
-    try {
-      hashTargetId = decodeURIComponent(hash);
-    } catch {
-      hashTargetId = hash;
-    }
-  }
+  const hashTargetId = hash ? decodeHashTargetId(hash) : "";
   const targetId = hash ? hashTargetId : sectionId;
   const target = targetId ? document.getElementById(targetId) : null;
   if (target) {
@@ -191,6 +196,37 @@ export function App() {
     document.title = `${pageTitle(page, language)} · verifiedNepal`;
     document.documentElement.dataset.page = page;
   }, [page, language]);
+
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+
+    const targetId = decodeHashTargetId(hash);
+    const deadline = Date.now() + 2000;
+    let pollId: number | undefined;
+
+    const checkForTarget = () => {
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (pollId !== undefined) window.clearInterval(pollId);
+        return;
+      }
+
+      if (Date.now() >= deadline && pollId !== undefined) {
+        window.clearInterval(pollId);
+      }
+    };
+
+    checkForTarget();
+    if (!document.getElementById(targetId) && Date.now() < deadline) {
+      pollId = window.setInterval(checkForTarget, 50);
+    }
+
+    return () => {
+      if (pollId !== undefined) window.clearInterval(pollId);
+    };
+  }, []);
 
   useEffect(() => {
     const onPopState = () => {
@@ -272,7 +308,7 @@ export function App() {
         {skipLink}
         <SiteHeader language={language} setLanguage={setLanguage} navigate={navigate} />
         <SiteStatusBar language={language} navigate={navigate} />
-        <EmergencyBar language={language} />
+        <EmergencyBar language={language} navigate={navigate} />
         <main
           id="main"
           tabIndex={-1}
@@ -393,6 +429,11 @@ export function App() {
                     navigate={navigate}
                     id={decodeURIComponent(window.location.pathname.split("/")[2] || "")}
                   />
+                </ComponentErrorBoundary>
+              ) : null}
+              {page === "floodRelief" ? (
+                <ComponentErrorBoundary language={language}>
+                  <FloodReliefPage language={language} navigate={navigate} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "climate" ? (

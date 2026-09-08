@@ -29,6 +29,7 @@ export type Page =
   | "dropCenters"
   | "dropCenterDetail"
   | "donationStatus"
+  | "floodRelief"
   | "climate"
   | "howTo"
   | "ourMessage"

@@ -1,0 +1,370 @@
+{
+  "meta": {
+    "event": "Rasuwa – Bhote Koshi/Trishuli flash flood, 26 August 2026 (10 Bhadra 2083)",
+    "last_verified": "2026-09-08",
+    "disclaimer": "Merged from two independently compiled sources: (1) Claude web research from Nepali government notices and news reporting, (2) a second research pass (Downloads/relief-drop-centers.json) that added a citizen volunteer network, precise GPS for several sites, and a Nuwakot venue list. Not an official government source. Call ahead before traveling with a large donation — points may wind down as needs shift.",
+    "emergency_numbers": {
+      "national_disaster_hotline": "1234",
+      "police": "100",
+      "ambulance": "102",
+      "armed_police": "1114",
+      "neoc": "1144",
+      "moha_main_lines": "01-4211208 / 01-4211214",
+      "moha_toll_free": "1112"
+    }
+  },
+  "important_notes": [
+    "The Government of Nepal has NOT authorised any private organisation, group, or individual to independently collect cash or relief goods for this disaster (\"one-door\"/एकद्वार policy). The official_government_centers below are the sanctioned channels; the volunteer_network_centers section is a separate, informal citizen effort — useful but not government-verified infrastructure.",
+    "Nepal Police have warned of fake donation QR codes circulating on social media impersonating the PM Disaster Relief Fund. Verify the payee name reads exactly 'Prime Minister Disaster Relief Fund' before scanning any QR.",
+    "coordinates_precision explains how reliable each lat/lng is: 'landmark' = precise, independently confirmed point; 'locality' = accurate to the neighbourhood/town center only; 'unverified' = no coordinate could be confirmed (approx_lat/approx_lng, if present, is an unconfirmed town-center estimate, not a real pin)."
+  ],
+  "official_government_centers": [
+    {
+      "id": "ktm-samakhusi-police",
+      "name": "Nepal Police Disaster Response & Training Center, Samakhusi",
+      "name_np": "नेपाल प्रहरी विपद् प्रतिकार्य तथा तालिम केन्द्र, समाखुसी",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.7354592,
+      "lng": 85.3236677,
+      "coordinates_precision": "landmark",
+      "category": "public_dropoff",
+      "hours": "24 hours",
+      "contacts": [{ "name": "Duty Police Inspector", "phone": "+977-9851283611" }],
+      "run_by": "Kathmandu District Administration Office (one-door collection system)",
+      "accepts": ["food", "clothing", "blankets", "tents", "hygiene kits", "kitchen sets"],
+      "handles": "Kathmandu Valley public donations (goods); Nepal Chamber of Commerce also routed its collected relief here",
+      "confidence": "high",
+      "sources": ["Downloads/relief-drop-centers.json", "https://www.arthikpati.com/content/2026/08/31/145185"]
+    },
+    {
+      "id": "ktm-radhaswami-basundhara",
+      "name": "Radha Swami Satsang Beas Nepal, Basundhara/Gongabu",
+      "name_np": "राधास्वामी सत्संग व्यास नेपाल भवन, वसुन्धरा",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.7362946,
+      "lng": 85.3214221,
+      "coordinates_precision": "landmark",
+      "category": "public_dropoff",
+      "hours": "24 hours",
+      "contacts": [],
+      "run_by": "Kathmandu District Administration Office (one-door collection system)",
+      "accepts": ["food", "clothing", "blankets", "tents", "hygiene kits", "kitchen sets"],
+      "handles": "Kathmandu Valley public donations (goods), set up by Kathmandu District Administration Office",
+      "confidence": "high",
+      "sources": ["Downloads/relief-drop-centers.json", "onlinekhabar.com/2026/09/2010959"]
+    },
+    {
+      "id": "ktm-tia-warehouse",
+      "name": "Tribhuvan International Airport – National Emergency Warehouse",
+      "name_np": "त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल, राष्ट्रिय आपत्कालीन गोदामघर",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.6991915,
+      "lng": 85.3566744,
+      "coordinates_precision": "landmark",
+      "category": "incoming_international_staging",
+      "hours": null,
+      "contacts": [
+        { "name": "Purushottam Bhandari", "phone": "+977-9851147494" },
+        { "name": "Chandra Bahadur Thapa", "phone": "+977-9851084220" },
+        { "name": "Niranjan Niraula", "phone": "+977-9843468991" },
+        { "name": "Shraddha Bhattarai (WFP)", "phone": "+977-9841879222" }
+      ],
+      "run_by": "NDRRMA / Government of Nepal",
+      "handles": "International relief flown in from abroad (air cargo)",
+      "note": "Staging point for relief flown in from abroad and redistributed by government. Not intended as a public walk-in drop point for individual donors.",
+      "confidence": "high",
+      "sources": ["Downloads/relief-drop-centers.json", "https://himalpress.com/2026/08/government-designates-three-relief-collection-centers-for-flood-victims/"]
+    },
+    {
+      "id": "ktm-dao-babarmahal",
+      "name": "Kathmandu District Administration Office (CDO), Babarmahal",
+      "name_np": "जिल्ला प्रशासन कार्यालय, काठमाडौं (बबरमहल)",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.6936481,
+      "lng": 85.3255831,
+      "coordinates_precision": "landmark",
+      "category": "coordinating_office",
+      "hours": "Sun–Fri 9:00–17:00 (ran 24-hour intake in the days immediately after the flood)",
+      "contacts": [
+        { "name": "Sujan Kumari Bardewa (Administrative Officer, relief coordinator) — also reported as \"Srijana Kumari Bardewa\" in some outlets, likely the same person", "phone": "+977-9841798542" },
+        { "name": "Main line", "phone": "+977-1-4262478" }
+      ],
+      "run_by": "Government of Nepal",
+      "handles": "Public donation intake and door-to-door redistribution to displaced families sheltering in Kathmandu Valley",
+      "note": "Organizations, companies and clubs running their own collection drives are asked to coordinate/hand over through this office. This office's own old building was the first improvised collection point right after the flood, before Samakhusi and Basundhara took over as the dedicated 24-hr public sites.",
+      "confidence": "high",
+      "sources": ["Downloads/relief-drop-centers.json", "https://lokaantar.com/story/328185/2026/9/6/main-news/ktm-"]
+    },
+    {
+      "id": "nuwakot-battar-barracks",
+      "name": "Nepali Army Maithili Barracks, Battar",
+      "name_np": "नेपाली सेना मैथिली ब्यारेक, बट्टार",
+      "city": "Battar",
+      "district": "Nuwakot",
+      "lat": null,
+      "lng": null,
+      "approx_lat": 27.83,
+      "approx_lng": 85.13,
+      "coordinates_precision": "unverified",
+      "category": "public_dropoff",
+      "hours": null,
+      "contacts": [
+        { "name": "Dipendra Poudel", "phone": "+977-9856067770" },
+        { "name": "Prakash Dhungana", "phone": "+977-9860659938" },
+        { "name": "Shyam Babu Kattel", "phone": "+977-9846046000" },
+        { "name": "Yubaraj Bhandari", "phone": "+977-9846106929" },
+        { "name": "Shekhar Babu Thokar", "phone": "+977-9854045497" },
+        { "name": "Abhiskar (Nepali Army)", "phone": "+977-9851234324" }
+      ],
+      "run_by": "Nepali Army / NDRRMA",
+      "handles": "Regional collection/distribution hub for Nuwakot-side relief",
+      "serves_districts": ["Rasuwa", "Nuwakot"],
+      "confidence": "medium — location name confirmed in multiple official notices, exact GPS pin not verified; approx_lat/lng is an unconfirmed Battar town-center estimate",
+      "sources": ["Downloads/relief-drop-centers.json", "https://himalpress.com/2026/08/government-designates-three-relief-collection-centers-for-flood-victims/"]
+    },
+    {
+      "id": "dhading-baireni-barracks",
+      "name": "Nepali Army Barracks, Baireni",
+      "name_np": "नेपाली सेना ब्यारेक, बैरेनी",
+      "city": "Baireni",
+      "district": "Dhading",
+      "lat": null,
+      "lng": null,
+      "approx_lat": 27.85,
+      "approx_lng": 84.9333,
+      "coordinates_precision": "unverified",
+      "category": "public_dropoff",
+      "hours": null,
+      "contacts": [{ "name": "Dilip Ghale", "phone": "+977-9851154226" }],
+      "run_by": "Nepali Army / NDRRMA",
+      "handles": "Regional collection/distribution hub for Dhading-side relief",
+      "serves_districts": ["Dhading"],
+      "confidence": "medium — location name confirmed in official notice, exact GPS pin not verified; approx_lat/lng is an unconfirmed Baireni town-center estimate",
+      "sources": ["Downloads/relief-drop-centers.json", "https://himalpress.com/2026/08/government-designates-three-relief-collection-centers-for-flood-victims/"]
+    },
+    {
+      "id": "rasuwa-dao-dhunche",
+      "name": "District Administration Office, Dhunche",
+      "name_np": "जिल्ला प्रशासन कार्यालय, धुन्चे, रसुवा",
+      "city": "Dhunche",
+      "district": "Rasuwa",
+      "lat": null,
+      "lng": null,
+      "approx_lat": 28.1167,
+      "approx_lng": 85.3167,
+      "coordinates_precision": "unverified",
+      "category": "public_dropoff",
+      "hours": null,
+      "contacts": [],
+      "run_by": "Government of Nepal",
+      "handles": "Final-mile distribution into the worst-hit district; alternate ground-transport drop-off point for donors already near or heading into Rasuwa",
+      "note": "Named in official notice, not cross-confirmed elsewhere. No named contact person found yet.",
+      "serves_districts": ["Rasuwa"],
+      "confidence": "medium — named in one official notice, not cross-confirmed elsewhere; approx_lat/lng is an unconfirmed Dhunche town-center estimate",
+      "sources": ["Downloads/relief-drop-centers.json", "aggregated Nepali news search snippets"]
+    },
+    {
+      "id": "nuwakot-bidur-dcc-hall",
+      "name": "District Coordination Committee Hall, Bidur",
+      "name_np": "जिल्ला समन्वय समिति हल, विदुर",
+      "city": "Bidur",
+      "district": "Nuwakot",
+      "lat": null,
+      "lng": null,
+      "approx_lat": 27.9167,
+      "approx_lng": 85.1833,
+      "coordinates_precision": "unverified",
+      "category": "onward_distribution_point",
+      "hours": null,
+      "contacts": [],
+      "run_by": "Government of Nepal",
+      "handles": "Onward routing of Kathmandu-Valley-collected relief into Nuwakot",
+      "note": "May overlap with one of the 18 venues listed under nuwakot_holding_distribution_centers below (e.g. 'Bidur Covered Hall'); not confirmed to be the same site.",
+      "confidence": "medium — named in aggregated news search snippets, no GPS or cross-confirmation",
+      "sources": ["aggregated Nepali news search snippets"]
+    },
+    {
+      "id": "nuwakot-bidur-municipality",
+      "name": "Bidur Municipality Office",
+      "name_np": "विदुर नगरपालिका कार्यालय",
+      "city": "Bidur",
+      "district": "Nuwakot",
+      "lat": null,
+      "lng": null,
+      "approx_lat": 27.9167,
+      "approx_lng": 85.1833,
+      "coordinates_precision": "unverified",
+      "category": "onward_distribution_point",
+      "hours": null,
+      "contacts": [],
+      "run_by": "Government of Nepal",
+      "handles": "Onward routing of Kathmandu-Valley-collected relief into Nuwakot",
+      "confidence": "medium — named in aggregated news search snippets, no GPS or cross-confirmation",
+      "sources": ["aggregated Nepali news search snippets"]
+    },
+    {
+      "id": "chitwan-bharatpur-room",
+      "name": "Bharatpur Metropolitan City relief collection room",
+      "name_np": "भरतपुर महानगरपालिका राहत सङ्कलन कक्ष",
+      "city": "Bharatpur",
+      "district": "Chitwan",
+      "lat": 27.677,
+      "lng": 84.434,
+      "coordinates_precision": "locality",
+      "category": "public_dropoff",
+      "hours": null,
+      "contacts": [
+        { "name": "Bharatpur Metropolitan City Office", "phone": "+977-56-597004 / 056-511467", "email": "bmc@ntc.net.np / info@bharatpurmun.gov.np" }
+      ],
+      "run_by": "Bharatpur Metropolitan City",
+      "handles": "Local collection point for Chitwan-area donors, separate from the Kathmandu/Nuwakot/Dhading chain",
+      "confidence": "medium — room's existence confirmed in news reporting, exact address/GPS not independently verified",
+      "sources": ["https://lokaantar.com/story/327678/2026/8/31/current-affairs/chitwan- (fetch blocked, corroborated via search snippet)", "bharatpurmun.gov.np"]
+    }
+  ],
+  "volunteer_network_centers": {
+    "group_info": {
+      "name": "Independent citizen relief group (organized by Samaya Khadka)",
+      "origin": "Started as a 5-person WhatsApp group after a Facebook post on 26 Aug 2026; grown to ~65 volunteers, unaffiliated with any party or organization",
+      "focus": "Relief goods only (redirects cash offers to the PM Disaster Relief Fund). Deliberately focused on Rasuwa rather than Nuwakot, after confirming with Nuwakot authorities that Nuwakot had sufficient supplies.",
+      "source": "OnlineKhabar English, 1 Sept 2026, https://english.onlinekhabar.com/friends-set-out-to-help-rasuwa.html",
+      "confidence_note": "This is an informal grassroots effort, not government-verified infrastructure — treat these as more likely to change or wind down than the official_government_centers above."
+    },
+    "centers": [
+      {
+        "id": "vol-techspire-college",
+        "name": "Techspire College",
+        "district": "Kathmandu",
+        "lat": 27.687439,
+        "lng": 85.3350387,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      },
+      {
+        "id": "vol-mirai-global",
+        "name": "Mirai Global Education and Visa Services",
+        "district": "Kathmandu",
+        "lat": 27.6925186,
+        "lng": 85.3365383,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      },
+      {
+        "id": "vol-cafe-de-mandala",
+        "name": "Cafe De Mandala, Boudha",
+        "district": "Kathmandu",
+        "lat": 27.7213763,
+        "lng": 85.363079,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      },
+      {
+        "id": "vol-eco-sathi",
+        "name": "Eco Sathi Nepal",
+        "district": "Kathmandu",
+        "lat": 27.6944342,
+        "lng": 85.3226683,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      },
+      {
+        "id": "vol-yellow-house",
+        "name": "The Yellow House",
+        "district": "Lalitpur",
+        "lat": 27.6823689,
+        "lng": 85.3058992,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      },
+      {
+        "id": "vol-mandap-moments",
+        "name": "Mandap and Moments",
+        "district": "Bhaktapur",
+        "lat": 27.6633361,
+        "lng": 85.375403,
+        "category": "public_dropoff",
+        "run_by": "Independent citizen volunteer group",
+        "confidence": "medium"
+      }
+    ]
+  },
+  "nuwakot_holding_distribution_centers": {
+    "note": "These are NOT donor drop-off points for people in Kathmandu — they are on-the-ground redistribution sites inside Nuwakot district where the local disaster committee stages relief for handout to survivors. Relevant only if traveling to Nuwakot directly. One source cites '13 holding centers' (9 in Vidur Municipality, 2 in Kispang, 1 in Suryagadhi, 1 in Belkotgadhi); a second source names 18 individual venues. The two lists don't fully reconcile — flagged as-is rather than forced into one count.",
+    "district": "Nuwakot",
+    "confidence": "medium — named in news reporting, no coordinates, venue count inconsistent across sources",
+    "venues": [
+      "Tribhuvan Secondary School",
+      "Karki Manakamana Basic School, Karkigaun",
+      "Tupchetar Health Post & Library",
+      "Sulakshan Secondary School",
+      "Sundari Kyaurini Secondary School",
+      "Indrayani Basic School, Bidur-1",
+      "Trishuli Basic School",
+      "Bidur Covered Hall",
+      "Health Post, Bidur-2",
+      "Nuwakot Durbar (palace grounds)",
+      "Colony Covered Hall",
+      "Bhairab Secondary School",
+      "Kriyaputri Bhawan",
+      "Tamang Plaza, Battar",
+      "Chandrajyoti Secondary School",
+      "Ayurveda Alternative Hospital/Clinic",
+      "Ranbhuwaneshwari Secondary School and Ward Office",
+      "Mahadev Secondary School (Belkotgadhi Municipality)"
+    ]
+  },
+  "ngo_channels": [
+    {
+      "id": "ngo-red-cross-hq",
+      "name": "Nepal Red Cross Society Headquarters",
+      "name_np": "नेपाल रेडक्रस सोसाइटी केन्द्रीय कार्यालय",
+      "city": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.6997,
+      "lng": 85.3181,
+      "coordinates_precision": "landmark",
+      "type": "ngo_cash_and_volunteer",
+      "handles": "Cash donations (donation.nrcs.org) and volunteer coordination; 200+ staff already deployed to affected districts with tarpaulins, blankets, sleeping mats, first aid kits and drinking water",
+      "source": "https://donation.nrcs.org/"
+    }
+  ],
+  "municipal_fund_contributors": [
+    {
+      "id": "pokhara-metro-fund",
+      "name": "Pokhara Metropolitan City Office",
+      "name_np": "पोखरा महानगरपालिका कार्यालय",
+      "city": "Pokhara",
+      "district": "Kaski",
+      "lat": 28.2096,
+      "lng": 83.9856,
+      "coordinates_precision": "locality",
+      "note": "NOT a public drop-off point. Pokhara Metropolitan City itself donated NPR 4.5 million to the PM Relief Fund; local businesses/associations in Pokhara separately raised over NPR 4.1 million routed through the same fund.",
+      "source": "https://www.arghakhanchi.com/2026/08/27/201941/"
+    }
+  ],
+  "items_needed": {
+    "source": "NDRRMA SitRep #06, 11 Bhadra (still-needed list — will go stale as needs shift)",
+    "shelter": ["Tents", "Tarpaulin", "Rope", "Blankets", "Black plastic sheeting", "Sleeping bags", "Sleeping mats"],
+    "kitchen": ["Kitchen sets", "Cooking gas + cylinder", "Plastic buckets", "Plastic mugs", "Water containers"],
+    "hygiene": ["Baby kits (0–2y, 3–5y)", "Dignity/adolescent kits", "Slippers", "Basic clothing", "Hygiene kits", "Soap/laundry soap", "Sanitary pads", "Toothbrush/toothpaste", "Towels", "Medicine (unspecified quantities)"],
+    "light": ["Solar panels", "Solar lights", "Batteries"],
+    "food": ["High-energy biscuits", "Ready-to-eat meals", "Rice", "Lentils", "Potatoes", "Cooking oil", "Salt", "Soybean", "Beaten rice (chiura)", "Dried fruit"]
+  },
+  "cash_donation": {
+    "official_portal": "https://donate.gov.np",
+    "rescue_request_portal": "https://rescue.opmcm.gov.np",
+    "fonepay_merchant_terminal": "2222010021637134 (Prime Minister Disaster Relief Fund — verify payee name matches exactly before paying)",
+    "moha_contact": "01-4211208 / 01-4211214, toll-free 1112",
+    "warning": "Government has publicly warned against personal/unofficial QR codes circulating on social media claiming to collect for flood victims. Verify against the official portal, and that the payee name reads exactly 'Prime Minister Disaster Relief Fund', before sending money to any QR code.",
+    "note": "Bank account numbers and live donation totals are deliberately excluded here — they change daily and would go stale in this file. Link out to the official portal instead."
+  }
+}

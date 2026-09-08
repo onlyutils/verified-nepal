@@ -10,6 +10,7 @@ import { orgStrings } from "@/i18n/orgs";
 import { ourMessageStrings } from "@/i18n/our-message";
 import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
+import { floodReliefStrings } from "@/i18n/flood-relief";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ const navPages = [
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
   ["dropCenters", "dropCenters"],
+  ["floodRelief", "floodReliefNav"],
   ["incidents", "incidents"],
   ["climate", "climate"],
   ["ourMessage", "ourMessage"],
@@ -107,7 +109,15 @@ export function SiteHeader({
                 <div className="my-3 border-t" />
                 {signedIn ? null : (
                   <SheetClose asChild>
-                    <Button type="button" variant="ghost" className="justify-start" onClick={() => { rememberReturnTo(); navigate("deskLogin"); }}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="justify-start"
+                      onClick={() => {
+                        rememberReturnTo();
+                        navigate("deskLogin");
+                      }}
+                    >
                       {meStrings[language].navSignIn}
                     </Button>
                   </SheetClose>
@@ -151,6 +161,7 @@ export function SiteHeader({
 function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
+  if (page === "floodRelief") return floodReliefStrings[language].navLabel;
   if (page === "climate") return climateStrings[language].navLabel;
   if (page === "ourMessage") return ourMessageStrings[language].navLabel;
   if (page === "poster") return posterStrings[language].catalogueTitle;
@@ -179,10 +190,23 @@ function AccountButton({ language, navigate }: { language: Language; navigate: (
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="min-h-11 h-auto max-w-[10rem]" aria-label={unread > 0 ? `${t.navAccount} · ${t.activityUnread}: ${unread}` : t.navAccount}>
-          <span className="relative flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground" aria-hidden="true">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="min-h-11 h-auto max-w-[10rem]"
+          aria-label={unread > 0 ? `${t.navAccount} · ${t.activityUnread}: ${unread}` : t.navAccount}
+        >
+          <span
+            className="relative flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
+            aria-hidden="true"
+          >
             {(auth.profile?.name || auth.profile?.email || "?").slice(0, 1)}
-            {unread > 0 ? <span className="absolute -right-2 -top-2 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-4 text-destructive-foreground">{unread}</span> : null}
+            {unread > 0 ? (
+              <span className="absolute -right-2 -top-2 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-4 text-destructive-foreground">
+                {unread}
+              </span>
+            ) : null}
           </span>
           <span className="hidden truncate sm:inline">{displayName}</span>
         </Button>

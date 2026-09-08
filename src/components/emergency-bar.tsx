@@ -1,15 +1,17 @@
-import { ExternalLink, Phone, TriangleAlert } from "lucide-react";
+import { ExternalLink, MapPin, Phone, TriangleAlert } from "lucide-react";
 import { labels } from "@/i18n";
+import { floodReliefStrings } from "@/i18n/flood-relief";
 import { shellStrings } from "@/i18n/shell";
 import { pmdrfUrl } from "@/lib/urls";
-import type { Language } from "@/lib/types";
+import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
 const container = "mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8";
 
-export function EmergencyBar({ language }: { language: Language }) {
+export function EmergencyBar({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
   const t = labels[language];
   const ts = shellStrings[language];
+  const fs = floodReliefStrings[language];
   return (
     <aside aria-label={t.emergencyStripLabel} className="emergency-bar bg-destructive text-destructive-foreground">
       <div className="mx-auto flex h-10 w-full max-w-7xl items-center justify-center gap-1 px-2 text-[11px] sm:hidden">
@@ -46,16 +48,26 @@ export function EmergencyBar({ language }: { language: Language }) {
           <EmergencyPhone number="100" label={t.policeShort} />
           <EmergencyPhone number="102" label={t.ambulanceShort} />
         </div>
-        <Button
-          asChild
-          type="button"
-          variant="outline"
-          className="min-h-11 w-full border-white bg-transparent text-white hover:bg-white hover:text-destructive lg:w-auto"
-        >
-          <a href={pmdrfUrl} target="_blank" rel="noopener noreferrer">
-            {ts.emergencyDonate} <ExternalLink aria-hidden="true" />
-          </a>
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 w-full border-white bg-transparent text-white hover:bg-white hover:text-destructive lg:w-auto"
+            onClick={() => navigate("floodRelief")}
+          >
+            <MapPin aria-hidden="true" /> {fs.emergencyBarCta}
+          </Button>
+          <Button
+            asChild
+            type="button"
+            variant="outline"
+            className="min-h-11 w-full border-white bg-transparent text-white hover:bg-white hover:text-destructive lg:w-auto"
+          >
+            <a href={pmdrfUrl} target="_blank" rel="noopener noreferrer">
+              {ts.emergencyDonate} <ExternalLink aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
       </div>
     </aside>
   );

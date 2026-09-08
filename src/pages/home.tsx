@@ -37,6 +37,8 @@ import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
 import { listStories, type StoryPublicItem } from "@/lib/api";
 import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
+import { floodReliefStrings } from "@/i18n/flood-relief";
+import reliefData from "@/data/relief-centers.json";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
 const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
@@ -54,9 +56,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
         <div className={`${container} grid items-start gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
           <div>
             <Eyebrow>{ts.landingFloodName}</Eyebrow>
-            <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight text-foreground lg:text-5xl">
-              {ts.landingTitle}
-            </h1>
+            <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight text-foreground lg:text-5xl">{ts.landingTitle}</h1>
             <p className="mt-5 text-lg text-muted-foreground">{labels[language].aboutBody}</p>
           </div>
           <div className="grid gap-5">
@@ -71,6 +71,52 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
                 {orgStrings[language].registerOrgCta} →
               </Button>
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-primary text-primary-foreground">
+        <div className={`${container} py-12 lg:py-16`}>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary-foreground/80">
+                <span className="inline-flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-background animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+                  {floodReliefStrings[language].eyebrow}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-background/15 px-3 py-1 text-primary-foreground">
+                  {language === "ne" ? `${reliefData.centers.length} राहत केन्द्रहरू` : `${reliefData.centers.length} relief centers`}
+                </span>
+              </div>
+              <h2 id="flood-relief" className="mt-4 scroll-mt-24 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                {floodReliefStrings[language].ctaHeadline}
+              </h2>
+              <div className="mt-5 flex min-w-0 items-start gap-4">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-background/15">
+                  <HandHelping className="size-5" aria-hidden="true" />
+                </span>
+                <p className="max-w-2xl text-base leading-7 text-primary-foreground/85">{floodReliefStrings[language].ctaBody}</p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full border-0 bg-background text-primary hover:bg-background/90 sm:w-auto"
+                onClick={() => navigate("floodRelief")}
+              >
+                {floodReliefStrings[language].ctaButton}
+              </Button>
+              <a
+                href={reliefData.cash_donation.official_portal}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center text-sm text-primary-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+              >
+                {floodReliefStrings[language].ctaCashLink} <ExternalLink aria-hidden="true" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -303,9 +349,13 @@ function Stories({ language }: { language: Language }) {
   useEffect(() => {
     let cancelled = false;
     listStories()
-      .then((r) => { if (!cancelled) setItems(r.items); })
+      .then((r) => {
+        if (!cancelled) setItems(r.items);
+      })
       .catch(() => {}); // ponytail: no stories yet or offline both mean "show nothing"
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   if (!items.length) return null;
   return (
@@ -318,7 +368,13 @@ function Stories({ language }: { language: Language }) {
             <li key={item.id} className="w-64 shrink-0 snap-start">
               <Card className="flex h-full flex-col overflow-hidden">
                 {item.media.type === "video" ? (
-                  <video src={item.media.url} controls preload="metadata" playsInline className="aspect-[4/5] w-full bg-black object-cover" />
+                  <video
+                    src={item.media.url}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="aspect-[4/5] w-full bg-black object-cover"
+                  />
                 ) : (
                   <img
                     src={item.media.url}
