@@ -1,33 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Check, Download, ExternalLink, Plus, Search, Share2 } from "lucide-react";
+import { Check, ChevronDown, Download, ExternalLink, Share2 } from "lucide-react";
 import { posterStrings } from "@/i18n/poster";
 import { labels } from "@/i18n";
 import { districtLabels, districtNames } from "@/lib/geo";
 import { downscaleImage } from "@/lib/image";
 import { apiErrorMessage } from "@/lib/api-error";
-import {
-  getDashboard,
-  getMissing,
-  createMissingTip,
-  presignMissingPhoto,
-  putMissing,
-  type MissingBody,
-  type MissingListResponse,
-  type MyMissing,
-} from "@/lib/api";
+import { getDashboard, getMissing, createMissingTip, presignMissingPhoto, putMissing, type MissingBody, type MyMissing } from "@/lib/api";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { useGoogleAuth } from "@/lib/auth";
 import { uploadMedia } from "@/lib/media";
 import {
   EMPTY_POSTER,
-  lastSeenLine,
   posterFilename,
-  posterHeadline,
   posterNameLine,
   POSTER_LIMITS,
   POSTER_SIZES,
   validatePoster,
   type PosterInput,
+  type PosterSize,
   type PosterStatus,
 } from "@/lib/poster";
 import { drawPoster, loadPosterFonts, type PosterAssets } from "@/lib/poster-draw";
@@ -37,6 +27,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,8 +36,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { TurnstileWidget } from "@/components/turnstile";
 import { PageHeader } from "@/components/page-header";
 import { SignInNudge } from "@/components/sign-in-nudge";
-import { StatCard } from "@/components/stat-card";
-import { StatusBadge, type StatusTone } from "@/components/status-badge";
 
 const DRAFT_KEY = "vn:poster-draft";
 const TURNSTILE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -113,18 +102,24 @@ function posterPhoto(item: MyMissing): { fileId: string; url: string } | null {
   return null;
 }
 
-const POSTER_TONE: Record<PosterStatus, StatusTone> = { missing: "danger", found: "info", safe: "success" };
-
-async function renderPosterBlob(item: MyMissing, language: Language, includeContact = false): Promise<{ blob: Blob; filename: string } | null> {
-  const input = toPosterInput(item, language);
+async function renderPosterBlob(
+  item: MyMissing,
+  language: Language,
+  includeContact = false,
+  format?: PosterExportFormat,
+): Promise<{ blob: Blob; filename: string } | null> {
+  const baseInput = toPosterInput(item, language);
+  const input = format ? { ...baseInput, size: format.base } : baseInput;
   const t = posterStrings[input.language];
   await loadPosterFonts();
   const savedPhoto = posterPhoto(item);
   const photo = savedPhoto ? await loadImage(savedPhoto.url).catch(() => null) : null;
   const canvas = document.createElement("canvas");
   drawPoster(canvas, input, { photo }, t, { includeContact, pageUrl: `${window.location.origin}/poster/${encodeURIComponent(item.id)}` });
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-  return blob ? { blob, filename: posterFilename(input) } : null;
+  const out = format ? fitToCanvas(canvas, format.width, format.height) : canvas;
+  const blob = await canvasToBlob(out);
+  const filename = format ? posterFilename(input).replace(/\.png$/, `-${format.id}.png`) : posterFilename(input);
+  return blob ? { blob, filename } : null;
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -134,6 +129,74 @@ function downloadBlob(blob: Blob, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/** A named export size: which of the two poster layouts to render, scaled to fit the platform's pixel dimensions. */
+type PosterExportFormat = {
+  id: string;
+  base: PosterSize;
+  width: number;
+  height: number;
+  labelKey: keyof (typeof posterStrings)["en"];
+};
+
+const POSTER_EXPORT_FORMATS: PosterExportFormat[] = [
+  { id: "instagram-post", base: "feed", width: 1080, height: 1080, labelKey: "formatInstagramPost" },
+  { id: "instagram-story", base: "story", width: 1080, height: 1920, labelKey: "formatInstagramStory" },
+  { id: "facebook", base: "feed", width: 1200, height: 630, labelKey: "formatFacebook" },
+  { id: "twitter", base: "feed", width: 1200, height: 675, labelKey: "formatTwitter" },
+  { id: "a4", base: "story", width: 2480, height: 3508, labelKey: "formatA4" },
+];
+
+function canvasToBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+}
+
+/** Scales the rendered poster to fit inside the target box, centred on a white background — a plain letterbox, no relayout. */
+function fitToCanvas(source: HTMLCanvasElement, width: number, height: number) {
+  const out = document.createElement("canvas");
+  out.width = width;
+  out.height = height;
+  const ctx = out.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    const scale = Math.min(width / source.width, height / source.height);
+    const w = source.width * scale;
+    const h = source.height * scale;
+    ctx.drawImage(source, (width - w) / 2, (height - h) / 2, w, h);
+  }
+  return out;
+}
+
+/** Download button with a menu of platform-sized exports (Instagram, Facebook, Twitter, print A4). */
+function DownloadFormatMenu({
+  t,
+  disabled,
+  onPick,
+}: {
+  t: (typeof posterStrings)["en"];
+  disabled?: boolean;
+  onPick: (format: PosterExportFormat) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" size="lg" className="flex-1" disabled={disabled}>
+          <Download aria-hidden="true" />
+          {t.download}
+          <ChevronDown aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {POSTER_EXPORT_FORMATS.map((format) => (
+          <DropdownMenuItem key={format.id} onSelect={() => onPick(format)}>
+            {t[format.labelKey]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 /** One-tap share of the rendered poster picture, falling back to a download. */
@@ -362,7 +425,17 @@ function sharePosterPage(id: string, label: string) {
   else void navigator.clipboard?.writeText(url);
 }
 
-function TipDialog({ id, language, open, onOpenChange }: { id: string; language: Language; open: boolean; onOpenChange: (open: boolean) => void }) {
+function TipDialog({
+  id,
+  language,
+  open,
+  onOpenChange,
+}: {
+  id: string;
+  language: Language;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = posterStrings[language];
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
@@ -399,12 +472,20 @@ function TipDialog({ id, language, open, onOpenChange }: { id: string; language:
           <DialogTitle>{sent ? t.informationSent : t.informationTitle}</DialogTitle>
         </DialogHeader>
         {sent ? (
-          <DialogFooter><Button onClick={() => onOpenChange(false)}>{t.cardOpen}</Button></DialogFooter>
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)}>{t.cardOpen}</Button>
+          </DialogFooter>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="missing-tip-message">{t.informationMessage}</Label>
-              <Textarea id="missing-tip-message" rows={4} maxLength={1000} value={message} onChange={(event) => setMessage(event.target.value)} />
+              <Textarea
+                id="missing-tip-message"
+                rows={4}
+                maxLength={1000}
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="missing-tip-contact">{t.informationContact}</Label>
@@ -412,63 +493,23 @@ function TipDialog({ id, language, open, onOpenChange }: { id: string; language:
               <p className="text-sm text-muted-foreground">{t.informationPrivacy}</p>
             </div>
             {TURNSTILE_KEY ? <TurnstileWidget siteKey={TURNSTILE_KEY} language={language} onToken={setToken} /> : null}
-            {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
+            {error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
             <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>{t.backToCatalogue}</Button>
-              <Button onClick={() => void submit()} disabled={submitting || !message.trim() || Boolean(TURNSTILE_KEY && !token)}>{t.informationSubmit}</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                {t.cancel}
+              </Button>
+              <Button onClick={() => void submit()} disabled={submitting || !message.trim() || Boolean(TURNSTILE_KEY && !token)}>
+                {t.informationSubmit}
+              </Button>
             </DialogFooter>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function PosterBoardCard({ item, language, onOpen }: { item: MyMissing; language: Language; onOpen: () => void }) {
-  const t = posterStrings[language];
-  const input = toPosterInput(item, language);
-  const photo = posterPhoto(item);
-
-  return (
-    <Card>
-      <CardContent className="flex gap-4 p-4">
-        {photo ? (
-          <img src={photo.url} alt={item.name} className="h-20 w-20 shrink-0 rounded-md object-cover" loading="lazy" />
-        ) : (
-          <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-[11px] text-muted-foreground"
-            aria-hidden="true"
-          >
-            {t.photoPlaceholder}
-          </div>
-        )}
-        <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold">{posterNameLine(input)}</span>
-            <StatusBadge tone={POSTER_TONE[input.status]}>{posterHeadline(input.status, t)}</StatusBadge>
-          </div>
-          <p className="text-muted-foreground">{lastSeenLine(input, t)}</p>
-          {input.story.trim() ? <p className="truncate text-muted-foreground">{input.story.trim()}</p> : null}
-          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-t pt-2">
-            <span />
-            <div className="flex gap-2">
-              <Button type="button" size="sm" variant="outline" className="h-8 rounded-full px-3" onClick={onOpen}>
-                {t.cardOpen}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 rounded-full px-3"
-                onClick={() => sharePosterPage(item.id, posterNameLine(input))}
-              >
-                {t.cardShare}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -534,14 +575,12 @@ function PosterViewDialog({
                 </Button>
               ) : null}
               {canEdit ? (
-                <Button
-                  type="button"
-                  className="flex-1"
-                  onClick={() => renderPosterBlob(item, language, includeContact).then((r) => r && downloadBlob(r.blob, r.filename))}
-                >
-                  <Download aria-hidden="true" />
-                  {t.download}
-                </Button>
+                <DownloadFormatMenu
+                  t={t}
+                  onPick={(format) =>
+                    renderPosterBlob(item, language, includeContact, format).then((r) => r && downloadBlob(r.blob, r.filename))
+                  }
+                />
               ) : (
                 <Button type="button" className="flex-1" onClick={() => setTipOpen(true)}>
                   {t.informationButton}
@@ -553,7 +592,12 @@ function PosterViewDialog({
                   {t.cardShare}
                 </Button>
               ) : (
-                <Button type="button" variant="secondary" className="flex-1" onClick={() => sharePosterPage(item.id, posterNameLine(input))}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => sharePosterPage(item.id, posterNameLine(input))}
+                >
                   <Share2 aria-hidden="true" />
                   {t.sharePage}
                 </Button>
@@ -574,137 +618,6 @@ function PosterViewDialog({
   );
 }
 
-/** /poster — public board of every saved poster, missing first, plus the create button. */
-export function PosterCatalogue({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
-  const t = posterStrings[language];
-  const [data, setData] = useState<MissingListResponse | null | "error">(null);
-  const [filter, setFilter] = useState<"all" | PosterStatus>("all");
-  const [query, setQuery] = useState("");
-  const [openItem, setOpenItem] = useState<MyMissing | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getMissing()
-      .then((res) => !cancelled && setData(res))
-      .catch(() => !cancelled && setData("error"));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const createButton = (
-    <Button type="button" size="lg" onClick={() => navigate("posterNew")}>
-      <Plus aria-hidden="true" />
-      {t.newPoster}
-    </Button>
-  );
-
-  const items = data && data !== "error" ? data.items : [];
-  const missingDistricts = useMemo(
-    () => new Set(items.filter((m) => m.status === "missing" && m.district).map((m) => m.district)).size,
-    [items],
-  );
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return items.filter((m) => {
-      if (filter !== "all" && m.status !== filter) return false;
-      if (!q) return true;
-      return [m.name, m.district, m.place].join(" ").toLowerCase().includes(q);
-    });
-  }, [items, filter, query]);
-
-  const filterOptions: { value: "all" | PosterStatus; label: string }[] = [
-    { value: "all", label: t.filterAll },
-    { value: "missing", label: t.filterMissing },
-    { value: "found", label: t.filterFound },
-    { value: "safe", label: t.filterSafe },
-  ];
-  const filtering = filter !== "all" || query.trim().length > 0;
-
-  return (
-    <div className="mx-auto max-w-7xl space-y-8">
-      <PageHeader eyebrow={t.eyebrow} title={t.catalogueTitle} description={t.catalogueIntro} actions={createButton} />
-      <aside className="border-l-2 border-primary pl-4 text-sm leading-relaxed text-muted-foreground">
-        <p className="font-semibold text-primary">{t.disclaimerTitle}</p>
-        <p className="mt-1">{t.disclaimerBody}</p>
-        <Button asChild variant="outline" size="sm" className="mt-3">
-          <a href={opmcmMissingPersonUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink aria-hidden="true" />
-            {t.disclaimerLink}
-          </a>
-        </Button>
-      </aside>
-      {data === null ? (
-        <LoadingState label={t.loading} />
-      ) : data === "error" ? (
-        <Alert variant="destructive">
-          <AlertDescription>{t.catalogueError}</AlertDescription>
-        </Alert>
-      ) : items.length === 0 ? (
-        <EmptyState title={t.catalogueEmpty} description={t.catalogueEmptyBody} action={createButton} />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard
-              value={data.counts.missing}
-              label={t.kpiMissing}
-              hint={t.kpiMissingHint.replace("{n}", String(missingDistricts))}
-              tone="danger"
-            />
-            <StatCard value={data.counts.found} label={t.kpiFound} hint={t.kpiFoundHint} tone="primary" />
-            <StatCard value={data.counts.safe} label={t.kpiSafe} hint={t.kpiSafeHint} tone="success" />
-          </div>
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t.filterAll}>
-                {filterOptions.map((o) => {
-                  const active = o.value === filter;
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => setFilter(o.value)}
-                      className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        active ? "border-foreground bg-foreground text-background" : "border-input bg-background hover:bg-accent"
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="relative w-full sm:w-72">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.searchPlaceholder} className="pl-9" />
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {filtering
-                ? t.showingFiltered.replace("{n}", String(filtered.length)).replace("{m}", String(items.length))
-                : t.showingAll.replace("{n}", String(items.length))}
-            </p>
-            {filtered.length === 0 ? (
-              <EmptyState icon={Search} title={t.noResultsTitle} description={t.noResultsBody} />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((m) => (
-                  <PosterBoardCard key={m.id} item={m} language={language} onOpen={() => setOpenItem(m)} />
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-      <PosterViewDialog item={openItem} language={language} onOpenChange={(open) => !open && setOpenItem(null)} />
-    </div>
-  );
-}
-
 export function PosterRecordPage({ language, navigate, id }: { language: Language; navigate: (page: Page) => void; id: string }) {
   const auth = useGoogleAuth();
   const [item, setItem] = useState<MyMissing | null>(null);
@@ -715,28 +628,34 @@ export function PosterRecordPage({ language, navigate, id }: { language: Languag
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      getMissing(),
-      auth.idToken ? getDashboard(auth.idToken).catch(() => null) : Promise.resolve(null),
-    ]).then(([publicData, dashboard]) => {
-      if (cancelled) return;
-      const found = publicData.items.find((candidate) => candidate.id === id) ?? dashboard?.missing.find((candidate) => candidate.id === id) ?? null;
-      setItem(found);
-      setOwner(Boolean(dashboard?.missing.some((candidate) => candidate.id === id)));
-      setNotFound(!found);
-    }).catch(() => {
-      if (!cancelled) setNotFound(true);
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+    Promise.all([getMissing(), auth.idToken ? getDashboard(auth.idToken).catch(() => null) : Promise.resolve(null)])
+      .then(([publicData, dashboard]) => {
+        if (cancelled) return;
+        const found =
+          publicData.items.find((candidate) => candidate.id === id) ?? dashboard?.missing.find((candidate) => candidate.id === id) ?? null;
+        setItem(found);
+        setOwner(Boolean(dashboard?.missing.some((candidate) => candidate.id === id)));
+        setNotFound(!found);
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-    }, [auth.idToken, id]);
+  }, [auth.idToken, id]);
 
   if (loading) return <LoadingState label={posterStrings[language].loading} />;
   if (notFound || !item)
-    return <EmptyState title={posterStrings[language].catalogueEmpty} action={<Button onClick={() => navigate("poster")}>{posterStrings[language].backToCatalogue}</Button>} />;
+    return (
+      <EmptyState
+        title={posterStrings[language].notFoundTitle}
+        action={<Button onClick={() => navigate("poster")}>{posterStrings[language].newPoster}</Button>}
+      />
+    );
   return (
     <PosterViewDialog
       item={item}
@@ -858,6 +777,21 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
     setDownloaded(true);
   };
 
+  const downloadFormat = async (format: PosterExportFormat) => {
+    if (!validate()) return;
+    const formatInput = { ...input, size: format.base };
+    const offscreen = document.createElement("canvas");
+    drawPoster(offscreen, formatInput, assets, posterStrings[input.language]);
+    const out = fitToCanvas(offscreen, format.width, format.height);
+    const blob = await canvasToBlob(out);
+    if (!blob) {
+      setExportError(true);
+      return;
+    }
+    downloadBlob(blob, posterFilename(formatInput).replace(/\.png$/, `-${format.id}.png`));
+    setDownloaded(true);
+  };
+
   const share = async () => {
     if (!validate()) return;
     const blob = await toBlob();
@@ -931,11 +865,23 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
         title={savedId ? t.editTitle : t.title}
         description={t.intro}
         actions={
-          <Button asChild variant="outline">
-            <a href="/poster">{t.backToCatalogue}</a>
-          </Button>
+          savedId ? (
+            <Button asChild variant="outline">
+              <a href={`/poster/${encodeURIComponent(savedId)}`}>{t.cardOpen}</a>
+            </Button>
+          ) : undefined
         }
       />
+      <aside className="border-l-2 border-primary pl-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="font-semibold text-primary">{t.disclaimerTitle}</p>
+        <p className="mt-1">{t.disclaimerBody}</p>
+        <Button asChild variant="outline" size="sm" className="mt-3">
+          <a href={opmcmMissingPersonUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink aria-hidden="true" />
+            {t.disclaimerLink}
+          </a>
+        </Button>
+      </aside>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           {errorCount ? (
@@ -1113,10 +1059,7 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
             role="img"
           />
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="button" size="lg" className="flex-1" onClick={download}>
-              <Download aria-hidden="true" />
-              {t.download}
-            </Button>
+            <DownloadFormatMenu t={t} onPick={(format) => void downloadFormat(format)} />
             {canShare ? (
               <Button type="button" size="lg" variant="secondary" className="flex-1" onClick={share}>
                 <Share2 aria-hidden="true" />

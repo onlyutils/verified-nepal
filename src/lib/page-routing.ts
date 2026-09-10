@@ -8,6 +8,13 @@ export function refCodeFromPath(pathname: string): string | null {
   return code || null;
 }
 
+/** Old URLs the edge already 301s on a real deploy; the SPA also fixes the address bar itself, since `npm run dev` never sees _redirects. */
+export function canonicalPath(pathname: string): string | null {
+  if (pathname === "/poster/new") return "/poster";
+  if (pathname === "/flood-relief" || pathname.startsWith("/flood-relief/")) return "/drop-centers";
+  return null;
+}
+
 export function pageFromPath(path: string): AppPage {
   const url = new URL(path, "https://verifiednepal.local");
   const pathname = url.pathname.replace(/\/+$/, "") || "/";
@@ -19,7 +26,7 @@ export function pageFromPath(path: string): AppPage {
   if (pathname.startsWith("/org")) return "org";
   if (pathname.match(/^\/drop-centers\/[^\/]+/)) return "dropCenterDetail";
   if (pathname.startsWith("/drop-centers")) return "dropCenters";
-  if (pathname.startsWith("/flood-relief")) return "floodRelief";
+  if (pathname.startsWith("/flood-relief")) return "dropCenters";
   if (pathname.startsWith("/climate")) return "climate";
   if (pathname.startsWith("/how-to")) return "howTo";
   if (pathname.startsWith("/our-message")) return "ourMessage";
@@ -44,7 +51,8 @@ export function pageFromPath(path: string): AppPage {
   if (pathname.startsWith("/search")) return "search";
   if (pathname === "/me" || pathname.startsWith("/me/")) return "me";
   if (pathname.startsWith("/missing")) return "missing";
-  if (pathname.startsWith("/poster/")) return url.searchParams.get("edit") === "1" ? "posterNew" : "posterView";
+  if (pathname === "/poster/new") return "poster";
+  if (pathname.startsWith("/poster/")) return url.searchParams.get("edit") === "1" ? "poster" : "posterView";
   if (pathname.startsWith("/poster")) return "poster";
   if (pathname.startsWith("/info")) return "info";
   if (pathname.startsWith("/privacy")) return "privacy";

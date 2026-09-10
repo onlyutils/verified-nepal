@@ -53,7 +53,7 @@ export function EmergencyBar({ language, navigate }: { language: Language; navig
             type="button"
             variant="outline"
             className="min-h-11 w-full border-white bg-transparent text-white hover:bg-white hover:text-destructive lg:w-auto"
-            onClick={() => navigate("floodRelief")}
+            onClick={() => navigate("dropCenters")}
           >
             <MapPin aria-hidden="true" /> {fs.emergencyBarCta}
           </Button>

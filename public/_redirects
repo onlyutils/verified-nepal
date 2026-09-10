@@ -1,5 +1,8 @@
 /dispatches /articles 301
 /dispatches/* /articles/:splat 301
+/poster/new /poster 301
+/flood-relief /drop-centers 301
+/flood-relief/* /drop-centers 301
 
 # www serves the identical site instead of redirecting — a second indexable
 # copy of every page. Canonical tags already point to the apex, but a 301 is

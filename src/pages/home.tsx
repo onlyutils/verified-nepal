@@ -104,7 +104,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
                 variant="outline"
                 size="lg"
                 className="w-full border-0 bg-background text-primary hover:bg-background/90 sm:w-auto"
-                onClick={() => navigate("floodRelief")}
+                onClick={() => navigate("dropCenters")}
               >
                 {floodReliefStrings[language].ctaButton}
               </Button>
@@ -242,13 +242,13 @@ function ActionCard({ language, kind, navigate }: { language: Language; kind: Ac
       variant: "secondary" as const,
     },
     poster: {
-      title: posterStrings[language].catalogueTitle,
+      title: posterStrings[language].title,
       description: ts.posterCardDescription,
       cta: ts.posterCardCta,
       icon: ImageIcon,
       chip: "bg-destructive-soft text-destructive",
       card: "border-2 bg-background",
-      action: () => navigate("posterNew"),
+      action: () => navigate("poster"),
       variant: "secondary" as const,
     },
     need: {

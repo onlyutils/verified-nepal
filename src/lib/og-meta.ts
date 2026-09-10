@@ -72,8 +72,8 @@ export function centerMeta(center: CenterLike): ShareMeta {
 /** Static per-page share cards for public pages with no per-request data. Image paths are site-relative. */
 export const STATIC_PAGE_META: Record<string, ShareMeta> = {
   poster: {
-    title: "Missing-person posters · verifiedNepal",
-    description: "Make a bilingual missing-person poster in minutes and share it — or browse posters and call if you recognise someone.",
+    title: "Make a missing-person poster · verifiedNepal",
+    description: "Make a bilingual missing-person poster in minutes and download it ready for print or social media.",
     image: "/brand/og-poster.png",
   },
   missing: {

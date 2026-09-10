@@ -20,9 +20,8 @@ import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
 import { droneStrings } from "@/i18n/drones";
-import { floodReliefStrings } from "@/i18n/flood-relief";
 import type { Language, Page } from "@/lib/types";
-import { pageFromPath, type AppPage } from "@/lib/page-routing";
+import { canonicalPath, pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
 
 export { pageFromPath } from "@/lib/page-routing";
@@ -38,7 +37,6 @@ const AuditPage = lazy(() => import("@/pages/audit").then((m) => ({ default: m.A
 const FindPerson = lazy(() => import("@/pages/find-person").then((m) => ({ default: m.FindPerson })));
 const MissingGuide = lazy(() => import("@/pages/missing-guide").then((m) => ({ default: m.MissingGuide })));
 const PosterPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterPage })));
-const PosterCatalogue = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterCatalogue })));
 const PosterRecordPage = lazy(() => import("@/pages/poster").then((m) => ({ default: m.PosterRecordPage })));
 const MePage = lazy(() => import("@/pages/me").then((m) => ({ default: m.MePage })));
 const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
@@ -61,14 +59,12 @@ const IncidentsPage = lazy(() => import("@/pages/incidents").then((m) => ({ defa
 const MyArticlesPage = lazy(() => import("@/articles/my-articles").then((m) => ({ default: m.MyArticlesPage })));
 const ArticleEditor = lazy(() => import("@/articles/editor").then((m) => ({ default: m.ArticleEditor })));
 const HowTo = lazy(() => import("@/pages/how-to").then((m) => ({ default: m.HowTo })));
-const FloodReliefPage = lazy(() => import("@/pages/flood-relief").then((m) => ({ default: m.FloodReliefPage })));
 
 const pagePaths: Record<AppPage, string> = {
   dashboard: "/",
   search: "/search",
   missing: "/missing",
   poster: "/poster",
-  posterNew: "/poster/new",
   posterView: "/poster/:id",
   me: "/me",
   myArticles: "/me/articles",
@@ -95,7 +91,6 @@ const pagePaths: Record<AppPage, string> = {
   dropCenters: "/drop-centers",
   dropCenterDetail: "/drop-centers/:id",
   donationStatus: "/donation/:ref",
-  floodRelief: "/flood-relief",
   climate: "/climate",
   howTo: "/how-to",
   ourMessage: "/our-message",
@@ -116,9 +111,8 @@ function pageTitle(page: AppPage, language: Language): string {
     dashboard: t.dashboard,
     search: t.search,
     missing: t.missingGuideTitle,
-    poster: posterStrings[language].catalogueTitle,
-    posterNew: posterStrings[language].title,
-    posterView: posterStrings[language].catalogueTitle,
+    poster: posterStrings[language].title,
+    posterView: posterStrings[language].title,
     me: meStrings[language].title,
     myArticles: articlesEditorStrings[language].listTitle,
     articleEdit: articlesEditorStrings[language].title,
@@ -144,7 +138,6 @@ function pageTitle(page: AppPage, language: Language): string {
     dropCenters: centerStrings[language].dropCentersTitle,
     dropCenterDetail: centerStrings[language].dropCentersTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
-    floodRelief: floodReliefStrings[language].pageTitle,
     climate: climateStrings[language].title,
     howTo: howToStrings[language].pageTitle,
     ourMessage: ourMessageStrings[language].title,
@@ -186,6 +179,12 @@ export function App() {
   });
   const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname + window.location.search));
   const lastNavigationUrl = useRef(window.location.pathname + window.location.search + window.location.hash);
+
+  useEffect(() => {
+    // The edge 301s these on a real deploy, but `npm run dev` never sees _redirects, so fix the address bar here too.
+    const canonical = canonicalPath(window.location.pathname);
+    if (canonical) window.history.replaceState({}, "", canonical + window.location.search + window.location.hash);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("verifiednepal:language", language);
@@ -322,11 +321,6 @@ export function App() {
               {page === "missing" ? <MissingGuide language={language} navigate={navigate} /> : null}
               {page === "poster" ? (
                 <ComponentErrorBoundary language={language}>
-                  <PosterCatalogue language={language} navigate={navigate} />
-                </ComponentErrorBoundary>
-              ) : null}
-              {page === "posterNew" ? (
-                <ComponentErrorBoundary language={language}>
                   <PosterPage language={language} navigate={navigate} savedId={posterIdFromPath(window.location.pathname)} />
                 </ComponentErrorBoundary>
               ) : null}
@@ -429,11 +423,6 @@ export function App() {
                     navigate={navigate}
                     id={decodeURIComponent(window.location.pathname.split("/")[2] || "")}
                   />
-                </ComponentErrorBoundary>
-              ) : null}
-              {page === "floodRelief" ? (
-                <ComponentErrorBoundary language={language}>
-                  <FloodReliefPage language={language} navigate={navigate} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "climate" ? (

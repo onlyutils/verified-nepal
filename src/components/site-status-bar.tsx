@@ -21,7 +21,7 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
   const signedIn = Boolean(useGoogleAuth().idToken);
   const links: Array<[Page, string]> = [
     ["dashboard", t.dashboard],
-    ["poster", posterStrings[language].catalogueTitle],
+    ["poster", posterStrings[language].title],
     ["dropCenters", centerStrings[language].navDropCenters],
     ["climate", climateStrings[language].navLabel],
     ["ourMessage", ourMessageStrings[language].navLabel],

@@ -357,7 +357,7 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                   <EmptyState
                     title={t.postersEmpty}
                     action={
-                      <Button type="button" onClick={() => navigate("posterNew")}>
+                      <Button type="button" onClick={() => navigate("poster")}>
                         {t.postersMake}
                       </Button>
                     }

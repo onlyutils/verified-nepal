@@ -25,7 +25,6 @@ const DYNAMIC_SOURCES: Array<{ endpoint: string; pathPrefix: string; changefreq:
   { endpoint: "/dispatches", pathPrefix: "/articles", changefreq: "weekly", priority: "0.6" },
   { endpoint: "/projects", pathPrefix: "/projects", changefreq: "weekly", priority: "0.6" },
   { endpoint: "/centers", pathPrefix: "/drop-centers", changefreq: "weekly", priority: "0.5" },
-  { endpoint: "/missing", pathPrefix: "/poster", changefreq: "weekly", priority: "0.5" },
 ];
 
 type Item = { id?: string; updatedAt?: string; createdAt?: string };

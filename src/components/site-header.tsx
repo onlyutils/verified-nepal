@@ -10,7 +10,6 @@ import { orgStrings } from "@/i18n/orgs";
 import { ourMessageStrings } from "@/i18n/our-message";
 import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
-import { floodReliefStrings } from "@/i18n/flood-relief";
 import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +31,6 @@ const navPages = [
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
   ["dropCenters", "dropCenters"],
-  ["floodRelief", "floodReliefNav"],
   ["incidents", "incidents"],
   ["climate", "climate"],
   ["ourMessage", "ourMessage"],
@@ -161,10 +159,9 @@ export function SiteHeader({
 function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
-  if (page === "floodRelief") return floodReliefStrings[language].navLabel;
   if (page === "climate") return climateStrings[language].navLabel;
   if (page === "ourMessage") return ourMessageStrings[language].navLabel;
-  if (page === "poster") return posterStrings[language].catalogueTitle;
+  if (page === "poster") return posterStrings[language].title;
   return t[key] ?? page;
 }
 
