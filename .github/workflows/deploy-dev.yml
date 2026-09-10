@@ -30,6 +30,7 @@ jobs:
           VITE_CHAT_KEY: ${{ vars.VITE_CHAT_KEY }}
           VITE_CHAT_API: ${{ vars.VITE_CHAT_API }}
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          VITE_FLOOD_MANIFEST_URL: ${{ vars.VITE_FLOOD_MANIFEST_URL }}
           VITE_OU_CLIENT_ID: ${{ vars.VITE_OU_CLIENT_ID }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           # dev-only: shows the email/password form for the fixture accounts in

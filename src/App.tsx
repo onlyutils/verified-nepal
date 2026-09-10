@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Dashboard } from "@/pages/home";
+import { FloodImpact } from "@/pages/flood-impact";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { BackToTop } from "@/components/back-to-top";
 import { EmergencyBar } from "@/components/emergency-bar";
@@ -20,6 +21,7 @@ import { disasterStrings } from "@/i18n/disasters";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
 import { droneStrings } from "@/i18n/drones";
+import { floodImpactStrings } from "@/i18n/flood-impact";
 import type { Language, Page } from "@/lib/types";
 import { canonicalPath, pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
@@ -90,6 +92,7 @@ const pagePaths: Record<AppPage, string> = {
   org: "/org",
   dropCenters: "/drop-centers",
   dropCenterDetail: "/drop-centers/:id",
+  floodImpact: "/flood-impact",
   donationStatus: "/donation/:ref",
   climate: "/climate",
   howTo: "/how-to",
@@ -137,6 +140,7 @@ function pageTitle(page: AppPage, language: Language): string {
     org: orgStrings[language].orgDashboardTitle,
     dropCenters: centerStrings[language].dropCentersTitle,
     dropCenterDetail: centerStrings[language].dropCentersTitle,
+    floodImpact: floodImpactStrings[language].pageTitle,
     donationStatus: centerStrings[language].donationStatusTitle,
     climate: climateStrings[language].title,
     howTo: howToStrings[language].pageTitle,
@@ -416,6 +420,7 @@ export function App() {
                   <DropCenters language={language} navigate={navigate} />
                 </ComponentErrorBoundary>
               ) : null}
+              {page === "floodImpact" ? <FloodImpact language={language} /> : null}
               {page === "dropCenterDetail" ? (
                 <ComponentErrorBoundary language={language}>
                   <DropCenterDetail

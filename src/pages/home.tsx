@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   ArrowUpCircle,
+  Camera,
   ExternalLink,
   Flame,
   HandHelping,
@@ -38,6 +39,7 @@ import { posterStrings } from "@/i18n/poster";
 import { listStories, type StoryPublicItem } from "@/lib/api";
 import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
 import { floodReliefStrings } from "@/i18n/flood-relief";
+import { floodImpactStrings } from "@/i18n/flood-impact";
 import reliefData from "@/data/relief-centers.json";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
@@ -117,6 +119,24 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
                 {floodReliefStrings[language].ctaCashLink} <ExternalLink aria-hidden="true" />
               </a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-muted/50">
+        <div className={`${container} py-12 lg:py-16`}>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <Camera className="size-4" aria-hidden="true" />
+                {floodImpactStrings[language].homeCtaEyebrow}
+              </div>
+              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{floodImpactStrings[language].homeCtaHeadline}</h2>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{floodImpactStrings[language].homeCtaBody}</p>
+            </div>
+            <Button type="button" size="lg" className="w-full sm:w-auto" onClick={() => navigate("floodImpact")}>
+              {floodImpactStrings[language].homeCtaButton}
+            </Button>
           </div>
         </div>
       </section>
