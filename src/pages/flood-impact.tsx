@@ -22,6 +22,10 @@ export function FloodImpact({ language }: { language: Language }) {
   const [showOverlay, setShowOverlay] = useState(false);
   const activeItemRef = useRef<HTMLLIElement>(null);
 
+  // The page shows plain optical satellite photographs only — radar frames read as
+  // technical imagery to a general audience, so they are left out.
+  const frames = manifest ? manifest.frames.filter((frame) => frame.source === "s2") : [];
+
   useEffect(() => {
     if (!MANIFEST_URL) {
       setError("not_found");
@@ -33,12 +37,12 @@ export function FloodImpact({ language }: { language: Language }) {
   }, []);
 
   useEffect(() => {
-    if (!playing || !manifest) return;
+    if (!playing || frames.length === 0) return;
     const id = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % manifest.frames.length);
+      setActiveIndex((i) => (i + 1) % frames.length);
     }, AUTOPLAY_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [playing, manifest]);
+  }, [playing, frames.length]);
 
   useEffect(() => {
     activeItemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -46,7 +50,9 @@ export function FloodImpact({ language }: { language: Language }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">{error === "not_found" ? t.notPublished : t.loadError}</div>
+      <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">
+        {error === "not_found" ? t.notPublished : t.loadError}
+      </div>
     );
   }
 
@@ -95,7 +101,9 @@ export function FloodImpact({ language }: { language: Language }) {
                   onClick={() => setActiveIndex(index)}
                 >
                   <span className="truncate font-semibold text-foreground">{item.location.label}</span>
-                  {item.location.arrivalLabel ? <span className="truncate text-xs text-muted-foreground">{item.location.arrivalLabel}</span> : null}
+                  {item.location.arrivalLabel ? (
+                    <span className="truncate text-xs text-muted-foreground">{item.location.arrivalLabel}</span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -135,6 +143,8 @@ export function FloodImpact({ language }: { language: Language }) {
           <img src={manifest.timelapseGifUrl} alt={t.timelapseHeading} className="w-full max-w-3xl rounded-lg" />
         </div>
       ) : null}
+
+      <p className="mt-10 text-xs text-muted-foreground">{t.imageryCredit}</p>
     </div>
   );
 }

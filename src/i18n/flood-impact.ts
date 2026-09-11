@@ -4,7 +4,8 @@ const en = {
   navLabel: "Flood impact",
   homeCtaEyebrow: "Satellite view · Trishuli flash flood",
   homeCtaHeadline: "See the corridor before and after",
-  homeCtaBody: "Sentinel satellite imagery of the Langtang Lirung glacier collapse and the flash flood it triggered all the way down the Trishuli and Narayani rivers into Chitwan — before and after, location by location.",
+  homeCtaBody:
+    "Sentinel satellite imagery of the Langtang Lirung glacier collapse and the flash flood it triggered all the way down the Trishuli and Narayani rivers into Chitwan — before and after, location by location.",
   homeCtaButton: "View the flood impact",
   pageTitle: "Trishuli flood — before and after",
   eyebrow: "26 August 2026 · Langtang Lirung glacial lake outburst",
@@ -26,6 +27,8 @@ const en = {
   timelapseCaption: "Weekly composite timelapse",
   notPublished: "This visualization isn't published yet.",
   loadError: "Couldn't load the flood imagery. Please try again later.",
+  noClearImagery: "No cloud-free satellite photographs of the corridor are available yet.",
+  imageryCredit: "Satellite photographs: Copernicus Sentinel-2. Map imagery: Esri, Maxar, Earthstar Geographics.",
   imageError: "Image unavailable",
 } satisfies Record<string, string>;
 
@@ -33,7 +36,8 @@ const ne: typeof en = {
   navLabel: "बाढी प्रभाव",
   homeCtaEyebrow: "स्याटेलाइट दृश्य · त्रिशूली बाढी",
   homeCtaHeadline: "अघि र पछि नदी करिडोर हेर्नुहोस्",
-  homeCtaBody: "लाङटाङ लिरुङ हिमताल फुटेर त्रिशूली हुँदै नारायणी नदीमार्फत चितवनसम्म आएको बाढीको स्याटेलाइट तस्बिर — अघि र पछि, ठाउँ-ठाउँमा।",
+  homeCtaBody:
+    "लाङटाङ लिरुङ हिमताल फुटेर त्रिशूली हुँदै नारायणी नदीमार्फत चितवनसम्म आएको बाढीको स्याटेलाइट तस्बिर — अघि र पछि, ठाउँ-ठाउँमा।",
   homeCtaButton: "बाढी प्रभाव हेर्नुहोस्",
   pageTitle: "त्रिशूली बाढी — अघि र पछि",
   eyebrow: "२६ अगस्ट २०२६ · लाङटाङ लिरुङ हिमताल विष्फोट",
@@ -55,6 +59,8 @@ const ne: typeof en = {
   timelapseCaption: "साप्ताहिक कम्पोजिट टाइमल्याप्स",
   notPublished: "यो दृश्यावलोकन अझै प्रकाशित भएको छैन।",
   loadError: "बाढीको तस्बिर लोड गर्न सकिएन। पछि फेरि प्रयास गर्नुहोस्।",
+  noClearImagery: "करिडोरको बादलरहित स्याटेलाइट तस्बिर अझै उपलब्ध छैन।",
+  imageryCredit: "स्याटेलाइट तस्बिर: कोपरनिकस सेन्टिनल-२। नक्सा तस्बिर: Esri, Maxar, Earthstar Geographics।",
   imageError: "तस्बिर उपलब्ध छैन",
 };
 
