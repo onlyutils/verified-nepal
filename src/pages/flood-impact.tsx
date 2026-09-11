@@ -22,6 +22,10 @@ export function FloodImpact({ language }: { language: Language }) {
   const [showOverlay, setShowOverlay] = useState(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  // The page shows plain optical satellite photographs only — radar frames read as
+  // technical imagery to a general audience, so they are left out.
+  const frames = manifest ? manifest.frames.filter((frame) => frame.source === "s2") : [];
+
   useEffect(() => {
     if (!MANIFEST_URL) {
       setError("not_found");
@@ -33,12 +37,12 @@ export function FloodImpact({ language }: { language: Language }) {
   }, []);
 
   useEffect(() => {
-    if (!playing || !manifest) return;
+    if (!playing || frames.length === 0) return;
     const id = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % manifest.frames.length);
+      setActiveIndex((i) => (i + 1) % frames.length);
     }, AUTOPLAY_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [playing, manifest]);
+  }, [playing, frames.length]);
 
   useEffect(() => {
     cardRefs.current[activeIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -54,6 +58,10 @@ export function FloodImpact({ language }: { language: Language }) {
     return <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">…</div>;
   }
 
+  if (frames.length === 0) {
+    return <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">{t.noClearImagery}</div>;
+  }
+
   return (
     <div>
       <Eyebrow>{t.eyebrow}</Eyebrow>
@@ -62,7 +70,7 @@ export function FloodImpact({ language }: { language: Language }) {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="lg:sticky lg:top-20 lg:h-fit">
-          <FloodImpactMap frames={manifest.frames} activeIndex={activeIndex} onSelect={setActiveIndex} aoi={manifest.aoi} />
+          <FloodImpactMap frames={frames} activeIndex={activeIndex} onSelect={setActiveIndex} aoi={manifest.aoi} />
           <div className="mt-4 flex items-center gap-3">
             <Button type="button" onClick={() => setPlaying((p) => !p)}>
               {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
@@ -76,7 +84,7 @@ export function FloodImpact({ language }: { language: Language }) {
         </div>
 
         <div className="flex flex-col gap-6">
-          {manifest.frames.map((frame, index) => (
+          {frames.map((frame, index) => (
             <Card
               key={frame.week}
               ref={(el: HTMLDivElement | null) => {
@@ -99,7 +107,6 @@ export function FloodImpact({ language }: { language: Language }) {
                 overlayUrl={frame.classOverlayUrl}
                 showOverlay={showOverlay}
               />
-              <p className="mt-2 text-xs text-muted-foreground">{frame.source === "s1" ? t.cloudGapNote : t.sourceS2}</p>
             </Card>
           ))}
         </div>
@@ -112,6 +119,8 @@ export function FloodImpact({ language }: { language: Language }) {
           <img src={manifest.timelapseGifUrl} alt={t.timelapseHeading} className="w-full max-w-3xl rounded-lg" />
         </div>
       ) : null}
+
+      <p className="mt-10 text-xs text-muted-foreground">{t.imageryCredit}</p>
     </div>
   );
 }
