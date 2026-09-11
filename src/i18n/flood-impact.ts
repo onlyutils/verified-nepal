@@ -30,6 +30,9 @@ const en = {
   noClearImagery: "No cloud-free satellite photographs of the corridor are available yet.",
   imageryCredit: "Satellite photographs: Copernicus Sentinel-2. Map imagery: Esri, Maxar, Earthstar Geographics.",
   imageError: "Image unavailable",
+  share: "Share",
+  shareText: "Before-and-after satellite imagery of the Trishuli flood corridor.",
+  linkCopied: "Link copied",
 } satisfies Record<string, string>;
 
 const ne: typeof en = {
@@ -62,6 +65,9 @@ const ne: typeof en = {
   noClearImagery: "करिडोरको बादलरहित स्याटेलाइट तस्बिर अझै उपलब्ध छैन।",
   imageryCredit: "स्याटेलाइट तस्बिर: कोपरनिकस सेन्टिनल-२। नक्सा तस्बिर: Esri, Maxar, Earthstar Geographics।",
   imageError: "तस्बिर उपलब्ध छैन",
+  share: "साझा गर्नुहोस्",
+  shareText: "त्रिशूली बाढी करिडोरको अघि-पछिको स्याटेलाइट तस्बिर।",
+  linkCopied: "लिङ्क प्रतिलिपि भयो",
 };
 
 export const floodImpactStrings: Record<Language, typeof en> = { en, ne };

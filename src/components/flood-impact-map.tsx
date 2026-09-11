@@ -16,6 +16,36 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
+type LatLng = [number, number];
+
+/** Closest point on segment a→b to p, using a flat-Earth approximation (fine at map-marker scale). */
+function projectPointOnSegment(p: LatLng, a: LatLng, b: LatLng): LatLng {
+  const cosLat0 = Math.cos((a[0] * Math.PI) / 180);
+  const toXY = ([lat, lng]: LatLng): [number, number] => [(lng - a[1]) * cosLat0, lat - a[0]];
+  const [px, py] = toXY(p);
+  const [bx, by] = toXY(b);
+  const lenSq = bx * bx + by * by;
+  const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, (px * bx + py * by) / lenSq));
+  return [a[0] + t * by, a[1] + (t * bx) / cosLat0];
+}
+
+/** Snaps a point to the nearest position on the river polyline, for display only. */
+function nearestPointOnPath(target: LatLng, path: LatLng[]): LatLng {
+  let best = path[0];
+  let bestDistSq = Infinity;
+  for (let i = 0; i < path.length - 1; i++) {
+    const candidate = projectPointOnSegment(target, path[i], path[i + 1]);
+    const dLat = candidate[0] - target[0];
+    const dLng = candidate[1] - target[1];
+    const distSq = dLat * dLat + dLng * dLng;
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
 function makeIcon(active: boolean) {
   const size = active ? 20 : 14;
   return L.divIcon({
@@ -55,10 +85,12 @@ export function FloodImpactMap({
     aoi.type === "Polygon" && Array.isArray(aoi.coordinates)
       ? ((aoi.coordinates as number[][][])[0]?.map(([lng, lat]) => [lat, lng]) ?? [])
       : [];
+  const snappedPositions = frames.map((frame) => nearestPointOnPath([frame.location.lat, frame.location.lng], riverPath));
+  const activePosition = snappedPositions[activeIndex];
 
   return (
     <MapContainer
-      center={[active.location.lat, active.location.lng]}
+      center={activePosition}
       zoom={16}
       scrollWheelZoom={false}
       className={`vn-flood-map h-full min-h-80 w-full rounded-lg ${className ?? ""}`}
@@ -74,14 +106,14 @@ export function FloodImpactMap({
       {frames.map((frame, index) => (
         <Marker
           key={frame.location.label}
-          position={[frame.location.lat, frame.location.lng]}
+          position={snappedPositions[index]}
           icon={makeIcon(index === activeIndex)}
           eventHandlers={{ click: () => onSelect(index) }}
         >
           <Tooltip>{frame.location.label}</Tooltip>
         </Marker>
       ))}
-      <MapFocus target={[active.location.lat, active.location.lng]} />
+      <MapFocus target={activePosition} />
     </MapContainer>
   );
 }

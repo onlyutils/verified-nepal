@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Check, Pause, Play, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,18 @@ import type { Language } from "@/lib/types";
 const MANIFEST_URL = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_FLOOD_MANIFEST_URL as string | undefined;
 const AUTOPLAY_INTERVAL_MS = 3000;
 
+/** kebab-case, ASCII-only slug for a waypoint label, used in the `?loc=` deep link. */
+const DIACRITIC_MARKS = /[̀-ͯ]/g;
+
+function slugify(label: string): string {
+  return label
+    .normalize("NFKD")
+    .replace(DIACRITIC_MARKS, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function FloodImpact({ language }: { language: Language }) {
   const t = floodImpactStrings[language];
   const [manifest, setManifest] = useState<FloodManifest | null>(null);
@@ -20,6 +32,7 @@ export function FloodImpact({ language }: { language: Language }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const activeItemRef = useRef<HTMLLIElement>(null);
 
   // The page shows plain optical satellite photographs only — radar frames read as
@@ -48,6 +61,25 @@ export function FloodImpact({ language }: { language: Language }) {
     activeItemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [activeIndex]);
 
+  // Deep link: `?loc=<slug>` on page load selects the matching waypoint. Runs once the
+  // manifest arrives (manifest only changes reference the one time it's fetched).
+  useEffect(() => {
+    if (!manifest) return;
+    const loc = new URLSearchParams(window.location.search).get("loc");
+    if (!loc) return;
+    const index = manifest.frames.findIndex((item) => slugify(item.location.label) === loc);
+    if (index >= 0) setActiveIndex(index);
+  }, [manifest]);
+
+  // Keep the URL in sync with the active waypoint (map click, sidebar click, autoplay all
+  // funnel through setActiveIndex) so the current URL is always shareable as-is.
+  useEffect(() => {
+    if (!manifest) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("loc", slugify(manifest.frames[activeIndex].location.label));
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }, [manifest, activeIndex]);
+
   if (error) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">
@@ -62,6 +94,31 @@ export function FloodImpact({ language }: { language: Language }) {
 
   const frame = manifest.frames[activeIndex];
   const coverage = manifest.coverageReport.find((report) => report.week === frame.week);
+
+  const shareUrl = (() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("loc", slugify(frame.location.label));
+    return url.toString();
+  })();
+
+  const handleShare = async () => {
+    const shareData = { title: `${frame.location.label} — ${t.pageTitle}`, text: `${frame.location.label}: ${t.shareText}`, url: shareUrl };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // user cancelled the share sheet, or the platform declined it — nothing to do
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Clipboard can be unavailable (http, old WebView). Nothing more we can do.
+    }
+  };
 
   return (
     <div>
@@ -80,10 +137,16 @@ export function FloodImpact({ language }: { language: Language }) {
 
         <div className="w-full shrink-0 rounded-lg border bg-background/95 p-2 shadow-lg backdrop-blur sm:absolute sm:bottom-3 sm:right-3 sm:top-3 sm:z-[1000] sm:w-64 sm:overflow-y-auto">
           <div className="flex flex-col gap-2 border-b pb-2">
-            <Button type="button" onClick={() => setPlaying((p) => !p)} className="w-full">
-              {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-              {playing ? t.pause : t.play}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" onClick={() => setPlaying((p) => !p)} className="flex-1">
+                {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+                {playing ? t.pause : t.play}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => void handleShare()} className="shrink-0">
+                {linkCopied ? <Check aria-hidden="true" /> : <Share2 aria-hidden="true" />}
+                {linkCopied ? t.linkCopied : t.share}
+              </Button>
+            </div>
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <Checkbox checked={showOverlay} onCheckedChange={(checked) => setShowOverlay(checked === true)} />
               {t.showClassification}
