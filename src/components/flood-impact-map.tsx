@@ -55,7 +55,11 @@ export function FloodImpactMap({
 
   return (
     <MapContainer center={[active.location.lat, active.location.lng]} zoom={11} scrollWheelZoom={false} className="h-full min-h-80 w-full rounded-lg">
-      <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer
+        attribution='Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics'
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      />
+      <TileLayer attribution="" url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
       {aoiPositions.length > 0 ? <Polygon positions={aoiPositions} pathOptions={{ color: "rgb(var(--primary))", weight: 2, fillOpacity: 0.08 }} /> : null}
       {frames.map((frame, index) => (
         <Marker
