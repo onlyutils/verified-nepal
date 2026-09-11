@@ -1,7 +1,8 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useState } from "react";
-import { MapContainer, Marker, Polygon, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polygon, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { riverPath } from "@/lib/geo";
 import type { FloodFrame, FloodManifest } from "@/lib/flood-manifest";
 
 function usePrefersReducedMotion() {
@@ -30,8 +31,8 @@ function MapFocus({ target }: { target: [number, number] | null }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   useEffect(() => {
     if (!target) return;
-    if (prefersReducedMotion) map.setView(target, 13, { animate: false });
-    else map.flyTo(target, 13, { duration: 0.8 });
+    if (prefersReducedMotion) map.setView(target, 16, { animate: false });
+    else map.flyTo(target, 16, { duration: 0.8 });
   }, [target, map, prefersReducedMotion]);
   return null;
 }
@@ -41,11 +42,13 @@ export function FloodImpactMap({
   activeIndex,
   onSelect,
   aoi,
+  className,
 }: {
   frames: FloodFrame[];
   activeIndex: number;
   onSelect: (index: number) => void;
   aoi: FloodManifest["aoi"];
+  className?: string;
 }) {
   const active = frames[activeIndex];
   const aoiPositions: [number, number][] =
@@ -54,12 +57,23 @@ export function FloodImpactMap({
       : [];
 
   return (
-    <MapContainer center={[active.location.lat, active.location.lng]} zoom={11} scrollWheelZoom={false} className="h-full min-h-80 w-full rounded-lg">
-      <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      {aoiPositions.length > 0 ? <Polygon positions={aoiPositions} pathOptions={{ color: "rgb(var(--primary))", weight: 2, fillOpacity: 0.08 }} /> : null}
+    <MapContainer
+      center={[active.location.lat, active.location.lng]}
+      zoom={16}
+      scrollWheelZoom={false}
+      className={`vn-flood-map h-full min-h-80 w-full rounded-lg ${className ?? ""}`}
+    >
+      <TileLayer
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attribution="Tiles &copy; Esri"
+      />
+      {aoiPositions.length > 0 ? (
+        <Polygon positions={aoiPositions} pathOptions={{ color: "rgb(var(--primary))", weight: 2, fillOpacity: 0.08 }} />
+      ) : null}
+      <Polyline positions={riverPath} pathOptions={{ color: "#38bdf8", weight: 3, opacity: 0.9 }} />
       {frames.map((frame, index) => (
         <Marker
-          key={frame.week}
+          key={frame.location.label}
           position={[frame.location.lat, frame.location.lng]}
           icon={makeIcon(index === activeIndex)}
           eventHandlers={{ click: () => onSelect(index) }}

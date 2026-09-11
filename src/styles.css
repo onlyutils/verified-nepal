@@ -195,6 +195,9 @@ html[data-page="deskLogin"] #onyutils-chat-widget {
 .leaflet-tile-pane {
   filter: grayscale(1) contrast(1.05);
 }
+.vn-flood-map .leaflet-tile-pane {
+  filter: none;
+}
 .leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.85) !important;
   color: rgb(var(--subtle)) !important;

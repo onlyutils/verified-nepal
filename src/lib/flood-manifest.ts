@@ -5,7 +5,7 @@ export type FloodFrame = {
   beforeUrl: string;
   afterUrl: string;
   classOverlayUrl?: string;
-  location: { lat: number; lng: number; label: string };
+  location: { lat: number; lng: number; label: string; distanceKm?: number; arrivalLabel?: string };
 };
 
 export type FloodManifest = {

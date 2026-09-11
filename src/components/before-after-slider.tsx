@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ChevronsLeftRight } from "lucide-react";
 import { clipPercentFromPointer } from "@/lib/before-after-slider";
 
 export function BeforeAfterSlider({
@@ -66,7 +67,11 @@ export function BeforeAfterSlider({
           onError={() => setBroken((b) => ({ ...b, before: true }))}
         />
       )}
-      <div className="absolute inset-y-0 w-0.5 bg-background shadow" style={{ left: `${clip}%` }} aria-hidden="true" />
+      <div className="absolute inset-y-0 w-0.5 bg-background shadow" style={{ left: `${clip}%` }} aria-hidden="true">
+        <span className="absolute left-1/2 top-1/2 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-background shadow">
+          <ChevronsLeftRight className="size-4" aria-hidden="true" />
+        </span>
+      </div>
       <span className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-0.5 text-xs font-medium">{beforeLabel}</span>
       <span className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-0.5 text-xs font-medium">{afterLabel}</span>
     </div>
