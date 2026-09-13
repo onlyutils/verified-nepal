@@ -29,6 +29,7 @@ const CURSOR_SOURCE = "flood-cursor";
 const CURSOR_LAYER = "flood-cursor";
 const BASEMAP_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const DRIVE_SPEED_M_PER_S = 300;
+const DRIVE_ZOOM_OFFSET = 0.5;
 const SEEK_EASE_MS = 400;
 const SKIP_EASE_MS = 600;
 // Rolling prefetch: URLs are in route order, so once the first fifth is warm the drive can
@@ -274,10 +275,10 @@ function usePrefersReducedMotion() {
 
 function StopLabelLines({ label, className }: { label: StopLabel; className?: string }) {
   return (
-    <div className={`translate-y-[6px] ${className ?? ""}`}>
+    <div className={className ?? ""}>
       <p className="[text-shadow:0_1px_2px_rgba(0,0,0,.8),0_0_12px_rgba(0,0,0,.6)] text-xl font-bold text-white sm:text-2xl">{label.primary}</p>
       {label.secondary ? (
-        <p className="[text-shadow:0_1px_2px_rgba(0,0,0,.8),0_0_12px_rgba(0,0,0,.6)] text-xs font-medium text-white/90 sm:text-sm">
+        <p className="[text-shadow:0_1px_2px_rgba(0,0,0,.8),0_0_12px_rgba(0,0,0,.6)] text-xs font-medium leading-normal pb-1 text-white/90 sm:text-sm">
           {label.secondary}
         </p>
       ) : null}
@@ -654,10 +655,10 @@ export function FloodImpactMap({
     const coverageRanges = afterTiles ? coverageRangesFromTileIndex(path, afterTiles.meta.tileIndex) : [];
 
     const driveZoom = (() => {
-      if (!storyStartFrame?.bounds) return 15;
+      if (!storyStartFrame?.bounds) return 15 + DRIVE_ZOOM_OFFSET;
       const startBearing = flowBearingDownDeg([storyStartFrame.location.lat, storyStartFrame.location.lng], riverPath);
       const camera = afterMap.cameraForBounds(mapBounds(storyStartFrame.bounds), { bearing: startBearing, padding: 16 });
-      return camera?.zoom ?? 15;
+      return (camera?.zoom ?? 15) + DRIVE_ZOOM_OFFSET;
     })();
 
     let cancelled = false;
@@ -939,7 +940,7 @@ export function FloodImpactMap({
       {portalHost && divider && currentStopLabel
         ? createPortal(
             <div className="pointer-events-none absolute left-6 z-[1001] -translate-y-full pb-2" style={{ top: `${divider.position}px` }}>
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-hidden pb-1">
                 {previousLabel ? (
                   <StopLabelLines
                     key={`previous-${previousLabel.key}`}
