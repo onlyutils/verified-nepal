@@ -14,6 +14,8 @@ export type FloodFrame = {
   location: { lat: number; lng: number; label: string; distanceKm?: number; arrivalLabel?: string };
 };
 
+export type RiverPath = Array<[number, number]>;
+
 export type FloodManifest = {
   event: string;
   aoi: { type: string; coordinates: unknown; source: string };
@@ -92,10 +94,7 @@ function isValidAfterTilesMeta(value: unknown): value is FloodAfterTilesMeta {
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    Object.values(value).every((item) => typeof item === "string")
+    typeof value === "object" && value !== null && !Array.isArray(value) && Object.values(value).every((item) => typeof item === "string")
   );
 }
 
@@ -126,6 +125,47 @@ export async function fetchFloodManifest(url: string, fetchImpl: typeof fetch = 
   const data = await res.json();
   if (!isValidManifest(data)) throw new FloodManifestError("invalid", "manifest is missing required fields");
   return data;
+}
+
+export async function fetchRiverPath(manifestUrl: string, fetchImpl: typeof fetch = fetch): Promise<RiverPath> {
+  const riverUrl = floodSiblingUrl(manifestUrl, "river.json");
+  const res = await fetchImpl(riverUrl);
+  if (!res.ok) throw new FloodManifestError("invalid", `river path fetch failed with status ${res.status}`);
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new FloodManifestError("invalid", "river path is not valid JSON");
+  }
+
+  if (!data || typeof data !== "object" || !Array.isArray((data as { features?: unknown }).features)) {
+    throw new FloodManifestError("invalid", "river path is missing a feature collection");
+  }
+
+  const feature = (data as { features: unknown[] }).features[0];
+  const geometry = feature && typeof feature === "object" ? (feature as { geometry?: unknown }).geometry : null;
+  const coordinates = geometry && typeof geometry === "object" ? (geometry as { type?: unknown; coordinates?: unknown }).coordinates : null;
+  if (
+    !geometry ||
+    typeof geometry !== "object" ||
+    (geometry as { type?: unknown }).type !== "LineString" ||
+    !Array.isArray(coordinates) ||
+    coordinates.length < 2 ||
+    !coordinates.every(
+      (coordinate) =>
+        Array.isArray(coordinate) &&
+        coordinate.length >= 2 &&
+        typeof coordinate[0] === "number" &&
+        Number.isFinite(coordinate[0]) &&
+        typeof coordinate[1] === "number" &&
+        Number.isFinite(coordinate[1]),
+    )
+  ) {
+    throw new FloodManifestError("invalid", "river path must contain a LineString with at least two coordinates");
+  }
+
+  return coordinates.map(([lng, lat]) => [lat, lng]);
 }
 
 export async function fetchAfterTilesMeta(url: string, fetchImpl: typeof fetch = fetch): Promise<FloodAfterTilesMeta | null> {

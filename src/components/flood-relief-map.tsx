@@ -1,8 +1,10 @@
 import { lazy, useEffect, useState } from "react";
 import { floodReliefStrings } from "@/i18n/flood-relief";
 import { exportCanvas } from "@/lib/climate-share";
-import { districtLabels, districtShapes, riverPath } from "@/lib/geo";
+import { districtLabels, districtShapes } from "@/lib/geo";
 import { loadPosterFonts, token } from "@/lib/poster-draw";
+import { useRiverPath } from "@/lib/use-river-path";
+import type { RiverPath } from "@/lib/flood-manifest";
 import type { Language } from "@/lib/types";
 import type { ReliefCenter, ReliefCenterCategory } from "@/types/relief-center";
 
@@ -39,6 +41,7 @@ const pinPath =
 
 const defaultMapCenter: [number, number] = [27.7172, 85.324];
 const defaultMapZoom = 12;
+let summaryRiverPath: RiverPath | null = null;
 
 function resolveTokenColor(value: string) {
   const match = value.match(/var\((--[\w-]+)\)/);
@@ -56,7 +59,7 @@ function truncatedText(ctx: CanvasRenderingContext2D, text: string, maxWidth: nu
 export function drawReliefCentersSummary(
   ctx: CanvasRenderingContext2D,
   box: { x: number; y: number; w: number; h: number },
-  data: { centers: ReliefCenter[]; language: Language },
+  data: { centers: ReliefCenter[]; language: Language; riverPath?: RiverPath | null },
 ): void {
   const strings = floodReliefStrings[data.language];
   const foreground = token("--foreground");
@@ -214,11 +217,14 @@ export function drawReliefCentersSummary(
     ctx.fill();
   }
 
-  ctx.beginPath();
-  drawPath(riverPath, false);
-  ctx.strokeStyle = primary;
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  const riverPath = data.riverPath ?? summaryRiverPath;
+  if (riverPath) {
+    ctx.beginPath();
+    drawPath(riverPath, false);
+    ctx.strokeStyle = primary;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 
   ctx.font = `500 18px ${SHARE_CARD_FAMILY}`;
   ctx.fillStyle = muted;
@@ -432,7 +438,10 @@ export async function drawReliefCentersList(data: {
 }
 
 export const FloodReliefMap = lazy(async () => {
-  const [{ MapContainer, TileLayer, Marker, Tooltip, useMap }, leaflet] = await Promise.all([import("react-leaflet"), import("leaflet")]);
+  const [{ MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap }, leaflet] = await Promise.all([
+    import("react-leaflet"),
+    import("leaflet"),
+  ]);
   await import("leaflet/dist/leaflet.css");
   const Leaflet = leaflet.default;
 
@@ -469,9 +478,14 @@ export const FloodReliefMap = lazy(async () => {
   }
 
   function MapView({ centers, language, selectedId, onSelect }: FloodReliefMapProps) {
+    const riverPath = useRiverPath();
     const located = centers.filter((center) => typeof center.lat === "number" && typeof center.lng === "number");
     const selectedCenter = centers.find((center) => center.id === selectedId) ?? null;
     const strings = floodReliefStrings[language];
+
+    useEffect(() => {
+      if (riverPath) summaryRiverPath = riverPath;
+    }, [riverPath]);
     const markerIcon = (center: ReliefCenter) => {
       const active = center.id === selectedId;
       const size = active ? 38 : 30;
@@ -495,6 +509,7 @@ export const FloodReliefMap = lazy(async () => {
           <MapContainer center={defaultMapCenter} zoom={defaultMapZoom} scrollWheelZoom={false} className="h-full w-full">
             <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <MapFocus selectedCenter={selectedCenter} />
+            {riverPath ? <Polyline positions={riverPath} pathOptions={{ color: "rgb(var(--primary))", weight: 3, opacity: 0.7 }} /> : null}
             {located.map((center) => (
               <Marker
                 key={center.id}

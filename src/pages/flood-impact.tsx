@@ -9,11 +9,13 @@ import {
   fetchFloodMedia,
   fetchFloodManifest,
   fetchFloodSceneData,
+  fetchRiverPath,
   FloodManifestError,
   type FloodAfterScenesData,
   type FloodAfterTilesMeta,
   type FloodMedia,
   type FloodManifest,
+  type RiverPath,
 } from "@/lib/flood-manifest";
 import { selectStoryFrames, slugify, storyStartIndex } from "@/lib/flood-after-scenes";
 import { floodImpactStrings } from "@/i18n/flood-impact";
@@ -27,6 +29,7 @@ export function FloodImpact({ language }: { language: Language }) {
   const t = floodImpactStrings[language];
   const [manifest, setManifest] = useState<FloodManifest | null>(null);
   const [sceneData, setSceneData] = useState<FloodAfterScenesData | null>(null);
+  const [riverPath, setRiverPath] = useState<RiverPath | null>(null);
   const [media, setMedia] = useState<FloodMedia[]>([]);
   const [afterTiles, setAfterTiles] = useState<{ baseUrl: string; meta: FloodAfterTilesMeta } | null>(null);
   const [error, setError] = useState<"not_found" | "invalid" | null>(null);
@@ -37,6 +40,8 @@ export function FloodImpact({ language }: { language: Language }) {
   const [linkCopied, setLinkCopied] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
+  const fullscreenActive = fullscreen || pseudoFullscreen;
   const activeItemRef = useRef<HTMLLIElement>(null);
   const stopListRef = useRef<HTMLDivElement>(null);
   const stopListHandleRef = useRef<HTMLButtonElement>(null);
@@ -58,10 +63,12 @@ export function FloodImpact({ language }: { language: Language }) {
       fetchAfterTilesMeta(MANIFEST_URL),
       fetchFloodSceneData(MANIFEST_URL),
       fetchFloodMedia(MANIFEST_URL),
+      fetchRiverPath(MANIFEST_URL),
     ])
-      .then(([nextManifest, meta, nextSceneData, nextMedia]) => {
+      .then(([nextManifest, meta, nextSceneData, nextMedia, nextRiverPath]) => {
         setManifest(nextManifest);
         setSceneData(nextSceneData);
+        setRiverPath(nextRiverPath);
         setMedia(nextMedia);
         setAfterTiles(meta ? { baseUrl: afterTilesBaseUrl(MANIFEST_URL), meta } : null);
       })
@@ -88,6 +95,21 @@ export function FloodImpact({ language }: { language: Language }) {
     handleFullscreenChange();
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  useEffect(() => {
+    if (!pseudoFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPseudoFullscreen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [pseudoFullscreen]);
 
   // Deep link: `?loc=<slug>` on page load selects the matching waypoint. Runs once the
   // manifest arrives (manifest only changes reference the one time it's fetched).
@@ -121,7 +143,7 @@ export function FloodImpact({ language }: { language: Language }) {
     );
   }
 
-  if (!manifest || !sceneData) {
+  if (!manifest || !sceneData || !riverPath) {
     return <div className="mx-auto max-w-2xl py-16 text-center text-muted-foreground">…</div>;
   }
 
@@ -153,10 +175,14 @@ export function FloodImpact({ language }: { language: Language }) {
 
   const toggleFullscreen = () => {
     try {
-      if (fullscreen) {
-        void document.exitFullscreen().catch(() => {});
-      } else if (wrapperRef.current) {
-        void wrapperRef.current.requestFullscreen().catch(() => {});
+      if (document.fullscreenEnabled) {
+        if (fullscreen) {
+          void document.exitFullscreen().catch(() => {});
+        } else if (wrapperRef.current) {
+          void wrapperRef.current.requestFullscreen().catch(() => {});
+        }
+      } else {
+        setPseudoFullscreen((value) => !value);
       }
     } catch {
       // Fullscreen can be unavailable or rejected synchronously.
@@ -167,8 +193,6 @@ export function FloodImpact({ language }: { language: Language }) {
     setSeekRequest((previous) => ({ id: (previous?.id ?? 0) + 1, offsetMeters }));
   };
 
-  const canFullscreen = typeof document !== "undefined" && document.fullscreenEnabled;
-
   return (
     <div>
       <Eyebrow>{t.eyebrow}</Eyebrow>
@@ -177,7 +201,11 @@ export function FloodImpact({ language }: { language: Language }) {
 
       <div
         ref={wrapperRef}
-        className="relative mt-8 flex w-full flex-col overflow-hidden rounded-xl bg-background ring-1 ring-border/60 shadow-sm sm:block sm:h-[75vh] sm:min-h-[32rem]"
+        className={`flex w-full flex-col overflow-hidden bg-background ring-1 ring-border/60 shadow-sm ${
+          pseudoFullscreen
+            ? "fixed inset-0 z-[2000] mt-0 h-[100dvh] w-screen rounded-none"
+            : "relative mt-8 rounded-xl sm:block sm:h-[75vh] sm:min-h-[32rem]"
+        }`}
       >
         <p
           aria-hidden="true"
@@ -189,7 +217,7 @@ export function FloodImpact({ language }: { language: Language }) {
         <Suspense
           fallback={
             <div
-              className={fullscreen ? "absolute inset-0 bg-muted" : "h-80 bg-muted sm:absolute sm:inset-0 sm:!h-full"}
+              className={fullscreenActive ? "absolute inset-0 bg-muted" : "h-80 bg-muted sm:absolute sm:inset-0 sm:!h-full"}
             />
           }
         >
@@ -208,13 +236,14 @@ export function FloodImpact({ language }: { language: Language }) {
             seekRequest={seekRequest}
             noDataStretchLabel={t.noDataStretch}
             skipAheadLabel={t.skipAhead}
-            className={fullscreen ? "absolute inset-0 !h-full" : "h-80 sm:absolute sm:inset-0 sm:!h-full"}
+            riverPath={riverPath}
+            className={fullscreenActive ? "absolute inset-0 !h-full" : "h-80 sm:absolute sm:inset-0 sm:!h-full"}
           />
         </Suspense>
 
         <div
           className={
-            fullscreen
+            fullscreenActive
               ? "pointer-events-none absolute inset-x-3 bottom-3 z-[1000] flex justify-center"
               : "flex justify-center bg-background px-3 py-2 sm:pointer-events-none sm:absolute sm:inset-x-3 sm:bottom-3 sm:z-[1000] sm:bg-transparent sm:p-0"
           }
@@ -232,19 +261,17 @@ export function FloodImpact({ language }: { language: Language }) {
               {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
             </Button>
 
-            {canFullscreen ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="icon"
-                aria-label={fullscreen ? t.exitFullscreen : t.fullscreen}
-                aria-pressed={fullscreen}
-                onClick={toggleFullscreen}
-                className="h-9 w-9 shrink-0 rounded-full sm:h-11 sm:w-11 [&_svg]:size-4 sm:[&_svg]:size-5"
-              >
-                {fullscreen ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
-              </Button>
-            ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              aria-label={fullscreenActive ? t.exitFullscreen : t.fullscreen}
+              aria-pressed={fullscreenActive}
+              onClick={toggleFullscreen}
+              className="h-9 w-9 shrink-0 rounded-full sm:h-11 sm:w-11 [&_svg]:size-4 sm:[&_svg]:size-5"
+            >
+              {fullscreenActive ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+            </Button>
 
             <div aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-border sm:h-6" />
 

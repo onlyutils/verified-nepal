@@ -3,19 +3,19 @@ import L from "leaflet";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Polygon, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { data } from "@/lib/data";
-import { districtLabels, districtShapes, locationDistrict, placeLocation, riverPath, type DistrictName } from "@/lib/geo";
+import { districtLabels, districtShapes, locationDistrict, placeLocation, type DistrictName } from "@/lib/geo";
 import { labels, textForLanguage } from "@/i18n";
 import { mapStrings } from "@/i18n/map";
 import { locationMatchesRegion } from "@/lib/region";
 import type { Language, NamedLocation } from "@/lib/types";
 import { formatNumber } from "@/lib/format";
+import { useRiverPath } from "@/lib/use-river-path";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { Eyebrow } from "@/components/page-header";
 
 type LatLng = [number, number];
-const overviewBounds = L.latLngBounds(riverPath).pad(0.18);
 
 const pinGlyph = {
   rescue:
@@ -45,7 +45,7 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
-function MapFocus({ selectedCenter }: { selectedCenter: LatLng | null }) {
+function MapFocus({ selectedCenter, overviewBounds }: { selectedCenter: LatLng | null; overviewBounds: L.LatLngBounds }) {
   const map = useMap();
   const prefersReducedMotion = usePrefersReducedMotion();
   useEffect(() => {
@@ -57,8 +57,7 @@ function MapFocus({ selectedCenter }: { selectedCenter: LatLng | null }) {
     if (prefersReducedMotion)
       map.setView(overviewBounds.getCenter(), map.getBoundsZoom(overviewBounds, false, L.point(48, 48)), { animate: false });
     else map.fitBounds(overviewBounds, { animate: true, padding: [48, 48] });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, selectedCenter?.[0], selectedCenter?.[1], prefersReducedMotion]);
+  }, [map, overviewBounds, prefersReducedMotion, selectedCenter?.[0], selectedCenter?.[1]]);
   return null;
 }
 
@@ -89,6 +88,14 @@ export function ReliefMap({
   region: string;
 }) {
   const ts = mapStrings[language];
+  const riverPath = useRiverPath();
+  const overviewBounds = useMemo(() => {
+    const fallbackPoints = Object.values(districtShapes).reduce<LatLng[]>(
+      (points, rings) => points.concat(rings.flatMap((ring) => ring)),
+      [],
+    );
+    return L.latLngBounds(riverPath ?? fallbackPoints).pad(0.18);
+  }, [riverPath]);
   const [mapExpanded, setMapExpanded] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches);
   const [mapUnlocked, setMapUnlocked] = useState(() => !(window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window));
   const camps = data.stationedLocations.results.filter(hasCoordinates).filter((camp) => !region || locationMatchesRegion(camp, region));
@@ -134,7 +141,7 @@ export function ReliefMap({
                 attribution=""
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
               />
-              <MapFocus selectedCenter={selectedCenter} />
+              <MapFocus selectedCenter={selectedCenter} overviewBounds={overviewBounds} />
               <MapDragging enabled={mapUnlocked} />
               {activeDistricts.map((district) => {
                 const isActive =
@@ -155,10 +162,14 @@ export function ReliefMap({
                   </Polygon>
                 ));
               })}
-              <Polyline positions={riverPath} pathOptions={{ color: "rgb(var(--foreground))", weight: 9, opacity: 0.25 }} />
-              <Polyline positions={riverPath} pathOptions={{ color: "rgb(var(--background))", weight: 3, opacity: 0.95 }}>
-                <Tooltip sticky>{ts.mapLabel}</Tooltip>
-              </Polyline>
+              {riverPath ? (
+                <>
+                  <Polyline positions={riverPath} pathOptions={{ color: "rgb(var(--foreground))", weight: 9, opacity: 0.25 }} />
+                  <Polyline positions={riverPath} pathOptions={{ color: "rgb(var(--background))", weight: 3, opacity: 0.95 }}>
+                    <Tooltip sticky>{ts.mapLabel}</Tooltip>
+                  </Polyline>
+                </>
+              ) : null}
               {camps.map((camp) => {
                 const [lng, lat] = camp.centroid.coordinates;
                 const active = camp.id === selected;

@@ -1,5 +1,4 @@
 import districtsGeo from "../../public/data/geo/districts.json";
-import riverGeo from "../../public/data/geo/bhotekoshi.json";
 import type { NamedLocation } from "@/lib/types";
 
 import { districtLabels, districtNames, type DistrictName } from "./districts.ts";
@@ -107,8 +106,4 @@ export const districtShapes: Record<DistrictName, Array<Array<[number, number]>>
     return acc;
   },
   {} as Record<DistrictName, Array<Array<[number, number]>>>,
-);
-
-export const riverPath: Array<[number, number]> = flip(
-  (riverGeo as unknown as { features: Array<{ geometry: { coordinates: Ring } }> }).features[0].geometry.coordinates,
 );

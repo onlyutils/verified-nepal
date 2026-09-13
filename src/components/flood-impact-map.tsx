@@ -5,14 +5,14 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import { Button } from "@/components/ui/button";
-import { riverPath } from "@/lib/geo";
 import { slugify, stopLabelNe, storyStartIndex } from "@/lib/flood-after-scenes";
 import { flowBearingDownDeg, nearestPointOnPath, pathLengthKm, pointAlongPath, shortestArcDeg, subPathBetween } from "@/lib/flood-geometry";
 import { buildPrefetchUrls, coverageRangesFromTileIndex, prefetchUrls, tileIndexBounds, type CoverageRange } from "@/lib/flood-prefetch";
-import type { FloodAfterScenesData, FloodAfterTilesMeta, FloodFrame, FloodManifest } from "@/lib/flood-manifest";
+import type { FloodAfterScenesData, FloodAfterTilesMeta, FloodFrame, FloodManifest, RiverPath } from "@/lib/flood-manifest";
 import type { Language } from "@/lib/types";
 
-maplibregl.setMaxParallelImageRequests(48);
+const isTouchDevice = typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
+maplibregl.setMaxParallelImageRequests(isTouchDevice ? 16 : 48);
 
 const BASEMAP_SOURCE = "flood-basemap";
 const BASEMAP_LAYER = "flood-basemap";
@@ -98,7 +98,7 @@ function makeAoiData(aoi: FloodManifest["aoi"]): GeoJSON.GeoJSON {
   } as unknown as GeoJSON.Feature;
 }
 
-function makeRiverData(): GeoJSON.Feature<GeoJSON.LineString> {
+function makeRiverData(riverPath: RiverPath): GeoJSON.Feature<GeoJSON.LineString> {
   return {
     type: "Feature",
     properties: {},
@@ -297,6 +297,7 @@ export function FloodImpactMap({
   onPlaybackEnd,
   preparingImagery,
   speedMultiplier,
+  riverPath,
   seekRequest,
   noDataStretchLabel,
   skipAheadLabel,
@@ -309,6 +310,7 @@ export function FloodImpactMap({
   aoi: FloodManifest["aoi"];
   afterTiles: { baseUrl: string; meta: FloodAfterTilesMeta } | null;
   sceneData: FloodAfterScenesData;
+  riverPath: RiverPath;
   playing: boolean;
   language: Language;
   preparingImagery: string;
@@ -379,11 +381,11 @@ export function FloodImpactMap({
         const snapped = nearestPointOnPath([frame.location.lat, frame.location.lng], riverPath);
         return snapped?.point ?? ([frame.location.lat, frame.location.lng] as [number, number]);
       }),
-    [frames],
+    [frames, riverPath],
   );
   const activePosition = snappedPositions[activeIndex] ?? riverPath[0] ?? [27, 85];
   const aoiData = useMemo(() => makeAoiData(aoi), [aoi]);
-  const riverData = useMemo(() => makeRiverData(), []);
+  const riverData = useMemo(() => makeRiverData(riverPath), [riverPath]);
   const waypointData = useMemo(() => makeWaypointData(frames, snappedPositions), [frames, snappedPositions]);
   const initialCenterRef = useRef<LngLat>(toLngLat(activePosition));
   const storyStart = storyStartIndex(frames, sceneData);
@@ -394,7 +396,7 @@ export function FloodImpactMap({
     if (!start || !end) return [];
     const route = subPathBetween(riverPath, start, end);
     return route.length > 0 ? route : [start, end];
-  }, [prefetchStops]);
+  }, [prefetchStops, riverPath]);
 
   const currentStopLabel = useMemo<StopLabel | null>(() => {
     if (!primaryStopLabel) return null;
@@ -601,6 +603,7 @@ export function FloodImpactMap({
 
     void prefetchUrls(urls, {
       signal: controller.signal,
+      concurrency: isTouchDevice ? 6 : 16,
       onProgress: (completed, total) => {
         setPrefetchProgress(total > 0 ? Math.round((completed / total) * 100) : 100);
         if (!releasedByTimeout && total > 0 && completed / total >= PREFETCH_START_FRACTION) {
@@ -747,41 +750,47 @@ export function FloodImpactMap({
     };
 
     const animate = (now: number) => {
-      if (cancelled || destroyedRef.current || !loopRunning || !playingRef.current || mapIsRemoved(afterMap)) {
-        stopLoop();
-        return;
-      }
-      if (cameraEaseUntil > 0) {
-        if (now < cameraEaseUntil) {
-          lastFrameAt = now;
-          travelFrameId = requestAnimationFrame(animate);
+      try {
+        if (cancelled || destroyedRef.current || !loopRunning || !playingRef.current || mapIsRemoved(afterMap)) {
+          stopLoop();
           return;
         }
-        cameraEaseUntil = 0;
+        if (cameraEaseUntil > 0) {
+          if (now < cameraEaseUntil) {
+            lastFrameAt = now;
+            travelFrameId = requestAnimationFrame(animate);
+            return;
+          }
+          cameraEaseUntil = 0;
+          lastFrameAt = now;
+          if (finishAfterCameraEase) {
+            finishPlayback();
+            return;
+          }
+        }
+
+        const elapsedMs = Math.max(0, now - lastFrameAt);
         lastFrameAt = now;
-        if (finishAfterCameraEase) {
+        const speed = Math.max(0, speedMultiplierRef.current);
+        const remainingDistanceM = Math.max(0, routeDistanceM - distanceM);
+        const remainingDurationMs = speed > 0 ? (remainingDistanceM / (DRIVE_SPEED_M_PER_S * speed)) * 1000 : Infinity;
+        const distanceDeltaM = remainingDurationMs <= elapsedMs ? remainingDistanceM : (elapsedMs / 1000) * DRIVE_SPEED_M_PER_S * speed;
+        distanceM = clampDistance(distanceM + distanceDeltaM);
+        const position = positionAtDistance(distanceM);
+        const targetBearing = flowBearingDownDeg(position, riverPath);
+        bearing += shortestArcDeg(bearing, targetBearing) * 0.08;
+        render(distanceM);
+
+        if (distanceM >= routeDistanceM) {
           finishPlayback();
           return;
         }
+        travelFrameId = requestAnimationFrame(animate);
+      } catch (error) {
+        console.error("flood drive stopped", error);
+        stopLoop();
+        onPlaybackEndRef.current();
       }
-
-      const elapsedMs = Math.max(0, now - lastFrameAt);
-      lastFrameAt = now;
-      const speed = Math.max(0, speedMultiplierRef.current);
-      const remainingDistanceM = Math.max(0, routeDistanceM - distanceM);
-      const remainingDurationMs = speed > 0 ? (remainingDistanceM / (DRIVE_SPEED_M_PER_S * speed)) * 1000 : Infinity;
-      const distanceDeltaM = remainingDurationMs <= elapsedMs ? remainingDistanceM : (elapsedMs / 1000) * DRIVE_SPEED_M_PER_S * speed;
-      distanceM = clampDistance(distanceM + distanceDeltaM);
-      const position = positionAtDistance(distanceM);
-      const targetBearing = flowBearingDownDeg(position, riverPath);
-      bearing += shortestArcDeg(bearing, targetBearing) * 0.08;
-      render(distanceM);
-
-      if (distanceM >= routeDistanceM) {
-        finishPlayback();
-        return;
-      }
-      travelFrameId = requestAnimationFrame(animate);
     };
 
     const startLoop = () => {
@@ -799,7 +808,7 @@ export function FloodImpactMap({
       cameraEaseUntil = 0;
       finishAfterCameraEase = false;
       lastFrameAt = performance.now();
-      if (reducedMotionRef.current || routeDistanceM <= 0) {
+      if (routeDistanceM <= 0) {
         distanceM = routeDistanceM;
         render(distanceM);
         finishPlayback();
@@ -854,7 +863,7 @@ export function FloodImpactMap({
       stopLoopRef.current = () => {};
       seekToStopRef.current = () => {};
     };
-  }, [afterTiles, frames, mapsReady, snappedPositions, updateClip]);
+  }, [afterTiles, frames, mapsReady, riverPath, snappedPositions, updateClip]);
 
   useEffect(() => {
     if (playing && prefetchReady) startLoopRef.current();
