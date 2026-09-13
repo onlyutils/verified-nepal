@@ -3,13 +3,34 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { isPrivateApiPath, isPublicApiPath, hasAuthHeader } from "./src/lib/sw-rules";
+import { readFileSync } from "fs";
+import type { Plugin } from "vite";
+
+// maplibre-gl 6 spawns its worker with `new URL("./maplibre-gl-worker.mjs", import.meta.url)`
+// built from a template string, which Vite cannot rewrite. Dev: serve the package unbundled
+// so the URL resolves inside node_modules/maplibre-gl/dist. Build: copy the worker and the
+// shared chunk it imports next to the maplibre chunk under assets/.
+function maplibreWorkerAssets(): Plugin {
+  const dist = path.resolve(__dirname, "node_modules/maplibre-gl/dist");
+  return {
+    name: "maplibre-worker-assets",
+    apply: "build",
+    generateBundle() {
+      for (const file of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
+        this.emitFile({ type: "asset", fileName: `assets/${file}`, source: readFileSync(path.join(dist, file)) });
+      }
+    },
+  };
+}
 
 void isPrivateApiPath;
 void isPublicApiPath;
 void hasAuthHeader;
 
 export default defineConfig({
+  optimizeDeps: { exclude: ["maplibre-gl"] },
   plugins: [
+    maplibreWorkerAssets(),
     react(),
     VitePWA({
       registerType: "autoUpdate",
