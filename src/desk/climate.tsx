@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DayStrip } from "@/components/day-strip";
 import { StatCard } from "@/components/stat-card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { climateData } from "@/lib/climate-data";
@@ -8,34 +9,6 @@ import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./sect
 import type { DeskModel } from "./use-desk";
 
 const countryNames = new Map(climateData.countries.map((country) => [country.iso3, country.name]));
-
-function DayStrip({ model }: { model: DeskModel }) {
-  const days = model.climateStats?.days ?? [];
-  const maxValue = Math.max(1, ...days.flatMap((day) => [day.messages, day.downloads]));
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{model.ds.deskClimateDays}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex h-36 items-stretch gap-1">
-          {days.map((day, index) => (
-            <div key={day.date} className="flex min-w-0 flex-1 flex-col">
-              <div className="flex min-h-0 flex-1 items-end gap-px" title={`${day.date}: ${day.messages} / ${day.downloads}`}>
-                <div className="w-1/2 rounded-t bg-primary" style={{ height: `${(day.messages / maxValue) * 100}%` }} />
-                <div className="w-1/2 rounded-t bg-primary/40" style={{ height: `${(day.downloads / maxValue) * 100}%` }} />
-              </div>
-              <div className="h-4 truncate text-[10px] text-muted-foreground">
-                {index === 0 || index === days.length - 1 ? day.date : ""}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export function ClimateStats({ model }: { model: DeskModel }) {
   const stats = model.climateStats;
@@ -65,7 +38,12 @@ export function ClimateStats({ model }: { model: DeskModel }) {
             <StatCard value={today} label={model.ds.deskClimateToday} />
           </div>
 
-          <DayStrip model={model} />
+          <DayStrip
+            title={model.ds.deskClimateDays}
+            days={stats.days.map((day) => ({ date: day.date, primary: day.messages, secondary: day.downloads }))}
+            primaryLabel={model.ds.deskClimateMessages}
+            secondaryLabel={model.ds.deskClimateDownloads}
+          />
 
           <div className="grid gap-4 lg:grid-cols-3">
             <Card>

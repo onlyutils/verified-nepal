@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Building2,
+  BarChart3,
   Camera,
   ClipboardList,
   Flag,
@@ -25,6 +26,7 @@ import type { Language, Page } from "@/lib/types";
 import { Admin } from "./admin";
 import { Boards } from "./boards";
 import { ClimateStats } from "./climate";
+import { ReachStats } from "./reach";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
 import { Distributions } from "./distributions";
@@ -42,6 +44,7 @@ import { useDesk, type DeskSection } from "./use-desk";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { distributionStrings } from "@/i18n/distributions";
 import { droneStrings } from "@/i18n/drones";
+import { reachStrings } from "@/i18n/reach";
 import { Drones } from "./drones";
 
 export function Desk({
@@ -101,6 +104,7 @@ export function Desk({
       ? [
           { key: "incidents" as DeskSection, label: model.ds.deskIncidentsTab, icon: <Siren /> },
           { key: "admin" as DeskSection, label: t.deskAdminTab, icon: <ShieldCheck /> },
+          { key: "reach" as DeskSection, label: reachStrings[language].nav, icon: <BarChart3 /> },
           { key: "climate" as DeskSection, label: model.ds.deskClimateTab, icon: <Globe /> },
         ]
       : []),
@@ -175,6 +179,7 @@ export function Desk({
           {model.activeSection === "drones" ? <Drones model={model} /> : null}
           {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
           {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
+          {model.activeSection === "reach" && auth.profile.role === "admin" ? <ReachStats model={model} /> : null}
           {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
         </ComponentErrorBoundary>
         <DeskDialogs model={model} />

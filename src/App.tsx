@@ -25,6 +25,7 @@ import { floodImpactStrings } from "@/i18n/flood-impact";
 import type { Language, Page } from "@/lib/types";
 import { canonicalPath, pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
+import { recordPageView } from "@/lib/reach";
 
 export { pageFromPath } from "@/lib/page-routing";
 
@@ -108,7 +109,7 @@ function posterIdFromPath(pathname: string) {
   return id && id !== "new" ? id : undefined;
 }
 
-function pageTitle(page: AppPage, language: Language): string {
+export function pageTitle(page: AppPage, language: Language): string {
   const t = labels[language] as Record<string, string>;
   const map: Record<AppPage, string> = {
     dashboard: t.dashboard,
@@ -201,6 +202,10 @@ export function App() {
   }, [page, language]);
 
   useEffect(() => {
+    recordPageView(page);
+  }, []);
+
+  useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash) return;
 
@@ -239,6 +244,7 @@ export function App() {
       lastNavigationUrl.current = nextUrl;
       const next = pageFromPath(window.location.pathname + window.location.search);
       setPage(next);
+      recordPageView(next);
       requestAnimationFrame(() => {
         document.title = `${pageTitle(next, language)} · verifiedNepal`;
         if (!hashOnlyNavigation) focusMainAndScroll();
@@ -267,6 +273,7 @@ export function App() {
       window.history.pushState({}, "", pagePaths[nextPage]);
       lastNavigationUrl.current = window.location.pathname + window.location.search + window.location.hash;
       setPage(nextPage);
+      recordPageView(nextPage);
       document.title = `${pageTitle(nextPage, language)} · verifiedNepal`;
       requestAnimationFrame(() => {
         focusMainAndScroll(sectionId);

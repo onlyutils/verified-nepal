@@ -40,6 +40,7 @@ import { handlePostStory, handleGetMyStories, handleDeleteStory, handleGetStorie
 import {
   handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
 } from "./controllers/climateController.js";
+import { handlePostReach, handleGetAdminReach } from "./controllers/reachController.js";
 import { KITS } from "./lib/kits.js";
 import { handleGetModerationDistributions, handleAckDistribution, handleGetPublicDistributions, handleGetDdmcLog } from "./controllers/distributionController.js";
 import {
@@ -95,6 +96,7 @@ const routes = [
   ["GET", /^\/admin\/work\/([^/]+)$/, withAuth(handleGetUserWork)],
   ["GET", /^\/admin\/stats$/, withAuth(handleAdminStats)],
   ["GET", /^\/admin\/climate$/, withAuth(handleGetAdminClimate)],
+  ["GET", /^\/admin\/reach$/, withAuth(handleGetAdminReach)],
   ["GET", /^\/admin\/incidents$/, withAuth(handleGetAdminIncidents)],
   ["POST", /^\/admin\/incidents$/, withAuth(handlePostAdminIncident)],
   ["POST", /^\/admin\/incidents\/([^/]+)\/publish$/, withAuth(handlePublishIncident)],
@@ -170,6 +172,7 @@ const routes = [
   ["POST", /^\/climate\/messages$/, handlePostClimateMessage],
   ["GET", /^\/climate\/messages$/, handleGetClimateMessages],
   ["POST", /^\/climate\/downloads$/, handlePostClimateDownload],
+  ["POST", /^\/reach$/, handlePostReach],
   ["GET", /^\/moderation\/dispatches$/, withModAck(handleGetModerationDispatches)],
   ["POST", /^\/moderation\/dispatches\/([^/]+)$/, withModAck(handlePostModerationDispatch)],
   ["GET", /^\/dispatches\/([^/]+)$/, handleGetDispatch],

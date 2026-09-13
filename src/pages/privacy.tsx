@@ -40,7 +40,7 @@ const enSections: Section[] = [
       "• Missing-person posters: name, nickname, age, gender, district, last-seen location and date, clothing description, a free-text account, one photo, and two contact phone numbers. The poster image is generated entirely in your browser — nothing is sent to us unless you sign in with Google to save it to your account dashboard. The phone numbers you enter are printed on the poster itself, so treat them as public once you share or download it.",
       "• Organisations and drop centers: for an organisation — name, type, registration number (optional), contact name/phone/email, districts served, description, and website. For each drop center — name, district, ward, address, coordinates, hours, contact phone, and goods accepted. Goods-ledger entries (category, quantity, notes) are recorded by organisation members for internal stock tracking and are not published as personal data.",
       "• Helper, article-author, incident-reporter, story-author and moderator sign-in: Google sign-in via the OnlyUtils auth service. The auth service verifies your identity and the site stores only the session token and the profile returned (email, name, role).",
-      "We set no analytics trackers, no advertising trackers, and no cookies beyond sign-in session storage. Your language, selected district, and whether you dismissed the emergency banner are stored locally in your browser and never leave your device.",
+      "We count page views ourselves: the page name, day, language, and the referring site when you arrive from elsewhere. No cookies, IP addresses, or device identifiers are stored. A one-bit ‘already counted this visit’ flag lives in your browser's session storage.",
     ],
   },
   {
@@ -106,8 +106,8 @@ const enSections: Section[] = [
   {
     title: "13. Cookies, sign-in storage and trackers",
     body: [
-      "No analytics trackers. No advertising. No cookies beyond sign-in session storage: the OnlyUtils sign-in stores a session token in your browser so you stay signed in as a helper or moderator until it expires. Clearing your browser storage signs you out.",
-      "We store only three small preferences locally — language, selected district, and whether you dismissed the emergency banner — and they never leave your device. The site sets no third-party tracking cookies.",
+      "We count page views ourselves: the page name, day, language, and the referring site when you arrive from elsewhere. No cookies, IP addresses, or device identifiers are stored. A one-bit ‘already counted this visit’ flag lives in your browser's session storage.",
+      "OnlyUtils sign-in separately stores a session token in your browser's session storage / local storage so you stay signed in until it expires; clearing browser storage signs you out. We also store only three small preferences locally — language, selected district, and whether you dismissed the emergency banner — and they never leave your device.",
     ],
   },
   {
@@ -209,7 +209,7 @@ const neSections: Section[] = [
       "• हराएको व्यक्तिको पोस्टर: नाम, उपनाम, उमेर, लिङ्ग, जिल्ला, अन्तिम देखिएको स्थान र मिति, लगाएको पोशाकको विवरण, स्वतन्त्र विवरण, एउटा तस्बिर, र सम्पर्कका दुई फोन नम्बर। पोस्टर तस्बिर पूर्ण रूपमा तपाईंको ब्राउजरमै तयार हुन्छ — तपाईंले यसलाई आफ्नो खाता ड्यासबोर्डमा सुरक्षित राख्न Google साइन-इन नगरेसम्म हामीलाई केही पनि पठाइँदैन। तपाईंले भरेको फोन नम्बर पोस्टरमै छापिन्छ, त्यसैले सेयर वा डाउनलोड गरेपछि यो सार्वजनिक ठान्नुहोस्।",
       "• संस्था र संकलन केन्द्र: संस्थाको लागि — नाम, प्रकार, दर्ता नम्बर (वैकल्पिक), सम्पर्क व्यक्तिको नाम/फोन/इमेल, सेवा दिने जिल्लाहरू, विवरण, र वेबसाइट। प्रत्येक संकलन केन्द्रको लागि — नाम, जिल्ला, वडा, ठेगाना, स्थान (coordinates), समय, सम्पर्क फोन, र स्वीकार गरिने सामग्री। सामग्री-लेजर प्रविष्टिहरू (श्रेणी, परिमाण, टिप्पणी) संस्थाका सदस्यहरूले आन्तरिक स्टक व्यवस्थापनका लागि राख्छन् र व्यक्तिगत डेटाका रूपमा प्रकाशित हुँदैनन्।",
       "• सहयोगी, लेख-लेखक/सम्पादक, घटना-प्रतिवेदक, कथा-लेखक र मोडरेटर साइन-इन: OnlyUtils प्रमाणीकरण सेवा मार्फत Google साइन-इन। साइटले सत्र टोकन र प्राप्त प्रोफाइल (इमेल, नाम, भूमिका) मात्र राख्छ।",
-      "हामी कुनै एनालिटिक्स वा विज्ञापन ट्र्याकर राख्दैनौं, र साइन-इन सत्रभन्दा बाहेक कुनै कुकी छैन। भाषा, रोजेको जिल्ला र आपतकालीन ब्यानर हटाएको अवस्था तपाईंको ब्राउजरमा मात्र रहन्छ, बाहिर जाँदैन।",
+      "हामी पृष्ठ हेराइ आफ्नै रूपमा गन्छौं: पृष्ठको नाम, दिन, भाषा, र तपाईं बाहिरको साइटबाट आउँदा सन्दर्भ दिने साइट। कुकी, IP ठेगाना वा उपकरण पहिचानकर्ता भण्डारण गर्दैनौं। “यो भ्रमणमा पहिले नै गणना भयो” भन्ने एक-बिट झण्डा तपाईंको ब्राउजरको session storage मा मात्र रहन्छ।",
     ],
   },
   {
@@ -275,8 +275,8 @@ const neSections: Section[] = [
   {
     title: "१३. कुकी, साइन-इन भण्डारण र ट्र्याकर",
     body: [
-      "कुनै एनालिटिक्स ट्र्याकर छैन, कुनै विज्ञापन छैन। साइन-इन सत्र भण्डारणभन्दा बाहेक कुनै कुकी छैन: OnlyUtils साइन-इनले तपाईंको ब्राउजरमा सत्र टोकन राख्छ ताकि सहयोगी/सम्पादक म्याद सकिएसम्म साइन-इन रहोस्। ब्राउजर स्टोरेज खाली गरेपछि साइन-आउट हुन्छ।",
-      "हामी स्थानीय रूपमा केवल तीन सानो प्राथमिकता राख्छौं — भाषा, रोजेको जिल्ला, र आपतकालीन ब्यानर हटाएको अवस्था — र त्यो बाहिर जाँदैन। तेस्रो-पक्ष ट्र्याकिङ कुकी छैन।",
+      "हामी पृष्ठ हेराइ आफ्नै रूपमा गन्छौं: पृष्ठको नाम, दिन, भाषा, र तपाईं बाहिरको साइटबाट आउँदा सन्दर्भ दिने साइट। कुकी, IP ठेगाना वा उपकरण पहिचानकर्ता भण्डारण गर्दैनौं। “यो भ्रमणमा पहिले नै गणना भयो” भन्ने एक-बिट झण्डा तपाईंको ब्राउजरको session storage मा मात्र रहन्छ।",
+      "OnlyUtils साइन-इनले म्याद नसकिएसम्म साइन-इन राख्न तपाईंको ब्राउजरमा सत्र टोकन भण्डारण गर्छ; ब्राउजर स्टोरेज खाली गरेपछि साइन-आउट हुन्छ। भाषा, रोजेको जिल्ला र आपतकालीन ब्यानर हटाएको अवस्था पनि तपाईंको ब्राउजरमा मात्र रहन्छ।",
     ],
   },
   {
@@ -347,7 +347,7 @@ const neSections: Section[] = [
 
 const nepaliSummaryHonest = [
   "यो साइट एक व्यक्तिले स्वयंसेवी रूपमा चलाउनु भएको हो; नेपाल सरकार वा NDRRMA सँग आबद्ध छैन। यहाँको उद्धार/बेपत्ता तथ्यांक NDRRMA बाट जस्ताको तस्तै लिइएको हो र हरेक बिन्दुमा स्रोत खुलाइएको छ।",
-  "हामी आवश्यकता, सहयोग प्रस्ताव, परियोजना र लेखमा तपाईंले दिने विवरण (नाम, जिल्ला/वडा, विवरण, कभर/मिडिया स्रोत र OnlyUtils मार्फत Google साइन-इन) मात्र लिन्छौं। लेख-लेखकको इमेल Google खाताबाट आउँछ र निजी रहन्छ। कुनै एनालिटिक्स/विज्ञापन ट्र्याकर छैन, साइन-इन सत्रबाहेक कुनै कुकी छैन।",
+  "हामी आवश्यकता, सहयोग प्रस्ताव, परियोजना र लेखमा तपाईंले दिने विवरण (नाम, जिल्ला/वडा, विवरण, कभर/मिडिया स्रोत र OnlyUtils मार्फत Google साइन-इन) मात्र लिन्छौं। लेख-लेखकको इमेल Google खाताबाट आउँछ र निजी रहन्छ। पृष्ठ हेराइ हामी आफैं गन्छौं — पृष्ठको नाम, दिन, भाषा र बाहिरबाट आउँदा सन्दर्भ दिने साइट मात्र; कुकी, IP ठेगाना वा उपकरण पहिचानकर्ता भण्डारण गर्दैनौं।",
   "सार्वजनिकमा मास्क गरिएको नाम र वडा-स्तरको स्थान मात्र देखिन्छ; फोन, दर्ता गर्नेको विवरण र परिवार जानकारी कहिल्यै सार्वजनिक हुँदैन। परियोजनाको बैंक विवरण समिति फोनबाट प्रमाणित भएपछि मात्र देखिन्छ।",
   "आवश्यकता ३० दिनपछि म्याद सकिन्छ (नवीकरण नगरे हट्छ); लेजर मास्क गरिएको सार्वजनिक अडिट रेकर्डका रूपमा रहन्छ। निजी डेटा सम्पादकले मात्र देख्छन् र हरेक कार्य अडिट-लग हुन्छ।",
   "आफ्नो डेटा सच्याउन/हटाउन verifiednepal01@gmail.com मा सम्पर्क गर्नुहोस् — लक्ष्य ७ दिन। अरूका लागि दर्ता गर्दा उनीहरूको सहमति अनिवार्य छ। यो साइटले कहिल्यै पैसा चलाउँदैन। लागू कानून: व्यक्तिगत गोपनीयता ऐन २०७५।",

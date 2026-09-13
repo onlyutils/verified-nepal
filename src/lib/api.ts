@@ -2277,3 +2277,30 @@ export function postArticleLike(id: string, token?: string, body: { undo?: boole
     body: JSON.stringify(body),
   });
 }
+
+export interface ReachPayload {
+  page: string;
+  path: string;
+  lang: "en" | "ne";
+  ref?: string;
+  newSession?: boolean;
+}
+
+export interface AdminReachStats {
+  totals: { views: number; sessions: number };
+  today: { views: number; sessions: number };
+  last30: { views: number; sessions: number };
+  days: { date: string; views: number; sessions: number; pages: Record<string, number> }[];
+  pages: { page: string; views: number; last30: number }[];
+  paths: { page: string; path: string; views: number }[];
+  referrers: { host: string; views: number }[];
+  languages: { en: number; ne: number };
+}
+
+export function postReach(payload: ReachPayload): Promise<void> {
+  return request<void>("/reach", { method: "POST", body: JSON.stringify(payload), keepalive: true });
+}
+
+export function getAdminReach(token: string): Promise<AdminReachStats> {
+  return request<AdminReachStats>("/admin/reach", { token });
+}

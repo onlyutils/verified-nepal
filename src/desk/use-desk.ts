@@ -11,6 +11,7 @@ import {
   setMyDistricts,
   claimQueueItem,
   getAdminClimate,
+  getAdminReach,
   getAdminIncidents,
   getAdminStats,
   getAdminUsers,
@@ -48,6 +49,7 @@ import {
   updateOfferStatus,
   type AdminStatsResponse,
   type AdminClimateStats,
+  type AdminReachStats,
   type AdminIncident,
   type AdminUser,
   type CenterFlagInboxItem,
@@ -93,7 +95,8 @@ export type DeskSection =
   | "drones"
   | "incidents"
   | "admin"
-  | "climate";
+  | "climate"
+  | "reach";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }
   | { kind: "dispatch" | "story"; action: "publish"; id: string }
@@ -115,6 +118,7 @@ const sections = new Set<DeskSection>([
   "incidents",
   "admin",
   "climate",
+  "reach",
 ]);
 
 function initialSection(): DeskSection {
@@ -293,6 +297,9 @@ export function useDesk(language: Language) {
   const [climateStats, setClimateStats] = useState<AdminClimateStats | null>(null);
   const [climateStatsLoading, setClimateStatsLoading] = useState(false);
   const [climateStatsError, setClimateStatsError] = useState<string | null>(null);
+  const [reachStats, setReachStats] = useState<AdminReachStats | null>(null);
+  const [reachStatsLoading, setReachStatsLoading] = useState(false);
+  const [reachStatsError, setReachStatsError] = useState<string | null>(null);
 
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -588,6 +595,18 @@ export function useDesk(language: Language) {
       setClimateStatsLoading(false);
     }
   }, [auth.idToken, language]);
+  const loadReachStats = useCallback(async () => {
+    if (!auth.idToken) return;
+    setReachStatsLoading(true);
+    setReachStatsError(null);
+    try {
+      setReachStats(await getAdminReach(auth.idToken));
+    } catch (error) {
+      setReachStatsError(apiErrorMessage(error, language));
+    } finally {
+      setReachStatsLoading(false);
+    }
+  }, [auth.idToken, language]);
 
   useEffect(() => {
     if (!auth.idToken || !auth.profile || (auth.profile.role !== "moderator" && auth.profile.role !== "admin")) return;
@@ -624,6 +643,7 @@ export function useDesk(language: Language) {
       void loadAdminStats();
     }
     if (activeSection === "climate" && auth.profile?.role === "admin") void loadClimateStats();
+    if (activeSection === "reach" && auth.profile?.role === "admin") void loadReachStats();
   }, [
     activeSection,
     auth.idToken,
@@ -631,6 +651,7 @@ export function useDesk(language: Language) {
     loadAdminModerators,
     loadAdminStats,
     loadClimateStats,
+    loadReachStats,
     loadCenterFlags,
     loadDispatches,
     loadStories,
@@ -1448,6 +1469,10 @@ export function useDesk(language: Language) {
     climateStatsLoading,
     climateStatsError,
     loadClimateStats,
+    reachStats,
+    reachStatsLoading,
+    reachStatsError,
+    loadReachStats,
     handleAdminLookup,
     handleAdminSave,
     actionMsg,
