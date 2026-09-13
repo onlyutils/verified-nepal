@@ -20,7 +20,7 @@ export function DayStrip({
       </CardHeader>
       <CardContent>
         <div className="flex h-36 items-stretch gap-1" aria-label={title}>
-          {days.map((day, index) => (
+          {days.map((day) => (
             <div key={day.date} className="flex min-w-0 flex-1 flex-col">
               <div
                 className="flex min-h-0 flex-1 items-end gap-px"
@@ -34,11 +34,24 @@ export function DayStrip({
                   <div className="w-1/2 rounded-t bg-primary/40" style={{ height: `${(day.secondary / maxValue) * 100}%` }} />
                 ) : null}
               </div>
-              <div className="h-4 truncate text-[10px] text-muted-foreground">
-                {index === 0 || index === days.length - 1 ? day.date : ""}
-              </div>
             </div>
           ))}
+        </div>
+        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+          <span>{days[0]?.date}</span>
+          <span>{days[days.length - 1]?.date}</span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2.5 rounded-sm bg-primary" aria-hidden="true" />
+            {primaryLabel}
+          </span>
+          {secondaryLabel ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-primary/40" aria-hidden="true" />
+              {secondaryLabel}
+            </span>
+          ) : null}
         </div>
       </CardContent>
     </Card>
