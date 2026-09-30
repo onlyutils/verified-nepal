@@ -1,6 +1,10 @@
+# Ahrefs re-renders the SPA home page thousands of times a day, which burned
+# the Cloudflare Functions quota (2026-09-30). Keep it out entirely.
+User-agent: AhrefsBot
+Disallow: /
+
 User-agent: *
 Disallow: /search
 Disallow: /data/
 
 Sitemap: https://verifiednepal.com/sitemap.xml
-
