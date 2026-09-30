@@ -59,6 +59,26 @@ pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm build
 
+# Prod only: invoke Functions just on the routes that have one. Without this,
+# wrangler generates include:["/*"] (because _middleware.ts matches everything)
+# and every page view + asset fetch burns the free 100k/day Functions quota.
+# The middleware only adds noindex on non-prod hosts, so prod doesn't need it;
+# dev keeps /* so its X-Robots-Tag still covers every response.
+# Derived from functions/ so a new function can't silently drop out of prod.
+if [ "$ENV" = prod ]; then
+  python3 - <<'PY'
+import json, pathlib
+routes = []
+for f in sorted(pathlib.Path("functions").rglob("*.ts")):
+    parts = f.relative_to("functions").with_suffix("").parts
+    if any(p.startswith("_") for p in parts):  # _middleware, _shared: not routes
+        continue
+    routes.append("/" + "/".join("*" if p.startswith("[") else p for p in parts))
+json.dump({"version": 1, "include": routes, "exclude": []}, open("dist/_routes.json", "w"), indent=2)
+print("prod _routes.json include:", routes)
+PY
+fi
+
 npx --yes wrangler@latest pages deploy dist --project-name "$PROJECT" \
   --branch main --commit-dirty=true
 
