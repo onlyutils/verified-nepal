@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: sync-climate
@@ -24,13 +25,24 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm sync:climate
+      # main is protected (PR + `check` required), so the bot opens a PR instead of pushing.
+      # ponytail: PRs opened with GITHUB_TOKEN don't trigger ci.yml, so merge it as admin.
       - run: |
           if git diff --quiet -- public/data/climate; then
             echo "No climate data changes."
             exit 0
           fi
+          branch=chore/refresh-climate-data
           git config user.name "verifiednepal-bot"
           git config user.email "actions@users.noreply.github.com"
+          git checkout -B "$branch"
           git add public/data/climate
           git commit -m "chore: refresh climate data"
-          git push
+          git push --force origin "$branch"
+          if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null)" != OPEN ]; then
+            gh pr create --base main --head "$branch" \
+              --title "chore: refresh climate data" \
+              --body "Automated quarterly refresh from the sync-climate workflow."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
