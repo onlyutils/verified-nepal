@@ -27,7 +27,9 @@ case "$ENV" in
     # prod OnlyUtils client (confidential; secret lives in the Lambda, not here)
     export VITE_OU_CLIENT_ID=ou_client_34G33PBOq8T6BJCbya4I8
     export VITE_API_BASE=https://api.prod.verifiednepal.com
-    export VITE_FLOOD_MANIFEST_URL=https://cdn.prod.verifiednepal.com/floods/trishuli-2026-08-26/published/manifest.json
+    # Flood-impact manifest: CI reads it from the GitHub `production` environment variable.
+    : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
+    export VITE_FLOOD_MANIFEST_URL
     export VITE_CHAT_WIDGET_SRC=https://onyutils-chat-widget.pages.dev/onyutils-chat.js
     export VITE_CHAT_KEY=ou_chatpk_34G34ZplIA7A1WqqRT9ri
     export VITE_CHAT_API=https://chat.onlyutils.com
