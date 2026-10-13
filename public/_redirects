@@ -4,7 +4,5 @@
 /flood-relief /drop-centers 301
 /flood-relief/* /drop-centers 301
 
-# www serves the identical site instead of redirecting — a second indexable
-# copy of every page. Canonical tags already point to the apex, but a 301 is
-# the stronger signal and avoids relying on crawlers honouring canonical.
-https://www.verifiednepal.com/* https://verifiednepal.com/:splat 301
+# Cloudflare Pages does not support host-based sources in _redirects.
+# The www to apex redirect is configured as a Cloudflare Redirect Rule.

@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { centerMeta, climateMeta, dispatchMeta, projectMeta } from "./og-meta.ts";
+import { centerMeta, climateMeta, dispatchMeta, projectMeta, STATIC_PAGE_META } from "./og-meta.ts";
+
+test("new static page metadata has titles and useful descriptions", () => {
+  const keys = ["floodImpact", "info", "howTo", "ourMessage", "articles", "privacy", "ledger", "audit", "coverage", "incidents", "drones"];
+  for (const key of keys) {
+    const meta = STATIC_PAGE_META[key];
+    assert.ok(meta.title.endsWith("· verifiedNepal"));
+    assert.ok(meta.title.trim().length > 0);
+    assert.ok(meta.description.length >= 50 && meta.description.length <= 170);
+  }
+});
 
 test("dispatchMeta builds a title and a <=155-char excerpt with author, kept under the meta description limit", () => {
   const meta = dispatchMeta({

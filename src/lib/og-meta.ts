@@ -101,6 +101,61 @@ export const STATIC_PAGE_META: Record<string, ShareMeta> = {
     description: "Verified infrastructure projects — tuin, bridges, trails, water and schools. Money goes straight to local committees.",
     image: "/brand/og-projects.png",
   },
+  floodImpact: {
+    title: "Trishuli flood — before and after · verifiedNepal",
+    description: "Explore satellite before-and-after imagery of the Trishuli flash flood, from Rasuwa through Trishuli Bazaar and Devighat to Chitwan.",
+    image: "/brand/og-card.png",
+  },
+  info: {
+    title: "Info & help · verifiedNepal",
+    description: "Find official rescue links and emergency helplines, learn how to donate safely, and understand how this volunteer-run, community-verified site works.",
+    image: "/brand/og-card.png",
+  },
+  howTo: {
+    title: "How VerifiedNepal works · verifiedNepal",
+    description: "A practical guide to finding and giving disaster relief in Nepal, what moderators verify, and how requests move from review to delivery.",
+    image: "/brand/og-card.png",
+  },
+  ourMessage: {
+    title: "Your message becomes Nepal's message · verifiedNepal",
+    description: "Send a message from Nepal to a country you choose. Each message joins the live word cloud and is counted with messages from others.",
+    image: "/brand/og-card.png",
+  },
+  articles: {
+    title: "Articles · verifiedNepal",
+    description: "Read moderated community writing on mountains and climate: editorial articles with a community voice, not an open forum.",
+    image: "/brand/og-card.png",
+  },
+  privacy: {
+    title: "Privacy and terms · verifiedNepal",
+    description: "Read the terms and privacy policy: what information the volunteer-run site collects, why it is used, and how public records are handled.",
+    image: "/brand/og-card.png",
+  },
+  ledger: {
+    title: "Public goods ledger · verifiedNepal",
+    description: "Follow relief goods from a helper or drop center through receipt and delivery, with public records of where support has gone.",
+    image: "/brand/og-card.png",
+  },
+  audit: {
+    title: "Public audit log · verifiedNepal",
+    description: "Review the public audit log of moderation and status decisions, with recorded actions that make the response process accountable.",
+    image: "/brand/og-card.png",
+  },
+  coverage: {
+    title: "Coverage by ward · verifiedNepal",
+    description: "See where verified help has reached and where it has not, by ward, from the public register refreshed every five minutes.",
+    image: "/brand/og-card.png",
+  },
+  incidents: {
+    title: "Verified incidents · verifiedNepal",
+    description: "Browse current and past community-reported emergencies that moderators have verified, with summaries and affected districts.",
+    image: "/brand/og-card.png",
+  },
+  drones: {
+    title: "Drone tasking board · verifiedNepal",
+    description: "Coordinate drone payload requests, landing sites and flight plans to support active disaster response incidents in Nepal.",
+    image: "/brand/og-card.png",
+  },
 };
 
 export function climateMeta(): ShareMeta {

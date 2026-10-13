@@ -15,6 +15,7 @@ export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Resp
     const res = await fetch(`${apiBase(url.hostname)}/centers/${encodeURIComponent(params.id)}`, {
       cf: { cacheTtl: 300 },
     } as RequestInit);
+    if (res.status === 404) return new Response(page.body, { status: 404, headers: page.headers }); // Stops soft 404s in Google.
     if (!res.ok) return page;
     item = await res.json();
   } catch {

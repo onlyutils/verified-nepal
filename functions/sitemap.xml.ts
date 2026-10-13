@@ -9,11 +9,17 @@ type Ctx = { request: Request };
 const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string }> = [
   { path: "/", changefreq: "hourly", priority: "1.0" },
   { path: "/missing", changefreq: "weekly", priority: "0.8" },
+  { path: "/flood-impact", changefreq: "weekly", priority: "0.8" },
+  { path: "/climate", changefreq: "weekly", priority: "0.6" },
   { path: "/info", changefreq: "weekly", priority: "0.6" },
+  { path: "/how-to", changefreq: "weekly", priority: "0.6" },
+  { path: "/our-message", changefreq: "monthly", priority: "0.5" },
   { path: "/privacy", changefreq: "monthly", priority: "0.3" },
   { path: "/get-help", changefreq: "weekly", priority: "0.8" },
   { path: "/give-help", changefreq: "weekly", priority: "0.8" },
   { path: "/drop-centers", changefreq: "daily", priority: "0.7" },
+  { path: "/incidents", changefreq: "daily", priority: "0.6" },
+  { path: "/coverage", changefreq: "weekly", priority: "0.5" },
   { path: "/projects", changefreq: "daily", priority: "0.7" },
   { path: "/articles", changefreq: "daily", priority: "0.7" },
   { path: "/poster", changefreq: "daily", priority: "0.5" },
@@ -56,7 +62,8 @@ export const onRequestGet = async ({ request }: Ctx): Promise<Response> => {
               item.updatedAt || item.createdAt,
             ),
           );
-      } catch {
+      } catch (error) {
+        console.error(`Sitemap fetch failed for ${base}${source.endpoint}`, error);
         return [];
       }
     }),

@@ -256,7 +256,7 @@ export function App() {
 
   useEffect(() => {
     let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    if (page === "search") {
+    if (page === "search" || page === "notFound") {
       if (!robots) {
         robots = document.createElement("meta");
         robots.name = "robots";

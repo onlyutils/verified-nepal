@@ -6,5 +6,8 @@ Disallow: /
 User-agent: *
 Disallow: /search
 Disallow: /data/
+Disallow: /desk
+Disallow: /me
+Disallow: /org
 
 Sitemap: https://verifiednepal.com/sitemap.xml

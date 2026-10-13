@@ -15,13 +15,14 @@ export function apiBase(hostname: string): string {
 
 /**
  * Canonical/og:url/sitemap links must always point at the production domain,
- * even when the page is served from dev or a preview host — otherwise every
+ * including www, so both production hosts consolidate on the apex even when
+ * the page is served from dev or a preview host — otherwise every
  * non-prod deploy publishes itself as a legitimate, self-canonical duplicate
  * of the real site, which is exactly the kind of thing that gets a brand-name
  * query split across two indexed domains instead of ranking one clearly.
  */
 export function canonicalOrigin(hostname: string): string {
-  return isProdHost(hostname) ? `https://${hostname}` : "https://verifiednepal.com";
+  return "https://verifiednepal.com";
 }
 
 /** Resolves a site-relative image path (e.g. "/brand/og-poster.png") to an absolute URL. */
