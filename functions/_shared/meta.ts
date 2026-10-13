@@ -49,3 +49,10 @@ export function applyMeta(page: Response, meta: ShareMeta, canonical: string, ty
   }
   return rewriter.transform(page);
 }
+
+export function appendJsonLd(page: Response, data: Record<string, unknown>): Response {
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+  return new HTMLRewriter()
+    .on("head", { element: (e: Element) => e.append(`<script type="application/ld+json">${json}</script>`, { html: true }) })
+    .transform(page);
+}

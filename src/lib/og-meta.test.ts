@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { centerMeta, climateMeta, dispatchMeta, projectMeta, STATIC_PAGE_META } from "./og-meta.ts";
+import { centerMeta, climateMeta, dispatchJsonLd, dispatchMeta, projectMeta, STATIC_PAGE_META } from "./og-meta.ts";
 
 test("new static page metadata has titles and useful descriptions", () => {
   const keys = ["floodImpact", "info", "howTo", "ourMessage", "articles", "privacy", "ledger", "audit", "coverage", "incidents", "drones"];
@@ -42,6 +42,29 @@ test("dispatchMeta includes the cover image and caption for sharing", () => {
 test("dispatchMeta uses the title as image alt text when the cover has no caption", () => {
   const meta = dispatchMeta({ title: "A clear title", body: "Short", cover: { url: "https://cdn.example/cover.jpg" } });
   assert.equal(meta.imageAlt, "A clear title");
+});
+
+test("dispatchJsonLd includes article and publisher data", () => {
+  const data = dispatchJsonLd({
+    title: { en: "Glacier retreat in Langtang", ne: "लाङटाङ" },
+    body: "Article body",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-02T00:00:00.000Z",
+    cover: { url: "https://cdn.example/cover.jpg" },
+    author: { displayName: "Asha" },
+  }, "https://verifiednepal.com/articles/a1");
+  assert.equal(data["@type"], "Article");
+  assert.equal(data.headline, "Glacier retreat in Langtang");
+  assert.deepEqual(data.author, { "@type": "Person", name: "Asha" });
+  assert.equal((data.publisher as { name: string }).name, "verifiedNepal");
+});
+
+test("dispatchJsonLd omits optional values from a minimal item", () => {
+  const data = dispatchJsonLd({ title: "A clear title", body: "Short" }, "https://verifiednepal.com/articles/a1");
+  assert.equal(data.headline, "A clear title");
+  assert.equal("author" in data, false);
+  assert.equal("image" in data, false);
+  assert.equal("datePublished" in data, false);
 });
 
 test("climateMeta includes the computed share and Nepal in the description", () => {

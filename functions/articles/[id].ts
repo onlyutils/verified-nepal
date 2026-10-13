@@ -3,8 +3,8 @@
 // article's own, so shared links preview the article. Anything that fails
 // falls back to the untouched page. Wrangler picks this folder up automatically
 // on `pages deploy` (see infra/deploy.sh).
-import { dispatchMeta } from "../../src/lib/og-meta";
-import { apiBase, applyMeta, canonicalOrigin } from "../_shared/meta";
+import { dispatchJsonLd, dispatchMeta } from "../../src/lib/og-meta";
+import { apiBase, appendJsonLd, applyMeta, canonicalOrigin } from "../_shared/meta";
 
 type Ctx = { request: Request; params: { id: string }; next: () => Promise<Response> };
 
@@ -25,5 +25,6 @@ export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Resp
   }
   const meta = dispatchMeta(item);
   const canonical = `${canonicalOrigin(url.hostname)}/articles/${encodeURIComponent(params.id)}`;
-  return applyMeta(page, meta, canonical, "article");
+  const result = applyMeta(page, meta, canonical, "article");
+  return appendJsonLd(result, dispatchJsonLd(item, canonical));
 };

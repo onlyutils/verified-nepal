@@ -11,6 +11,8 @@ export interface DispatchLike {
   body: Localized;
   author?: { displayName?: string; place?: string };
   cover?: { url?: string; caption?: string };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectLike {
@@ -50,6 +52,28 @@ export function dispatchMeta(item: DispatchLike): ShareMeta {
   return image
     ? { title: `${title} · verifiedNepal`, description, image, imageAlt: item.cover?.caption?.trim() || title }
     : { title: `${title} · verifiedNepal`, description };
+}
+
+export function dispatchJsonLd(item: DispatchLike, canonical: string): Record<string, unknown> {
+  const title = text(item.title).trim() || "Article";
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    mainEntityOfPage: canonical,
+    url: canonical,
+    ...(item.createdAt ? { datePublished: item.createdAt } : {}),
+    ...(item.updatedAt || item.createdAt ? { dateModified: item.updatedAt ?? item.createdAt } : {}),
+    ...(item.cover?.url ? { image: item.cover.url } : {}),
+    ...(item.author?.displayName ? { author: { "@type": "Person", name: item.author.displayName } } : {}),
+    publisher: {
+      "@type": "Organization",
+      name: "verifiedNepal",
+      url: "https://verifiednepal.com/",
+      logo: { "@type": "ImageObject", url: "https://verifiednepal.com/brand/logo-mark.svg" },
+    },
+    inLanguage: "en",
+  };
 }
 
 export function projectMeta(project: ProjectLike): ShareMeta {
