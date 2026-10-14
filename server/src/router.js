@@ -19,6 +19,13 @@ import {
 } from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
+  handleGetAd,
+  handleAdminAdsList,
+  handleAdminAdCreate,
+  handleAdminAdUpdate,
+  handleAdminAdDelete,
+} from "./controllers/adController.js";
+import {
   handleGetIncidents,
   handleGetAdminIncidents,
   handlePostAdminIncident,
@@ -148,6 +155,11 @@ const withModAck = compose(withModAuth, withGuidelinesAck);
 // project photo/update) decide auth themselves from the request body / committee code.
 const routes = [
   ["GET", /^\/health$/, () => json(200, { ok: true })],
+  ["GET", /^\/ads$/, handleGetAd],
+  ["GET", /^\/admin\/ads$/, withAuth(handleAdminAdsList)],
+  ["POST", /^\/admin\/ads$/, withAuth(handleAdminAdCreate)],
+  ["PUT", /^\/admin\/ads\/([^/]+)$/, withAuth(handleAdminAdUpdate)],
+  ["DELETE", /^\/admin\/ads\/([^/]+)$/, withAuth(handleAdminAdDelete)],
   [
     "GET",
     /^\/kits$/,
