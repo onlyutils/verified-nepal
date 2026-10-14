@@ -204,7 +204,7 @@ Everything later imports these. Merge both before Wave 1 starts.
 
 Start after Wave 0 is on `main`. Expected one to two days wall-clock.
 
-#### [ ] W1-A Chrome: nav, defaults, precache, footer links
+#### [x] W1-A Chrome: nav, defaults, precache, footer links
 
 - **Codex:** `gpt-6-luna`, effort `medium`.
 - **Owns:** `src/components/site-header.tsx`, `src/components/site-status-bar.tsx`, `src/desk/guides.tsx` (create), `src/desk/desk.tsx` (one nav entry), `src/App.tsx`, `src/pages/dispatches.tsx`, `src/lib/chat-widget.ts`, `vite.config.ts`, `src/i18n/nav.ts` (create for new strings), `src/lib/page-routing.test.ts`.
@@ -223,7 +223,7 @@ Start after Wave 0 is on `main`. Expected one to two days wall-clock.
   - Service worker: load dev before merging (old build), merge, wait for deploy, reload twice, confirm the new nav. Check in DevTools-equivalent via CDP `ServiceWorker.enable` that the precache manifest no longer lists `rescued-persons.json`.
 - **Done when:** screenshots and the SW check are in the e2e report.
 
-#### [ ] W1-B Home honesty: per-block source and time, hero, search lead, vocabulary
+#### [x] W1-B Home honesty: per-block source and time, hero, search lead, vocabulary
 
 - **Codex:** `gpt-6.1-sol`, effort `medium` (Nepali copy quality matters more than logic).
 - **Owns:** `src/pages/home.tsx`, `src/pages/find-person.tsx`, `src/pages/project-detail.tsx`, `src/pages/info-help.tsx`, `src/i18n/index.ts`, `src/i18n/shell.ts`, `src/lib/edition.ts`, `public/llms.txt`.
@@ -241,7 +241,7 @@ Start after Wave 0 is on `main`. Expected one to two days wall-clock.
   - Nepali review: the owner or a named native speaker reads the new `ne` strings before prod dispatch #1 (owner action A-1).
 - **Done when:** screenshots are in the report and the Nepali review is recorded.
 
-#### [ ] W1-C Backend: `kind: news` end to end (plan tasks T1, T2, T3, part of T6)
+#### [x] W1-C Backend: `kind: news` end to end (plan tasks T1, T2, T3, part of T6)
 
 - **Codex:** `gpt-6.1-sol`, effort `high`.
 - **Owns:** `server/**` only. Follow the TDD steps in the 20-task plan for T1, T2, T3 exactly, with these amendments:
@@ -267,6 +267,8 @@ Start after Wave 0 is on `main`. Expected one to two days wall-clock.
 #### Prod dispatch #1 (immediately after Wave 1 is green on dev)
 
 Owner decision Q12: push to prod immediately. The agent that closes the last Wave 1 lane runs `deploy-prod.yml` and `deploy-backend-prod.yml` as in section 2.4 and records the prod SHA in the e2e report. The Nepali read-through (A-1) happens on prod afterwards; copy fixes land as one follow-up commit and another dispatch. Section 1.4 rule 6 (Get help / Give help above the fold) is checked on prod too.
+
+**Done 2026-10-14:** frontend and backend prod workflows both green on commit 28ccc09; prod home serves bundle `index-DcLfd9rM.js`, Nepali by default, dateline `बुधबार, असोज २८, २०८३`, Get help / Give help buttons end at 493 and 549 px at 360x740, `?kind=news` returns `{"items":[]}`, an unknown kind returns 400. Dev e2e: `docs/e2e/2026-10/E2E-TEST-REPORT.md`.
 
 ### Wave 2, the Now strip, the Desk queue, sharing (three lanes, parallel)
 
