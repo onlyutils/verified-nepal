@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, ImagePlus, Plus, Trash2, Upload } from "lucide-react";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
+import { localStrings } from "@/i18n/local";
+import { MunicipalitySelect } from "@/components/municipality-select";
+import { districtLabels, districtNames } from "@/lib/districts";
+import { municipalityById } from "@/lib/admin-units";
+import { formatBsDate, formatRelativeTime, formatNumber } from "@/lib/format-date";
 import { communityStrings } from "@/i18n/community";
 import {
   ApiError,
+  createArticle,
   DISPATCH_TAGS,
   getMyArticle,
+  listMyArticles,
   presignArticleMedia,
   saveArticle,
   submitArticle,
@@ -19,7 +26,7 @@ import { useGoogleAuth } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { MediaUploadError, uploadMedia } from "@/lib/media";
 import type { Language } from "@/lib/types";
-import { BLOCK_LIMITS } from "./types";
+import { BLOCK_LIMITS, MEDIA_LIMITS } from "./types";
 import type { Block, Cover, MediaBlock, TextBlock } from "./types";
 import { trimBlocks, trimCover, validateArticle, type ArticleMissingCode } from "./validate";
 import { ArticleBody } from "./render";
@@ -113,6 +120,11 @@ function statusLabel(status: ArticleStatus, t: (typeof articlesEditorStrings)["e
 }
 
 export function ArticleEditor({ language, id }: { language: Language; id: string }) {
+  const localUpdate = new URLSearchParams(window.location.search).get("kind") === "news";
+  return localUpdate ? <LocalUpdateEditor key={id} language={language} id={id} /> : <StandardArticleEditor key={id} language={language} id={id} />;
+}
+
+function StandardArticleEditor({ language, id }: { language: Language; id: string }) {
   const t = articlesEditorStrings[language];
   const auth = useGoogleAuth();
   const [article, setArticle] = useState<MyArticleDetail | null>(null);
@@ -767,6 +779,363 @@ function EditorBlock({
           className={block.type === "heading" ? "text-xl font-semibold" : block.type === "quote" ? "italic text-muted-foreground" : ""}
         />
       )}
+    </div>
+  );
+}
+
+function localMissingLabel(code: string, t: (typeof localStrings)["en"]) {
+  if (code.startsWith("block.source:")) return t.missingImageSource;
+  return ({ title: t.missingTitle, body: t.missingBody, blocks: t.missingBlocks, tags: t.missingTags,
+    locality: t.missingLocality, scope: t.missingScope, happenedAt: t.missingDate, source: t.missingSource } as Record<string, string>)[code] || t.invalid;
+}
+
+// ponytail: Use the server's filed count when the daily-limit response gains that field.
+function localError(cause: unknown, language: Language, count?: number) {
+  const t = localStrings[language];
+  if (cause instanceof ApiError) {
+    const body = cause.body as { error?: string; missing?: string[]; limit?: number; resetsAt?: string } | null;
+    if (body?.error === "daily_limit") return t.dailyLimit
+      .replace("{n}", formatNumber(count ?? body.limit ?? 0, language))
+      .replace("{time}", formatRelativeTime(body.resetsAt, language));
+    if (body?.error === "reporter_required") return t.permission;
+    if (body?.missing?.length) return body.missing.map((code) => localMissingLabel(code, t)).join(" ");
+  }
+  return apiErrorMessage(cause, language) || t.invalid;
+}
+
+function inputDate(iso: string | undefined) {
+  if (!iso || Number.isNaN(Date.parse(iso))) return "";
+  const date = new Date(iso);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function LocalUpdateEditor({ language, id }: { language: Language; id: string }) {
+  const t = localStrings[language];
+  const auth = useGoogleAuth();
+  const [currentId, setCurrentId] = useState(id === "new" ? null : id);
+  const [status, setStatus] = useState<ArticleStatus>("draft");
+  const [form, setForm] = useState<ArticleSaveBody>({ title: "", blocks: [], tags: ["community"], language, scope: "municipality", sourceUrls: [], sourceNote: "" });
+  const [bodyText, setBodyText] = useState("");
+  const [date, setDate] = useState("");
+  const [district, setDistrict] = useState("");
+  const [municipality, setMunicipality] = useState<number | "">("");
+  const [ward, setWard] = useState("");
+  const [image, setImage] = useState<MediaBlock | null>(null);
+  const [loading, setLoading] = useState(id !== "new");
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const allowed = auth.profile?.role === "admin" || Boolean(auth.profile?.reporter?.approvedAt);
+  const readOnly = status === "pending" || status === "published";
+  const loadedFor = useRef<string | null>(null);
+  const load = useCallback(async () => {
+    if (!auth.idToken || !auth.profile) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const home = auth.profile.reporter?.localities?.[0];
+      if (id === "new") {
+        setDistrict(home?.district || "");
+        setMunicipality(home?.municipalityId ? Number(home.municipalityId) : "");
+        setWard(home?.ward ? String(home.ward) : "");
+        setForm((current) => ({ ...current, displayName: auth.profile?.displayName || auth.profile?.name || "", scope: home?.ward ? "ward" : "municipality" }));
+      } else {
+        const item = await getMyArticle(auth.idToken, id);
+        if (item.kind !== "news") throw new Error();
+        setCurrentId(item.id);
+        setStatus(item.status);
+        setForm(item);
+        setBodyText(item.blocks.filter((block) => block.type === "paragraph").map((block) => (block as TextBlock).text).join("\n\n"));
+        setDate(inputDate(item.happenedAt));
+        setDistrict(item.locality?.district || "");
+        setMunicipality(item.locality?.municipalityId ? Number(item.locality.municipalityId) : "");
+        setWard(item.locality?.ward ? String(item.locality.ward) : "");
+        setImage(item.blocks.find((block): block is MediaBlock => block.type === "image") || null);
+        setRejectReason(item.rejectReason || "");
+        setSaved(true);
+      }
+    } catch (cause) {
+      setError(localError(cause, language));
+    } finally {
+      setLoading(false);
+    }
+  }, [auth.idToken, auth.profile, id, language]);
+  useEffect(() => {
+    if (!allowed || !auth.profile) return;
+    const key = `${auth.profile.sub}:${id}`;
+    // Token refreshes and chrome language changes must not reset an unsaved draft.
+    // ponytail: Lift draft loading into a shared authoring hook when the editor grows another mode.
+    if (loadedFor.current !== key) {
+      loadedFor.current = key;
+      void load();
+    }
+  }, [allowed, auth.profile, id, load]);
+
+  const change = (patch: ArticleSaveBody) => { setForm((current) => ({ ...current, ...patch })); setSaved(false); setMissing([]); setError(null); };
+  const dirty = () => { setSaved(false); setMissing([]); setError(null); };
+  const validate = () => {
+    const codes: string[] = [];
+    if (!form.title?.trim() || form.title.trim().length > 200) codes.push("title");
+    if (!bodyText.trim() || bodyText.trim().length > 1200) codes.push("body");
+    const unit = municipalityById(municipality === "" ? undefined : municipality);
+    if (!unit || unit.district !== district || (ward && (!Number.isInteger(Number(ward)) || Number(ward) < 1 || Number(ward) > unit.wards))) codes.push("locality");
+    if (!form.scope || (form.scope === "ward" && !ward)) codes.push("scope");
+    if (!date || Number.isNaN(Date.parse(date)) || Date.parse(date) > Date.now()) codes.push("happenedAt");
+    const urls = (form.sourceUrls || []).map((url) => url.trim()).filter(Boolean);
+    if ((!urls.length && !form.sourceNote?.trim()) || urls.length > 3 || (form.sourceNote || "").length > 200 || /[\r\n]/.test(form.sourceNote || "") || urls.some((url) => {
+      try { const parsed = new URL(url); return !/^https:\/\/[^\s]{4,500}$/.test(url) || parsed.protocol !== "https:" || !parsed.hostname || Boolean(parsed.username || parsed.password); } catch { return true; }
+    })) codes.push("source");
+    if (bodyText.trim().split(/\n\s*\n/).length + (image ? 1 : 0) > BLOCK_LIMITS.maxBlocks) codes.push("blocks");
+    if (form.tags?.length !== 1 || !DISPATCH_TAGS.includes(form.tags[0])) codes.push("tags");
+    if (image && (!image.url || !image.fileId || !image.source.trim())) codes.push("block.source:0");
+    setMissing(codes);
+    return codes.length === 0;
+  };
+  const save = async () => {
+    if (!auth.idToken || !allowed || busy || uploading || !validate()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const blocks: Block[] = bodyText.trim().split(/\n\s*\n/).map((text) => ({ type: "paragraph", text: text.trim() }));
+      if (image) blocks.push(image);
+      const payload: ArticleSaveBody & { language: Language } = {
+        title: form.title?.trim(), blocks: trimBlocks(blocks), language: form.language || language, tags: form.tags, scope: form.scope,
+        locality: { district, municipalityId: String(municipality), ...(ward ? { ward: Number(ward) } : {}) },
+        happenedAt: new Date(date).toISOString(), sourceUrls: (form.sourceUrls || []).map((url) => url.trim()).filter(Boolean), sourceNote: form.sourceNote?.trim() || "", displayName: form.displayName,
+      };
+      if (currentId) await saveArticle(auth.idToken, currentId, payload);
+      else {
+        const result = await createArticle(auth.idToken, { ...payload, kind: "news" });
+        setCurrentId(result.id);
+        window.history.replaceState({}, "", `/me/articles/${encodeURIComponent(result.id)}/edit?kind=news`);
+      }
+      setSaved(true);
+    } catch (cause) {
+      let count: number | undefined;
+      if (cause instanceof ApiError && cause.status === 429) {
+        try {
+          const result = await listMyArticles(auth.idToken);
+          count = result.items.filter((item) => item.kind === "news" && Date.parse(item.createdAt) > Date.now() - 86400000).length;
+        } catch { /* The server's limit is the fallback if the tally cannot load. */ }
+      }
+      setError(localError(cause, language, count));
+    } finally { setBusy(false); }
+  };
+  const submit = async () => {
+    if (!auth.idToken || !currentId || !saved || busy || uploading || !validate()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await submitArticle(auth.idToken, currentId);
+      setStatus(result.status);
+      setRejectReason("");
+      setSent(true);
+    } catch (cause) { setError(localError(cause, language)); }
+    finally { setBusy(false); }
+  };
+  const upload = async (file: File) => {
+    if (!auth.idToken) return;
+    if (!(MEDIA_LIMITS.image.types as readonly string[]).includes(file.type) || file.size > MEDIA_LIMITS.image.maxBytes) {
+      setError(t.uploadFailed);
+      return;
+    }
+    setUploading(true);
+    dirty();
+    try {
+      const result = await uploadMedia((payload) => presignArticleMedia(auth.idToken as string, payload), file, () => {});
+      setImage({ type: "image", ...result, source: "", caption: "", id: uid() });
+    } catch { setError(t.uploadFailed); }
+    finally { setUploading(false); }
+  };
+  const fieldError = (code: string) => missing.includes(code) ? (
+    <p id={`local-error-${code}`} role="alert" className="text-sm text-destructive">{localMissingLabel(code, t)}</p>
+  ) : null;
+  let bsDate = "";
+  try { bsDate = date ? formatBsDate(new Date(date), language) : ""; }
+  catch { bsDate = t.bsUnavailable; }
+
+  if (auth.loading || (auth.idToken && !auth.profile && !auth.error) || (allowed && loading))
+    return <LoadingState label={t.loading} />;
+  if (!auth.idToken) return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader title={t.title} />
+      <SignInNudge language={language} id="local-update" title={t.title} body={t.permission} />
+    </div>
+  );
+  if (!allowed) return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader title={t.title} />
+      <Alert><AlertDescription>{t.permission}</AlertDescription></Alert>
+      <Button asChild><a href="/me">{t.back}</a></Button>
+    </div>
+  );
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader title={t.title} />
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}{" "}
+            <Button variant="outline" disabled={busy} onClick={() => {
+              if (id !== "new" && !form.title) void load();
+              else void save();
+            }}>{t.retry}</Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {missing.length ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            <ul className="list-disc space-y-2 pl-5">
+              {missing.map((code) => <li key={code}>{localMissingLabel(code, t)}</li>)}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {rejectReason ? <Alert variant="destructive"><AlertDescription>{t.rejectedReason}: {rejectReason}</AlertDescription></Alert> : null}
+      <StatusBadge tone={toneForStatus(status)}>
+        {({ draft: t.statusDraft, pending: t.statusPending, published: t.statusPublished, rejected: t.statusRejected })[status]}
+      </StatusBadge>
+      {sent ? <Alert><AlertDescription>{t.submitted}</AlertDescription></Alert> : null}
+      {readOnly ? <p>{status === "published" ? t.statusPublished : t.readOnly}</p> : saved ? <Alert><AlertDescription>{t.saved}</AlertDescription></Alert> : null}
+      <Card>
+        <CardHeader><CardTitle><h2>{t.body}</h2></CardTitle></CardHeader>
+        <CardContent>
+          <fieldset disabled={busy || uploading || readOnly} className="min-w-0 space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="local-title">{t.titleLabel}</Label>
+              <Input id="local-title" value={form.title || ""} maxLength={200}
+                aria-invalid={missing.includes("title")} aria-describedby={missing.includes("title") ? "local-error-title" : undefined}
+                onChange={(event) => change({ title: event.target.value })} />
+              {fieldError("title")}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="local-body">{t.body}</Label>
+              <Textarea id="local-body" rows={6} maxLength={1200} value={bodyText}
+                aria-invalid={missing.includes("body")} aria-describedby={`local-body-hint${missing.includes("body") ? " local-error-body" : ""}`}
+                onChange={(event) => { setBodyText(event.target.value); dirty(); }} />
+              <p id="local-body-hint" className="text-sm text-muted-foreground">{t.bodyHint}</p>
+              {fieldError("body")}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="local-language">{t.language}</Label>
+              <NativeSelect id="local-language" value={form.language} onChange={(event) => change({ language: event.target.value as Language })}>
+                <NativeSelectOption value="en">{t.english}</NativeSelectOption>
+                <NativeSelectOption value="ne">{t.nepali}</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="local-district">{t.district}</Label>
+              <NativeSelect id="local-district" value={district} aria-invalid={missing.includes("locality")}
+                onChange={(event) => { setDistrict(event.target.value); setMunicipality(""); setWard(""); dirty(); }}>
+                <NativeSelectOption value="">{t.chooseDistrict}</NativeSelectOption>
+                {districtNames.map((name) => <NativeSelectOption key={name} value={name}>{districtLabels[name][language]}</NativeSelectOption>)}
+              </NativeSelect>
+            </div>
+            {/* ponytail: Replace MunicipalitySelect and ward input with the gated LocalityPicker when T8 ships. */}
+            <MunicipalitySelect id="local-municipality" district={district} value={municipality}
+              onChange={(value) => { setMunicipality(value); setWard(""); dirty(); }} language={language}
+              label={t.municipality} placeholder={t.chooseMunicipality} districtFirst={t.districtFirst} typeLabels={t}
+              error={missing.includes("locality") ? t.missingLocality : undefined} />
+            <div className="space-y-2">
+              <Label htmlFor="local-ward">{t.ward}</Label>
+              <Input id="local-ward" type="number" min={1} max={municipalityById(Number(municipality))?.wards} step={1} value={ward}
+                aria-invalid={missing.includes("locality") || missing.includes("scope")}
+                onChange={(event) => { setWard(event.target.value); dirty(); }} />
+            </div>
+            <fieldset className="min-w-0">
+              <legend className="text-sm font-medium">{t.scope}</legend>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {([
+                  ["ward", t.scopeWard], ["municipality", t.scopeMunicipality], ["district", t.scopeDistrict], ["national", t.scopeNational],
+                ] as const).map(([value, label]) => (
+                  <label key={value} className="flex min-h-11 cursor-pointer items-center gap-2">
+                    <input type="radio" name="local-scope" value={value} checked={form.scope === value}
+                      onChange={() => change({ scope: value })} className="size-5 shrink-0 accent-primary" />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              {fieldError("scope")}
+            </fieldset>
+            <div className="space-y-2">
+              <Label htmlFor="local-date">{t.happenedAt}</Label>
+              <Input id="local-date" type="datetime-local" value={date} max={inputDate(new Date().toISOString())} className="min-w-0"
+                aria-invalid={missing.includes("happenedAt")} aria-describedby={`local-bs-date${missing.includes("happenedAt") ? " local-error-happenedAt" : ""}`}
+                onChange={(event) => { setDate(event.target.value); dirty(); }} />
+              <p id="local-bs-date" className="text-sm text-muted-foreground">{bsDate}</p>
+              {fieldError("happenedAt")}
+            </div>
+            <fieldset className="min-w-0 space-y-3">
+              <legend className="text-sm font-medium">{t.sources}</legend>
+              {[0, 1, 2].map((index) => (
+                <div key={index} className="space-y-2">
+                  <Label htmlFor={`local-source-${index}`}>{t.sourceUrl.replace("{n}", formatNumber(index + 1, language))}</Label>
+                  <Input id={`local-source-${index}`} type="url" maxLength={500} value={form.sourceUrls?.[index] || ""}
+                    aria-invalid={missing.includes("source")} onChange={(event) => {
+                      const sourceUrls = [...(form.sourceUrls || [])];
+                      sourceUrls[index] = event.target.value;
+                      change({ sourceUrls });
+                    }} />
+                </div>
+              ))}
+            </fieldset>
+            <div className="space-y-2">
+              <Label htmlFor="local-source-note">{t.sourceNote}</Label>
+              <Input id="local-source-note" maxLength={200} value={form.sourceNote || ""} placeholder={t.sourcePlaceholder}
+                aria-invalid={missing.includes("source")} aria-describedby={missing.includes("source") ? "local-error-source" : undefined}
+                onChange={(event) => change({ sourceNote: event.target.value })} />
+              <p className="text-sm text-muted-foreground">{t.sourceHint}</p>
+              {fieldError("source")}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="local-tag">{t.tag}</Label>
+              <NativeSelect id="local-tag" value={form.tags?.[0] || ""} aria-invalid={missing.includes("tags")}
+                onChange={(event) => change({ tags: [event.target.value as DispatchTag] })}>
+                {DISPATCH_TAGS.map((tag) => <NativeSelectOption key={tag} value={tag}>{tagLabel(tag, language)}</NativeSelectOption>)}
+              </NativeSelect>
+              {fieldError("tags")}
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="local-image">{t.image}</Label>
+              <Input id="local-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void upload(file);
+                event.currentTarget.value = "";
+              }} />
+              {image ? (
+                <>
+                  <img src={image.url} alt={image.caption || ""} className="w-full rounded-lg" />
+                  <Label htmlFor="local-image-source">{t.imageSource}</Label>
+                  <Input id="local-image-source" value={image.source} maxLength={200}
+                    aria-invalid={missing.includes("block.source:0")} onChange={(event) => { setImage({ ...image, source: event.target.value }); dirty(); }} />
+                  <Label htmlFor="local-image-caption">{t.imageCaption}</Label>
+                  <Input id="local-image-caption" value={image.caption || ""} maxLength={300}
+                    onChange={(event) => { setImage({ ...image, caption: event.target.value }); dirty(); }} />
+                  {fieldError("block.source:0")}
+                  <Button type="button" variant="outline" onClick={() => { setImage(null); dirty(); }}>{t.removeImage}</Button>
+                </>
+              ) : null}
+            </div>
+          </fieldset>
+        </CardContent>
+      </Card>
+      {uploading ? <p role="status">{t.uploading}</p> : null}
+      {!readOnly ? (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" className="h-auto min-h-11 whitespace-normal py-3" variant={saved ? "outline" : "default"}
+            disabled={busy || uploading} onClick={() => void save()}>{busy ? t.saving : t.save}</Button>
+          <Button size="lg" className="h-auto min-h-11 whitespace-normal py-3" variant={saved ? "default" : "outline"}
+            disabled={busy || uploading || !saved} onClick={() => void submit()}>{t.submit}</Button>
+        </div>
+      ) : null}
+      <Button asChild className="h-auto min-h-11 whitespace-normal py-3" variant={readOnly ? "default" : "outline"}>
+        <a href="/me#local-updates">{t.back}</a>
+      </Button>
     </div>
   );
 }

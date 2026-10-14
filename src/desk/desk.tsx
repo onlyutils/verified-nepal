@@ -29,6 +29,7 @@ import { ClimateStats } from "./climate";
 import { ReachStats } from "./reach";
 import { DeskDialogs } from "./dialogs";
 import { Dispatches } from "./dispatches";
+import { LocalUpdates } from "./local-updates";
 import { Distributions } from "./distributions";
 import { Stories } from "./stories";
 import { AuthGate, DistrictCheckboxes, DistrictGate, GuidelinesGate, LoadingGate, SignedOutGate, UnauthorizedGate } from "./gates";
@@ -98,6 +99,7 @@ export function Desk({
     { key: "print", group: g.deskGroupPaper, label: t.deskPrintTab, icon: <Printer /> },
     { key: "sync", group: g.deskGroupPaper, label: t.deskSyncTab, icon: <RefreshCw /> },
     { key: "dispatches", group: g.deskGroupPublish, label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
+    { key: "local-updates", group: g.deskGroupPublish, label: g.localUpdatesTab, count: model.localUpdates.length, icon: <Newspaper /> },
     { key: "stories", group: g.deskGroupPublish, label: g.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
     { key: "projects", group: g.deskGroupRelief, label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
     { key: "orgs", group: g.deskGroupRelief, label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
@@ -183,6 +185,7 @@ export function Desk({
           {model.activeSection === "flags" ? <Flags model={model} /> : null}
           {model.activeSection === "projects" ? <Projects model={model} /> : null}
           {model.activeSection === "dispatches" ? <Dispatches model={model} /> : null}
+          {model.activeSection === "local-updates" ? <LocalUpdates model={model} /> : null}
           {model.activeSection === "stories" ? <Stories model={model} /> : null}
           {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
           {model.activeSection === "distributions" ? <Distributions model={model} /> : null}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FileText, Plus } from "lucide-react";
+import { localStrings } from "@/i18n/local";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { createArticle, deleteArticle, listMyArticles, type ArticleStatus, type MyArticle } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
@@ -19,8 +20,9 @@ function openArticle(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-export function MyArticlesPage({ language }: { language: Language }) {
-  const t = articlesEditorStrings[language];
+export function MyArticlesPage({ language, localOnly = false, embedded = false }: { language: Language; localOnly?: boolean; embedded?: boolean }) {
+  const local = localStrings[language];
+  const t = localOnly ? { ...articlesEditorStrings[language], ...local, newArticle: local.title, listLoading: local.loading, listLoadError: local.loadError } : articlesEditorStrings[language];
   const auth = useGoogleAuth();
   const [items, setItems] = useState<MyArticle[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,19 +32,24 @@ export function MyArticlesPage({ language }: { language: Language }) {
     if (!auth.idToken) return;
     setError(null);
     try {
-      setItems((await listMyArticles(auth.idToken)).items);
+      setItems((await listMyArticles(auth.idToken)).items.filter((item) => localOnly ? item.kind === "news" : item.kind !== "news"));
     } catch (cause) {
       setError(apiErrorMessage(cause, language) || t.listLoadError);
     }
-  }, [auth.idToken, language, t.listLoadError]);
+  }, [auth.idToken, language, localOnly, t.listLoadError]);
 
   useEffect(() => {
     if (auth.idToken) void load();
     else setItems(null);
   }, [auth.idToken, load]);
 
+  const canWriteUpdate = auth.profile?.role === "admin" || Boolean(auth.profile?.reporter?.approvedAt);
   const create = async () => {
     if (!auth.idToken) return;
+    if (localOnly) {
+      openArticle("/me/articles/new/edit?kind=news");
+      return;
+    }
     setBusy("new");
     try {
       const result = await createArticle(auth.idToken, { language });
@@ -67,6 +74,7 @@ export function MyArticlesPage({ language }: { language: Language }) {
     }
   };
 
+  if (embedded && localOnly && !canWriteUpdate && !items?.length) return null;
   if (auth.loading) return <LoadingState label={t.listLoading} />;
   if (!auth.idToken) {
     return (
@@ -80,13 +88,17 @@ export function MyArticlesPage({ language }: { language: Language }) {
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <PageHeader
-        eyebrow={t.eyebrow}
+        as={embedded ? "h2" : "h1"}
+        eyebrow={embedded ? undefined : t.eyebrow}
         title={t.listTitle}
         actions={
-          <Button type="button" disabled={busy === "new"} onClick={() => void create()}>
-            <Plus aria-hidden="true" />
-            {t.newArticle}
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {!localOnly || canWriteUpdate ? <Button type="button" className={localOnly ? "h-auto min-h-11 whitespace-normal py-3" : undefined} disabled={busy === "new"} onClick={() => void create()}>
+              <Plus aria-hidden="true" />
+              {t.newArticle}
+            </Button> : null}
+            {!localOnly && canWriteUpdate ? <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal py-3"><a href="/me/articles/new/edit?kind=news">{local.title}</a></Button> : null}
+          </div>
         }
       />
       {error ? (
@@ -104,10 +116,10 @@ export function MyArticlesPage({ language }: { language: Language }) {
         <EmptyState
           icon={FileText}
           title={t.empty}
-          action={
-            <Button type="button" onClick={() => void create()}>
+          action={(!localOnly || canWriteUpdate) ?
+            <Button type="button" className={localOnly ? "h-auto min-h-11 whitespace-normal py-3" : undefined} onClick={() => void create()}>
               {t.newArticle}
-            </Button>
+            </Button> : undefined
           }
         />
       ) : null}
@@ -157,17 +169,21 @@ function ArticleRow({
             <CardTitle className="text-lg">{item.title || t.title}</CardTitle>
             <StatusBadge tone={toneForStatus(item.status)}>{statusLabel(item.status, t)}</StatusBadge>
           </div>
-          <p className="text-sm text-muted-foreground">{counters}</p>
+          {item.kind !== "news" ? <p className="text-sm text-muted-foreground">{counters}</p> : null}
           {item.rejectReason ? (
             <p className="text-sm text-destructive">
               <span className="font-semibold">{t.rejectedReason}:</span> {item.rejectReason}
             </p>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm" variant="outline" className={item.kind === "news" ? "min-h-11" : undefined}>
               <a
                 href={
-                  item.status === "draft" || item.status === "rejected"
+                  item.kind === "news"
+                    ? item.status === "published"
+                      ? `/articles/${encodeURIComponent(item.id)}`
+                      : `/me/articles/${encodeURIComponent(item.id)}/edit?kind=news`
+                    : item.status === "draft" || item.status === "rejected"
                     ? `/me/articles/${encodeURIComponent(item.id)}/edit`
                     : `/articles/${encodeURIComponent(item.id)}`
                 }
@@ -175,7 +191,7 @@ function ArticleRow({
                 {item.status === "draft" || item.status === "rejected" ? t.edit : t.view}
               </a>
             </Button>
-            {item.status !== "published" ? (
+            {item.kind !== "news" && item.status !== "published" ? (
               <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={onDelete}>
                 {t.delete}
               </Button>
