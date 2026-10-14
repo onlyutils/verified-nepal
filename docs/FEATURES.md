@@ -59,6 +59,12 @@ the **help board** (what's needed, what's offered) or the **ledger and audit log
 
 ---
 
+## Now strip and local updates
+
+The home page's **Now** strip brings together short, dated, sourced local items so people can check what is happening nearby. Items include a place, when it happened, a source and a clear trust label. An **Official source / आधिकारिक स्रोत** label is for material relayed from OPMCM, NDRRMA, DHM or Nepal Police. **Checked / जाँच गरिएको** means a moderator approved the item.
+
+Local updates are the next step: correspondents can submit an update for a ward, municipality, district or Nepal. A moderator checks it before it appears. The local page and area picker surface places with published updates, while the picker still lets people look up any local level.
+
 ## 1. Asking for help, and offering it
 
 This is the heart of the site: `/get-help` and `/give-help`.

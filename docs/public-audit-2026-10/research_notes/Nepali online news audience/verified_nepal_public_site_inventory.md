@@ -107,7 +107,7 @@ One photo or video + caption ≤ 500 chars, role badge (Received help / Helped s
 
 ### 3c. Local updates — **planned, not shipped**
 
-`docs/NEWS-PORTAL-DECISIONS.md` (2026-10-14) settles a `kind: news` DISPATCH subtype with scope radios Ward→Nepal, locality, `happenedAt`/`expiresAt`, post-moderation with "Not yet checked / अझै जाँच भएको छैन" vs "Checked by volunteer / स्वयंसेवकले जाँचेको" labels, `/local/<municipality>` page, "Now" strip, home "Your area", a `reporter` role, two labelled ad slots. None of this exists in `src/` (no `kind`, `locality`, `reviewedAt` in `src/lib/api.ts`; no `/local` route in `src/lib/page-routing.ts`). Public naming decision: "Local updates" / "local correspondents", never "news portal"/"reporters" (decision #6).
+`docs/NEWS-PORTAL-DECISIONS.md` (2026-10-14) settles a `kind: news` DISPATCH subtype with scope radios Ward→Nepal, locality, `happenedAt`/`expiresAt`, pre-moderation with the two site trust labels, `/local/<municipality>` page, "Now" strip, home "Your area", a `reporter` role, two labelled ad slots. None of this exists in `src/` (no `kind`, `locality`, `reviewedAt` in `src/lib/api.ts`; no `/local` route in `src/lib/page-routing.ts`). Public naming decision: "Local updates" / "local correspondents", never "news portal"/"reporters" (decision #6).
 
 ### 3d. Incidents (`/incidents`, `src/pages/incidents.tsx:21-105`)
 
@@ -277,6 +277,8 @@ Social presence: footer links to GitHub (`github.com/onlyutils/verified-nepal`),
 
 ## 11. Monetisation surfaces
 
+> Superseded 2026-10-14: owner decisions and the public-site action plan now govern local updates, moderation, and ad sequencing. This inventory records the state observed during the 2026-10-14 audit.
+
 - Ad slots: none in `src/` (`grep -ri "advert\|sponsor\|विज्ञापन" src` → no UI matches). Two labelled slots ("विज्ञापन / Sponsored") with an admin-only AD item are decided but unbuilt (`docs/NEWS-PORTAL-DECISIONS.md` #11, build order step 6); an ad-manager role is deferred (#12).
 - Donation CTAs: all point off-site to the government PMDRF gateway (`pmdrf.nchl.com.np`) and the PMO appeal page — emergency bar button, home blue band link to `donate.gov.np`, `PublicNotice` on home and `/info` with QR (`home.tsx:602-642`, `info-help.tsx:112-147`). The site states it never handles money (`privacy.tsx` §12, `GOVERNANCE.md`). Project pages show committee bank/eSewa/Khalti details for direct payment.
 - Sponsor mentions: "Powered by OnlyUtils" in footer and inside the chat widget (`site-footer.tsx:68-79`, `chat-widget.ts:188`). No other sponsor, grant or partner logos.
@@ -285,11 +287,13 @@ Social presence: footer links to GitHub (`github.com/onlyutils/verified-nepal`),
 
 ## 12. Known gaps the repo admits (public-site relevant)
 
+> Superseded 2026-10-14: owner decisions and the public-site action plan now govern local updates, moderation, and sequencing. This inventory records the state observed during the 2026-10-14 audit.
+
 From `docs/TODO.md`:
 - Condolence messages on local updates — deferred 2026-10-14; when built: moderator-approved only, family-removal route, written policy first.
 - No notification to a beneficiary when an org takes their request (status page only).
 
-From `docs/NEWS-PORTAL-DECISIONS.md` (all unbuilt): local updates content type, `/local/<municipality>` page and picker, "Now" strip and home "Your area", reporter role and public profile, language chip per post, post-moderation labels, flags auto-hide, two ad slots, AI writer spec, ad-manager role, DoIB legal opinion before using the word "news".
+From `docs/NEWS-PORTAL-DECISIONS.md` (all unbuilt): local updates content type, `/local/<municipality>` page and picker, "Now" strip and home "Your area", reporter role and public profile, language chip per post, pre-moderation, two ad slots, AI writer spec, ad-manager role, DoIB registration before using restricted public terminology.
 
 From `docs/SEO-ACTION-PLAN.md`: sitemap never submitted (owner); `www` redirect (live check: still 200); crawlable text for `/flood-impact` (2.1); query-matching titles/H1s (2.2); Nepali as its own URL + `hreflang` (2.5); external links (2.6); IndexNow (2.7); CWV/Lighthouse once traffic exists (3.3). Open questions include whether `/ledger` and `/audit` should rank.
 

@@ -52,7 +52,7 @@ All of these run in CI on every PR.
 
 ## Pull requests
 
-- Branch from `main`; `main` is protected — all changes land via PR.
+- Develop each feature in its own git worktree off `main`; run `pnpm format` only on files you changed, `pnpm typecheck`, `pnpm test`, `pnpm build`, and `(cd server && pnpm test)`, then merge directly to `main` (the owner has admin rights and the required CI check applies to PRs only). Merges to `main` auto-deploy to dev for e2e testing; production deploys are manual.
 - Keep PRs small and single-purpose. UI change? Include a screenshot
   (mobile width too).
 - Describe *why*, cite sources for any factual change (numbers, contacts,

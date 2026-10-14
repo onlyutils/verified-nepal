@@ -11,7 +11,7 @@ Owner decisions after three council rounds. Transcripts: `council-news-portal-20
 | 2 | Scope | Locality pre-filled from the reporter's home locality. Radio buttons: Ward, Municipality, District, Province, Nepal. |
 | 3 | Moderation | Pre-moderation, same pending -> published path as articles and stories. Own Desk queue. Details below. |
 | 4 | Language | Each post shows in the language written, EN / ने chip, toggle changes chrome only. Moderators declare the language(s) they moderate at onboarding; the news queue filters by it. |
-| 5 | Reporter role | `reporter` role with home localities (empty = national). Anyone signed in can apply; admin approves; many per locality; may post outside locality. Works with post-moderation given the scope ladder below. |
+| 5 | Reporter role | `reporter` role with home localities (empty = national). Anyone signed in can apply; admin approves; many per locality; may post outside locality. |
 | 6 | Public naming | "Local updates" and "local correspondents". No "news portal", no "reporters" in public copy. See DoIB note below. |
 | 7 | Points | None public. Private tally + public profile (byline, locality, published count). |
 | 8 | Display | `/local/<municipality>` page, picker once (Nepali, English, old VDC names), tiers Ward -> Municipality -> District -> Nepal with empty tiers collapsing, "Now" strip of local updates on top. |
@@ -56,6 +56,8 @@ with nothing published collapses to the next tier (Municipality -> District -> N
 in round 1, so no page ever renders an empty heading.
 
 ## Build order
+
+Sequencing follows the dispositions in [the public-site action plan](PUBLIC-SITE-ACTION-PLAN-2026-10.md).
 
 1. `kind: news` + validator + scope radios + `happenedAt`/`expiresAt` + `sourceUrls` + backfill
    `kind: article` + Desk "Local updates" queue with inline approve/reject + language chip and
