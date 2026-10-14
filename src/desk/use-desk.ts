@@ -119,6 +119,7 @@ const sections = new Set<DeskSection>([
   "incidents",
   "admin",
   "climate",
+  "guides",
   "reach",
 ]);
 
