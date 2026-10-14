@@ -162,7 +162,7 @@ export const STATIC_PAGE_META: Record<string, ShareMeta> = {
   },
   info: {
     title: "Info & help · verifiedNepal",
-    description: "Find official rescue links and emergency helplines, learn how to donate safely, and understand how this volunteer-run, community-verified site works.",
+    description: "Find official rescue links and emergency helplines, learn how to donate safely, and understand how this independent, volunteer-run site works.",
     image: "/brand/og-card.png",
   },
   howTo: {
