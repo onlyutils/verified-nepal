@@ -153,7 +153,7 @@ export function MissingGuide({ language, navigate }: { language: Language; navig
                 >
                   {index + 1}
                 </span>
-                <CardTitle className="pt-1 text-lg">{step.title}</CardTitle>
+                <CardTitle className="min-w-0 pt-1 text-lg [overflow-wrap:anywhere]">{step.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pl-[4.5rem] text-base leading-relaxed">
                 {step.body.map((paragraph) => (
@@ -173,9 +173,9 @@ export function MissingGuide({ language, navigate }: { language: Language; navig
                   </Button>
                 ) : null}
                 {step.cta === "unidentified" ? (
-                  <Button asChild className="mt-2">
+                  <Button asChild className="mt-2 max-w-full whitespace-normal [overflow-wrap:anywhere]">
                     <a href={opmcmUnidentifiedUrl} target="_blank" rel="noopener noreferrer">
-                      {c.unidentified}
+                      <span className="min-w-0">{c.unidentified}</span>
                       <ExternalLink aria-hidden="true" />
                     </a>
                   </Button>
@@ -205,7 +205,7 @@ export function MissingGuide({ language, navigate }: { language: Language; navig
           ))}
         </CardContent>
       </Card>
-      <p className="text-base leading-relaxed text-muted-foreground">{c.closing}</p>
+      <p className="text-base leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">{c.closing}</p>
     </div>
   );
 }

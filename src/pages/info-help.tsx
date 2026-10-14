@@ -95,13 +95,13 @@ function EmergencyInfo({ language }: { language: Language }) {
           <a
             key={line.key}
             href={`tel:${line.number}`}
-            className="flex min-h-11 items-center justify-between gap-3 rounded-lg border p-4 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-h-11 min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border p-4 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span className="flex min-w-0 items-center gap-3 text-sm font-medium">
               <Phone aria-hidden="true" className="size-5 shrink-0 text-destructive" />
-              {language === "ne" ? line.labelNe : line.labelEn}
+              <span className="min-w-0 [overflow-wrap:anywhere]">{language === "ne" ? line.labelNe : line.labelEn}</span>
             </span>
-            <span className="shrink-0 font-bold tabular-nums text-destructive">{line.number}</span>
+            <span className="min-w-0 max-w-full font-bold tabular-nums text-destructive [overflow-wrap:anywhere]">{line.number}</span>
           </a>
         ))}
       </CardContent>

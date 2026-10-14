@@ -882,8 +882,8 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
           </a>
         </Button>
       </aside>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-6">
           {errorCount ? (
             <Alert variant="destructive">
               <AlertDescription>{t.validationSummary.replace("{n}", String(errorCount))}</AlertDescription>
@@ -1047,14 +1047,15 @@ export function PosterPage({ language, navigate, savedId }: { language: Language
           </SectionCard>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="flex items-baseline justify-between">
+        <div className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-subtle">{t.previewLabel}</p>
             <p className="text-xs text-subtle">{t.dimensions.replace("{w}", String(size.width)).replace("{h}", String(size.height))}</p>
           </div>
           <canvas
             ref={canvasRef}
-            className={`w-full rounded-xl border ${input.size === "story" ? "max-w-sm" : ""}`}
+            className={`h-auto w-full max-w-full rounded-xl border ${input.size === "story" ? "max-w-sm" : ""}`}
+            style={{ aspectRatio: `${size.width} / ${size.height}` }}
             aria-label={t.previewLabel}
             role="img"
           />
