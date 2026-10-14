@@ -119,3 +119,28 @@ Owner decision 2026-10-14: build the ad feature now; selling or running ads wait
 Finding (environment, not code): image upload on dev returns 502 `media_upstream: client authentication failed`. This is the dev media-client secret that was removed from the Lambda on 2026-09-07 (see `docs/e2e/2026-09-07/E2E-TEST-REPORT.md`, finding 1); it needs a free secret slot in the OnlyUtils console and an infra-repo Terraform apply. It also blocks image uploads in the article editor and the ad form on dev. The ad checks above reused an image already in the media bucket. Prod was not tested for this.
 
 Not covered: uploading a new image from the ad form, editing an ad from the Desk form (API edit covered), the `localTop` slot (no page yet).
+
+## Leftover fixes: header overflow, share preview, PNG cards for local updates (dev build of commit 1304533)
+
+Owner asked to fix the three leftovers from the Wave 2 report. Script: `scripts/overflow-sweep.mjs` (set `WARM=1` so each page is loaded once before measuring; `MODES`, `PAGES` narrow the run).
+
+| Check | Result |
+|---|---|
+| Overflow sweep, 320x640 mobile emulation, text scale 150% (`vn:text-scale`), ne and en, signed out and signed in (helper-01), 19 pages (`/`, `/me`, `/get-help`, `/give-help`, `/search`, `/articles`, a local update page, `/ledger`, `/drop-centers`, `/incidents`, `/projects`, `/climate`, `/missing`, `/poster`, `/report-incident`, `/register-organization`, `/our-message`, `/info`, and `/desk` signed in) | No page has `scrollWidth > clientWidth`; no header element past the right edge |
+| Header, signed in, 320 px / 150% | Controls wrap onto a second line, Menu reachable, every control at least 44 px |
+| Home at 360x740 after all changes | Nepali by default; Get help and Give help buttons end at 493 and 549 px; Now strip below the situation band; Viber links present |
+| Default share preview (`curl -A facebookexternalhit /`) | Title "verifiedNepal \| Find help. Give help."; new description; `og:image:alt` updated; `og-card.png` 1200x630, 53 KB, no "community-verified", no flood eyebrow |
+| `scripts/render-og-card.mjs` | Rebuilds `public/brand/og-card.png` from `scripts/og-card.html` with headless Chrome |
+| PNG card, local update detail page | Button "तस्बिर डाउनलोड गर्नुहोस्" present; click produces a blob download named `verifiednepal-local-update-<id>.png`; share counter fires after download or share |
+| PNG card on the Now strip | Present on every local-update row, absent on official notices and ledger rows |
+| Card content, Nepali | Title, place and Bikram Sambat date, excerpt (two-line limit of the existing renderer), "जाँच गरिएको · verifiednepal.com/articles/<id>"; conjuncts (स्वास्थ्य, क्षेत्रको, प्रतिकार्य, अद्यावधि) render correctly |
+
+Causes found and fixed along the way:
+
+- The Now strip's compact share row (my earlier change) could not wrap at 320 px / 150%; made wrapping.
+- Cloudflare verification widget: fixed 300 px iframe inside a 272 px card widened `/get-help` and every other anonymous form; it now renders compact when its container is under 300 px.
+- Long Nepali words in a local update title did not break; the heading now wraps.
+- Hotline rows, the missing-person link list, the incidents district filter, the climate legends, the signed-out sign-in prompt and the poster preview needed wrapping or stacking.
+- First-mode readings in a fresh browser sometimes showed old overflow after a deploy; a cold load measured over time was clean, so these were a test-order artefact. The sweep script's warm-up option avoids it.
+
+Not covered: real-device checks (iPhone Safari, older Android WebView), the signed-in Desk header below 320 px, completing a verification widget (headless Chrome cannot).
