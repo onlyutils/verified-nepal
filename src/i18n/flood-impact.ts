@@ -20,7 +20,7 @@ const en = {
   mediaLead: "Footage and satellite views of the 26 August flood, gathered from public sources. Each item links to where it was published.",
   playVideo: "Play video",
   mediaNote:
-    "Public-domain and Creative Commons material via Wikimedia Commons; news clips are embedded from YouTube and remain the property of their publishers.",
+    "Public-domain and Creative Commons material via Wikimedia Commons; video clips are embedded from YouTube and remain the property of their publishers.",
   play: "Play",
   pause: "Pause",
   stops: "Stops",
@@ -64,7 +64,7 @@ const ne: typeof en = {
   mediaLead: "२६ अगस्टको बाढीका सार्वजनिक स्रोतबाट सङ्कलित भिडियो र स्याटेलाइट दृश्यहरू। हरेक सामग्रीले प्रकाशित ठाउँमा लिङ्क गर्छ।",
   playVideo: "भिडियो चलाउनुहोस्",
   mediaNote:
-    "विकिमिडिया कमन्सबाट सार्वजनिक र क्रिएटिभ कमन्स सामग्री; समाचार क्लिपहरू युट्युबबाट इम्बेड गरिएका हुन् र तिनका प्रकाशकको स्वामित्वमा रहन्छन्।",
+    "विकिमिडिया कमन्सबाट सार्वजनिक र क्रिएटिभ कमन्स सामग्री; भिडियो क्लिपहरू युट्युबबाट इम्बेड गरिएका हुन् र तिनका प्रकाशकको स्वामित्वमा रहन्छन्।",
   play: "प्ले",
   pause: "रोक्नुहोस्",
   stops: "ठाउँहरू",
