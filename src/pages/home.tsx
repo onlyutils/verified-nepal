@@ -10,7 +10,6 @@ import {
   Plus,
   Search,
   Shield,
-  ShieldCheck,
   UserX,
 } from "lucide-react";
 import { openChatWidget } from "@/lib/chat-widget";
@@ -20,10 +19,10 @@ import { labels } from "@/i18n";
 import { useLiveData } from "@/lib/live";
 import { formatDateTime, formatNumber, messageText } from "@/lib/format";
 import { officialRescueUrl } from "@/lib/format";
-import { opmcmMissingPersonUrl, opmcmUpdatesUrl, pmdrfUrl, pmoAppealUrl } from "@/lib/urls";
+import { opmcmMissingPersonUrl, pmdrfUrl, pmoAppealUrl } from "@/lib/urls";
 import { regionOptions } from "@/lib/region";
 import { districtLabels } from "@/lib/geo";
-import type { Language, OpmcmGovernmentEffort, Page } from "@/lib/types";
+import type { Language, Page } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -32,7 +31,6 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Eyebrow, SectionHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { StatusBadge } from "@/components/status-badge";
 import { shellStrings } from "@/i18n/shell";
 import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
@@ -41,7 +39,7 @@ import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
 import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
 import { fillTemplate, formatEditionDate } from "@/lib/edition";
 import { fetchFloodManifest, type FloodManifest } from "@/lib/flood-manifest";
-import { nowStrings } from "@/i18n/now";
+import { NowStrip } from "@/components/now-strip";
 import { floodReliefStrings } from "@/i18n/flood-relief";
 import { floodImpactStrings } from "@/i18n/flood-impact";
 import reliefData from "@/data/relief-centers.json";
@@ -257,7 +255,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
         </div>
       </section>
 
-      <OfficialUpdates language={language} />
+      <NowStrip language={language} />
 
       <Stories language={language} />
 
@@ -494,77 +492,6 @@ function OfficialMessages({ language }: { language: Language }) {
       ))}
     </div>
   );
-}
-
-function OfficialUpdates({ language }: { language: Language }) {
-  const ts = shellStrings[language];
-  const updates = useLiveData().officialUpdates;
-  if (!updates?.length) return null;
-  return (
-    <section className="bg-secondary">
-      <div className={`${container} py-12 lg:py-16`}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <Eyebrow>{ts.latestOfficialUpdate}</Eyebrow>
-          <Button asChild type="button" variant="link" className="px-0">
-            <a href={opmcmUpdatesUrl} target="_blank" rel="noopener noreferrer">
-              {ts.readAllOfficialUpdates} <ExternalLink aria-hidden="true" />
-            </a>
-          </Button>
-        </div>
-        <Card className="mt-5 overflow-hidden">
-          <ul className="divide-y">
-            {updates.slice(0, 3).map((item) => (
-              <OfficialUpdateRow key={item._id} item={item} language={language} />
-            ))}
-          </ul>
-        </Card>
-      </div>
-    </section>
-  );
-}
-
-function OfficialUpdateRow({ item, language }: { item: OpmcmGovernmentEffort; language: Language }) {
-  const ts = shellStrings[language];
-  const title =
-    language === "ne"
-      ? textField(item, ["title_ne", "title", "titleEn", "englishTitle", "titleEnglish"])
-      : textField(item, ["title_en", "titleEn", "englishTitle", "titleEnglish", "title"]);
-  const summary =
-    language === "ne"
-      ? textField(item, ["summary_ne", "summary", "description_ne", "description", "content_ne", "content"])
-      : textField(item, ["summary_en", "summary", "description_en", "description", "content_en", "content"]);
-  const category =
-    textField(item, language === "ne" ? ["category_ne", "category", "type"] : ["category_en", "category", "type"]) ||
-    ts.officialUpdateFallbackCategory;
-  const date = item.updatedAt || item.createdAt;
-  return (
-    <li className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <Badge variant="info">{category}</Badge>
-        <h3 className="mt-2 font-semibold">{title || ts.officialUpdateFallbackCategory}</h3>
-        {summary ? <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{summary}</p> : null}
-        <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-subtle">
-          <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-          {ts.opmcmSource}
-          {date ? ` · ${formatDateTime(date, language)}` : ""}
-          <StatusBadge tone="info">{nowStrings[language].officialSource}</StatusBadge>
-        </p>
-      </div>
-      <Button asChild type="button" variant="link" size="sm" className="h-auto min-h-11 shrink-0 self-start px-0">
-        <a href={opmcmUpdatesUrl} target="_blank" rel="noopener noreferrer">
-          {ts.readUpdate} <ExternalLink aria-hidden="true" />
-        </a>
-      </Button>
-    </li>
-  );
-}
-
-function textField(item: OpmcmGovernmentEffort, keys: string[]) {
-  for (const key of keys) {
-    const value = item[key];
-    if (typeof value === "string" && value.trim()) return value;
-  }
-  return "";
 }
 
 export function EmergencyContacts({ language }: { language: Language }) {
