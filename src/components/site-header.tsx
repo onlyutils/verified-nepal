@@ -69,7 +69,7 @@ export function SiteHeader({
           aria-label={t.dashboard}
           className="min-h-11 min-w-11 flex-1 overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <Logo language={language} tagline={ts.tagline} className="max-w-full min-w-0 [&_span]:min-w-0 [&_span[lang]]:truncate" />
+          <Logo language={language} tagline={ts.tagline} className="max-w-full min-w-0 [&_span]:min-w-0 [&_span]:whitespace-normal [&_span]:break-words" />
         </button>
         <div className="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1">
           <AccountButton language={language} navigate={navigate} />

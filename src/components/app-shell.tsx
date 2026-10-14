@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { LogOut, Phone, UserRound } from "lucide-react";
 import { AccessibilityBar } from "@/components/accessibility-bar";
+import { labels } from "@/i18n";
 import { deskStrings } from "@/i18n/desk";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -77,9 +78,10 @@ export function AppShell<K extends string>({
           <button
             type="button"
             onClick={onHome}
-            className="min-h-11 min-w-11 flex-1 overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none"
+            aria-label={labels[language].dashboard}
+            className="min-h-11 min-w-11 shrink-0 overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Logo language={language} className="max-w-full min-w-0 [&_span]:min-w-0 [&_span[lang]]:truncate" />
+            <Logo language={language} className="max-w-full min-w-0 gap-0 [&>span]:sr-only sm:gap-2.5 sm:[&>span]:not-sr-only [&_span]:min-w-0 [&_span]:whitespace-normal [&_span]:break-words" />
           </button>
           <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
           <span className="hidden text-sm font-semibold text-muted-foreground sm:block">{title}</span>
