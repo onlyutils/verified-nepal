@@ -99,3 +99,23 @@ Findings:
 - Project detail page share row had no Viber; fixed separately (0966656).
 
 Not covered: PNG share cards for local-update permalinks (not built; the text share and OG preview cover Viber, WhatsApp and Facebook), image upload in the authoring form, Lambda concurrency under parallel load, a human Nepali read-through.
+
+## Ads: ADS-A backend and ADS-B frontend (dev build of commit a88d7cc)
+
+Owner decision 2026-10-14: build the ad feature now; selling or running ads waits for the DoIB registration. With no ad item nothing renders. API script: `scripts/ads-api.mjs`.
+
+| Id | Check | Result |
+|---|---|---|
+| 3, 4 | Helper cannot create an ad; moderator cannot list ads | 403, 403 |
+| 5a to 5d | `javascript:` link, HTML in a label, end before start, image outside the media bucket | 400 each |
+| 6, 7 | Admin creates a house ad for all of Nepal and a Gosaikunda-targeted ad | 201, 201 |
+| 8a to 8e | Gosaikunda gets the municipality ad; Gorkha and no-place callers get the general ad; the other slot has none; response is `public, max-age=300` and carries no `note` or `createdBy` | pass |
+| 9 | Admin list shows both with `active: true` | pass |
+| 10a, 10b | Admin ends the municipality ad by moving its end date into the past; it stops being served | pass |
+| UI | Detail page of a local update and of a plain article show the slot after the body and before the sources; label "विज्ञापन / Sponsored"; link has `rel="sponsored noopener noreferrer"`, opens a new tab; image loaded; alt text is the caption | pass |
+| UI | Desk "Ads" tab (Admin group) opens for admin; shows the warning "Do not run paid ads until VerifiedNepal's registration is complete" and the create form (placement, audience area, image, URL, two captions, dates, internal note) | pass |
+| Cleanup | Both test ads deleted; admin list empty; public endpoint returns `{"ad":null}` | pass |
+
+Finding (environment, not code): image upload on dev returns 502 `media_upstream: client authentication failed`. This is the dev media-client secret that was removed from the Lambda on 2026-09-07 (see `docs/e2e/2026-09-07/E2E-TEST-REPORT.md`, finding 1); it needs a free secret slot in the OnlyUtils console and an infra-repo Terraform apply. It also blocks image uploads in the article editor and the ad form on dev. The ad checks above reused an image already in the media bucket. Prod was not tested for this.
+
+Not covered: uploading a new image from the ad form, editing an ad from the Desk form (API edit covered), the `localTop` slot (no page yet).
