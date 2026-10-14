@@ -1,4 +1,5 @@
 import type { Language } from "@/lib/types";
+import { formatDateline } from "./format-date.ts";
 import { disasterStart } from "./disasters.ts";
 
 const responseStart = disasterStart();
@@ -17,10 +18,5 @@ export function leadHeadline(t: { leadHeadline: string; leadHeadlineNoMissing: s
 }
 
 export function formatEditionDate(now: Date, language: Language) {
-  return new Intl.DateTimeFormat(language === "ne" ? "ne-NP" : "en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Asia/Kathmandu",
-  }).format(now);
+  return formatDateline(now, language);
 }

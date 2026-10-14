@@ -1,22 +1,22 @@
 # verifiedNepal
 
-> Independent, volunteer-run public-service dashboard mirroring official Government of Nepal data for the 2026 Rasuwa / Bhote Koshi flash flood. Not a government website; it exists to make already-public disaster information easier to read. Bilingual (English / नेपाली), mobile-first.
+> Independent, volunteer-run service keeping a checked record of disaster and relief information for Nepal. People can ask for help, find needs they can respond to, and read information from official sources. Not a government website; it makes already-public disaster information easier to read. Bilingual (English / नेपाली), mobile-first.
 
-Live figures (rescued, missing, forces deployed) are fetched from NDRRMA's public API and refreshed every 5 minutes, with an offline snapshot fallback. Person records are never listed in bulk — they surface only through an explicit name search. Always verify individual records and follow emergency guidance on the official government sources linked below, not this site.
+The site attempts to refresh NDRRMA figures every 5 minutes while open. Bundled figures are shown when a complete refresh is unavailable; each situation block identifies its source and time. Person records appear only after a name search. Always verify individual records and follow emergency guidance on the official government sources linked below, not this site.
 
 ## Pages
 
-- [Dashboard](https://verifiednepal.com/): live rescued/missing/deployed counts, relief map, official updates.
-- [Find a person](https://verifiednepal.com/search): name search across NDRRMA's verified rescued and missing-persons lists and the public lost/found reports on the OPMCM rescue portal. Not indexed (results are per-query, not a browsable listing).
-- [Someone is missing](https://verifiednepal.com/missing): step-by-step guide for families — search the lists, register on the OPMCM portal, police/DAO report, hospitals, the Rasuwagadhi border channel, scam warning, verified hotlines.
-- [Get help](https://verifiednepal.com/get-help): request goods, shelter, transport or medical support; requests are verified before they are listed.
-- [Give help](https://verifiednepal.com/give-help): respond to verified needs or register an offer.
+- [Home](https://verifiednepal.com/): ask for help or give help, rescue figures with source and time, relief map, official updates.
+- [Find a person](https://verifiednepal.com/search): search NDRRMA’s rescued and missing-person lists by name, in Nepali or English. The page separately links to public lost-and-found reports on the official OPMCM portal. Not indexed (results are per-query, not a browsable listing).
+- [Someone is missing](https://verifiednepal.com/missing): step-by-step guide for families — search the lists, register on the OPMCM portal, police/DAO report, hospitals, the Rasuwagadhi border channel, scam warning, official hotlines.
+- [Get help](https://verifiednepal.com/get-help): request goods, shelter, transport or medical support; requests are checked before they are listed.
+- [Give help](https://verifiednepal.com/give-help): respond to checked needs or register an offer.
 - [Drop centres](https://verifiednepal.com/drop-centers): registered collection points for relief goods and their current status.
-- [Projects](https://verifiednepal.com/projects): verified infrastructure needs (tuin, bridges, trails, water, schools); committees receive payments directly.
+- [Projects](https://verifiednepal.com/projects): checked infrastructure needs (tuin, bridges, trails, water, schools); committees receive payments directly.
 - [Ledger](https://verifiednepal.com/ledger): public record of fulfilled aid, who received what, where and when. Nothing private is shown.
 - [Audit log](https://verifiednepal.com/audit): every moderator action, newest first, with names and targets masked.
 - [Articles](https://verifiednepal.com/articles): moderated community writing on mountains and climate; each article lives at /articles/{id}.
-- [Info & Help](https://verifiednepal.com/info): verified emergency hotlines, data sources, how to report a missing person or ask for help.
+- [Info & Help](https://verifiednepal.com/info): official emergency hotlines, data sources, how to report a missing person or ask for help.
 - [Privacy & Terms](https://verifiednepal.com/privacy): data handling, liability, and source-attribution policy.
 
 ## Official sources mirrored here

@@ -38,12 +38,17 @@ import { orgStrings } from "@/i18n/orgs";
 import { posterStrings } from "@/i18n/poster";
 import { listStories, type StoryPublicItem } from "@/lib/api";
 import { articlesPublicStrings, storyRoleLabel } from "@/i18n/articles-public";
+import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
+import { fillTemplate, formatEditionDate } from "@/lib/edition";
+import { fetchFloodManifest, type FloodManifest } from "@/lib/flood-manifest";
+import { nowStrings } from "@/i18n/now";
 import { floodReliefStrings } from "@/i18n/flood-relief";
 import { floodImpactStrings } from "@/i18n/flood-impact";
 import reliefData from "@/data/relief-centers.json";
 
 const ReliefMap = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.ReliefMap })));
 const AffectedLocations = lazy(() => import("@/components/relief-map").then((module) => ({ default: module.AffectedLocations })));
+const manifestUrl = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_FLOOD_MANIFEST_URL;
 const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
 
 export function Dashboard({ language, navigate }: { language: Language; navigate: (page: Page) => void }) {
@@ -51,15 +56,50 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
   const [selected, setSelected] = useState<number | null>(null);
   const [locationQuery, setLocationQuery] = useState("");
   const ts = shellStrings[language];
+  const [manifest, setManifest] = useState<FloodManifest | null>(null);
+  useEffect(() => {
+    if (!manifestUrl) return;
+    let cancelled = false;
+    fetchFloodManifest(manifestUrl)
+      .then((value) => {
+        if (!cancelled) setManifest(value);
+      })
+      .catch(() => {}); // ponytail: Keep a generic CTA offline; add cached manifest metadata when the asset loader supports it.
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  // ponytail: Move bilingual event names into the data files when their schema supports localized names.
+  const eventName = (event: string) => ts.eventNames[event as keyof typeof ts.eventNames] ?? event;
+  const imageDates = manifest?.frames.flatMap((frame) => [...(frame.beforeDateRange ?? []), ...frame.dateRange]).sort();
+  const floodBody =
+    manifest && imageDates?.length
+      ? fillTemplate(ts.floodBody, {
+          event: eventName(manifest.event),
+          start: formatBsDate(imageDates[0], language),
+          end: formatBsDate(imageDates[imageDates.length - 1], language),
+        })
+      : ts.floodBodyFallback;
 
   return (
     <div>
       <section className="bg-background">
-        <div className={`${container} grid items-start gap-12 py-12 lg:grid-cols-[440px_1fr] lg:gap-20 lg:py-20`}>
+        <div className={`${container} pt-4 lg:pt-6`}>
+          <p className="text-xs text-muted-foreground">{formatEditionDate(new Date(), language)}</p>
+        </div>
+        <div className={`${container} grid items-start gap-12 pb-12 pt-4 lg:grid-cols-[440px_1fr] lg:gap-20 lg:pb-20 lg:pt-10`}>
           <div>
             <Eyebrow>{ts.landingFloodName}</Eyebrow>
             <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight text-foreground lg:text-5xl">{ts.landingTitle}</h1>
-            <p className="mt-5 text-lg text-muted-foreground">{labels[language].aboutBody}</p>
+            <p className="mt-5 text-lg text-muted-foreground">{ts.heroBody}</p>
+            <div className="mt-6 flex flex-col gap-3 lg:hidden sm:flex-row">
+              <Button type="button" className="min-h-11 w-full" onClick={() => navigate("getHelp")}>
+                {ts.needHelpCta}
+              </Button>
+              <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => navigate("giveHelp")}>
+                {ts.wantHelpCta}
+              </Button>
+            </div>
           </div>
           <div className="grid gap-5">
             <ActionCard language={language} kind="find" navigate={navigate} />
@@ -84,20 +124,25 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.1em] text-primary-foreground/80">
                 <span className="inline-flex items-center gap-2">
                   <span className="size-2 rounded-full bg-background animate-pulse motion-reduce:animate-none" aria-hidden="true" />
-                  {floodReliefStrings[language].eyebrow}
+                  {ts.reliefEyebrow}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-background/15 px-3 py-1 text-primary-foreground">
-                  {language === "ne" ? `${reliefData.centers.length} राहत केन्द्रहरू` : `${reliefData.centers.length} relief centers`}
+                  {fillTemplate(ts.reliefCenterCount, { count: formatNumber(reliefData.centers.length, language) })}
                 </span>
               </div>
               <h2 id="flood-relief" className="mt-4 scroll-mt-24 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                {floodReliefStrings[language].ctaHeadline}
+                {ts.reliefHeadline}
               </h2>
               <div className="mt-5 flex min-w-0 items-start gap-4">
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-background/15">
                   <HandHelping className="size-5" aria-hidden="true" />
                 </span>
-                <p className="max-w-2xl text-base leading-7 text-primary-foreground/85">{floodReliefStrings[language].ctaBody}</p>
+                <p className="max-w-2xl text-base leading-7 text-primary-foreground/85">
+                  {fillTemplate(ts.reliefBody, {
+                    event: eventName(reliefData.meta.event),
+                    date: formatBsDate(reliefData.meta.last_verified, language),
+                  })}
+                </p>
               </div>
             </div>
             <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
@@ -129,10 +174,12 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 <Camera className="size-4" aria-hidden="true" />
-                {floodImpactStrings[language].homeCtaEyebrow}
+                {ts.floodEyebrow}
               </div>
-              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{floodImpactStrings[language].homeCtaHeadline}</h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{floodImpactStrings[language].homeCtaBody}</p>
+              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                {floodImpactStrings[language].homeCtaHeadline}
+              </h2>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{floodBody}</p>
             </div>
             <Button type="button" size="lg" className="w-full sm:w-auto" onClick={() => navigate("floodImpact")}>
               {floodImpactStrings[language].homeCtaButton}
@@ -326,8 +373,12 @@ function SituationBand({ language }: { language: Language }) {
   const t = labels[language];
   const ts = shellStrings[language];
   const liveData = useLiveData();
-  const updated = liveData.updatedAt || data.meta.synced_at;
-  const missing = liveData.missingCount === null ? t.unavailable : formatNumber(liveData.missingCount, language);
+  // Use the bundled figures until all NDRRMA requests succeed; partial refreshes have no reliable timestamp.
+  const live = liveData.isLive && liveData.updatedAt !== null;
+  const updated = live ? liveData.updatedAt : data.meta.synced_at;
+  const rescuedStatistics = live ? liveData.rescuedStatistics : data.rescuedStatistics;
+  const statusCounts = live ? liveData.statusCounts : data.statusCounts;
+  const missing = !live || liveData.missingCount === null ? t.unavailable : formatNumber(liveData.missingCount, language);
   const camps = data.stationedLocations.results.length || data.rescuedLocations.results.length;
   return (
     <section id="current-situation" className="scroll-mt-20 bg-secondary">
@@ -335,18 +386,27 @@ function SituationBand({ language }: { language: Language }) {
         <SectionHeader
           title={ts.currentSituation}
           aside={
-            <span className="block text-right text-xs leading-5 text-subtle">
-              {ts.sourcePrefix} <strong className="text-foreground">{t.sourceName}</strong>
-              <br />
-              {ts.updatedPrefix} {formatDateTime(updated, language)}
+            <span className="block text-xs leading-5 text-muted-foreground">
+              {ts.sourcePrefix} <strong className="text-foreground">{ts.footerNdrRma}</strong> ·{" "}
+              {fillTemplate(live ? ts.situationUpdated : ts.situationSnapshot, {
+                date: formatBsDate(updated, language),
+                relative: formatRelativeTime(updated, language),
+              })}
             </span>
           }
         />
         <div className="mt-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
-          <StatCard value={formatNumber(liveData.rescuedStatistics.rescued_count, language)} label={ts.peopleRescued} />
+          <StatCard value={formatNumber(rescuedStatistics.rescued_count, language)} label={ts.peopleRescued} />
           <StatCard value={missing} label={ts.peopleMissing} tone="danger" />
-          <StatCard value={formatNumber(liveData.statusCounts.total_count, language)} label={ts.verifiedRecords} />
-          <StatCard value={formatNumber(camps, language)} label={ts.activeReliefLocations} />
+          <StatCard value={formatNumber(statusCounts.total_count, language)} label={ts.verifiedRecords} />
+          <div>
+            <StatCard value={formatNumber(camps, language)} label={ts.activeReliefLocations} />
+            {live ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {fillTemplate(ts.reliefSnapshot, { date: formatBsDate(data.meta.synced_at, language) })}
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="mt-5 flex flex-col gap-1">
           <Button asChild type="button" variant="link" className="w-fit px-0">
@@ -485,9 +545,9 @@ function OfficialUpdateRow({ item, language }: { item: OpmcmGovernmentEffort; la
         {summary ? <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{summary}</p> : null}
         <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-subtle">
           <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-          {ts.officialSource}
+          {ts.opmcmSource}
           {date ? ` · ${formatDateTime(date, language)}` : ""}
-          <StatusBadge tone="success">{ts.verified}</StatusBadge>
+          <StatusBadge tone="info">{nowStrings[language].officialSource}</StatusBadge>
         </p>
       </div>
       <Button asChild type="button" variant="link" size="sm" className="h-auto min-h-11 shrink-0 self-start px-0">
@@ -527,7 +587,7 @@ export function EmergencyContacts({ language }: { language: Language }) {
       {primary ? (
         <a
           href={`tel:${primary.number}`}
-          className="mt-6 flex min-h-32 items-center justify-between gap-4 rounded-xl bg-foreground p-6 text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="mt-6 flex min-h-32 flex-wrap items-center justify-between gap-4 rounded-xl bg-foreground p-6 text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <span>
             <span className="block text-xs text-faint">{ts.disasterHotlineLabel}</span>

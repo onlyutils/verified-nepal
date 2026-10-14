@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ApiError, getProject, type ProjectDetailResponse, type ProjectStatus, type ProjectType } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
+import { nowStrings } from "@/i18n/now";
+import { shellStrings } from "@/i18n/shell";
 import { communityStrings } from "@/i18n/community";
 import { districtLabels } from "@/lib/geo";
 import { formatDateTime, formatNumber } from "@/lib/format";
@@ -128,9 +130,18 @@ export function ProjectDetail({ language, id }: { language: Language; id: string
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{typeLabel(project.type, language)}</Badge>
             <StatusBadge tone={toneForStatus(project.status)}>{statusLabel(project.status, language)}</StatusBadge>
-            <StatusBadge tone={project.committee.verified ? "success" : "neutral"}>
-              {project.committee.verified ? t.verified : t.notVerified}
-            </StatusBadge>
+            <span
+              title={project.committee.verified ? nowStrings[language].checkedTooltip : undefined}
+              tabIndex={project.committee.verified ? 0 : undefined}
+              aria-label={
+                project.committee.verified ? `${nowStrings[language].checked}. ${nowStrings[language].checkedTooltip}` : undefined
+              }
+              className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <StatusBadge tone={project.committee.verified ? "success" : "neutral"}>
+                {project.committee.verified ? nowStrings[language].checked : shellStrings[language].committeePending}
+              </StatusBadge>
+            </span>
           </div>
         }
       />
@@ -218,7 +229,7 @@ export function ProjectDetail({ language, id }: { language: Language; id: string
             <CardContent className="space-y-4">
               {project.committee.verified ? (
                 <>
-                  <p className="text-sm font-semibold text-primary">{t.verified}</p>
+                  <p className="text-sm font-semibold text-primary">{nowStrings[language].checked}</p>
                   <Separator />
                   <div className="space-y-3">
                     <p className="text-sm font-semibold">{t.projectBank}</p>

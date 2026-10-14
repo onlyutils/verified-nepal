@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Search } from "lucide-react";
 import { labels, textForLanguage } from "@/i18n";
+import { shellStrings } from "@/i18n/shell";
+import { opmcmMissingPersonUrl } from "@/lib/urls";
 import { formStrings } from "@/i18n/forms";
 import { rescueApiBase, useLiveData } from "@/lib/live";
 import { formatDateTime, formatNumber, matchesPerson, messageText, officialRescueUrl } from "@/lib/format";
@@ -96,7 +98,23 @@ export function FindPerson({ language, navigate }: { language: Language; navigat
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <PageHeader eyebrow={ts.officialRecordsEyebrow} title={t.searchTitle} description={t.searchIntro} />
+      <PageHeader
+        eyebrow={ts.officialRecordsEyebrow}
+        title={t.searchTitle}
+        description={
+          <>
+            {t.searchIntro}{" "}
+            <a
+              href={opmcmMissingPersonUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-primary underline"
+            >
+              {shellStrings[language].searchPortalSentence}
+            </a>
+          </>
+        }
+      />
       <Card>
         <CardContent className="p-5 sm:p-6">
           <form
