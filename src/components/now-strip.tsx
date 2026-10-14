@@ -162,14 +162,14 @@ function RowShare({ item, language }: { item: NowItem; language: Language }) {
   return (
     <div className="flex flex-col gap-2">
       {/* ponytail: Text shares work for all rows; W2-F can add PNG cards for local-update permalinks later. */}
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" className="min-h-11 max-w-full px-3">
+      <div className="flex gap-2">
+        <Button asChild size="sm" variant="outline" className="min-h-11 max-w-full px-3">
           <a href={`https://wa.me/?text=${encoded}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />{t.whatsapp}</a>
         </Button>
-        <Button asChild variant="outline" className="min-h-11 max-w-full px-3">
+        <Button asChild size="sm" variant="outline" className="min-h-11 max-w-full px-3">
           <a href={`viber://forward?text=${encoded}`}><Send aria-hidden="true" />{t.viber}</a>
         </Button>
-        <Button type="button" variant="outline" className="min-h-11 max-w-full px-3" onClick={copy}>
+        <Button type="button" size="sm" variant="outline" className="min-h-11 max-w-full px-3" onClick={copy}>
           <Copy aria-hidden="true" />{t.copy}
         </Button>
       </div>

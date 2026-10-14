@@ -82,7 +82,7 @@ export function deliveryNowItem(item: NowLedgerItem, language: Language, index =
     source: { label: nowStrings[language].deliverySource, url: "/ledger" },
     trust: null,
     href: "/ledger",
-    language: writtenLanguage(item.orgName || item.deliveredBy?.label || ""),
+    language,
   };
 }
 

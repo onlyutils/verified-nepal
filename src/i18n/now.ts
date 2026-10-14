@@ -78,7 +78,7 @@ export const nowStrings: Record<
     hideBody: "छोटकरीमा हेर्नुहोस्",
     whatsapp: "WhatsApp",
     viber: "Viber",
-    copy: "कपी गर्नुहोस्",
+    copy: "कपी",
     copied: "कपी भयो",
     copyFailed: "कपी गर्न सकिएन। साझा गर्न WhatsApp वा Viber प्रयोग गर्नुहोस्।",
     languageEn: "EN",

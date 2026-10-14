@@ -37,10 +37,12 @@ describe("Now adapters", () => {
     assert.equal(item.happenedAt, delivery.confirmedAt);
     assert.equal(item.trust, null);
     assert.equal(item.href, "/ledger");
+    assert.equal(item.language, "en");
     const fallback = deliveryNowItem({ ...delivery, municipalityId: undefined, orgName: undefined, confirmedAt: undefined }, "ne");
     assert.equal(fallback.title, "पुर्‍याइयो · Moderator desk");
     assert.equal(fallback.place, "रसुवा · वडा ३");
     assert.equal(fallback.happenedAt, delivery.redeemedAt);
+    assert.equal(fallback.language, "ne");
     assert.equal(deliveryNowItem({ ...delivery, orgName: undefined, deliveredBy: undefined }, "en").title, "Delivered · Moderator");
   });
 
