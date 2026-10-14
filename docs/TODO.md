@@ -18,3 +18,9 @@ new one inline, and admins manage the `/admin/incidents` queue (list/publish/app
 reject/archive) from a Desk tab next to Admin (`src/desk/incidents.tsx`). Incidents reported
 inline on a need form aren't actionable there by design — they activate automatically when a
 moderator publishes that need.
+
+## Condolence messages on local updates — deferred 2026-10-14
+A local correspondent posts a condolence for a death in their locality. Deferred by the owner on
+2026-10-14 (council rounds 1-2 rated it the highest-harm, least-verifiable content on the site).
+When picked up: moderator-approved only (no post-moderation), a family-removal route, and a
+written policy before the first post. See `docs/NEWS-PORTAL-DECISIONS.md`.
