@@ -25,13 +25,27 @@ describe("relative time", () => {
   it("formats eleven hours ago in both languages", () => {
     const value = new Date(NOW.getTime() - 11 * 60 * 60 * 1000);
     assert.match(formatRelativeTime(value, "en", NOW), /11 hours ago/);
-    assert.match(formatRelativeTime(value, "ne", NOW), /११.*घण्टा/);
+    assert.equal(formatRelativeTime(value, "ne", NOW), "११ घण्टा पहिले");
   });
 
   it("uses just now for less than a minute in either direction", () => {
     for (const offset of [-59_999, 0, 59_999]) {
       assert.equal(formatRelativeTime(NOW.getTime() + offset, "en", NOW), "just now");
       assert.equal(formatRelativeTime(NOW.getTime() + offset, "ne", NOW), "अहिले");
+    }
+  });
+
+  it("uses explicit Nepali words and digits for past and future dates", () => {
+    for (const [offset, expected] of [
+      [-DAY, "हिजो"],
+      [-3 * DAY, "३ दिन पहिले"],
+      [5 * 60_000, "५ मिनेटमा"],
+      [3_600_000, "१ घण्टामा"],
+      [DAY, "भोलि"],
+      [3 * DAY, "३ दिनमा"],
+      [-60_000, "१ मिनेट पहिले"],
+    ] as const) {
+      assert.equal(formatRelativeTime(NOW.getTime() + offset, "ne", NOW), expected);
     }
   });
 
@@ -185,6 +199,40 @@ describe("Bikram Sambat calendar", () => {
 });
 
 describe("BS date and dateline formatters", () => {
+  it("formats Gregorian dates with full Nepali month names and digits", () => {
+    assert.equal(formatDate(NOW, "ne"), "१४ अक्टोबर २०२६");
+    assert.equal(formatDate("2026-12-31T18:15:00Z", "ne"), "१ जनवरी २०२७");
+  });
+
+  it("uses Nepali weekdays from the Kathmandu civil date", () => {
+    const weekdays = ["आइतबार", "सोमबार", "मङ्गलबार", "बुधबार", "बिहीबार", "शुक्रबार", "शनिबार"];
+    for (const [index, weekday] of weekdays.entries()) {
+      assert.equal(formatDateline(new Date("2026-10-11T06:00:00Z").getTime() + index * DAY, "ne").split(",")[0], weekday);
+    }
+    assert.equal(formatDateline("2026-10-13T18:14:59.999Z", "ne"), "मङ्गलबार, असोज २७, २०८३ (१३ अक्टोबर २०२६)");
+    assert.equal(formatDateline("2026-10-13T18:15:00Z", "ne"), "बुधबार, असोज २८, २०८३ (१४ अक्टोबर २०२६)");
+  });
+
+  it("keeps Nepali output free of ASCII words and digits without locale formatters", (t) => {
+    // Civil-date extraction uses the existing numeric English formatter, never Nepali locale data.
+    t.mock.method(Intl, "DateTimeFormat", function () {
+      throw new Error("Unexpected locale formatter");
+    });
+    t.mock.method(Intl, "RelativeTimeFormat", function () {
+      throw new Error("Unexpected relative-time formatter");
+    });
+    const outputs = [
+      formatDate(NOW, "ne"),
+      formatDateline(NOW, "ne"),
+      ...[-11 * 3_600_000, -DAY, -3 * DAY, 5 * 60_000, 0, DAY, 3 * DAY, -40 * DAY].map((offset) =>
+        formatRelativeTime(NOW.getTime() + offset, "ne", NOW),
+      ),
+    ];
+    assert.equal(outputs[0], "१४ अक्टोबर २०२६");
+    assert.equal(outputs[1], "बुधबार, असोज २८, २०८३ (१४ अक्टोबर २०२६)");
+    for (const output of outputs) assert.doesNotMatch(output, /[A-Za-z0-9]/);
+  });
+
   it("formats the supplied dates in English and Nepali", () => {
     for (const value of [NOW, NOW.toISOString(), NOW.getTime()]) {
       assert.equal(formatBsDate(value, "en"), "Asoj 28, 2083");

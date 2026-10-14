@@ -1,7 +1,11 @@
 import type { Language } from "./types";
-import { BS_MONTHS_EN, BS_MONTHS_NE, toBikramSambat, toDevanagariDigits } from "./bs-calendar.ts";
+import { BS_MONTHS_EN, BS_MONTHS_NE, kathmanduParts, toBikramSambat, toDevanagariDigits } from "./bs-calendar.ts";
 
 const TIME_ZONE = "Asia/Kathmandu";
+// ponytail: Move these tables and relative-time words to shared date i18n when that file is in scope.
+const WEEKDAYS_NE = ["आइतबार", "सोमबार", "मङ्गलबार", "बुधबार", "बिहीबार", "शुक्रबार", "शनिबार"] as const;
+const GREGORIAN_MONTHS_NE = ["जनवरी", "फेब्रुअरी", "मार्च", "अप्रिल", "मे", "जुन", "जुलाई", "अगस्ट", "सेप्टेम्बर", "अक्टोबर", "नोभेम्बर", "डिसेम्बर"] as const;
+const RELATIVE_UNITS_NE = { minute: "मिनेट", hour: "घण्टा", day: "दिन" } as const;
 
 function localeFor(language: Language) {
   return language === "ne" ? "ne-NP" : "en-GB";
@@ -45,6 +49,10 @@ export function formatNumber(value: number, language: Language, options?: Intl.N
 export function formatDate(value: string | number | Date | null | undefined, language: Language): string {
   const date = validDate(value);
   if (!date) return "";
+  if (language === "ne") {
+    const { year, month, day } = kathmanduParts(date);
+    return `${toDevanagariDigits(day)} ${GREGORIAN_MONTHS_NE[month - 1]} ${toDevanagariDigits(year)}`;
+  }
   const parts = new Intl.DateTimeFormat(localeFor(language), {
     timeZone: TIME_ZONE,
     day: "numeric",
@@ -71,7 +79,15 @@ export function formatRelativeTime(value: string | number | Date | null | undefi
   }
   const unit = magnitude >= day ? "day" : magnitude >= hour ? "hour" : "minute";
   const duration = unit === "day" ? day : unit === "hour" ? hour : minute;
-  return new Intl.RelativeTimeFormat(localeFor(language), { numeric: "auto" }).format(Math.trunc(difference / duration), unit);
+  const amount = Math.trunc(difference / duration);
+  if (language === "ne") {
+    if (unit === "day" && amount === -1) return "हिजो";
+    if (unit === "day" && amount === 1) return "भोलि";
+    const count = toDevanagariDigits(Math.abs(amount));
+    const word = RELATIVE_UNITS_NE[unit];
+    return amount < 0 ? `${count} ${word} पहिले` : `${count} ${word}मा`;
+  }
+  return new Intl.RelativeTimeFormat(localeFor(language), { numeric: "auto" }).format(amount, unit);
 }
 
 // Invalid/missing input returns ""; only dates outside BS 2070–2095 throw RangeError.
@@ -93,9 +109,12 @@ export function formatDateline(value: string | number | Date | null | undefined,
   const date = validDate(value);
   if (!date) return "";
   const bsDate = formatBsDate(date, language);
-  const weekday = new Intl.DateTimeFormat(localeFor(language), {
-    timeZone: TIME_ZONE,
-    weekday: "long",
-  }).format(date);
+  const weekday =
+    language === "ne"
+      ? WEEKDAYS_NE[kathmanduParts(date).weekday]
+      : new Intl.DateTimeFormat(localeFor(language), {
+          timeZone: TIME_ZONE,
+          weekday: "long",
+        }).format(date);
   return `${weekday}, ${bsDate} (${formatDate(date, language)})`;
 }

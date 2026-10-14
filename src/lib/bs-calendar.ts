@@ -57,7 +57,7 @@ const BS_MONTH_LENGTHS = [
 const FIRST_BS_YEAR = 2070;
 const ANCHOR_CIVIL_DAY = Date.UTC(2013, 3, 14);
 const DAY_MS = 86_400_000;
-const civilDateFormatter = new Intl.DateTimeFormat("en-GB", {
+const civilDateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "Asia/Kathmandu",
   calendar: "gregory",
   numberingSystem: "latn",
@@ -67,15 +67,27 @@ const civilDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
 });
 
+/** Extracts Gregorian Kathmandu date numbers without relying on Nepali locale data. */
+export function kathmanduParts(date: Date): { year: number; month: number; day: number; weekday: number } {
+  const parts = civilDateFormatter.formatToParts(date);
+  const partNumber = (type: "year" | "month" | "day") => Number(parts.find((part) => part.type === type)!.value);
+  // Retain the era check internally so BCE dates cannot alias supported AD dates.
+  const year = parts.find((part) => part.type === "era")?.value === "BC" ? 1 - partNumber("year") : partNumber("year");
+  const month = partNumber("month");
+  const day = partNumber("day");
+  const civilDate = new Date(0);
+  civilDate.setUTCFullYear(year, month - 1, day);
+  return { year, month, day, weekday: civilDate.getUTCDay() };
+}
+
 /** Converts a Kathmandu civil date; invalid dates and dates outside BS 2070–2095 throw RangeError. */
 export function toBikramSambat(date: Date): { year: number; month: number; day: number } {
-  const parts = civilDateFormatter.formatToParts(date);
-  if (parts.find((part) => part.type === "era")?.value !== "AD") {
+  const { year, month, day } = kathmanduParts(date);
+  if (year <= 0) {
     throw new RangeError("Date is outside the BS 2070–2095 calendar table");
   }
-  const partNumber = (type: "year" | "month" | "day") => Number(parts.find((part) => part.type === type)!.value);
   // UTC is only an ordinal for the already extracted Kathmandu Y-M-D, not the input instant.
-  const civilDay = Date.UTC(partNumber("year"), partNumber("month") - 1, partNumber("day"));
+  const civilDay = Date.UTC(year, month - 1, day);
   let remainingDays = (civilDay - ANCHOR_CIVIL_DAY) / DAY_MS;
   if (remainingDays >= 0) {
     for (const [yearIndex, months] of BS_MONTH_LENGTHS.entries()) {
