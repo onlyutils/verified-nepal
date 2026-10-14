@@ -341,7 +341,7 @@ Same as dispatch #1: the agent closing the last Wave 2 lane runs both workflows 
 |---|---|---|---|
 | **G-1 Locality layer** | Plan T4, T5, T7, T8, T9, the "Your area" and list-filter parts of T10, T12 sitemap half, quick win 16 (Roman-Nepali transliteration in the picker and `/search`) | Ten published local updates in one municipality **and** Reach tab shows the strip is clicked (A-6) **and** owner go | Collapse rule = empty tier collapses (not "fewer than three"); no `expiresAt` filtering; picker accepts Roman input; `/dispatches/local` stays at two queries; nav entry under "More". Models: T4 tiering `gpt-6-astra` high; the rest `gpt-6.1-sol` high. |
 | **G-2 Correspondents and reviewer rules** | Plan T13, rest of T6, T15, T16, T17, plus three new tasks: edit-after-publish returns the item to pending (today 409), a `POST /dispatches/:id/flag` route feeding the FLAGGED queue, and the three-rejections-in-90-days flag on the admin list | At least two active moderators besides the owner (Q6: none today), else the scope rules deadlock the queue; the first correspondent is onboarded by email in W2-E without waiting for this | T17 profile URL uses a handle or request id, never the raw auth `sub`. Queue language filter server-side. Models: reviewer rules `gpt-6-astra` high; the rest `gpt-6.1-sol`. |
-| **G-3 Ads** | Plan T18, T19 | DoIB registration certificate in hand (A-3) | Not written before. Unused ad code on main is exposure, not progress. |
+| **G-3 Ads** (feature built 2026-10-14, marketing gated) | Plan T18, T19 (ADS-A backend, ADS-B frontend) | Owner decision 2026-10-14: build the feature now. **Selling or running ads waits for the DoIB registration certificate (A-3).** Safety default: with no ad item the public endpoint returns `ad: null` and no page changes; the Desk ads section carries a warning not to run paid ads before registration. | Only the `articleEnd` slot is placed (detail pages); `localTop` waits for the locality page (G-1). |
 | **G-4 `feed.xml`** | Quick win 11 | 30+ published items **and** registration done (a feed reads as a news portal) | Clone the sitemap fetch loop; `gpt-6-luna`. |
 | **G-5 Self-hosted fonts** | Quick win 8 | W2-D's PNG-card conjunct check fails, or a measured first-paint problem on 4G | Two Devanagari weights (400/600) + two Latin, `index.html` and `styles.css`; `gpt-6.1-sol` medium. |
 | **G-6 `sameAs` and footer Facebook link** | Quick win 15 | Owner has created the page (A-5) | Ten-minute `gpt-6-luna` run. |
@@ -364,7 +364,7 @@ Stopped by the council and accepted here: AI writer, condolences, ad-manager rol
 | T13 | Gated G-2 |
 | T14 | W2-E with the `group:` nav shape and the extended rule card |
 | T15, T16, T17 | Gated G-2 (T17 without raw `sub` in the URL), plus three new G-2 tasks |
-| T18, T19 | Gated G-3; not written |
+| T18, T19 | Built as ADS-A and ADS-B on 2026-10-14 (owner decision); no ads are created until registration |
 | T20 | Folded into each wave's commits and D-1 |
 
 ## 7. Owner actions and questions
@@ -373,13 +373,13 @@ Stopped by the council and accepted here: AI writer, condolences, ad-manager rol
 
 | Id | Action | Blocks |
 |---|---|---|
-| A-1 | Nepali read-through of the Wave 1 strings on prod (owner/admin, per Q7); fixes ship as a follow-up commit | Nothing (prod ships first, Q12) |
+| A-1 | Nepali read-through of the Wave 1 strings on prod (owner/admin, per Q7); fixes ship as a follow-up commit. Owner 2026-10-14: "looks good for now" | Done for now |
 | A-2 | Onboard the first correspondent by email from the Desk admin form (W2-E); they write the first ten local updates from real, cited sources; the admin publishes each (the admin cannot publish their own items) | G-1 gate, Wave 2 e2e on prod |
 | A-3 | Confirm registration rules with DoIB directly **and** the Bagmati Province Communication Registrar's Office (fees, named editor, staffing, renewal); start entity formation if proceeding | G-3, any public use of "news" / "reporter" |
 | A-4 | Submit the sitemap in Search Console | SEO plan Phase 0 |
-| A-5 | Social-media handler creates the owned Facebook page and posts the evening card (6-10 pm) | G-6, distribution claim |
+| A-5 | Social-media handler creates the owned Facebook page and posts the evening card (6-10 pm). Owner 2026-10-14: no page yet | G-6, distribution claim |
 | A-6 | Read the Desk Reach tab at day 28 after dispatch #2: if the strip gets no clicks and nothing new is filed, G-1 does not open | G-1 |
-| A-8 | Before Baisakh 2084 (14 April 2027) and each year after, check `src/lib/bs-calendar.ts` month lengths for the coming BS year against the published Nepali calendar (patro); one agent run with `gpt-6-luna` fixes the table | Correct masthead dates from June 2027 |
+| A-8 (owner agreed 2026-10-14) | Before Baisakh 2084 (14 April 2027) and each year after, check `src/lib/bs-calendar.ts` month lengths for the coming BS year against the published Nepali calendar (patro); one agent run with `gpt-6-luna` fixes the table | Correct masthead dates from June 2027 |
 | A-7 | Authorised on 2026-10-14: agents run prod dispatches #1 and #2 themselves right after each wave is green on dev; the owner reads prod afterwards | None |
 
 ### Questions to answer (each blocks or shapes an item)
@@ -389,7 +389,7 @@ Stopped by the council and accepted here: AI writer, condolences, ad-manager rol
 3. **Who is the named person accountable for "Checked"…** Answered: accepted; the publishing moderator is accountable. W0-2 tooltip copy stands; the audit entry already records the moderator.
 4. **`/climate` and `/our-message`: retire or keep under "More"?** Answered: keep under More.
 5. **Are GOVERNANCE.md and MODERATION-GUIDELINES.md fit to link publicly verbatim?** Answered: verbatim is fine, but keep them inside the signed-in portal as a guide (W1-A item 6).
-6. **How many active moderators are there besides you?** Answered: none. So the admin publishes correspondents' items and cannot publish their own; G-2 reviewer rules stay gated.
+6. **How many active moderators are there besides you?** Answered first as none; updated 2026-10-14 evening: `laxman.pokhrel.101@gmail.com` is already a moderator, so there is one moderator besides the admin and a correspondent's update can be published by either. G-2 reviewer rules still wait for a second moderator and named correspondents.
 7. **Who reviews the Nepali strings before prod dispatch #1?** Answered: the admin (A-1).
 8. **Has DoIB entity formation started…** Answered: not yet, starting soon. G-3 stays gated; public naming stays "local updates".
 9. **May the strip republish OPMCM title, agency and link verbatim under "Official source", and may a named correspondent stand as the source when no URL exists?** Answered: yes to both, and keep the OPMCM body text as well. W2-D shows title, agency, time, body (clamped) and link; W1-C accepts a typed `sourceNote` as an alternative to a URL, at least one required.
