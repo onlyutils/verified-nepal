@@ -17,6 +17,7 @@ import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
 import { municipalityById, municipalityLabel } from "@/lib/admin-units";
 import { districtLabels, type DistrictName } from "@/lib/districts";
 import { TextShareRow } from "@/components/share-button";
+import { AdSlot } from "@/components/ad-slot";
 import { StatusBadge } from "@/components/status-badge";
 import { useGoogleAuth } from "@/lib/auth";
 import type { Language } from "@/lib/types";
@@ -239,6 +240,13 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       <div className="border-t pt-8 print:border-black">
         <div lang={contentLanguage}><ArticleBody blocks={item.blocks} body={item.body} language={contentLanguage} /></div>
       </div>
+      <AdSlot
+        key={item.id}
+        slot="articleEnd"
+        district={isLocalUpdate ? item.locality?.district : undefined}
+        municipalityId={isLocalUpdate ? item.locality?.municipalityId : undefined}
+        language={language}
+      />
       {isLocalUpdate && (item.sourceUrls?.length || item.sourceNote) ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">{t.sources}</h2>

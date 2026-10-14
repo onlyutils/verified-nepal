@@ -98,6 +98,7 @@ export type DeskSection =
   | "admin"
   | "climate"
   | "guides"
+  | "ads"
   | "reach";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }
@@ -122,6 +123,7 @@ const sections = new Set<DeskSection>([
   "admin",
   "climate",
   "guides",
+  "ads",
   "reach",
 ]);
 

@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AppShell, type AppShellNavItem } from "@/components/app-shell";
 import type { Language, Page } from "@/lib/types";
 import { Admin } from "./admin";
+import { Ads } from "./ads";
 import { Boards } from "./boards";
 import { ClimateStats } from "./climate";
 import { ReachStats } from "./reach";
@@ -115,6 +116,7 @@ export function Desk({
       ? [
           { key: "incidents" as DeskSection, group: g.deskGroupAdmin, label: g.deskIncidentsTab, icon: <Siren /> },
           { key: "admin" as DeskSection, group: g.deskGroupAdmin, label: t.deskAdminTab, icon: <ShieldCheck /> },
+          { key: "ads" as DeskSection, group: g.deskGroupAdmin, label: g.deskAdsTab, icon: <FileImage /> },
           { key: "reach" as DeskSection, group: g.deskGroupAdmin, label: reachStrings[language].nav, icon: <BarChart3 /> },
           { key: "climate" as DeskSection, group: g.deskGroupAdmin, label: g.deskClimateTab, icon: <Globe /> },
         ]
@@ -144,7 +146,7 @@ export function Desk({
     </div>
   );
 
-  return (
+  const shell = (
     <AppShell
       title={t.deskTitle}
       nav={nav}
@@ -193,6 +195,7 @@ export function Desk({
           {model.activeSection === "guides" ? <Guides language={language} /> : null}
           {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
           {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
+          {model.activeSection === "ads" && auth.profile.role === "admin" ? <Ads language={language} token={auth.idToken} /> : null}
           {model.activeSection === "reach" && auth.profile.role === "admin" ? <ReachStats model={model} /> : null}
           {model.activeSection === "climate" && auth.profile.role === "admin" ? <ClimateStats model={model} /> : null}
         </ComponentErrorBoundary>
@@ -228,5 +231,11 @@ export function Desk({
         </Dialog>
       </div>
     </AppShell>
+  );
+  // ponytail: Wrap the Ads header at large text sizes; move this into AppShell when shared-shell changes are allowed.
+  return (
+    <div className={model.activeSection === "ads" ? "[&_header>div]:h-auto [&_header>div]:flex-wrap [&_header>div]:py-2 [&_header>div>div]:max-w-full [&_header>div>div]:flex-wrap" : undefined}>
+      {shell}
+    </div>
   );
 }
