@@ -16,7 +16,8 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Link2 } from "lucide-react";
+import { articlesPublicStrings } from "@/i18n/articles-public";
+import { Link2, PhoneCall } from "lucide-react";
 
 function typeLabel(type: ProjectType, language: Language) {
   const t = communityStrings[language];
@@ -297,6 +298,12 @@ export function ProjectDetail({ language, id }: { language: Language; id: string
                   rel="noopener noreferrer"
                 >
                   {t.projectsShareFacebook}
+                </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href={`viber://forward?text=${encodeURIComponent(url)}`}>
+                  <PhoneCall aria-hidden="true" style={{ color: "#7360f2" }} />
+                  {articlesPublicStrings[language].viber}
                 </a>
               </Button>
             </CardContent>
