@@ -144,3 +144,7 @@ Causes found and fixed along the way:
 - First-mode readings in a fresh browser sometimes showed old overflow after a deploy; a cold load measured over time was clean, so these were a test-order artefact. The sweep script's warm-up option avoids it.
 
 Not covered: real-device checks (iPhone Safari, older Android WebView), the signed-in Desk header below 320 px, completing a verification widget (headless Chrome cannot).
+
+Final header measurements on dev (commit ff0ba12; `scripts/header-heights.mjs`): at 360 px normal text the public header is 57 px tall signed out and signed in, in both languages, with the wordmark fully visible on two lines (no ellipsis); the Desk header is 57 px (it was 177 px in Nepali and 105 px in English after the first overflow fix, so the Desk now shows only the logo mark below the `sm` breakpoint, with the name kept for screen readers). At 320 px with 150% text no layout overflows horizontally; the header wraps to 157 px signed out, 229 px signed in and 235 px on the Desk.
+
+Regression caught while testing: the first overflow fix truncated the wordmark to "भेरिफाइड ..." and made the Desk header very tall at 360 px; both were fixed before this deploy.
