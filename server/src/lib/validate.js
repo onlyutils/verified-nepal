@@ -1,5 +1,7 @@
 import { err } from "./http.js";
-import { DISPATCH_TAGS, DISTRICTS, MAX_NEED_MEDIA_ITEMS } from "../constants.js";
+import { DISPATCH_TAGS, DISTRICTS, MAX_NEED_MEDIA_ITEMS, NEWS_SCOPES, NEWS_MAX_SOURCES, NEWS_SOURCE_NOTE_MAX } from "../constants.js";
+
+import { getMunicipality, municipalityInDistrict, wardInMunicipality } from "./adminUnits.js";
 
 export function validateString(v, name, min, max) {
   if (typeof v !== "string") throw err(400, `${name} must be a string`);
@@ -48,12 +50,14 @@ export function validateDeliveryReceipt(body) {
     if (typeof h !== "number" || !Number.isInteger(h) || h < 1 || h > 500) throw err(400, "households must be integer 1-500");
     out.households = h;
   }
-  const hasLat = body.lat !== undefined && body.lat !== null, hasLng = body.lng !== undefined && body.lng !== null;
+  const hasLat = body.lat !== undefined && body.lat !== null,
+    hasLng = body.lng !== undefined && body.lng !== null;
   if (hasLat !== hasLng) throw err(400, "lat and lng must both be provided or neither");
   if (hasLat) {
     if (typeof body.lat !== "number" || body.lat < 26 || body.lat > 31) throw err(400, "lat must be 26-31");
     if (typeof body.lng !== "number" || body.lng < 80 || body.lng > 89) throw err(400, "lng must be 80-89");
-    out.lat = body.lat; out.lng = body.lng;
+    out.lat = body.lat;
+    out.lng = body.lng;
   }
   return Object.keys(out).length ? out : undefined;
 }
@@ -78,7 +82,8 @@ export function validateTitle(v, field) {
   if (v === undefined || v === null) throw err(400, `${field} required`);
   if (typeof v !== "object" || Array.isArray(v)) throw err(400, `${field} must be object`);
   const en = v.en;
-  if (typeof en !== "string" || !en.trim() || en.trim().length < 1 || en.trim().length > 200) throw err(400, `${field}.en must be 1-200 characters`);
+  if (typeof en !== "string" || !en.trim() || en.trim().length < 1 || en.trim().length > 200)
+    throw err(400, `${field}.en must be 1-200 characters`);
   let ne;
   if (v.ne !== undefined && v.ne !== null) {
     if (typeof v.ne !== "string") throw err(400, `${field}.ne must be string`);
@@ -97,7 +102,8 @@ export function validateDescription(v, field) {
   if (v === undefined || v === null) throw err(400, `${field} required`);
   if (typeof v !== "object" || Array.isArray(v)) throw err(400, `${field} must be object`);
   const en = v.en;
-  if (typeof en !== "string" || !en.trim() || en.trim().length < 10 || en.trim().length > 5000) throw err(400, `${field}.en must be 10-5000 characters`);
+  if (typeof en !== "string" || !en.trim() || en.trim().length < 10 || en.trim().length > 5000)
+    throw err(400, `${field}.en must be 10-5000 characters`);
   let ne;
   if (v.ne !== undefined && v.ne !== null) {
     if (typeof v.ne !== "string") throw err(400, `${field}.ne must be string`);
@@ -116,7 +122,8 @@ export function validateDispatchTitle(v) {
   if (v === undefined || v === null) throw err(400, "title required");
   if (typeof v === "object" && !Array.isArray(v)) {
     const en = v.en;
-    if (typeof en !== "string" || !en.trim() || en.trim().length < 1 || en.trim().length > 200) throw err(400, "title.en must be 1-200 characters");
+    if (typeof en !== "string" || !en.trim() || en.trim().length < 1 || en.trim().length > 200)
+      throw err(400, "title.en must be 1-200 characters");
     let ne;
     if (v.ne !== undefined && v.ne !== null) {
       if (typeof v.ne !== "string") throw err(400, "title.ne must be string");
@@ -217,7 +224,8 @@ export function validateArticleBlocks(value, { mediaPublicBase } = {}) {
     else out.url = "";
     out.fileId = articleString(block.fileId, `block ${index}.fileId`, 200, { trim: true }) ?? "";
     out.source = articleString(block.source, `block ${index}.source`, 200, { trim: true }) ?? "";
-    if (block.caption !== undefined && block.caption !== null) out.caption = articleString(block.caption, `block ${index}.caption`, 300) ?? "";
+    if (block.caption !== undefined && block.caption !== null)
+      out.caption = articleString(block.caption, `block ${index}.caption`, 300) ?? "";
     return out;
   });
 }
@@ -251,4 +259,73 @@ export function validateArticleTitle(value, { strict = false } = {}) {
   const title = value.trim();
   if (title.length > 200 || (strict && !title)) throw err(400, "title must be 1-200 characters");
   return title;
+}
+
+/** Locality is checked against the bundled district, municipality and ward dataset. */
+export function validateLocality(value, { required = true } = {}) {
+  if (value === undefined || value === null) {
+    if (required) throw err(400, "locality is required");
+    return undefined;
+  }
+  if (typeof value !== "object" || Array.isArray(value)) throw err(400, "locality must be an object");
+  const district = typeof value.district === "string" ? value.district.trim() : "";
+  if (!DISTRICTS.includes(district)) throw err(400, "locality.district is not a known district");
+  const rawId = value.municipalityId;
+  if (typeof rawId !== "number" && typeof rawId !== "string") throw err(400, "locality.municipalityId is not a known municipality");
+  const municipalityId = Number(rawId);
+  if (!Number.isInteger(municipalityId) || !getMunicipality(municipalityId))
+    throw err(400, "locality.municipalityId is not a known municipality");
+  if (!municipalityInDistrict(municipalityId, district)) throw err(400, "locality.municipalityId is not in locality.district");
+  const out = { district, municipalityId };
+  if (value.ward !== undefined && value.ward !== null && value.ward !== "") {
+    if (typeof value.ward !== "number" && typeof value.ward !== "string")
+      throw err(400, "locality.ward is not a ward of that municipality");
+    const ward = Number(value.ward);
+    if (!wardInMunicipality(municipalityId, ward)) throw err(400, "locality.ward is not a ward of that municipality");
+    out.ward = ward;
+  }
+  return out;
+}
+
+export function validateScope(value) {
+  if (!NEWS_SCOPES.includes(value)) throw err(400, `scope must be one of ${NEWS_SCOPES.join(",")}`);
+  return value;
+}
+
+export function validateSourceUrls(value) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw err(400, "sourceUrls must be an array");
+  if (value.length > NEWS_MAX_SOURCES) throw err(400, `sourceUrls must have at most ${NEWS_MAX_SOURCES} items`);
+  return value.map((raw) => {
+    const url = typeof raw === "string" ? raw.trim() : "";
+    try {
+      const parsed = new URL(url);
+      if (!/^https:\/\/[^\s]{4,500}$/.test(url) || parsed.protocol !== "https:" || !parsed.hostname || parsed.username || parsed.password)
+        throw new Error();
+    } catch {
+      throw err(400, "sourceUrls must be https URLs");
+    }
+    return url;
+  });
+}
+
+export function validateSourceNote(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string" || value.length > NEWS_SOURCE_NOTE_MAX || /[\r\n]/.test(value))
+    throw err(400, `sourceNote must be one line of at most ${NEWS_SOURCE_NOTE_MAX} characters`);
+  return value.trim() || undefined;
+}
+
+export function validateExpiresAt(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(value) || Number.isNaN(Date.parse(value)))
+    throw err(400, "expiresAt must be an ISO date");
+  return new Date(value).toISOString();
+}
+
+export function validateHappenedAt(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(value) || Number.isNaN(Date.parse(value)))
+    throw err(400, "happenedAt must be an ISO date");
+  const ts = new Date(value);
+  if (ts.getTime() > Date.now() + 60 * 60 * 1000) throw err(400, "happenedAt cannot be in the future");
+  return ts.toISOString();
 }

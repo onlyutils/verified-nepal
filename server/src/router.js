@@ -1,51 +1,145 @@
 import { json, err, dispatch } from "./lib/http.js";
 import { compose, withAuth, withOptionalAuth, withModAuth, withGuidelinesAck } from "./lib/middleware.js";
 import { routeOrgs } from "./routes/orgRoutes.js";
-import { handleAuthExchange, handleAuthRefresh, handleMe, handleAckGuidelines, handleSetMyDistricts } from "./controllers/authController.js";
-import { handleAdminUsersLookup, handleAdminUsersList, handleAdminStats, handleAdminUsersRole, handleGetUserWork } from "./controllers/adminController.js";
+import {
+  handleAuthExchange,
+  handleAuthRefresh,
+  handleMe,
+  handleAckGuidelines,
+  handleSetMyDistricts,
+} from "./controllers/authController.js";
+import {
+  handleAdminUsersLookup,
+  handleAdminUsersList,
+  handleAdminStats,
+  handleAdminUsersRole,
+  handleGetUserWork,
+  handleGetLocalUpdateSettings,
+  handlePutLocalUpdateSettings,
+} from "./controllers/adminController.js";
 import { handleGetAudit } from "./controllers/auditController.js";
 import {
-  handleGetIncidents, handleGetAdminIncidents, handlePostAdminIncident, handlePostIncidentRequest,
-  handlePublishIncident, handleArchiveIncident, handleApproveIncident, handleRejectIncident, handleEditIncident,
+  handleGetIncidents,
+  handleGetAdminIncidents,
+  handlePostAdminIncident,
+  handlePostIncidentRequest,
+  handlePublishIncident,
+  handleArchiveIncident,
+  handleApproveIncident,
+  handleRejectIncident,
+  handleEditIncident,
 } from "./controllers/incidentController.js";
 import {
-  handlePostNeeds, handlePostNeedsMediaPresign, handleGetNeeds, handleGetStatus, handlePostRenew,
-  handlePostNeedStatus, handlePostNeedEdit, handlePostFlag, handleGetFlags, handleResolveFlag,
+  handlePostNeeds,
+  handlePostNeedsMediaPresign,
+  handleGetNeeds,
+  handleGetStatus,
+  handlePostRenew,
+  handlePostNeedStatus,
+  handlePostNeedEdit,
+  handlePostFlag,
+  handleGetFlags,
+  handleResolveFlag,
 } from "./controllers/needController.js";
 import { handlePostOffers, handleGetOffers, handlePostOfferStatus, handlePostOfferEdit } from "./controllers/offerController.js";
 import {
-  handleGetDashboard, handleGetMyWork, handlePostSeen, handlePostNeedClaim, handlePostMissingPresign, handlePutMissing, handleGetMissing, handleDeleteMissing,
+  handleGetDashboard,
+  handleGetMyWork,
+  handlePostSeen,
+  handlePostNeedClaim,
+  handlePostMissingPresign,
+  handlePutMissing,
+  handleGetMissing,
+  handleDeleteMissing,
 } from "./controllers/meController.js";
-import { handleGetModerationMissing, handlePostModerationMissing, handlePostMissingTip, handleGetMissingTips } from "./controllers/missingController.js";
 import {
-  handleGetModerationQueue, handlePostModeration, handlePostModerationClaim, handlePostModerationRelease,
+  handleGetModerationMissing,
+  handlePostModerationMissing,
+  handlePostMissingTip,
+  handleGetMissingTips,
+} from "./controllers/missingController.js";
+import {
+  handleGetModerationQueue,
+  handlePostModeration,
+  handlePostModerationClaim,
+  handlePostModerationRelease,
 } from "./controllers/moderationController.js";
 import {
-  handlePostGroup, handlePostGroupJoin, handlePostGroupItem,
-  handlePostGroupItemClaim, handlePostGroupItemRelease, handlePostGroupItemDone,
+  handlePostGroup,
+  handlePostGroupJoin,
+  handlePostGroupItem,
+  handlePostGroupItemClaim,
+  handlePostGroupItemRelease,
+  handlePostGroupItemDone,
 } from "./controllers/groupController.js";
 import { handleRedeem, handleSync, handlePrint, handleLedger } from "./controllers/claimController.js";
 import { handleGetCoverage, handleGet3w } from "./controllers/coverageController.js";
-import { handleHelperTakeNeed, handleHelperDeliverNeed, handleGroupTakeNeed, handleGroupReleaseNeed, handleGroupDeliverNeed, handleGetNeedContact, handleReleaseNeed, handleSetNeedDelivery } from "./controllers/needTakeController.js";
 import {
-  handlePostProject, handleGetProjects, handleGetProject, handlePostPresign, handlePostPhoto,
-  handlePostUpdate, handleGetModerationProjects, handlePostModerationProject, handlePostModerationUpdate,
+  handleHelperTakeNeed,
+  handleHelperDeliverNeed,
+  handleGroupTakeNeed,
+  handleGroupReleaseNeed,
+  handleGroupDeliverNeed,
+  handleGetNeedContact,
+  handleReleaseNeed,
+  handleSetNeedDelivery,
+} from "./controllers/needTakeController.js";
+import {
+  handlePostProject,
+  handleGetProjects,
+  handleGetProject,
+  handlePostPresign,
+  handlePostPhoto,
+  handlePostUpdate,
+  handleGetModerationProjects,
+  handlePostModerationProject,
+  handlePostModerationUpdate,
 } from "./controllers/projectController.js";
 import {
-  handlePostArticle, handleGetMyArticles, handleGetMyArticle, handlePutArticle, handleSubmitArticle,
-  handleDeleteArticle, handlePostArticlePresign, handlePostArticleView, handlePostArticleShare, handlePostArticleLike,
-  handleGetDispatches, handleGetModerationDispatches, handlePostModerationDispatch, handleGetDispatch,
+  handlePostArticle,
+  handleGetMyArticles,
+  handleGetMyArticle,
+  handlePutArticle,
+  handleSubmitArticle,
+  handleDeleteArticle,
+  handlePostArticlePresign,
+  handlePostArticleView,
+  handlePostArticleShare,
+  handlePostArticleLike,
+  handleGetDispatches,
+  handleGetModerationDispatches,
+  handlePostModerationDispatch,
+  handleGetDispatch,
 } from "./controllers/dispatchController.js";
-import { handlePostStory, handleGetMyStories, handleDeleteStory, handleGetStories, handleGetModerationStories, handlePostModerationStory } from "./controllers/storyController.js";
 import {
-  handlePostClimateMessage, handleGetClimateMessages, handlePostClimateDownload, handleGetAdminClimate,
+  handlePostStory,
+  handleGetMyStories,
+  handleDeleteStory,
+  handleGetStories,
+  handleGetModerationStories,
+  handlePostModerationStory,
+} from "./controllers/storyController.js";
+import {
+  handlePostClimateMessage,
+  handleGetClimateMessages,
+  handlePostClimateDownload,
+  handleGetAdminClimate,
 } from "./controllers/climateController.js";
 import { handlePostReach, handleGetAdminReach } from "./controllers/reachController.js";
 import { KITS } from "./lib/kits.js";
-import { handleGetModerationDistributions, handleAckDistribution, handleGetPublicDistributions, handleGetDdmcLog } from "./controllers/distributionController.js";
 import {
-  handleCreateModeratorPayloadRequest, handleModerationCreateLandingSite, handleModerationListPayloadRequests,
-  handleConfirmPayloadRequest, handleCancelPayloadRequest, handlePublicDroneBoard,
+  handleGetModerationDistributions,
+  handleAckDistribution,
+  handleGetPublicDistributions,
+  handleGetDdmcLog,
+} from "./controllers/distributionController.js";
+import {
+  handleCreateModeratorPayloadRequest,
+  handleModerationCreateLandingSite,
+  handleModerationListPayloadRequests,
+  handleConfirmPayloadRequest,
+  handleCancelPayloadRequest,
+  handlePublicDroneBoard,
 } from "./controllers/droneController.js";
 
 const withModAck = compose(withModAuth, withGuidelinesAck);
@@ -54,11 +148,15 @@ const withModAck = compose(withModAuth, withGuidelinesAck);
 // project photo/update) decide auth themselves from the request body / committee code.
 const routes = [
   ["GET", /^\/health$/, () => json(200, { ok: true })],
-  ["GET", /^\/kits$/, () => {
-    const response = json(200, { kits: KITS });
-    response.headers["cache-control"] = "public, max-age=86400";
-    return response;
-  }],
+  [
+    "GET",
+    /^\/kits$/,
+    () => {
+      const response = json(200, { kits: KITS });
+      response.headers["cache-control"] = "public, max-age=86400";
+      return response;
+    },
+  ],
   ["GET", /^\/distributions$/, handleGetPublicDistributions],
   ["GET", /^\/export\/ddmc-log$/, handleGetDdmcLog],
   ["GET", /^\/drones\/board$/, handlePublicDroneBoard],
@@ -91,6 +189,8 @@ const routes = [
   ["POST", /^\/me\/missing\/presign$/, withAuth(handlePostMissingPresign)],
   ["PUT", /^\/me\/missing\/([^/]+)$/, withAuth(handlePutMissing)],
   ["DELETE", /^\/me\/missing\/([^/]+)$/, withAuth(handleDeleteMissing)],
+  ["GET", /^\/admin\/settings\/local-updates$/, withAuth(handleGetLocalUpdateSettings)],
+  ["PUT", /^\/admin\/settings\/local-updates$/, withAuth(handlePutLocalUpdateSettings)],
   ["GET", /^\/admin\/users\/lookup$/, withAuth(handleAdminUsersLookup)],
   ["GET", /^\/admin\/users$/, withAuth(handleAdminUsersList)],
   ["GET", /^\/admin\/work\/([^/]+)$/, withAuth(handleGetUserWork)],
@@ -110,10 +210,14 @@ const routes = [
   ["POST", /^\/needs\/media\/presign$/, withOptionalAuth(handlePostNeedsMediaPresign)],
   ["POST", /^\/needs$/, withOptionalAuth(handlePostNeeds)],
   ["GET", /^\/needs$/, withOptionalAuth(handleGetNeeds)],
-  ["GET", /^\/status\/(.*)$/, (event, opts, ref) => {
-    if (!ref) throw err(400, "refCode required");
-    return handleGetStatus(event, opts, ref);
-  }],
+  [
+    "GET",
+    /^\/status\/(.*)$/,
+    (event, opts, ref) => {
+      if (!ref) throw err(400, "refCode required");
+      return handleGetStatus(event, opts, ref);
+    },
+  ],
   ["POST", /^\/needs\/([^/]+)\/renew$/, handlePostRenew],
   ["POST", /^\/offers$/, withAuth(handlePostOffers)],
   ["GET", /^\/offers$/, handleGetOffers],
