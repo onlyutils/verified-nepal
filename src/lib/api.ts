@@ -2368,3 +2368,45 @@ export function postReach(payload: ReachPayload): Promise<void> {
 export function getAdminReach(token: string): Promise<AdminReachStats> {
   return request<AdminReachStats>("/admin/reach", { token });
 }
+
+export type AdSlotName = "localTop" | "articleEnd";
+export type AdTarget = { kind: "all" } | { kind: "district" | "municipality"; value: string };
+export interface PublicAd {
+  id: string;
+  slot: AdSlotName;
+  image: { url: string };
+  href: string;
+  label: { en: string; ne: string };
+}
+export interface AdBody {
+  slot: AdSlotName;
+  target: AdTarget;
+  image: { url: string; fileId: string };
+  href: string;
+  label: { en: string; ne: string };
+  startAt: string;
+  endAt: string;
+  note?: string;
+}
+export interface AdminAd extends AdBody {
+  id: string;
+  active: boolean;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export function getAd(slot: AdSlotName, district?: string, municipalityId?: string | number): Promise<{ ad: PublicAd | null }> {
+  return request(`/ads${qs({ slot, district, municipality: municipalityId })}`);
+}
+export function getAdminAds(token: string): Promise<{ items: AdminAd[] }> {
+  return request("/admin/ads", { token });
+}
+export function createAd(token: string, body: AdBody): Promise<AdminAd> {
+  return request("/admin/ads", { method: "POST", token, body: JSON.stringify(body) });
+}
+export function updateAd(token: string, id: string, body: AdBody): Promise<AdminAd> {
+  return request(`/admin/ads/${encodeURIComponent(id)}`, { method: "PUT", token, body: JSON.stringify(body) });
+}
+export function deleteAd(token: string, id: string): Promise<void> {
+  return request(`/admin/ads/${encodeURIComponent(id)}`, { method: "DELETE", token });
+}

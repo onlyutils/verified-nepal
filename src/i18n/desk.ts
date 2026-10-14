@@ -1,5 +1,6 @@
 export const deskStrings = {
   en: {
+    deskAdsTab: "Ads",
     localUpdatesTab: "Local updates",
     localUpdatesDescription: "Check the source, place and date before publishing.",
     localUpdatesEmpty: "No local updates are awaiting checking.",
@@ -272,6 +273,7 @@ export const deskStrings = {
     deskEnglish: "English",
   },
   ne: {
+    deskAdsTab: "विज्ञापन",
     localUpdatesTab: "स्थानीय अपडेट",
     localUpdatesDescription: "प्रकाशित गर्नुअघि स्रोत, स्थान र मिति जाँच्नुहोस्।",
     localUpdatesEmpty: "जाँच पर्खिरहेका स्थानीय अपडेट छैनन्।",
