@@ -274,7 +274,7 @@ Owner decision Q12: push to prod immediately. The agent that closes the last Wav
 
 Start after Wave 1 is on `main` and dispatch #1 has run.
 
-#### [ ] W2-D The "Now" strip on `/` (replaces plan task T10)
+#### [x] W2-D The "Now" strip on `/` (replaces plan task T10)
 
 - **Codex:** `gpt-6.1-sol`, effort `high`.
 - **Owns:** `src/components/now-strip.tsx` (create), `src/pages/home.tsx` (the `OfficialUpdates` block and the position of the hard-wired August block only), `src/i18n/now.ts` (extend), `src/lib/now-items.ts` + `.test.ts` (create: pure normaliser).
@@ -289,7 +289,7 @@ Start after Wave 1 is on `main` and dispatch #1 has run.
 - **E2E on dev:** dev has 27 ledger rows and the W1-C news item, so every source renders. Browser (CDP, 360x740, `ne` then `en`): strip shows OPMCM rows labelled आधिकारिक स्रोत, a ledger row with place and "Delivered", the news item labelled जाँच गरिएको with a source link, standing entries last; a Viber share link on a row has the `viber://forward?text=` scheme; conjunct-heavy Nepali in a PNG card renders correctly (if glyphs break, open G-5 fonts). Record request count on `/` before and after (must be at most two more). An OPMCM row shows its body text clamped. Screenshots, including the section 1.4 rule 6 shot of `/` with Get help / Give help above the fold. Note in the report that prod day one will show OPMCM rows plus standing entries only, until supply exists.
 - **Done when:** the above is in the report.
 
-#### [ ] W2-E Desk "Local updates" queue and admin-only authoring (plan tasks T14, T11)
+#### [x] W2-E Desk "Local updates" queue and admin-only authoring (plan tasks T14, T11)
 
 - **Codex:** `gpt-6.1-sol`, effort `medium`.
 - **Owns:** `src/desk/local-updates.tsx` (create), `src/desk/desk.tsx`, `src/desk/use-desk.ts`, `src/i18n/desk.ts`, `src/articles/editor.tsx`, `src/articles/my-articles.tsx`, `src/desk/admin.tsx`, `src/i18n/local.ts` (create), `src/pages/me.tsx` (entry point only).
@@ -306,7 +306,7 @@ Start after Wave 1 is on `main` and dispatch #1 has run.
   - Run after W2-D is merged for the strip check; everything else can run before.
 - **Done when:** the loop submit → queue → publish → strip is in the report with ids.
 
-#### [ ] W2-F Sharing: Viber everywhere, news share meta, detail-page eyebrow (plan task T12 share half + quick win 10)
+#### [x] W2-F Sharing: Viber everywhere, news share meta, detail-page eyebrow (plan task T12 share half + quick win 10)
 
 - **Codex:** `gpt-6.1-sol`, effort `medium`.
 - **Owns:** `src/components/share-button.tsx`, `src/pages/dispatch-detail.tsx`, `src/pages/dispatches.tsx` (list row date only; W1-A's Write-button change is already merged), `src/pages/incidents.tsx`, `src/lib/og-meta.ts`, `functions/articles/[id].ts`, `src/i18n/articles-public.ts` (share strings).
@@ -324,7 +324,7 @@ Same as dispatch #1: the agent closing the last Wave 2 lane runs both workflows 
 
 ### Wave 3, docs and housekeeping (one lane, any time after Wave 1)
 
-#### [ ] D-1 Documents: stale text, PDF defects, plan dispositions
+#### [x] D-1 Documents: stale text, PDF defects, plan dispositions
 
 - **Codex:** `gpt-6-luna`, effort `low`.
 - **Owns:** `docs/NEWS-PORTAL-DECISIONS.md`, `docs/superpowers/plans/2026-10-14-local-updates.md` (header only), `docs/public-audit-2026-10/reports/*.md`, `docs/public-audit-2026-10/research_notes/**/verified_nepal_public_site_inventory.md` (§11, §12 notes), `docs/public-audit-2026-10/VerifiedNepal-Public-Site-Audit-2026-10.pdf`, `CONTRIBUTING.md` (workflow line), `docs/FEATURES.md`.

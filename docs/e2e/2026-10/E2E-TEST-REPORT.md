@@ -66,3 +66,36 @@ Design note for Wave 2: creation of a news item requires `happenedAt` and a sour
 Dev data created: two published local updates (ids `9100295f-6647-457a-8ffb-837e66b4b0a9` Rasuwa health response, `32506776-7ff7-4acc-9350-caf6d0a62164` Gorkha health response, typed source) and helper-01 flagged as a correspondent. Both items cite real OPMCM notices.
 
 Not covered: Lambda concurrency under parallel load.
+
+## Wave 2: W2-D Now strip, W2-E Desk and authoring, W2-F sharing (dev build of commit bf6b237)
+
+Browser checks with headless Chrome over raw CDP (`scripts/` holds the earlier drivers; the Wave 2 drivers follow the same pattern) plus the API loop from the W1-C section. Codex also drove the authoring loop locally against the dev API before merge; its own record is summarised below.
+
+| Check | Result |
+|---|---|
+| Home `/` at 360x740, Nepali: strip titled "अहिले" below the situation band and relief map | Present; hero and Get help / Give help still first, buttons end at 493 and 549 px |
+| Requests added to `/` by the strip | Exactly two (`/dispatches?kind=news`, `/ledger`) |
+| Row labels | Official notices carry "आधिकारिक स्रोत", checked local updates "जाँच गरिएको", ledger rows carry no trust word and no language chip |
+| Relative times in Nepali | "३ घण्टा पहिले", "हिजो"; older ledger rows fall back to an absolute Nepali date |
+| OPMCM rows | Title, agency, three-line body with expand, link to the OPMCM page |
+| Share row on each strip row | WhatsApp, Viber (`viber://forward?text=`), copy; one line at 360 px, no overflow |
+| Local update detail page (`/articles/<id>`) | Eyebrow "स्थानीय अपडेट", locality chip, language chip, "जाँच गरिएको" with tooltip, "घटना भएको मिति असोज २७, २०८३ (हिजो)", sources list including a typed source line, Viber link |
+| Share preview (`curl -A facebookexternalhit`) | Nepali title, locality in the description, `inLanguage: ne`, `og:type website`, `datePublished` from `happenedAt`; article pages unchanged |
+| Desk, admin: "Local updates" tab | Rule card shows the reject rule, "You cannot publish your own update. The correspondent writes, a moderator publishes.", the corrections line and the PCN 2083 checklist |
+| Desk, admin page | "Local correspondent" email form and a "Local updates" settings card with the daily-limit switch and number (1 to 50) |
+| `/me` for helper-01 (correspondent) and admin | "Write a local update" and "My local updates" present |
+| `/me` for helper-02 (not approved) | Neither present; opening the form URL shows "an administrator must approve you as a local correspondent" |
+| Authoring form at 360 px, Nepali | Fields: headline, body (1,200 character note), language, district, municipality, ward, scope, happened-at, up to three source links, typed source line, one tag, optional image |
+
+Codex's own browser loop against the dev API (local build, test-only CORS override), recorded in its report: blank form shows bilingual validation before any create; first request carries kind, language, happenedAt, sources, title, body, one tag, scope and locality (201, submit pending); queue shows body, scope, municipality, date, link and typed source inline; publish and reject both 200; `/me` shows the rejected item with its Nepali reason; with the limit at 1 a create returned 429 and the UI showed the filed count and a relative retry time; limit switched off allowed creates and was restored to on at 5; an admin's own items show no Publish button, only Reject; language switch keeps unsaved form input.
+
+Dev data created by these runs (all cite real notices): published `89d8a726-a6c1-41b4-9eb9-c970f4801322` (Kathmandu park closure notice, link source), published `018b4da0-7ebd-40c1-9e14-9c3aba636c7e` (Kathmandu cooperatives notice, typed source), rejected `b7d69c37-61b4-4051-b15d-5261c0d9ae16`; plus the two from the W1-C section.
+
+Findings:
+
+- The Nepali name for local updates was "स्थानीय जानकारी" in the authoring and Desk lanes and "स्थानीय अपडेट" on the detail page. Unified to "स्थानीय अपडेट" in commit bf6b237. The owner's Nepali read-through (A-1) should confirm the term.
+- Codex noted the existing signed-in header overflows at 320 px with 150% text. Pre-existing; not fixed in this wave.
+- `og:image:alt` on share previews still says "community-verified disaster response for Nepal", the old wording. Not changed.
+- Project detail page share row had no Viber; fixed separately (0966656).
+
+Not covered: PNG share cards for local-update permalinks (not built; the text share and OG preview cover Viber, WhatsApp and Facebook), image upload in the authoring form, Lambda concurrency under parallel load, a human Nepali read-through.
