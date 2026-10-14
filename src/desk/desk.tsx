@@ -87,25 +87,26 @@ export function Desk({
   if (auth.profile.role === "moderator" && (auth.profile.districts?.length ?? 0) === 0)
     return <DistrictGate model={model} language={language} setLanguage={setLanguage} onHome={onHome} />;
 
+  const g = model.ds;
   const nav: AppShellNavItem<DeskSection>[] = [
-    { key: "queue", label: t.deskQueueNeedsTab, count: model.queue.length, icon: <Inbox /> },
-    { key: "posters", label: model.ds.deskPostersTab, count: model.posters.length, icon: <FileImage /> },
-    { key: "boards", label: t.deskBoardsTab, icon: <LayoutList /> },
-    { key: "print", label: t.deskPrintTab, icon: <Printer /> },
-    { key: "sync", label: t.deskSyncTab, icon: <RefreshCw /> },
-    { key: "flags", label: t.deskFlagsTab, count: model.flags.length, icon: <Flag /> },
-    { key: "projects", label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
-    { key: "dispatches", label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
-    { key: "stories", label: model.ds.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
-    { key: "orgs", label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
-    { key: "distributions", label: distributionStrings[language].nav, count: model.distributionsCount, icon: <ClipboardList /> },
-    { key: "drones", label: droneStrings[language].nav, icon: <Plane /> },
+    { key: "queue", group: g.deskGroupCases, label: t.deskQueueNeedsTab, count: model.queue.length, icon: <Inbox /> },
+    { key: "posters", group: g.deskGroupCases, label: g.deskPostersTab, count: model.posters.length, icon: <FileImage /> },
+    { key: "flags", group: g.deskGroupCases, label: t.deskFlagsTab, count: model.flags.length, icon: <Flag /> },
+    { key: "boards", group: g.deskGroupPaper, label: t.deskBoardsTab, icon: <LayoutList /> },
+    { key: "print", group: g.deskGroupPaper, label: t.deskPrintTab, icon: <Printer /> },
+    { key: "sync", group: g.deskGroupPaper, label: t.deskSyncTab, icon: <RefreshCw /> },
+    { key: "dispatches", group: g.deskGroupPublish, label: t.deskDispatchesTab, count: model.dispatches.length, icon: <Newspaper /> },
+    { key: "stories", group: g.deskGroupPublish, label: g.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
+    { key: "projects", group: g.deskGroupRelief, label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
+    { key: "orgs", group: g.deskGroupRelief, label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
+    { key: "distributions", group: g.deskGroupRelief, label: distributionStrings[language].nav, count: model.distributionsCount, icon: <ClipboardList /> },
+    { key: "drones", group: g.deskGroupRelief, label: droneStrings[language].nav, icon: <Plane /> },
     ...(auth.profile.role === "admin"
       ? [
-          { key: "incidents" as DeskSection, label: model.ds.deskIncidentsTab, icon: <Siren /> },
-          { key: "admin" as DeskSection, label: t.deskAdminTab, icon: <ShieldCheck /> },
-          { key: "reach" as DeskSection, label: reachStrings[language].nav, icon: <BarChart3 /> },
-          { key: "climate" as DeskSection, label: model.ds.deskClimateTab, icon: <Globe /> },
+          { key: "incidents" as DeskSection, group: g.deskGroupAdmin, label: g.deskIncidentsTab, icon: <Siren /> },
+          { key: "admin" as DeskSection, group: g.deskGroupAdmin, label: t.deskAdminTab, icon: <ShieldCheck /> },
+          { key: "reach" as DeskSection, group: g.deskGroupAdmin, label: reachStrings[language].nav, icon: <BarChart3 /> },
+          { key: "climate" as DeskSection, group: g.deskGroupAdmin, label: g.deskClimateTab, icon: <Globe /> },
         ]
       : []),
   ];

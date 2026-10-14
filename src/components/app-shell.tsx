@@ -22,6 +22,8 @@ export interface AppShellNavItem<K extends string = string> {
   /** Unfiltered count shown after the label (queue size, pending items). */
   count?: number;
   icon?: ReactNode;
+  /** Items with the same consecutive group share a heading in the sidebar (hidden in the mobile tab strip). */
+  group?: string;
 }
 
 /**
@@ -144,10 +146,16 @@ export function AppShell<K extends string>({
             {aside ? <div className="mt-2">{aside}</div> : null}
           </div>
           <ul className="flex overflow-x-auto px-2 pr-10 lg:flex-col lg:gap-0.5 lg:px-3 lg:py-3">
-            {nav.map((item) => {
+            {nav.map((item, i) => {
               const isActive = item.key === active;
+              const startsGroup = item.group && item.group !== nav[i - 1]?.group;
               return (
                 <li key={item.key} className="shrink-0">
+                  {startsGroup ? (
+                    <p className={`${i > 0 ? "mt-3 " : ""}hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:block`}>
+                      {item.group}
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     data-nav-key={item.key}
