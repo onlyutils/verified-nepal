@@ -7,7 +7,7 @@ declare global {
     turnstile?: {
       render: (
         el: HTMLElement,
-        opts: { sitekey: string; callback: (t: string) => void; "expired-callback"?: () => void; "error-callback"?: () => void },
+        opts: { sitekey: string; size: "normal" | "compact"; callback: (t: string) => void; "expired-callback"?: () => void; "error-callback"?: () => void },
       ) => string;
       reset: (id: string) => void;
       remove?: (id: string) => void;
@@ -47,6 +47,8 @@ export function TurnstileWidget({
       try {
         widgetId.current = window.turnstile.render(ref.current, {
           sitekey: siteKey,
+          // ponytail: Size at render; upgrade to ResizeObserver if forms need live widget resizing.
+          size: ref.current.clientWidth < 300 ? "compact" : "normal",
           callback: (token: string) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(""),
           "error-callback": () => {
@@ -100,7 +102,7 @@ export function TurnstileWidget({
 
   if (!siteKey) return null;
   return (
-    <div ref={ref} className="mt-4" role="region" aria-label={strings.label}>
+    <div ref={ref} className="mt-4 max-w-full overflow-hidden" role="region" aria-label={strings.label}>
       {loadError ? <p className="text-sm text-destructive">{strings.loadError}</p> : null}
       {verificationError ? <p className="text-sm text-destructive">{strings.expiredError}</p> : null}
       {!loadError && !verificationError ? <p className="text-sm text-muted-foreground">{strings.completeHint}</p> : null}

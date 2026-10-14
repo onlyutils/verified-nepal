@@ -188,8 +188,9 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         <a href="/articles">← {t.back}</a>
       </Button>
       <PageHeader
+        className="[&_h1]:min-w-0 [&_h1]:[overflow-wrap:anywhere]"
         eyebrow={isLocalUpdate ? t.localUpdate : t.eyebrow}
-        title={<span lang={contentLanguage}>{title}</span>}
+        title={<span lang={contentLanguage} className="min-w-0 [overflow-wrap:anywhere]">{title}</span>}
         description={`${t.by} ${item.author.displayName}${item.author.place ? ` · ${item.author.place}` : ""}${isLocalUpdate ? "" : ` · ${formatDateTime(item.publishedAt, language)} · ${formatRelativeTime(item.publishedAt, language)}`}`}
       />
       {isLocalUpdate ? (
