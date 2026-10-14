@@ -972,6 +972,14 @@ export function lookupAdminUser(token: string, email: string): Promise<AdminUser
   return request<AdminUser>(`/admin/users/lookup?${q.toString()}`, { token });
 }
 
+export function setCorrespondent(token: string, sub: string, enabled: boolean): Promise<{ reporter?: { approvedAt?: string; localities?: Locality[]; nationalScope?: boolean } }> {
+  return request(`/admin/users/${encodeURIComponent(sub)}/role`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ reporter: enabled ? { localities: [], nationalScope: false } : null }),
+  });
+}
+
 export function setAdminUserRole(
   token: string,
   sub: string,
@@ -2295,7 +2303,7 @@ export interface ArticleSaveBody {
   displayName?: string;
   place?: string;
 }
-export function createArticle(token: string, body: { language: "en" | "ne"; kind?: DispatchKind }): Promise<{ id: string }> {
+export function createArticle(token: string, body: ArticleSaveBody & { language: "en" | "ne"; kind?: DispatchKind }): Promise<{ id: string }> {
   return request<{ id: string }>("/me/articles", { method: "POST", token, body: JSON.stringify(body) });
 }
 export function listMyArticles(token: string): Promise<{ items: MyArticle[] }> {

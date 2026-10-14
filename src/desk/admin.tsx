@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,40 @@ import { DistrictPicker } from "@/components/district-picker";
 import { SectionEmpty, SectionError, SectionFrame, SectionLoading } from "./section-ui";
 import type { DeskModel } from "./use-desk";
 import { formatDateTime, formatNumber } from "@/lib/format-date";
-import { getUserWork, type WorkResponse } from "@/lib/api";
+import { getLocalUpdateSettings, putLocalUpdateSettings, setCorrespondent, getUserWork, type LocalUpdateSettings, type WorkResponse } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { apiErrorMessage } from "@/lib/api-error";
 import { meStrings } from "@/i18n/me";
 import { WorkTally } from "@/components/work-tally";
 
 export function Admin({ model }: { model: DeskModel }) {
   const workT = meStrings[model.language];
+  const [correspondentBusy, setCorrespondentBusy] = useState(false);
+  const [correspondentError, setCorrespondentError] = useState<string | null>(null);
+  const [correspondentSaved, setCorrespondentSaved] = useState(false);
+  const user = model.adminLookupUser as (NonNullable<typeof model.adminLookupUser> & { reporter?: { approvedAt?: string } }) | null;
+  const [correspondent, setCorrespondentValue] = useState(false);
+  useEffect(() => {
+    setCorrespondentValue(Boolean(user?.reporter?.approvedAt));
+    setCorrespondentError(null);
+    setCorrespondentSaved(false);
+  }, [user]);
+  const toggleCorrespondent = async (enabled: boolean) => {
+    if (!model.auth.idToken || !user) return;
+    setCorrespondentBusy(true);
+    setCorrespondentError(null);
+    setCorrespondentSaved(false);
+    try {
+      await setCorrespondent(model.auth.idToken, user.sub, enabled);
+      setCorrespondentValue(enabled);
+      setCorrespondentSaved(true);
+      void model.loadAdminModerators();
+    } catch (cause) {
+      setCorrespondentError(apiErrorMessage(cause, model.language));
+    } finally {
+      setCorrespondentBusy(false);
+    }
+  };
   const [workBySub, setWorkBySub] = useState<Record<string, WorkResponse>>({});
   const [expandedWork, setExpandedWork] = useState<string | null>(null);
   const [workLoading, setWorkLoading] = useState<Record<string, boolean>>({});
@@ -70,7 +98,7 @@ export function Admin({ model }: { model: DeskModel }) {
                   placeholder={model.t.deskAdminLookupPlaceholder}
                 />
               </div>
-              <Button className="self-end" onClick={model.handleAdminLookup} disabled={model.adminLookupLoading}>
+              <Button className="self-end" onClick={model.handleAdminLookup} disabled={model.adminLookupLoading || correspondentBusy}>
                 {model.t.deskAdminLookupButton}
               </Button>
             </div>
@@ -95,6 +123,15 @@ export function Admin({ model }: { model: DeskModel }) {
                     <strong>{model.ds.deskAdminGuidelines}:</strong>{" "}
                     {model.adminLookupUser.guidelinesAckAt ? model.ds.deskAdminYes : model.ds.deskAdminNo}
                   </p>
+                </div>
+                <div className="space-y-2">
+                  {correspondent ? <Badge variant="secondary">{model.ds.correspondentBadge}</Badge> : null}
+                  <label htmlFor="admin-correspondent" className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+                    <input id="admin-correspondent" type="checkbox" role="switch" checked={correspondent} disabled={correspondentBusy} onChange={(event) => void toggleCorrespondent(event.target.checked)} className="size-5 accent-primary" />
+                    {model.ds.localCorrespondent}
+                  </label>
+                  {correspondentError ? <Alert variant="destructive"><AlertDescription>{correspondentError}</AlertDescription></Alert> : null}
+                  {correspondentSaved ? <Alert><AlertDescription>{model.ds.correspondentSaved}</AlertDescription></Alert> : null}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="admin-role">{model.t.deskAdminRoleLabel}</Label>
@@ -131,6 +168,7 @@ export function Admin({ model }: { model: DeskModel }) {
           </CardContent>
         </Card>
         <div className="space-y-6">
+          <LocalUpdateSettingsCard model={model} />
           <Card>
             <CardHeader>
               <CardTitle>{model.t.deskAdminStatsTitle}</CardTitle>
@@ -167,7 +205,7 @@ export function Admin({ model }: { model: DeskModel }) {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>{model.t.deskAdminModeratorsTitle}</CardTitle>
+          <CardTitle>{model.ds.localUpdatesUsers}</CardTitle>
         </CardHeader>
         <CardContent>
           {model.adminModeratorsLoading ? (
@@ -193,11 +231,14 @@ export function Admin({ model }: { model: DeskModel }) {
                       <TableRow>
                         <TableCell>{moderator.email}</TableCell>
                         <TableCell>{moderator.name || model.t.unavailable}</TableCell>
-                        <TableCell>{moderator.role}</TableCell>
+                        <TableCell>
+                          {moderator.role}
+                          {(moderator as typeof moderator & { reporter?: { approvedAt?: string } }).reporter?.approvedAt ? <Badge variant="secondary" className="ml-2">{model.ds.correspondentBadge}</Badge> : null}
+                        </TableCell>
                         <TableCell>{moderator.districts.join(", ") || model.t.deskScopeAll}</TableCell>
                         <TableCell>{formatDateTime(moderator.createdAt, model.language)}</TableCell>
                         <TableCell>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => void toggleWork(moderator.sub)} disabled={workLoading[moderator.sub]}>
+                          <Button type="button" size="sm" variant="secondary" className="min-h-11" onClick={() => void toggleWork(moderator.sub)} disabled={workLoading[moderator.sub]}>
                             {workLoading[moderator.sub] ? "…" : workT.workTitle}
                           </Button>
                         </TableCell>
@@ -218,5 +259,72 @@ export function Admin({ model }: { model: DeskModel }) {
         </CardContent>
       </Card>
     </SectionFrame>
+  );
+}
+
+function LocalUpdateSettingsCard({ model }: { model: DeskModel }) {
+  const t = model.ds;
+  type Settings = LocalUpdateSettings & { updatedBy?: string | { name?: string; email?: string; sub?: string }; updatedAt?: string };
+  const [saved, setSaved] = useState<Settings | null>(null);
+  const [enabled, setEnabled] = useState(true);
+  const [limit, setLimit] = useState("5");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState(false);
+  useEffect(() => {
+    if (!model.auth.idToken) return;
+    let active = true;
+    setLoading(true);
+    getLocalUpdateSettings(model.auth.idToken).then((settings) => {
+      if (!active) return;
+      setSaved(settings);
+      setEnabled(settings.dailyLimitEnabled);
+      setLimit(String(settings.dailyLimit));
+      setError(null);
+    }).catch((cause) => { if (active) setError(apiErrorMessage(cause, model.language)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [model.auth.idToken, model.language]);
+  const save = async () => {
+    if (!model.auth.idToken) return;
+    setMessage(false);
+    setError(null);
+    const dailyLimit = Number(limit);
+    if (!limit.trim() || !Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 50) {
+      setError(t.localUpdatesSettingsInvalid);
+      return;
+    }
+    setBusy(true);
+    try {
+      setSaved(await putLocalUpdateSettings(model.auth.idToken, { dailyLimitEnabled: enabled, dailyLimit }));
+      setMessage(true);
+    } catch (cause) {
+      setError(apiErrorMessage(cause, model.language));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const changedBy = typeof saved?.updatedBy === "string" ? saved.updatedBy : saved?.updatedBy?.name || saved?.updatedBy?.email || saved?.updatedBy?.sub;
+  return (
+    <Card>
+      <CardHeader><CardTitle><h3>{t.localUpdatesTab}</h3></CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? <SectionLoading label={t.localUpdatesSettingsLoading} /> : null}
+        <label htmlFor="local-limit-enabled" className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+          <input id="local-limit-enabled" type="checkbox" role="switch" checked={enabled} disabled={loading || busy} onChange={(event) => { setEnabled(event.target.checked); setMessage(false); }} className="size-5 accent-primary" />
+          {t.localUpdatesLimit}
+        </label>
+        <div className="space-y-2">
+          <Label htmlFor="local-limit">{t.localUpdatesLimitNumber}</Label>
+          <Input id="local-limit" type="number" min={1} max={50} step={1} value={limit} disabled={loading || busy} onChange={(event) => { setLimit(event.target.value); setMessage(false); }} />
+        </div>
+        {saved ? <p className="text-sm text-muted-foreground">{saved.dailyLimitEnabled ? t.localUpdatesSettingsValue.replace("{n}", formatNumber(saved.dailyLimit, model.language)) : t.localUpdatesSettingsOff}</p> : null}
+        {changedBy ? <p className="text-sm text-muted-foreground">{t.localUpdatesSettingsBy.replace("{name}", changedBy)}</p> : null}
+        {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
+        {message ? <Alert><AlertDescription>{t.localUpdatesSettingsSaved}</AlertDescription></Alert> : null}
+        <Button onClick={() => void save()} disabled={loading || busy}>{t.localUpdatesSettingsSave}</Button>
+      </CardContent>
+    </Card>
   );
 }

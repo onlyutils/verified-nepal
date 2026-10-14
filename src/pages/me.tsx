@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { meStrings } from "@/i18n/me";
+import { MyArticlesPage } from "@/articles/my-articles";
 import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { needTimelineStrings } from "@/i18n/needs";
 import { labels } from "@/i18n";
@@ -589,6 +590,9 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
                 </Button>
               </CardContent>
             </Card>
+          </section>
+          <section id="local-updates">
+            <MyArticlesPage language={language} localOnly embedded />
           </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.storyTitle}</h2>
