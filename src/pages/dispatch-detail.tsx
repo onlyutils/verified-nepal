@@ -195,7 +195,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       {isLocalUpdate ? (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            {locality ? <Badge variant="secondary" className="whitespace-normal">{locality}</Badge> : null}
+            {locality ? <Badge variant="secondary" className="min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere]">{locality}</Badge> : null}
             <Badge variant="outline" lang={item.language || language}>{(item.language || language) === "ne" ? t.languageNe : t.languageEn}</Badge>
             {/* ponytail: Native tooltip avoids another dependency; upgrade to the shared Tooltip when installed. */}
             <span tabIndex={0} title={t.checkedTooltip} aria-label={`${t.checked}: ${t.checkedTooltip}`} className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">

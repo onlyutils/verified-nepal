@@ -50,7 +50,7 @@ export function SignInNudge({ language, title, body, id }: { language: Language;
           <p className="mt-1 text-sm text-muted-foreground">{body}</p>
           <p className="mt-1 text-xs text-subtle">{t.nudgePrivacy}</p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex min-w-0 max-w-full flex-wrap gap-2 sm:shrink-0">
           <Button type="button" onClick={auth.signIn}>
             <GoogleMark />
             {t.nudgeContinueWithGoogle}

@@ -84,7 +84,7 @@ export function ClimatePage({ language, navigate }: { language: Language; naviga
   const pageDescription = interpolate(t.description, factValues);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8 [overflow-wrap:anywhere]">
       <PageHeader eyebrow={t.eyebrow} title={t.title} description={pageDescription} />
 
       <Card className="border-primary/30 bg-primary/5">

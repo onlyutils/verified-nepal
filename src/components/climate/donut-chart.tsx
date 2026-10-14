@@ -21,16 +21,16 @@ export function DonutChart({ segments, centerLabel }: { segments: DonutSegment[]
     .join(", ");
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4">
       <div className="relative size-24 shrink-0 rounded-full" style={{ background: `conic-gradient(${stops})` }} aria-hidden="true">
         <div className="absolute inset-[18%] flex items-center justify-center rounded-full bg-card text-center text-[10px] font-medium text-muted-foreground">
           {centerLabel}
         </div>
       </div>
-      <ul className="space-y-1 text-sm">
+      <ul className="min-w-0 space-y-1 text-sm">
         {positive.map((segment) => (
-          <li key={segment.label} className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full" style={{ backgroundColor: segment.color }} aria-hidden="true" />
+          <li key={segment.label} className="flex flex-wrap items-center gap-2">
+            <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} aria-hidden="true" />
             <span className="text-foreground">{segment.label}</span>
             <span className="text-muted-foreground">{Math.round((segment.value / total) * 100)}%</span>
           </li>

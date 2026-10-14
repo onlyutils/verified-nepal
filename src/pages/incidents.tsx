@@ -145,14 +145,14 @@ export function IncidentsPage({ language }: { language: Language }) {
               />
             </div>
           </div>
-          <fieldset className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
+          <fieldset className="min-w-0 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <legend className="text-sm font-medium">{t.incidentsPublicFilterLabel}</legend>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedDistricts([...districtNames])}>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setSelectedDistricts([...districtNames])}>
                   {t.incidentsPublicSelectAll}
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedDistricts([])}>
+                <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setSelectedDistricts([])}>
                   {t.incidentsPublicClearAll}
                 </Button>
               </div>
