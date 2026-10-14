@@ -1594,6 +1594,18 @@ export function moderateProjectUpdate(
   });
 }
 
+export type DispatchKind = "article" | "news";
+export type NewsScope = "ward" | "municipality" | "district" | "national";
+export interface Locality {
+  district: string;
+  municipalityId: string;
+  ward?: number;
+}
+export interface LocalUpdateSettings {
+  dailyLimitEnabled: boolean;
+  dailyLimit: number;
+}
+
 export type DispatchTag = "climate" | "mountains" | "floods" | "landslides" | "glaciers" | "community" | "story";
 export const DISPATCH_TAGS: DispatchTag[] = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
 
@@ -1607,6 +1619,13 @@ export interface ArticleCounters {
   shares: number;
 }
 export interface DispatchPublicItem extends Partial<ArticleCounters> {
+  kind?: DispatchKind;
+  scope?: NewsScope;
+  locality?: Locality;
+  happenedAt?: string;
+  sourceUrls?: string[];
+  sourceNote?: string;
+  language?: "en" | "ne";
   id: string;
   title: string | { en: string; ne?: string };
   excerpt: string | { en: string; ne?: string };
@@ -1622,6 +1641,13 @@ export interface DispatchListResponse {
 }
 
 export interface DispatchDetailResponse extends Partial<ArticleCounters> {
+  kind?: DispatchKind;
+  scope?: NewsScope;
+  locality?: Locality;
+  happenedAt?: string;
+  sourceUrls?: string[];
+  sourceNote?: string;
+  language?: "en" | "ne";
   id: string;
   title: string | { en: string; ne?: string };
   body: string | { en: string; ne?: string };
@@ -1634,6 +1660,13 @@ export interface DispatchDetailResponse extends Partial<ArticleCounters> {
 }
 
 export interface ModerationDispatchItem {
+  kind?: DispatchKind;
+  scope?: NewsScope;
+  locality?: Locality;
+  happenedAt?: string;
+  sourceUrls?: string[];
+  sourceNote?: string;
+  language?: "en" | "ne";
   id: string;
   title: { en: string; ne?: string } | string;
   body: { en: string; ne?: string } | string;
@@ -1649,18 +1682,30 @@ export interface ModerationDispatchResponse {
   items: ModerationDispatchItem[];
 }
 
-export function listDispatches(params: { tag?: string; cursor?: string } = {}): Promise<DispatchListResponse> {
+export function listDispatches(params: { tag?: string; cursor?: string; kind?: DispatchKind } = {}): Promise<DispatchListResponse> {
   const q = new URLSearchParams();
   if (params.tag) q.set("tag", params.tag);
   if (params.cursor) q.set("cursor", params.cursor);
+  if (params.kind) q.set("kind", params.kind);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return request<DispatchListResponse>(`/dispatches${suffix}`);
 }
 export function getDispatch(id: string): Promise<DispatchDetailResponse> {
   return request<DispatchDetailResponse>(`/dispatches/${encodeURIComponent(id)}`);
 }
-export function getModerationDispatches(token: string): Promise<ModerationDispatchResponse> {
-  return request<ModerationDispatchResponse>("/moderation/dispatches", { token });
+export function getModerationDispatches(token: string, params: { kind?: DispatchKind } = {}): Promise<ModerationDispatchResponse> {
+  const suffix = params.kind ? `?kind=${encodeURIComponent(params.kind)}` : "";
+  return request<ModerationDispatchResponse>(`/moderation/dispatches${suffix}`, { token });
+}
+export function getLocalUpdateSettings(token: string): Promise<LocalUpdateSettings> {
+  return request<LocalUpdateSettings>("/admin/settings/local-updates", { token });
+}
+export function putLocalUpdateSettings(token: string, body: LocalUpdateSettings): Promise<LocalUpdateSettings> {
+  return request<LocalUpdateSettings>("/admin/settings/local-updates", {
+    method: "PUT",
+    token,
+    body: JSON.stringify(body),
+  });
 }
 export function moderateDispatch(
   token: string,
@@ -2213,6 +2258,12 @@ export function getAdminClimate(token: string): Promise<AdminClimateStats> {
 // ---- Articles: signed-in authoring and engagement (spec 2026-09-03-articles-authoring-design) ----
 export type ArticleStatus = "draft" | "pending" | "published" | "rejected";
 export interface MyArticle extends ArticleCounters {
+  kind?: DispatchKind;
+  scope?: NewsScope;
+  locality?: Locality;
+  happenedAt?: string;
+  sourceUrls?: string[];
+  sourceNote?: string;
   id: string;
   status: ArticleStatus;
   title: string;
@@ -2231,6 +2282,11 @@ export interface MyArticleDetail extends MyArticle {
   place?: string;
 }
 export interface ArticleSaveBody {
+  scope?: NewsScope;
+  locality?: Locality;
+  happenedAt?: string;
+  sourceUrls?: string[];
+  sourceNote?: string;
   title?: string;
   blocks?: Block[];
   cover?: Cover | null; // null clears the cover
@@ -2239,7 +2295,7 @@ export interface ArticleSaveBody {
   displayName?: string;
   place?: string;
 }
-export function createArticle(token: string, body: { language: "en" | "ne" }): Promise<{ id: string }> {
+export function createArticle(token: string, body: { language: "en" | "ne"; kind?: DispatchKind }): Promise<{ id: string }> {
   return request<{ id: string }>("/me/articles", { method: "POST", token, body: JSON.stringify(body) });
 }
 export function listMyArticles(token: string): Promise<{ items: MyArticle[] }> {
