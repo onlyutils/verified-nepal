@@ -73,18 +73,18 @@ export function AppShell<K extends string>({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-background">
-        <div className="mx-auto flex h-14 max-w-[90rem] items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex min-h-14 max-w-[90rem] flex-wrap items-center gap-3 px-4 py-1 sm:px-6">
           <button
             type="button"
             onClick={onHome}
-            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-11 min-w-11 flex-1 overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none"
           >
-            <Logo language={language} />
+            <Logo language={language} className="max-w-full min-w-0 [&_span]:min-w-0 [&_span[lang]]:truncate" />
           </button>
           <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
           <span className="hidden text-sm font-semibold text-muted-foreground sm:block">{title}</span>
-          <div className="ml-auto flex items-center gap-1 sm:gap-2">
-            <Button asChild variant="ghost" size="sm" className="text-destructive">
+          <div className="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-2">
+            <Button asChild variant="ghost" size="sm" className="min-h-11 text-destructive">
               <a href="tel:1234">
                 <Phone />
                 1234
@@ -93,6 +93,7 @@ export function AppShell<K extends string>({
             <Button
               variant="ghost"
               size="sm"
+              className="min-h-11 min-w-11"
               onClick={() => setLanguage(language === "en" ? "ne" : "en")}
               aria-label={otherLanguage}
             >
@@ -102,7 +103,7 @@ export function AppShell<K extends string>({
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="max-w-[10rem]">
+                  <Button variant="outline" size="sm" className="min-h-11 min-w-11 max-w-[10rem]">
                     <span
                       className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold uppercase text-primary-foreground"
                       aria-hidden="true"
@@ -186,7 +187,7 @@ export function AppShell<K extends string>({
           <div aria-hidden="true" className="pointer-events-none absolute right-0 top-0 h-14 w-10 bg-gradient-to-l from-background to-transparent lg:hidden" />
           {aside ? <div className="px-4 pb-3 lg:hidden">{aside}</div> : null}
         </nav>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 focus:outline-none sm:p-6 lg:p-8">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 [overflow-wrap:anywhere] focus:outline-none sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

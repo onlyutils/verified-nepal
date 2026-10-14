@@ -62,22 +62,22 @@ export function SiteHeader({
 
   return (
     <header className="border-b bg-background">
-      <div className={`${container} flex h-14 items-center justify-between gap-2`}>
+      <div className={`${container} flex min-h-14 flex-wrap items-center justify-between gap-2 py-1`}>
         <button
           type="button"
           onClick={() => navigate("dashboard")}
           aria-label={t.dashboard}
-          className="min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="min-h-11 min-w-11 flex-1 overflow-hidden rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <Logo language={language} tagline={ts.tagline} className="min-w-0" />
+          <Logo language={language} tagline={ts.tagline} className="max-w-full min-w-0 [&_span]:min-w-0 [&_span[lang]]:truncate" />
         </button>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1">
           <AccountButton language={language} navigate={navigate} />
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="min-h-11 h-auto"
+            className="min-h-11 min-w-11 h-auto max-[360px]:px-1"
             onClick={() => setLanguage(language === "en" ? "ne" : "en")}
             aria-label={`${t.language}: ${otherLanguage}`}
           >
@@ -226,7 +226,7 @@ function AccountButton({ language, navigate }: { language: Language; navigate: (
           type="button"
           variant="ghost"
           size="sm"
-          className="min-h-11 h-auto max-w-[10rem]"
+          className="min-h-11 min-w-11 h-auto max-w-[10rem] max-[360px]:px-1"
           aria-label={unread > 0 ? `${t.navAccount} · ${t.activityUnread}: ${unread}` : t.navAccount}
         >
           <span
