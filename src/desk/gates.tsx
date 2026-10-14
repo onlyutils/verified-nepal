@@ -180,7 +180,7 @@ function renderGuidelinesInline(text: string): React.ReactNode {
 
 // ponytail: hand-rolled parser for the small subset of Markdown the guidelines doc actually
 // uses (h1/h2, hr, bullets, bold, inline code) — swap for a real parser if the doc grows richer syntax.
-function renderGuidelinesMarkdown(markdown: string): React.ReactNode[] {
+export function renderGuidelinesMarkdown(markdown: string): React.ReactNode[] {
   const blocks: React.ReactNode[] = [];
   let listItems: string[] = [];
   let paragraph: string[] = [];

@@ -19,25 +19,29 @@ import { orgStrings } from "@/i18n/orgs";
 import { ourMessageStrings } from "@/i18n/our-message";
 import { posterStrings } from "@/i18n/poster";
 import { shellStrings } from "@/i18n/shell";
+import { navStrings } from "@/i18n/nav";
 import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
 import type { Language, Page } from "@/lib/types";
-import { ClipboardList, LogOut, Menu, UserRound } from "lucide-react";
+import { ClipboardList, LogOut, Menu, UserRound, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
-const navPages = [
-  ["search", "search"],
-  ["poster", "poster"],
+const primaryPages = [
+  ["dashboard", "now"],
   ["getHelp", "getHelp"],
   ["giveHelp", "giveHelp"],
+  ["search", "search"],
   ["dropCenters", "dropCenters"],
+  ["ledger", "ledgerTitle"],
+] as const;
+const morePages = [
+  ["poster", "poster"],
   ["incidents", "incidents"],
+  ["projects", "projects"],
+  ["dispatches", "dispatches"],
   ["climate", "climate"],
   ["ourMessage", "ourMessage"],
   ["info", "info"],
-  ["projects", "projects"],
-  ["dispatches", "dispatches"],
-  ["ledger", "ledgerTitle"],
   ["drones", "dronesTitle"],
 ] as const;
 
@@ -80,6 +84,28 @@ export function SiteHeader({
             <span lang={language === "en" ? "ne" : "en"}>{otherLanguage}</span>
           </Button>
           <AccessibilityBar language={language} />
+          <nav aria-label={ts.primaryNavigation} className="hidden items-center gap-1 lg:flex">
+            {primaryPages.map(([page, key]) => (
+              <Button key={page} type="button" variant="ghost" className="min-h-11 px-2" onClick={() => navigate(page as Page)}>
+                {page === "dashboard" ? navStrings[language].now : navigationLabel(page, key, language)}
+              </Button>
+            ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="min-h-11 px-2">
+                  {navStrings[language].more}
+                  <ChevronDown aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {morePages.map(([page, key]) => (
+                  <DropdownMenuItem key={page} onSelect={() => navigate(page as Page)}>
+                    {navigationLabel(page, key, language)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button type="button" variant="ghost" size="icon" className="lg:hidden" aria-label={ts.menu}>
@@ -92,18 +118,27 @@ export function SiteHeader({
                 <SheetDescription>{ts.primaryNavigation}</SheetDescription>
               </SheetHeader>
               <nav aria-label={ts.primaryNavigation} className="mt-6 grid gap-1">
-                <SheetClose asChild>
-                  <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate("dashboard")}>
-                    {t.dashboard}
-                  </Button>
-                </SheetClose>
-                {navPages.map(([page, key]) => (
+                {primaryPages.map(([page, key]) => (
                   <SheetClose key={page} asChild>
                     <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate(page as Page)}>
-                      {navigationLabel(page, key, language)}
+                      {page === "dashboard" ? navStrings[language].now : navigationLabel(page, key, language)}
                     </Button>
                   </SheetClose>
                 ))}
+                <details className="mt-2 border-t pt-2">
+                  <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    {navStrings[language].more}
+                  </summary>
+                  <div className="grid gap-1">
+                    {morePages.map(([page, key]) => (
+                      <SheetClose key={page} asChild>
+                        <Button type="button" variant="ghost" className="justify-start" onClick={() => navigate(page as Page)}>
+                          {navigationLabel(page, key, language)}
+                        </Button>
+                      </SheetClose>
+                    ))}
+                  </div>
+                </details>
                 <div className="my-3 border-t" />
                 {signedIn ? null : (
                   <SheetClose asChild>

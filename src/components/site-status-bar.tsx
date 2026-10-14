@@ -25,8 +25,6 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
     ["dropCenters", centerStrings[language].navDropCenters],
     ["climate", climateStrings[language].navLabel],
     ["ourMessage", ourMessageStrings[language].navLabel],
-    ["projects", t.projects],
-    ["dispatches", t.dispatches],
     ["ledger", t.ledgerTitle],
   ];
 
@@ -44,7 +42,16 @@ export function SiteStatusBar({ language, navigate }: { language: Language; navi
           {signedIn ? null : (
             <>
               <span aria-hidden="true" className="h-4 w-px bg-primary-soft-border" />
-              <Button type="button" variant="link" size="sm" className="h-auto min-h-11 px-0" onClick={() => { rememberReturnTo(); navigate("deskLogin"); }}>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto min-h-11 px-0"
+                onClick={() => {
+                  rememberReturnTo();
+                  navigate("deskLogin");
+                }}
+              >
                 <ShieldCheck aria-hidden="true" />
                 {meStrings[language].navSignIn}
               </Button>

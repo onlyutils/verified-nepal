@@ -96,6 +96,7 @@ export type DeskSection =
   | "incidents"
   | "admin"
   | "climate"
+  | "guides"
   | "reach";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }

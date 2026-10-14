@@ -125,9 +125,20 @@ function decorate(root: ShadowRoot) {
   if (composer) {
     const disclaimer = document.createElement("div");
     disclaimer.className = "vn-chat-disclaimer";
-    disclaimer.textContent = "Do not include sensitive personal information in chat messages.";
+    disclaimer.textContent =
+      document.documentElement.lang === "ne"
+        ? "कुराकानीमा संवेदनशील व्यक्तिगत जानकारी नलेख्नुहोस्।"
+        : "Do not include sensitive personal information in chat messages.";
     composer.insertAdjacentElement("beforebegin", disclaimer);
   }
+  new MutationObserver(() => {
+    const disclaimer = root.querySelector<HTMLElement>(".vn-chat-disclaimer");
+    if (disclaimer)
+      disclaimer.textContent =
+        document.documentElement.lang === "ne"
+          ? "कुराकानीमा संवेदनशील व्यक्तिगत जानकारी नलेख्नुहोस्।"
+          : "Do not include sensitive personal information in chat messages.";
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
 
   const panel = root.querySelector(".ouc-panel");
   if (panel) {
@@ -213,7 +224,12 @@ export function ensureChatWidget(): Promise<void> {
     script.src = src;
     if (dataKey) script.setAttribute("data-key", dataKey);
     if (dataApi) script.setAttribute("data-api", dataApi);
-    script.setAttribute("data-greeting", "I'm here to help. Ask about rescued or missing people, relief locations, or how to get help.");
+    script.setAttribute(
+      "data-greeting",
+      document.documentElement.lang === "ne"
+        ? "म सहयोगका लागि यहाँ छु। उद्धार भएका वा हराएका व्यक्ति, राहत केन्द्र वा सहयोग कसरी पाउने भनेर सोध्नुहोस्।"
+        : "I'm here to help. Ask about rescued or missing people, relief locations, or how to get help.",
+    );
     script.defer = true;
     script.addEventListener(
       "load",

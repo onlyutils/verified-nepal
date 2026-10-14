@@ -22,6 +22,7 @@ import { articlesEditorStrings } from "@/i18n/articles-editor";
 import { howToStrings } from "@/i18n/how-to";
 import { droneStrings } from "@/i18n/drones";
 import { floodImpactStrings } from "@/i18n/flood-impact";
+import { navStrings } from "@/i18n/nav";
 import type { Language, Page } from "@/lib/types";
 import { canonicalPath, pageFromPath, type AppPage } from "@/lib/page-routing";
 import { isHashOnlyNavigation } from "@/lib/navigation";
@@ -180,7 +181,9 @@ function focusMainAndScroll(sectionId?: string) {
 export function App() {
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem("verifiednepal:language");
-    return stored === "ne" ? "ne" : "en";
+    const initial = stored === "en" ? "en" : "ne";
+    document.documentElement.lang = initial;
+    return initial;
   });
   const [page, setPage] = useState<AppPage>(() => pageFromPath(window.location.pathname + window.location.search));
   const lastNavigationUrl = useRef(window.location.pathname + window.location.search + window.location.hash);
@@ -287,7 +290,7 @@ export function App() {
       href="#main"
       className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground"
     >
-      Skip to main content
+      {navStrings[language].skipToMain}
     </a>
   );
   const loading = <p className="min-h-[40vh] p-6 text-sm text-muted-foreground">{shellStrings[language].loading}</p>;

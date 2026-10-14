@@ -51,6 +51,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2,json}"],
+        globIgnores: ["**/data/rescued-persons.json", "**/data/climate/**/*.geo.json", "**/data/climate/**/*timeseries*.json", "**/data/climate/**/*time-series*.json"],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/api\//, /^\/guides\//],
         runtimeCaching: [
@@ -71,16 +75,8 @@ export default defineConfig({
             method: "GET",
           },
           {
-            urlPattern: /^https?:\/\/.*\/data\/.*/,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "vn-data",
-              expiration: { maxEntries: 100, maxAgeSeconds: 86400 },
-            },
-          },
-          {
             urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/data/"),
-            handler: "StaleWhileRevalidate",
+            handler: "NetworkFirst",
             options: {
               cacheName: "vn-data-local",
               expiration: { maxEntries: 100, maxAgeSeconds: 86400 },

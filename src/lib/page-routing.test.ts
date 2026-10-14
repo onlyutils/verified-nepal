@@ -31,3 +31,16 @@ test("extracts a status reference code from the pathname", () => {
   assert.equal(refCodeFromPath("/status/abc123"), "ABC123");
   assert.equal(refCodeFromPath("/get-help"), null);
 });
+
+test("primary navigation routes and More grouping cover the secondary pages", () => {
+  const primary = ["/", "/get-help", "/give-help", "/search", "/drop-centers", "/ledger"];
+  const more = ["/poster", "/incidents", "/projects", "/articles", "/climate", "/our-message", "/info", "/drones"];
+  assert.deepEqual(
+    primary.map((path) => pageFromPath(path)),
+    ["dashboard", "getHelp", "giveHelp", "search", "dropCenters", "ledger"],
+  );
+  assert.deepEqual(
+    more.map((path) => pageFromPath(path)),
+    ["poster", "incidents", "projects", "dispatches", "climate", "ourMessage", "info", "drones"],
+  );
+});

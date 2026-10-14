@@ -46,6 +46,8 @@ import { distributionStrings } from "@/i18n/distributions";
 import { droneStrings } from "@/i18n/drones";
 import { reachStrings } from "@/i18n/reach";
 import { Drones } from "./drones";
+import { Guides } from "./guides";
+import { navStrings } from "@/i18n/nav";
 
 export function Desk({
   language,
@@ -99,7 +101,13 @@ export function Desk({
     { key: "stories", group: g.deskGroupPublish, label: g.deskStoriesTab, count: model.stories.length, icon: <Camera /> },
     { key: "projects", group: g.deskGroupRelief, label: t.deskProjectsTab, count: model.projectsCount, icon: <FolderKanban /> },
     { key: "orgs", group: g.deskGroupRelief, label: model.dos.orgsTab, count: model.orgsPendingCount, icon: <Building2 /> },
-    { key: "distributions", group: g.deskGroupRelief, label: distributionStrings[language].nav, count: model.distributionsCount, icon: <ClipboardList /> },
+    {
+      key: "distributions",
+      group: g.deskGroupRelief,
+      label: distributionStrings[language].nav,
+      count: model.distributionsCount,
+      icon: <ClipboardList />,
+    },
     { key: "drones", group: g.deskGroupRelief, label: droneStrings[language].nav, icon: <Plane /> },
     ...(auth.profile.role === "admin"
       ? [
@@ -109,6 +117,7 @@ export function Desk({
           { key: "climate" as DeskSection, group: g.deskGroupAdmin, label: g.deskClimateTab, icon: <Globe /> },
         ]
       : []),
+    { key: "guides", group: g.deskGroupAdmin, label: navStrings[language].guides, icon: <ClipboardList /> },
   ];
   const scopeText = model.isScoped ? t.deskScopeBadge.replace("{districts}", model.scopeLabel) : t.deskScopeAll;
   const aside = (
@@ -178,6 +187,7 @@ export function Desk({
           {model.activeSection === "orgs" ? <Organizations model={model} /> : null}
           {model.activeSection === "distributions" ? <Distributions model={model} /> : null}
           {model.activeSection === "drones" ? <Drones model={model} /> : null}
+          {model.activeSection === "guides" ? <Guides language={language} /> : null}
           {model.activeSection === "incidents" && auth.profile.role === "admin" ? <Incidents model={model} /> : null}
           {model.activeSection === "admin" && auth.profile.role === "admin" ? <Admin model={model} /> : null}
           {model.activeSection === "reach" && auth.profile.role === "admin" ? <ReachStats model={model} /> : null}

@@ -108,9 +108,11 @@ export function DispatchesPage({ language }: { language: Language }) {
         title={t.title}
         description={t.lead}
         actions={
-          <Button type="button" onClick={writeArticle}>
-            {t.writeArticle}
-          </Button>
+          auth.idToken ? (
+            <Button type="button" onClick={writeArticle}>
+              {t.writeArticle}
+            </Button>
+          ) : undefined
         }
       />
       <div className="flex flex-wrap items-center gap-2 border-y py-4" aria-label={t.filter}>
