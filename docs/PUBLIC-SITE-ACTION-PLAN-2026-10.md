@@ -177,7 +177,7 @@ Concurrency cap: **three Codex runs at once** (rate limits were hit before) and 
 
 Everything later imports these. Merge both before Wave 1 starts.
 
-#### [ ] W0-1 Date helpers: relative time and Bikram Sambat
+#### [x] W0-1 Date helpers: relative time and Bikram Sambat
 
 - **Codex:** `gpt-6-astra`, effort `high`. Calendar maths has a correctness ceiling; a wrong BS date is the worst bug a "checked record" can ship.
 - **Owns:** `src/lib/format-date.ts` (additive exports only; ~20 importers must keep compiling), `src/lib/format-date.test.ts` (create), `src/lib/bs-calendar.ts` (create).
@@ -188,8 +188,9 @@ Everything later imports these. Merge both before Wave 1 starts.
   - Existing exports untouched.
 - **Tests (must fail first, then pass):** 2026-10-14 → असोज २८ २०८३; 2026-08-26 → भदौ १० २०८३; 2024-04-13 → वैशाख १ २०८१; 2025-04-14 → वैशाख १ २०८२; day before and after each new year in the table; a date outside the table throws. Relative: 11 h ago in `ne` and `en`; 40 days ago falls back to absolute.
 - **E2E on dev:** none beyond `pnpm test` (pure functions). Consumers verify in W1-B and W2-F.
+- **Result (2026-10-14, merged as 7998d18):** 112 tests green. The BS table (nepali-datetime data) was compared day by day against the `nepali-date-converter` library for BS 2070 to 2083 (7,141 days, zero mismatches). The two sources disagree from Jestha 2084 (June 2027), where calendars are still projections. Owner action A-8 below covers the yearly re-check.
 
-#### [ ] W0-2 Vocabulary, shared types, public-copy guard
+#### [x] W0-2 Vocabulary, shared types, public-copy guard
 
 - **Codex:** `gpt-6.1-sol`, effort `medium`.
 - **Owns:** `src/i18n/now.ts` (create), `src/lib/types.ts`, `src/lib/api.ts`, `src/lib/auth.tsx` (`DeskProfile` only), `src/i18n/public-copy.test.ts` (create).
@@ -374,6 +375,7 @@ Stopped by the council and accepted here: AI writer, condolences, ad-manager rol
 | A-4 | Submit the sitemap in Search Console | SEO plan Phase 0 |
 | A-5 | Social-media handler creates the owned Facebook page and posts the evening card (6-10 pm) | G-6, distribution claim |
 | A-6 | Read the Desk Reach tab at day 28 after dispatch #2: if the strip gets no clicks and nothing new is filed, G-1 does not open | G-1 |
+| A-8 | Before Baisakh 2084 (14 April 2027) and each year after, check `src/lib/bs-calendar.ts` month lengths for the coming BS year against the published Nepali calendar (patro); one agent run with `gpt-6-luna` fixes the table | Correct masthead dates from June 2027 |
 | A-7 | Authorised on 2026-10-14: agents run prod dispatches #1 and #2 themselves right after each wave is green on dev; the owner reads prod afterwards | None |
 
 ### Questions to answer (each blocks or shapes an item)
