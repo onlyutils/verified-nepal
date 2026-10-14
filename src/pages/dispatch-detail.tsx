@@ -14,9 +14,8 @@ import { articlesPublicStrings } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
 import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
-import { municipalityById, municipalityLabel } from "@/lib/admin-units";
-import { districtLabels, type DistrictName } from "@/lib/districts";
-import { TextShareRow } from "@/components/share-button";
+import { localUpdateBodyText, localUpdatePlace, localUpdateShareCard } from "@/lib/now-items";
+import { ShareButton, TextShareRow } from "@/components/share-button";
 import { AdSlot } from "@/components/ad-slot";
 import { StatusBadge } from "@/components/status-badge";
 import { useGoogleAuth } from "@/lib/auth";
@@ -138,12 +137,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
 
   const isLocalUpdate = item.kind === "news";
   const contentLanguage = isLocalUpdate ? item.language || language : language;
-  const municipality = item.locality ? municipalityById(Number(item.locality.municipalityId)) : undefined;
-  const locality = item.locality ? [
-    districtLabels[item.locality.district as DistrictName]?.[language] || item.locality.district,
-    municipality?.district === item.locality.district ? municipalityLabel(municipality, language) : "",
-    item.locality.ward == null ? "" : `${t.ward} ${formatNumber(item.locality.ward, language)}`,
-  ].filter(Boolean).join(" · ") : "";
+  const locality = localUpdatePlace(item.locality, language);
   const title = localizedText(item.title, contentLanguage);
   const timestamp = isLocalUpdate ? item.happenedAt : item.publishedAt;
   const url = `${window.location.origin}/articles/${encodeURIComponent(item.id)}`;
@@ -298,6 +292,13 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
           </Button>
         ) : null}
       </div>
+      {isLocalUpdate ? (
+        <ShareButton
+          {...localUpdateShareCard({ id: item.id, title, place: locality, happenedAt: item.happenedAt, excerpt: localUpdateBodyText(item, contentLanguage) }, language)}
+          labels={{ download: t.downloadCard, share: t.shareCard, exportError: t.cardExportError }}
+          onShared={trackShare}
+        />
+      ) : null}
       <div className="flex flex-wrap gap-2 print:hidden">
         <TextShareRow title={title} place={locality || item.author.place} timestamp={timestamp} url={url} language={language} onShare={trackShare} />
         <Button variant="outline" onClick={() => void copy()}>

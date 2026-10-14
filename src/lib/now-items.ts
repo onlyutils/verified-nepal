@@ -1,9 +1,9 @@
-import type { DispatchPublicItem, LedgerItem } from "./api.ts";
+import type { DispatchDetailResponse, DispatchPublicItem, LedgerItem } from "./api.ts";
 import type { Language, OpmcmGovernmentEffort } from "./types.ts";
 import { nowStrings } from "../i18n/now.ts";
 import { municipalityById, municipalityLabel } from "./admin-units.ts";
 import { districtLabels, type DistrictName } from "./districts.ts";
-import { formatRelativeTime } from "./format-date.ts";
+import { formatBsDate, formatRelativeTime } from "./format-date.ts";
 import { toDevanagariDigits } from "./bs-calendar.ts";
 import { opmcmUpdatesUrl } from "./urls.ts";
 
@@ -18,6 +18,7 @@ export interface NowItem {
   href: string;
   language: Language;
   body?: string;
+  shareCard?: ReturnType<typeof localUpdateShareCard>;
 }
 
 // ponytail: The public ledger type omits locality fields; remove this extension when api.ts exposes them.
@@ -91,6 +92,7 @@ export function localUpdateNowItem(item: DispatchPublicItem, language: Language)
   const title = typeof item.title === "string" ? item.title : item.title[itemLanguage] || item.title.en || item.title.ne || nowStrings[language].readUpdate;
   const href = `/articles/${encodeURIComponent(item.id)}`;
   const url = item.sourceUrls?.map(webUrl).find((value) => value !== null) ?? null;
+  const excerpt = typeof item.excerpt === "string" ? item.excerpt : item.excerpt[itemLanguage] || item.excerpt.en || item.excerpt.ne || "";
   return {
     id: `local-update:${item.id}`,
     kind: "local-update",
@@ -101,6 +103,48 @@ export function localUpdateNowItem(item: DispatchPublicItem, language: Language)
     trust: "checked",
     href,
     language: itemLanguage,
+    // ponytail: The list API supplies an excerpt; use full paragraph blocks when that endpoint exposes them.
+    shareCard: localUpdateShareCard({ id: item.id, title, place: localUpdatePlace(item.locality, language), happenedAt: item.happenedAt, excerpt }, language),
+  };
+}
+
+export function localUpdatePlace(locality: DispatchPublicItem["locality"], language: Language): string {
+  if (!locality) return "";
+  const municipality = municipalityById(Number(locality.municipalityId));
+  return [
+    districtLabels[locality.district as DistrictName]?.[language] || locality.district,
+    municipality?.district === locality.district ? municipalityLabel(municipality, language) : "",
+    locality.ward == null ? "" : nowStrings[language].ward.replace("{ward}", language === "ne" ? toDevanagariDigits(locality.ward) : String(locality.ward)),
+  ].filter(Boolean).join(" · ");
+}
+
+export function localUpdateBodyText(item: Pick<DispatchDetailResponse, "blocks" | "body">, language: Language): string {
+  const text = item.blocks?.length
+    ? item.blocks.flatMap((block) => block.type === "paragraph" ? [block.text] : []).join(" ")
+    : typeof item.body === "string" ? item.body : item.body[language] || item.body.en || item.body.ne || "";
+  return text;
+}
+
+export function localUpdateExcerpt(text: string): string {
+  const plain = text.replace(/\s+/gu, " ").trim();
+  if (plain.length <= 220) return plain;
+  const words = plain.split(" ");
+  let excerpt = "";
+  for (const word of words) {
+    const next = excerpt ? `${excerpt} ${word}` : word;
+    if (next.length > 220) break;
+    excerpt = next;
+  }
+  return `${excerpt}…`;
+}
+
+export function localUpdateShareCard(item: { id: string; title: string; place?: string; happenedAt?: string | null; excerpt: string }, language: Language) {
+  return {
+    filename: `verifiednepal-local-update-${item.id}.png`,
+    headline: item.title,
+    subline: [item.place, formatBsDate(item.happenedAt, language)].filter(Boolean).join(" · "),
+    message: localUpdateExcerpt(item.excerpt),
+    footnote: `${nowStrings[language].checked} · verifiednepal.com/articles/${encodeURIComponent(item.id)}`,
   };
 }
 

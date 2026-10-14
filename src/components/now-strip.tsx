@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, ExternalLink, MessageCircle, Send } from "lucide-react";
-import { getLedger, listDispatches, type DispatchPublicItem } from "@/lib/api";
+import { getLedger, listDispatches, postArticleShare, type DispatchPublicItem } from "@/lib/api";
 import { useLiveData } from "@/lib/live";
 import type { Language } from "@/lib/types";
 import { formatRelativeTime } from "@/lib/format-date";
 import { normaliseNowItems, nowEmptyMessage, nowShareText, type NowItem, type NowLedgerItem } from "@/lib/now-items";
 import { nowStrings } from "@/i18n/now";
+import { articlesPublicStrings } from "@/i18n/articles-public";
+import { ShareButton } from "@/components/share-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -160,9 +162,15 @@ function RowShare({ item, language }: { item: NowItem; language: Language }) {
     }
   }
   return (
-    <div className="flex flex-col gap-2">
-      {/* ponytail: Text shares work for all rows; W2-F can add PNG cards for local-update permalinks later. */}
-      <div className="flex gap-2">
+    <div className="flex flex-wrap items-start gap-2 print:hidden">
+      {item.kind === "local-update" && item.shareCard ? (
+        <ShareButton
+          {...item.shareCard}
+          labels={{ download: articlesPublicStrings[language].downloadCard, share: articlesPublicStrings[language].shareCard, exportError: articlesPublicStrings[language].cardExportError }}
+          onShared={() => { void postArticleShare(item.id.slice("local-update:".length)).catch(() => {}); }}
+        />
+      ) : null}
+      <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" variant="outline" className="min-h-11 max-w-full px-3">
           <a href={`https://wa.me/?text=${encoded}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />{t.whatsapp}</a>
         </Button>

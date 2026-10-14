@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { DispatchPublicItem } from "./api.ts";
-import { deliveryNowItem, localUpdateNowItem, normaliseNowItems, nowEmptyMessage, nowShareText, officialNowItem, sortNowItems, standingNowItems, type NowLedgerItem } from "./now-items.ts";
+import { deliveryNowItem, localUpdateBodyText, localUpdateExcerpt, localUpdateNowItem, localUpdatePlace, localUpdateShareCard, normaliseNowItems, nowEmptyMessage, nowShareText, officialNowItem, sortNowItems, standingNowItems, type NowLedgerItem } from "./now-items.ts";
 
 const NOW = new Date("2026-10-14T12:00:00Z");
 const delivery: NowLedgerItem = {
@@ -118,5 +118,59 @@ describe("Now feed", () => {
     const text = nowShareText(item, "ne", "https://dev.verifiednepal.com", NOW);
     assert.equal(text, "स्वास्थ्य क्षेत्रको प्रतिकार्य अद्यावधिक\nगोसाईकुण्ड · वडा ३\n११ घण्टा पहिले\nhttps://dev.verifiednepal.com/articles/local-1");
     assert.equal(new URL(`viber://forward?text=${encodeURIComponent(text)}`).searchParams.get("text"), text);
+  });
+});
+
+describe("Local update PNG content", () => {
+  it("uses paragraph text in order, excluding headings, quotes and media, with a legacy body fallback", () => {
+    assert.equal(localUpdateBodyText({ body: "Old body", blocks: [
+      { type: "heading", text: "Heading" },
+      { type: "paragraph", text: "पहिलो विवरण" },
+      { type: "image", url: "https://example.com/image.png", fileId: "image", source: "Source", caption: "Caption" },
+      { type: "quote", text: "Quote" },
+      { type: "paragraph", text: "स्वास्थ्य क्षेत्रको प्रतिकार्य" },
+    ] }, "ne"), "पहिलो विवरण स्वास्थ्य क्षेत्रको प्रतिकार्य");
+    assert.equal(localUpdateBodyText({ body: { en: "English body", ne: "नेपाली विवरण" } }, "ne"), "नेपाली विवरण");
+    assert.equal(localUpdateBodyText({ body: { en: "Fallback" }, blocks: [] }, "ne"), "Fallback");
+    assert.equal(localUpdateBodyText({ body: "Legacy body" }, "en"), "Legacy body");
+  });
+
+  it("normalises whitespace and cuts long English and Nepali excerpts at a whole word", () => {
+    assert.equal(localUpdateExcerpt("  Short\n\tupdate  "), "Short update");
+    assert.equal(localUpdateExcerpt(""), "");
+    assert.equal(localUpdateExcerpt("a".repeat(220)), "a".repeat(220));
+    assert.equal(localUpdateExcerpt("a".repeat(221)), "…");
+    for (const word of ["response", "स्वास्थ्य"]) {
+      const text = `${word} `.repeat(50);
+      const excerpt = localUpdateExcerpt(text);
+      assert.ok(excerpt.endsWith(`${word}…`));
+      assert.ok(excerpt.length <= 221);
+      assert.equal(excerpt.slice(0, -1).split(" ").every((value) => value === word), true);
+    }
+  });
+
+  it("gives only local updates a card, with the written excerpt, full locality and UI-language BS date and trust", () => {
+    const source = { ...update, excerpt: { en: "English excerpt", ne: "स्वास्थ्य क्षेत्रको प्रतिकार्य अद्यावधिक" } };
+    const english = localUpdateNowItem(source, "en").shareCard!;
+    const nepali = localUpdateNowItem(source, "ne").shareCard!;
+    assert.equal(english.headline, "स्वास्थ्य क्षेत्रको प्रतिकार्य अद्यावधिक");
+    assert.equal(english.message, source.excerpt.ne);
+    assert.equal(english.subline, "Rasuwa · Gosaikunda · Ward 3 · Asoj 28, 2083");
+    assert.equal(nepali.subline, "रसुवा · गोसाईकुण्ड · वडा ३ · असोज २८, २०८३");
+    assert.equal(english.footnote, "Checked · verifiednepal.com/articles/local-1");
+    assert.equal(nepali.footnote, "जाँच गरिएको · verifiednepal.com/articles/local-1");
+    assert.equal(english.filename, "verifiednepal-local-update-local-1.png");
+    assert.equal(officialNowItem({ _id: "official" }, "en").shareCard, undefined);
+    assert.equal(deliveryNowItem(delivery, "en").shareCard, undefined);
+    assert.equal(standingNowItems("en").every((item) => item.shareCard === undefined), true);
+  });
+
+  it("handles missing locality/date/excerpt, a mismatched municipality and encoded permalinks", () => {
+    assert.equal(localUpdatePlace(undefined, "ne"), "");
+    assert.equal(localUpdatePlace({ district: "Kathmandu", municipalityId: "29001", ward: 3 }, "en"), "Kathmandu · Ward 3");
+    const card = localUpdateShareCard({ id: "local/id", title: "Update", excerpt: "" }, "en");
+    assert.equal(card.subline, "");
+    assert.equal(card.message, "");
+    assert.equal(card.footnote, "Checked · verifiednepal.com/articles/local%2Fid");
   });
 });
