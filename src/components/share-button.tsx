@@ -3,9 +3,8 @@ import { articlesPublicStrings } from "@/i18n/articles-public";
 import { formatRelativeTime } from "@/lib/format-date";
 import type { Language } from "@/lib/types";
 import { useState } from "react";
-import { climateData, loadWorldGeoJson } from "@/lib/climate-data";
 import { postClimateDownload } from "@/lib/api";
-import { drawWorldMap, exportCanvas, renderShareCard, type ShareCardInput } from "@/lib/climate-share";
+import type { ShareCardInput } from "@/lib/climate-share";
 import { loadPosterFonts } from "@/lib/poster-draw";
 import type { ClimateDownloadKind } from "@/lib/climate-messages";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +19,7 @@ export function ShareButton({
   footnote,
   draw,
   labels,
+  onShared,
 }: {
   kind?: ClimateDownloadKind;
   filename: string;
@@ -29,6 +29,7 @@ export function ShareButton({
   footnote?: string;
   draw?: ShareCardInput["draw"];
   labels: { download: string; share: string; exportError?: string };
+  onShared?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -39,10 +40,14 @@ export function ShareButton({
     setBusy(true);
     setFailed(false);
     try {
-      await loadPosterFonts();
+      const [{ exportCanvas, renderShareCard, drawWorldMap }] = await Promise.all([
+        import("@/lib/climate-share"),
+        loadPosterFonts(),
+      ]);
       const canvas = document.createElement("canvas");
       let cardDraw = draw;
       if (kind === "map") {
+        const { climateData, loadWorldGeoJson } = await import("@/lib/climate-data");
         const geojson = await loadWorldGeoJson();
         cardDraw = (ctx, box) =>
           drawWorldMap(ctx, box, {
@@ -55,6 +60,7 @@ export function ShareButton({
       renderShareCard(canvas, input);
       const result = await exportCanvas(canvas, filename, { share });
       if (kind && (result === "downloaded" || result === "shared")) void postClimateDownload(kind);
+      if (result === "downloaded" || result === "shared") onShared?.();
       if (result === "failed") setFailed(true);
     } catch {
       setFailed(true);
@@ -64,14 +70,14 @@ export function ShareButton({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2 print:hidden">
       <div className="flex flex-wrap gap-2" aria-busy={busy}>
-        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void exportImage(false)}>
+        <Button type="button" size="sm" variant="outline" className="min-h-11 max-w-full" disabled={busy} onClick={() => void exportImage(false)}>
           <Download aria-hidden="true" />
           {labels.download}
         </Button>
         {canShare ? (
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void exportImage(true)}>
+          <Button type="button" size="sm" variant="outline" className="min-h-11 max-w-full" disabled={busy} onClick={() => void exportImage(true)}>
             <Share2 aria-hidden="true" />
             {labels.share}
           </Button>
