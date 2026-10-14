@@ -25,6 +25,6 @@ export const onRequestGet = async ({ request, params, next }: Ctx): Promise<Resp
   }
   const meta = dispatchMeta(item);
   const canonical = `${canonicalOrigin(url.hostname)}/articles/${encodeURIComponent(params.id)}`;
-  const result = applyMeta(page, meta, canonical, "article");
+  const result = applyMeta(page, meta, canonical, item.kind === "news" ? "website" : "article");
   return appendJsonLd(result, dispatchJsonLd(item, canonical));
 };

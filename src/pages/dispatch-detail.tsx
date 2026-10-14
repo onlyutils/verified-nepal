@@ -13,6 +13,11 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { articlesPublicStrings } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
+import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
+import { municipalityById, municipalityLabel } from "@/lib/admin-units";
+import { districtLabels, type DistrictName } from "@/lib/districts";
+import { TextShareRow } from "@/components/share-button";
+import { StatusBadge } from "@/components/status-badge";
 import { useGoogleAuth } from "@/lib/auth";
 import type { Language } from "@/lib/types";
 import { ArticleBody } from "@/articles/render";
@@ -130,6 +135,16 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       />
     );
 
+  const isLocalUpdate = item.kind === "news";
+  const contentLanguage = isLocalUpdate ? item.language || language : language;
+  const municipality = item.locality ? municipalityById(Number(item.locality.municipalityId)) : undefined;
+  const locality = item.locality ? [
+    districtLabels[item.locality.district as DistrictName]?.[language] || item.locality.district,
+    municipality?.district === item.locality.district ? municipalityLabel(municipality, language) : "",
+    item.locality.ward == null ? "" : `${t.ward} ${formatNumber(item.locality.ward, language)}`,
+  ].filter(Boolean).join(" · ") : "";
+  const title = localizedText(item.title, contentLanguage);
+  const timestamp = isLocalUpdate ? item.happenedAt : item.publishedAt;
   const url = `${window.location.origin}/articles/${encodeURIComponent(item.id)}`;
   const trackShare = () => {
     setShareCount((count) => count + 1);
@@ -178,10 +193,27 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         <a href="/articles">← {t.back}</a>
       </Button>
       <PageHeader
-        eyebrow={t.eyebrow}
-        title={localizedText(item.title, language)}
-        description={`${t.by} ${item.author.displayName}${item.author.place ? ` · ${item.author.place}` : ""} · ${formatDateTime(item.publishedAt, language)}`}
+        eyebrow={isLocalUpdate ? t.localUpdate : t.eyebrow}
+        title={<span lang={contentLanguage}>{title}</span>}
+        description={`${t.by} ${item.author.displayName}${item.author.place ? ` · ${item.author.place}` : ""}${isLocalUpdate ? "" : ` · ${formatDateTime(item.publishedAt, language)} · ${formatRelativeTime(item.publishedAt, language)}`}`}
       />
+      {isLocalUpdate ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {locality ? <Badge variant="secondary" className="whitespace-normal">{locality}</Badge> : null}
+            <Badge variant="outline" lang={item.language || language}>{(item.language || language) === "ne" ? t.languageNe : t.languageEn}</Badge>
+            {/* ponytail: Native tooltip avoids another dependency; upgrade to the shared Tooltip when installed. */}
+            <span tabIndex={0} title={t.checkedTooltip} aria-label={`${t.checked}: ${t.checkedTooltip}`} className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <StatusBadge tone="success">{t.checked}</StatusBadge>
+            </span>
+          </div>
+          {item.happenedAt ? (
+            <p className="text-sm text-muted-foreground">
+              {t.happened} <time dateTime={item.happenedAt}>{formatBsDate(item.happenedAt, language)}</time> ({formatRelativeTime(item.happenedAt, language)})
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {item.tags.map((tag) => (
           <Badge key={tag} variant="secondary">
@@ -193,7 +225,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         <figure className="space-y-3">
           <img
             src={item.cover.url}
-            alt={item.cover.caption || localizedText(item.title, language)}
+            alt={item.cover.caption || title}
             className="aspect-video w-full rounded-xl object-cover"
           />
           <figcaption className="space-y-1 text-sm text-muted-foreground">
@@ -205,8 +237,27 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         </figure>
       ) : null}
       <div className="border-t pt-8 print:border-black">
-        <ArticleBody blocks={item.blocks} body={item.body} language={language} />
+        <div lang={contentLanguage}><ArticleBody blocks={item.blocks} body={item.body} language={contentLanguage} /></div>
       </div>
+      {isLocalUpdate && (item.sourceUrls?.length || item.sourceNote) ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">{t.sources}</h2>
+          {item.sourceUrls?.length ? (
+            <ul className="flex flex-col gap-1">
+              {item.sourceUrls.map((sourceUrl, index) => (
+                <li key={`${index}-${sourceUrl}`}>
+                  {/^https?:\/\//i.test(sourceUrl) ? (
+                    <Button asChild variant="link" className="h-auto min-h-11 max-w-full whitespace-normal px-0 text-left">
+                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="break-all">{sourceUrl}</a>
+                    </Button>
+                  ) : <span className="break-all text-sm">{sourceUrl}</span>}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {item.sourceNote ? <p lang={contentLanguage} className="break-words text-sm text-muted-foreground">{item.sourceNote}</p> : null}
+        </section>
+      ) : null}
       <div
         className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y py-4 text-sm text-muted-foreground"
         aria-label={`${formatNumber(item.views ?? 0, language)} ${t.views}, ${formatNumber(likeCount, language)} ${t.likes}, ${formatNumber(shareCount, language)} ${t.shares}`}
@@ -240,18 +291,7 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         ) : null}
       </div>
       <div className="flex flex-wrap gap-2 print:hidden">
-        <Button asChild variant="outline" onClick={trackShare}>
-          <a href={`https://wa.me/?text=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
-            <Share2 aria-hidden="true" />
-            {t.whatsapp}
-          </a>
-        </Button>
-        <Button asChild variant="outline" onClick={trackShare}>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
-            <Share2 aria-hidden="true" />
-            {t.facebook}
-          </a>
-        </Button>
+        <TextShareRow title={title} place={locality || item.author.place} timestamp={timestamp} url={url} language={language} onShare={trackShare} />
         <Button variant="outline" onClick={() => void copy()}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           {copied ? t.copied : t.copyLink}

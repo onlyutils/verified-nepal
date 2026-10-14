@@ -1,4 +1,7 @@
-import { Download, Share2 } from "lucide-react";
+import { Download, PhoneCall, Share2 } from "lucide-react";
+import { articlesPublicStrings } from "@/i18n/articles-public";
+import { formatRelativeTime } from "@/lib/format-date";
+import type { Language } from "@/lib/types";
 import { useState } from "react";
 import { climateData, loadWorldGeoJson } from "@/lib/climate-data";
 import { postClimateDownload } from "@/lib/api";
@@ -79,6 +82,41 @@ export function ShareButton({
           <AlertDescription>{labels.exportError}</AlertDescription>
         </Alert>
       ) : null}
+    </div>
+  );
+}
+
+// ponytail: Native app links keep sharing lightweight; add a Web Share text fallback if demand warrants it.
+export function TextShareRow({ title, place, timestamp, url, language, onShare }: {
+  title: string;
+  place?: string;
+  timestamp?: string;
+  url: string;
+  language: Language;
+  onShare?: () => void;
+}) {
+  const t = articlesPublicStrings[language];
+  const shareText = [title, place, formatRelativeTime(timestamp, language), url].filter(Boolean).join(" · ");
+  return (
+    <div className="flex flex-wrap gap-2 print:hidden">
+      <Button asChild variant="outline" onClick={onShare}>
+        <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer">
+          <Share2 aria-hidden="true" />
+          {t.whatsapp}
+        </a>
+      </Button>
+      <Button asChild variant="outline" onClick={onShare}>
+        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
+          <Share2 aria-hidden="true" />
+          {t.facebook}
+        </a>
+      </Button>
+      <Button asChild variant="outline" onClick={onShare}>
+        <a href={`viber://forward?text=${encodeURIComponent(shareText)}`}>
+          <PhoneCall aria-hidden="true" style={{ color: "#7360f2" }} />
+          {t.viber}
+        </a>
+      </Button>
     </div>
   );
 }

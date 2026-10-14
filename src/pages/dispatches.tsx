@@ -5,6 +5,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { articlesPublicStrings } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format-date";
 import { useGoogleAuth } from "@/lib/auth";
 import type { Language } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -167,7 +168,7 @@ export function DispatchesPage({ language }: { language: Language }) {
                 <p className="text-sm text-muted-foreground">
                   {t.by} {item.author.displayName}
                   {item.author.place ? ` · ${item.author.place}` : ""} ·{" "}
-                  <time dateTime={item.publishedAt}>{formatDateTime(item.publishedAt, language)}</time>
+                  <time dateTime={item.publishedAt}>{formatDateTime(item.publishedAt, language)}</time> · {formatRelativeTime(item.publishedAt, language)}
                 </p>
                 <Counters item={item} language={language} t={t} />
                 <Button asChild variant="link" className="h-auto min-h-11 px-0">

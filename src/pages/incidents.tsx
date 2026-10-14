@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Share2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { listIncidents, type Incident } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/api-error";
 import { disasterStrings } from "@/i18n/disasters";
@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, LoadingState } from "@/components/empty-state";
-import { ShareButton } from "@/components/share-button";
+import { ShareButton, TextShareRow } from "@/components/share-button";
 import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DistrictPicker } from "@/components/district-picker";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDateTime, formatRelativeTime } from "@/lib/format-date";
 
 function IncidentCard({ incident, language }: { incident: Incident; language: Language }) {
   const t = disasterStrings[language];
@@ -25,7 +25,6 @@ function IncidentCard({ incident, language }: { incident: Incident; language: La
   const districtLabelsList = incident.affectedDistricts.map((district) => districtLabels[district][language]);
   const startedLabel = formatDateTime(incident.startedAt, language);
   const shareUrl = `${window.location.origin}/incidents`;
-  const shareText = `${displayName} — ${t.incidentsPublicShareTag} ${shareUrl}`;
   const statusLabels = {
     active: t.incidentsPublicStatusActive,
     archived: t.incidentsPublicStatusArchived,
@@ -56,7 +55,9 @@ function IncidentCard({ incident, language }: { incident: Incident; language: La
             ))}
           </div>
         ) : null}
-        <p className="text-sm text-muted-foreground">{startedLabel}</p>
+        <p className="text-sm text-muted-foreground">
+          <time dateTime={incident.startedAt}>{startedLabel}</time> · {formatRelativeTime(incident.startedAt, language)}
+        </p>
         <div className="mt-auto space-y-3 pt-2">
           <ShareButton
             filename={`verifiednepal-incident-${incident.id}.png`}
@@ -78,22 +79,7 @@ function IncidentCard({ incident, language }: { incident: Incident; language: La
                 </a>
               </Button>
             ) : null}
-            <Button asChild variant="outline" size="sm">
-              <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer">
-                <Share2 aria-hidden="true" />
-                WhatsApp
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Share2 aria-hidden="true" />
-                Facebook
-              </a>
-            </Button>
+            <TextShareRow title={displayName} place={districtLabelsList.join(", ")} timestamp={incident.startedAt} url={shareUrl} language={language} />
           </div>
         </div>
       </CardContent>
