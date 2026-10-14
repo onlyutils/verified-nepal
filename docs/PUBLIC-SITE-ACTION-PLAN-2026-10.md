@@ -322,6 +322,8 @@ Start after Wave 1 is on `main` and dispatch #1 has run.
 
 Same as dispatch #1: the agent closing the last Wave 2 lane runs both workflows and records the SHA.
 
+**Prod dispatch #3, 2026-10-14 night (commit 070f1ee):** leftover fixes deployed: header no longer overflows at 320 px with 150% text (19-page sweep clean), default share card and meta text without "community-verified" or the flood eyebrow, PNG share cards for local updates (detail page and Now strip), Desk header compact on phones, wordmark wraps instead of truncating. Prod crawler view, header and home verified; `/ads` still returns `{"ad":null}`. Details: `docs/e2e/2026-10/E2E-TEST-REPORT.md`.
+
 **Done 2026-10-14:** frontend prod workflow green on commit 2173be8 (no server changes since dispatch #1, so the backend workflow was not re-run); prod home serves `index-NaMv9Ese.js`; strip shows three OPMCM rows plus the two standing entries, Get help / Give help end at 493 and 549 px, `?kind=news` empty. Dev e2e: `docs/e2e/2026-10/E2E-TEST-REPORT.md`. From this point the first correspondent's ten local updates (A-2) are authored on prod.
 
 ### Wave 3, docs and housekeeping (one lane, any time after Wave 1)
