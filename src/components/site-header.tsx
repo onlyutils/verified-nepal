@@ -1,16 +1,5 @@
-import { useState } from "react";
-import { LogOut, Menu, UserRound } from "lucide-react";
-import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
-import { labels } from "@/i18n";
-import { centerStrings } from "@/i18n/centers";
-import { climateStrings } from "@/i18n/climate";
-import { deskStrings } from "@/i18n/desk";
-import { meStrings } from "@/i18n/me";
-import { orgStrings } from "@/i18n/orgs";
-import { ourMessageStrings } from "@/i18n/our-message";
-import { posterStrings } from "@/i18n/poster";
-import { shellStrings } from "@/i18n/shell";
-import type { Language, Page } from "@/lib/types";
+import { AccessibilityBar } from "@/components/accessibility-bar";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,9 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logo } from "@/components/logo";
-import { AccessibilityBar } from "@/components/accessibility-bar";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { labels } from "@/i18n";
+import { centerStrings } from "@/i18n/centers";
+import { climateStrings } from "@/i18n/climate";
+import { deskStrings } from "@/i18n/desk";
+import { meStrings } from "@/i18n/me";
+import { orgStrings } from "@/i18n/orgs";
+import { ourMessageStrings } from "@/i18n/our-message";
+import { posterStrings } from "@/i18n/poster";
+import { shellStrings } from "@/i18n/shell";
+import { rememberReturnTo, useGoogleAuth } from "@/lib/auth";
+import type { Language, Page } from "@/lib/types";
+import { ClipboardList, LogOut, Menu, UserRound } from "lucide-react";
+import { useState } from "react";
 
 const container = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
 const navPages = [
@@ -218,6 +218,12 @@ function AccountButton({ language, navigate }: { language: Language; navigate: (
           <UserRound />
           {t.navAccount}
         </DropdownMenuItem>
+        {auth.profile?.role === "moderator" || auth.profile?.role === "admin" ? (
+          <DropdownMenuItem onSelect={() => navigate("desk")}>
+            <ClipboardList />
+            {labels[language].deskTitle}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onSelect={() => auth.signOut()}>
           <LogOut />
           {t.signOut}
