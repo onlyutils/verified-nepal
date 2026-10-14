@@ -21,7 +21,9 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     payload = await verifyIdToken(token, { fetchJwks, env });
   } catch (e) {
     if (e.status === 500) throw e;
-    try { logAuthFail(token, e); } catch (_e) {}
+    try {
+      logAuthFail(token, e);
+    } catch (_e) {}
     const ne = new Error(e.message || "Invalid token");
     ne.status = 401;
     throw ne;
@@ -40,9 +42,24 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
     const guidelinesAckAt = existing.guidelinesAckAt;
     const lastSeen = existing.lastSeen && typeof existing.lastSeen === "object" ? existing.lastSeen : {};
     const emailResolved = Boolean(email);
-    try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
+    try {
+      console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved });
+    } catch (_e) {}
     await ensureUserBackfill({ ddb, tableName, user: existing, payload });
-    return json(200, toMeView({ sub: payload.sub, email, name, role, districts, guidelinesAckAt, lastSeen, activity: await getActivity(ddb, tableName, payload.sub, lastSeen) }));
+    return json(
+      200,
+      toMeView({
+        sub: payload.sub,
+        email,
+        name,
+        role,
+        districts,
+        guidelinesAckAt,
+        lastSeen,
+        reporter: existing.reporter,
+        activity: await getActivity(ddb, tableName, payload.sub, lastSeen),
+      }),
+    );
   }
   const fetchFn = fetchImpl ?? globalThis.fetch;
   const host = (env.AUTH_HOST || "https://auth.onlyutils.com").replace(/\/+$/, "");
@@ -51,18 +68,24 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   try {
     res = await fetchFn(url, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
   } catch (e) {
-    try { console.error({ tag: "userinfo_fail", status: undefined }); } catch (_e) {}
+    try {
+      console.error({ tag: "userinfo_fail", status: undefined });
+    } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   if (!res || !res.ok) {
-    try { console.error({ tag: "userinfo_fail", status: res?.status }); } catch (_e) {}
+    try {
+      console.error({ tag: "userinfo_fail", status: res?.status });
+    } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   let data;
   try {
     data = await res.json();
   } catch (e) {
-    try { console.error({ tag: "userinfo_fail", status: res.status }); } catch (_e) {}
+    try {
+      console.error({ tag: "userinfo_fail", status: res.status });
+    } catch (_e) {}
     return json(502, { error: "userinfo" });
   }
   const rawEmail = data?.email ?? data?.primary_email;
@@ -70,22 +93,51 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
   const email = typeof rawEmail === "string" && rawEmail.trim() ? rawEmail.trim() : undefined;
   const name = typeof rawName === "string" && rawName.trim() ? rawName.trim() : undefined;
   const emailResolved = Boolean(email);
-  try { console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved }); } catch (_e) {}
-  const adminEmails = (env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-  const moderatorEmails = (env.MODERATOR_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  try {
+    console.error({ tag: "auth_ok", claimKeys: Object.keys(payload), emailResolved });
+  } catch (_e) {}
+  const adminEmails = (env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  const moderatorEmails = (env.MODERATOR_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
   const emailLower = (email || "").toLowerCase();
   let role;
   if (adminEmails.includes(emailLower)) role = "admin";
   else if (moderatorEmails.includes(emailLower)) role = "moderator";
   else role = "helper";
   const nowIso = new Date().toISOString();
-  const item = { PK: `USER#${payload.sub}`, SK: "PROFILE", type: "USER", sub: payload.sub, role, districts: [], createdAt: nowIso, gsi2pk: `USER#${role}`, gsi2sk: nowIso };
+  const item = {
+    PK: `USER#${payload.sub}`,
+    SK: "PROFILE",
+    type: "USER",
+    sub: payload.sub,
+    role,
+    districts: [],
+    createdAt: nowIso,
+    gsi2pk: `USER#${role}`,
+    gsi2sk: nowIso,
+  };
   if (email !== undefined) item.email = email;
   if (name !== undefined) item.name = name;
   const createRes = await createUserProfile(ddb, tableName, item);
   if (!createRes.ok) return json(500, { error: "storage" });
   if (email) await createEmailPointer(ddb, tableName, { sub: payload.sub, email, createdAt: nowIso });
-  return json(200, toMeView({ sub: payload.sub, email: email ?? "", name: name ?? "", role, districts: [], guidelinesAckAt: undefined, activity: await getActivity(ddb, tableName, payload.sub) }));
+  return json(
+    200,
+    toMeView({
+      sub: payload.sub,
+      email: email ?? "",
+      name: name ?? "",
+      role,
+      districts: [],
+      guidelinesAckAt: undefined,
+      activity: await getActivity(ddb, tableName, payload.sub),
+    }),
+  );
 }
 
 export async function handleAckGuidelines(event, opts) {

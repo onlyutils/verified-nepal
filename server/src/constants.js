@@ -1,14 +1,83 @@
 export const CATEGORIES = ["goods", "shelter", "transport", "medical", "skilled-labor", "funds-guidance"];
 export const LANGUAGES = ["en", "ne"];
 export const DISTRICTS = [
-  "Rasuwa", "Nuwakot", "Sindhupalchok", "Achham", "Arghakhanchi", "Baglung", "Baitadi", "Bajhang", "Bajura",
-  "Banke", "Bara", "Bardiya", "Bhaktapur", "Bhojpur", "Chitwan", "Dadeldhura", "Dailekh", "Dang", "Darchula",
-  "Dhading", "Dhankuta", "Dhanusha", "Dolakha", "Dolpa", "Doti", "Gorkha", "Gulmi", "Humla", "Ilam", "Jajarkot",
-  "Jhapa", "Jumla", "Kailali", "Kalikot", "Kanchanpur", "Kapilvastu", "Kaski", "Kathmandu", "Kavrepalanchok",
-  "Khotang", "Lalitpur", "Lamjung", "Mahottari", "Makwanpur", "Manang", "Morang", "Mugu", "Mustang", "Myagdi",
-  "Nawalpur", "NawalparasiWest", "Okhaldhunga", "Palpa", "Panchthar", "Parbat", "Parsa", "Pyuthan", "Ramechhap",
-  "Rautahat", "Rolpa", "RukumEast", "RukumWest", "Rupandehi", "Salyan", "Sankhuwasabha", "Saptari", "Sarlahi",
-  "Sindhuli", "Siraha", "Solukhumbu", "Sunsari", "Surkhet", "Syangja", "Tanahun", "Taplejung", "Tehrathum", "Udayapur",
+  "Rasuwa",
+  "Nuwakot",
+  "Sindhupalchok",
+  "Achham",
+  "Arghakhanchi",
+  "Baglung",
+  "Baitadi",
+  "Bajhang",
+  "Bajura",
+  "Banke",
+  "Bara",
+  "Bardiya",
+  "Bhaktapur",
+  "Bhojpur",
+  "Chitwan",
+  "Dadeldhura",
+  "Dailekh",
+  "Dang",
+  "Darchula",
+  "Dhading",
+  "Dhankuta",
+  "Dhanusha",
+  "Dolakha",
+  "Dolpa",
+  "Doti",
+  "Gorkha",
+  "Gulmi",
+  "Humla",
+  "Ilam",
+  "Jajarkot",
+  "Jhapa",
+  "Jumla",
+  "Kailali",
+  "Kalikot",
+  "Kanchanpur",
+  "Kapilvastu",
+  "Kaski",
+  "Kathmandu",
+  "Kavrepalanchok",
+  "Khotang",
+  "Lalitpur",
+  "Lamjung",
+  "Mahottari",
+  "Makwanpur",
+  "Manang",
+  "Morang",
+  "Mugu",
+  "Mustang",
+  "Myagdi",
+  "Nawalpur",
+  "NawalparasiWest",
+  "Okhaldhunga",
+  "Palpa",
+  "Panchthar",
+  "Parbat",
+  "Parsa",
+  "Pyuthan",
+  "Ramechhap",
+  "Rautahat",
+  "Rolpa",
+  "RukumEast",
+  "RukumWest",
+  "Rupandehi",
+  "Salyan",
+  "Sankhuwasabha",
+  "Saptari",
+  "Sarlahi",
+  "Sindhuli",
+  "Siraha",
+  "Solukhumbu",
+  "Sunsari",
+  "Surkhet",
+  "Syangja",
+  "Tanahun",
+  "Taplejung",
+  "Tehrathum",
+  "Udayapur",
 ];
 export const PUBLIC_NEED_STATUSES = ["published", "matched", "fulfilled"];
 export const TAKE_TTL_DAYS = 6;
@@ -25,6 +94,14 @@ export const MAX_PHOTO_SIZE = 8 * 1024 * 1024;
 export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 export const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 export const MAX_NEED_MEDIA_ITEMS = 4;
+export const DISPATCH_KINDS = ["article", "news"];
+// national is the Wave 0 client spelling; nepal and province come from the locked plan.
+export const NEWS_SCOPES = ["ward", "municipality", "district", "province", "nepal", "national"];
+export const NEWS_BODY_MAX = 1200;
+export const NEWS_EXPIRY_DAYS = 7;
+export const NEWS_MAX_SOURCES = 3;
+export const NEWS_SOURCE_NOTE_MAX = 200;
+export const NEWS_DAILY_LIMIT = 5;
 export const DISPATCH_TAGS = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
 export const ALLOWED_ARTICLE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"];
 export const MAX_ARTICLE_IMAGE_SIZE = 10 * 1024 * 1024;

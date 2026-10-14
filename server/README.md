@@ -4,24 +4,24 @@ Standalone Lambda for API Gateway HTTP API v2 (`Node 22`, ESM).
 
 ## Env vars
 
-| Var | Required | Description |
-|---|---|---|
-| `TABLE_NAME` | yes | DynamoDB table name |
-| `AUTH_JWKS_URL` | no | JWKS URL (default `https://auth.onlyutils.com/.well-known/jwks.json`) |
-| `AUTH_ISSUER` | no | Expected `iss` claim (default `https://auth.onlyutils.com`) |
-| `AUTH_AUDIENCE` | no | Expected `aud` claim; when unset audience check is skipped |
-| `AUTH_HOST` | no | OnlyUtils auth host for token exchange/refresh and `GET /me` userinfo (default `https://auth.onlyutils.com`) |
-| `OU_CLIENT_ID` | yes | OnlyUtils OAuth client ID |
-| `OU_CLIENT_SECRET` | no | OnlyUtils OAuth client secret (confidential client in prod; omit for public client in dev) |
-| `ADMIN_EMAILS` | no | Comma-separated admin emails; first login with matching email gets `admin` role, otherwise `helper` |
-| `MODERATOR_EMAILS` | no | Comma-separated moderator emails; first login with matching email gets `moderator` role (`ADMIN_EMAILS` wins if in both) |
-| `OU_MEDIA_CLIENT_ID` | yes (for Phase 3) | OnlyUtils media service client ID for `client_credentials` machine token (`POST https://auth.onlyutils.com/token`) |
-| `OU_MEDIA_CLIENT_SECRET` | yes (for Phase 3) | OnlyUtils media service client secret (cached until `expires_in`) |
-| `MEDIA_HOST` | no | Media service host (default `https://media.onlyutils.com`; used as `${MEDIA_HOST}/v1/clients/{OU_MEDIA_CLIENT_ID}/media/files`) |
-| `MEDIA_PUBLIC_BASE` | no | Public CDN base for `publicUrl` override (when set, `publicUrl` is `${MEDIA_PUBLIC_BASE}/{fileId}`) |
-| `SPARROW_TOKEN` | no | Sparrow SMS API token; SMS is skipped when unset |
-| `SPARROW_FROM` | no | Sparrow sender name (default `VerifiedNP`) |
-| `PUBLIC_SITE_BASE` | no | Public site base used in requester SMS status links (default `https://verifiednepal.com`) |
+| Var                      | Required          | Description                                                                                                                     |
+| ------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `TABLE_NAME`             | yes               | DynamoDB table name                                                                                                             |
+| `AUTH_JWKS_URL`          | no                | JWKS URL (default `https://auth.onlyutils.com/.well-known/jwks.json`)                                                           |
+| `AUTH_ISSUER`            | no                | Expected `iss` claim (default `https://auth.onlyutils.com`)                                                                     |
+| `AUTH_AUDIENCE`          | no                | Expected `aud` claim; when unset audience check is skipped                                                                      |
+| `AUTH_HOST`              | no                | OnlyUtils auth host for token exchange/refresh and `GET /me` userinfo (default `https://auth.onlyutils.com`)                    |
+| `OU_CLIENT_ID`           | yes               | OnlyUtils OAuth client ID                                                                                                       |
+| `OU_CLIENT_SECRET`       | no                | OnlyUtils OAuth client secret (confidential client in prod; omit for public client in dev)                                      |
+| `ADMIN_EMAILS`           | no                | Comma-separated admin emails; first login with matching email gets `admin` role, otherwise `helper`                             |
+| `MODERATOR_EMAILS`       | no                | Comma-separated moderator emails; first login with matching email gets `moderator` role (`ADMIN_EMAILS` wins if in both)        |
+| `OU_MEDIA_CLIENT_ID`     | yes (for Phase 3) | OnlyUtils media service client ID for `client_credentials` machine token (`POST https://auth.onlyutils.com/token`)              |
+| `OU_MEDIA_CLIENT_SECRET` | yes (for Phase 3) | OnlyUtils media service client secret (cached until `expires_in`)                                                               |
+| `MEDIA_HOST`             | no                | Media service host (default `https://media.onlyutils.com`; used as `${MEDIA_HOST}/v1/clients/{OU_MEDIA_CLIENT_ID}/media/files`) |
+| `MEDIA_PUBLIC_BASE`      | no                | Public CDN base for `publicUrl` override (when set, `publicUrl` is `${MEDIA_PUBLIC_BASE}/{fileId}`)                             |
+| `SPARROW_TOKEN`          | no                | Sparrow SMS API token; SMS is skipped when unset                                                                                |
+| `SPARROW_FROM`           | no                | Sparrow sender name (default `VerifiedNP`)                                                                                      |
+| `PUBLIC_SITE_BASE`       | no                | Public site base used in requester SMS status links (default `https://verifiednepal.com`)                                       |
 
 ## Run
 
@@ -53,15 +53,15 @@ Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`)
 - `GET /me/work` → signed-in; `{months:[{month,counts,total}],lifetime:{counts,total}}`, with months newest first
 - `POST /auth/exchange` → `{code, code_verifier, redirect_uri}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=authorization_code`, `client_id=OU_CLIENT_ID`, `client_secret` when set)
 - `POST /auth/refresh` → `{refresh_token}` → token endpoint `POST {AUTH_HOST}/token` (`grant_type=refresh_token`, `client_id`/`secret` same rule)
-- `POST /projects` → anonymous (+ Turnstile) create project → `201 {id, updateCode}` (12-char base32, `updateCode` shown once, stored as `sha256` `updateCodeHash`; pointer `PCODE#<hash>`) 
-- `GET /projects?district=&status=&cursor=` → public list (published|in-progress|completed via GSI1/GSI2, `coverPhoto` from first published photo, no private fields) 
-- `GET /projects/{id}` → public detail (published photos/updates only, `coverPhoto`, masking) 
-- `POST /projects/{id}/photos/presign` → committee (`X-Update-Code`) or mod (`Bearer`) → media presign via OnlyUtils (`client_credentials` token cached, `POST ${MEDIA_HOST}/v1/clients/{id}/media/files` with `Idempotency-Key`, `visibility:public`) → `{uploadUrl,fileId,publicUrl,headers?}` 
-- `POST /projects/{id}/photos` → committee or mod add photo (mod publishes immediately, committee pending) 
-- `POST /projects/{id}/updates` → committee add update (`text,photoFileIds,spentNpr`) pending 
-- `GET /moderation/projects` → mod list all projects oldest-first with private fields + pending photos/updates 
-- `POST /moderation/projects/{id}` → mod `verify-committee|publish|reject|set-status|publish-photo|reject-photo` (`publish` requires `committee.verified`; every action writes `AUDIT` item) 
-- `POST /moderation/projects/{id}/updates/{updateId}` → mod `publish|reject` update 
+- `POST /projects` → anonymous (+ Turnstile) create project → `201 {id, updateCode}` (12-char base32, `updateCode` shown once, stored as `sha256` `updateCodeHash`; pointer `PCODE#<hash>`)
+- `GET /projects?district=&status=&cursor=` → public list (published|in-progress|completed via GSI1/GSI2, `coverPhoto` from first published photo, no private fields)
+- `GET /projects/{id}` → public detail (published photos/updates only, `coverPhoto`, masking)
+- `POST /projects/{id}/photos/presign` → committee (`X-Update-Code`) or mod (`Bearer`) → media presign via OnlyUtils (`client_credentials` token cached, `POST ${MEDIA_HOST}/v1/clients/{id}/media/files` with `Idempotency-Key`, `visibility:public`) → `{uploadUrl,fileId,publicUrl,headers?}`
+- `POST /projects/{id}/photos` → committee or mod add photo (mod publishes immediately, committee pending)
+- `POST /projects/{id}/updates` → committee add update (`text,photoFileIds,spentNpr`) pending
+- `GET /moderation/projects` → mod list all projects oldest-first with private fields + pending photos/updates
+- `POST /moderation/projects/{id}` → mod `verify-committee|publish|reject|set-status|publish-photo|reject-photo` (`publish` requires `committee.verified`; every action writes `AUDIT` item)
+- `POST /moderation/projects/{id}/updates/{updateId}` → mod `publish|reject` update
 - `POST /me/articles` → signed-in create an empty article draft → `201 {id}`
 - `GET /me/articles` → signed-in list owned articles with status, counters and reject reason
 - `GET /me/articles/{id}` → signed-in get an owned article for editing
@@ -159,3 +159,54 @@ Auth is applied in the route tables (`src/router.js`, `src/routes/orgRoutes.js`)
 - `POST /orgs/{id}/assignments/{assignmentId}/status` → owner or assignee move status forward through `assigned`, `en_route`, `on_site`, `done`, or `cancelled`
 - `POST /orgs/{id}/log` and `GET /orgs/{id}/log?date=` → add and list private activity or handover notes
 - `GET /orgs/{id}/handover?date=&shift=&format=csv` → private grouped handover JSON, or two-section assignments/log CSV
+
+## Local updates (Wave 1)
+
+`POST /me/articles` accepts `kind: "news"` for admins or users whose
+`reporter.approvedAt` is set. Creating a local-update draft requires `happenedAt`
+and either up to three HTTPS `sourceUrls` or a single `sourceNote` of at most
+200 characters. The create request can include the editor fields or a plain
+`body` (text or an object keyed by `language`); the item's kind cannot change.
+The correspondent's first locality is the default, and can be changed per item.
+Municipality ids are normalized to numbers using the bundled administrative data.
+Scope accepts `ward`, `municipality`, `district`, `province`, `nepal` and the
+Wave 0 client's equivalent `national` spelling.
+
+Draft saves remain lenient. Submission requires a title, nonempty body of at
+most 1200 characters, paragraph/image blocks only, sourced images, exactly one
+tag, locality, scope, date and a source. Errors use the article API's
+`{ error: "invalid", missing: [...] }` response, including `"source"` when both
+source forms are absent. Supplied `expiresAt` is stored; it is never inferred
+or used to hide published items. `GET /dispatches` and
+`GET /moderation/dispatches` default to articles; use `?kind=news` for local
+updates. Older dispatches without a kind remain articles.
+
+Admins onboard a correspondent by looking up their email using
+`GET /admin/users/lookup?email=...`, then sending
+`POST /admin/users/<sub>/role` with
+`{ "reporter": { "localities": [], "nationalScope": false } }`.
+The server stamps approval; the user's role and districts remain as they are
+when omitted. A role-only update preserves the correspondent flag. Set
+`reporter: null`, or explicitly clear `reporter.approvedAt` with `null` or `""`
+while supplying the locality/scope fields, to revoke approval. The flag appears
+in `/me` and admin user views.
+
+`GET` and `PUT /admin/settings/local-updates` are admin-only. The setting is
+stored at `PK: "SETTINGS", SK: "LOCAL_UPDATES"`; absent settings mean
+`{ "dailyLimitEnabled": true, "dailyLimit": 5 }`. PUT requires both fields,
+a boolean and an integer from 1 to 50. Non-admin local-update creation counts
+owned ARTICLE pointers whose dispatch is a local update created in the last
+24 hours, across all statuses. Reads for this count are strongly consistent;
+reaching the enabled limit returns
+`429 { "error": "daily_limit", "limit": ..., "resetsAt": ... }`.
+The reset time accounts for an admin lowering the limit. Admins are exempt,
+and articles do not count. Concurrent creations are not serialized; a
+transactional author counter is the upgrade path for a strict concurrent cap.
+
+Local updates follow draft → pending → published/rejected. Authors cannot
+publish or reject their own local updates, including admins (`403 own_item`).
+With one admin, the intended path is **the correspondent writes, the admin
+publishes**; an admin-authored item needs another moderator to publish it.
+Article moderation retains its existing behaviour. Language and district
+reviewer rules, correspondent applications and public locality feeds belong
+to later waves.
