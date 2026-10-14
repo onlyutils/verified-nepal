@@ -1,0 +1,94 @@
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{counter-reset:fig;margin:0;font-family:"Noto Sans","Noto Sans Devanagari","DejaVu Sans",sans-serif;font-size:10pt;line-height:1.62;color:#1b1f2a;background:#fff}
+a{color:#184f95;text-decoration:underline;text-decoration-thickness:.5px;overflow-wrap:anywhere}
+p{margin:0 0 .7em;orphans:3;widows:3}
+strong{font-weight:700}
+.eyebrow{font-size:8pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c8102e;margin:0 0 6px}
+h1{font-size:23pt;line-height:1.2;color:#14284b;margin:0 0 .5em;font-weight:700;break-after:avoid}
+h2{font-size:15pt;line-height:1.3;color:#14284b;margin:1.6em 0 .55em;padding-bottom:5px;border-bottom:1.5px solid #d9dee7;font-weight:700;break-after:avoid}
+h2.plain{margin-top:0}
+h3{font-size:11.5pt;line-height:1.35;color:#184f95;margin:1.3em 0 .4em;font-weight:700;break-after:avoid}
+ul,ol{margin:.2em 0 .8em;padding-left:1.4em}
+li{margin:.18em 0}
+li>p{margin:0 0 .3em}
+code{font-family:"DejaVu Sans Mono",monospace;font-size:8.3pt;background:#f1f3f7;border-radius:3px;padding:0 3px;overflow-wrap:anywhere}
+blockquote{margin:.8em 0;padding:.4em 1em;border-left:3px solid #2a78d6;background:#f4f7fb;color:#33405a}
+hr{border:0;border-top:1px solid #d9dee7;margin:1.4em 0}
+.cite{font-size:7.3pt;color:#6b7a99;letter-spacing:-.02em}
+.tw{margin:.7em 0 1em}
+table{width:100%;border-collapse:collapse;font-size:8.3pt;line-height:1.42}
+thead{display:table-header-group}
+th{background:#14284b;color:#fff;text-align:left;padding:4px 6px;font-weight:700;vertical-align:bottom}
+td{padding:4px 6px;border-bottom:1px solid #e3e6ec;vertical-align:top;overflow-wrap:anywhere}
+tr{break-inside:avoid}
+tbody tr:nth-child(even) td{background:#f6f8fb}
+td strong{color:#14284b}
+.refs{font-size:8pt;line-height:1.42}
+.refs ol{padding-left:2.2em}
+.refs li{margin:.25em 0;overflow-wrap:anywhere}
+section.part{break-before:page}
+
+/* cover */
+.cover{height:252mm;display:flex;flex-direction:column;break-after:page}
+.cover .bar{display:flex;height:8px;margin-bottom:26px}
+.cover .bar i{display:block;flex:1}.cover .bar i:first-child{background:#c8102e;flex:0 0 22%}.cover .bar i:last-child{background:#14284b}
+.cover-title{font-size:31pt;line-height:1.14;margin:.15em 0 .45em;font-weight:700;color:#14284b}
+.ph{font-size:15pt;font-weight:700;color:#14284b;margin:0 0 .55em;padding-bottom:5px;border-bottom:1.5px solid #d9dee7}
+.cover-sub{font-size:11.5pt;line-height:1.6;color:#33405a;max-width:150mm}
+table.meta{width:auto;margin:14px 0 18px;font-size:9.5pt}
+table.meta th{background:none;color:#7b8494;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:7.5pt;padding:4px 18px 4px 0;white-space:nowrap}
+table.meta td{padding:4px 0;border:0;background:none!important}
+table.pkg{font-size:9pt}table.pkg td{padding:5px 8px;background:none!important}
+table.pkg td.k{white-space:nowrap;font-weight:700;color:#c8102e;width:24mm}
+.cover .mount{margin-top:auto}
+
+/* short version */
+.glance{break-after:page}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.card{border:1px solid #d9dee7;border-left:4px solid #184f95;border-radius:6px;padding:8px 11px;break-inside:avoid;background:#fff}
+.card .ch{margin:0 0 3px;font-size:10.5pt;font-weight:700;color:#14284b}
+.card p{margin:0;font-size:9pt;line-height:1.5}
+.card.good{border-left-color:#0ca30c}.card.bad{border-left-color:#d03b3b}.card.key{border-left-color:#14284b;background:#eef3fb}
+.src{font-size:7.5pt;color:#7b8494;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.limits{margin-top:10px;font-size:8.6pt;line-height:1.5;color:#4a5263;background:#f6f8fb;border-radius:6px;padding:8px 11px}
+
+/* contents */
+.toc{break-after:page}
+table.toct{font-size:9.5pt}
+table.toct td{border-bottom:1px dotted #c5ccd8;padding:3px 0;background:none!important}
+.toct a{color:inherit;text-decoration:none}
+.toct .tp td{font-weight:700;padding-top:9px;color:#14284b}
+.toct .pn{color:#c8102e;margin-right:6px}
+.toct .t2 td.tl{padding-left:26px;font-size:8.8pt}
+.toct td.tn{text-align:right;width:12mm;color:#4a5263}
+
+/* figures */
+figure.fig{margin:14px 0 18px;padding:10px 12px 8px;border:1px solid #d9dee7;border-radius:8px;background:#fcfcfd;break-inside:avoid;counter-increment:fig}
+figure.fig.plain{background:#fff}
+.fh{font-size:9.6pt;font-weight:700;color:#14284b;line-height:1.35;margin-bottom:8px}
+.fn::before{content:"Figure " counter(fig) ".";color:#c8102e;margin-right:4px}
+.fs{margin:6px 0 0;font-size:7.6pt;line-height:1.4;color:#7b8494}
+figure.fig svg{display:block;font-family:"Noto Sans","Noto Sans Devanagari","DejaVu Sans",sans-serif}
+.two{display:flex;gap:10px;align-items:flex-end}.two .l{flex:1.55}.two .r{flex:1}
+.sub{font-size:8pt;color:#7b8494;margin:2px 0 0}
+.tiles{display:grid;gap:8px}.tiles.c3{grid-template-columns:repeat(3,1fr)}.tiles.c4{grid-template-columns:repeat(4,1fr)}
+.tile{background:#f1f4f9;border-radius:8px;padding:9px 11px}
+.tile .v{font-size:20pt;font-weight:700;color:#184f95;line-height:1.15}
+.tile .l{font-size:8.3pt;line-height:1.4;color:#4a5263;margin-top:2px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pc{border:1px solid #d9dee7;border-radius:8px;padding:8px 10px;background:#fff;position:relative}
+.pc .n{position:absolute;right:8px;top:6px;font-size:16pt;font-weight:700;color:#e3e6ec;line-height:1}
+.pc .t{font-size:9pt;font-weight:700;color:#14284b;padding-right:18px;line-height:1.3}
+.pc .q{font-size:8.3pt;line-height:1.45;color:#4a5263;margin-top:4px;font-style:normal}
+.zeros{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.z{background:#fde8ea;border-radius:8px;text-align:center;padding:10px 2px 8px}
+.zv{font-size:26pt;font-weight:700;color:#c8102e;line-height:1}
+.zl{font-size:7.8pt;color:#4a5263;margin-top:4px;line-height:1.25}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 12px}
+.gallery figure{margin:0;break-inside:avoid;text-align:center}
+.gallery img{width:100%;border:1px solid #c5ccd8;border-radius:8px;display:block}
+.gallery figcaption{font-size:8pt;color:#4a5263;margin-top:3px}
+figure.fig:has(.gallery){break-inside:auto}
+
+table.num1 td:first-child,table.num1 th:first-child{white-space:nowrap}

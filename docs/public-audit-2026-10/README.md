@@ -6,7 +6,7 @@ five anonymised peer reviews, chairman synthesis).
 
 | File | What it is |
 |------|------------|
-| `VerifiedNepal-Public-Site-Audit-2026-10.pdf` | All three reports plus the council verdict in one shareable PDF: 68 pages, 17 figures, screenshot gallery, clickable contents and bookmarks. |
+| `VerifiedNepal-Public-Site-Audit-2026-10.pdf` | All three reports plus the council verdict in one shareable PDF: 69 pages, 17 figures, screenshot gallery, clickable contents and bookmarks. |
 | `reports/1-nepali-audience-research.md` | How Nepali audiences consume news and civic/disaster information online, UI/UX preferences, how portals gain traction, pain points per persona, each persona's open questions, numbered references with URLs. |
 | `reports/2-ideal-nepali-information-portal.md` | What an ideal Nepali public-information portal must look like to solve those pain points: principles, 12 layers with requirement IDs, persona scorecard, what it deliberately does not do, evidence gaps, references. |
 | `reports/3-verified-nepal-alignment-audit.md` | Where Verified Nepal's public site is and is not aligned with that ideal: per-layer scorecard with file:line and live-site evidence, protected strengths, reader walkthrough, persona table, council sequence vs owner build order, quick wins, legal notes. |
@@ -21,3 +21,7 @@ Caveats carried through all three reports: Reddit blocked the research environme
 Reddit sample is nine threads via an archive; the ward-chair adoption hook rests on one Kathmandu
 Post report; no post-September-2025 media survey exists; prod reading surfaces, ledger, audit and
 coverage were empty on 2026-10-14.
+
+## Rebuilding the PDF
+
+The scripts are in `pdf-build/`. Copy that folder somewhere writable, check the `ROOT` path at the top of `build_html.py`, and run `bash make.sh` (needs Python with `markdown` and `pypdf`, Node 22 and headless Chrome). It builds the HTML from the three reports and the council verdict, prints twice so contents page numbers settle, adds bookmarks, and writes `final.pdf`. Edit the markdown reports, never the PDF.
