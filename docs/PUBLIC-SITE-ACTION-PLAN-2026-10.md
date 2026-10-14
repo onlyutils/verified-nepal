@@ -320,7 +320,9 @@ Start after Wave 1 is on `main` and dispatch #1 has run.
 
 #### Prod dispatch #2 (immediately after Wave 2 is green on dev)
 
-Same as dispatch #1: the agent closing the last Wave 2 lane runs both workflows and records the SHA. From this point the first correspondent's ten local updates (A-2) are authored on prod.
+Same as dispatch #1: the agent closing the last Wave 2 lane runs both workflows and records the SHA.
+
+**Done 2026-10-14:** frontend prod workflow green on commit 2173be8 (no server changes since dispatch #1, so the backend workflow was not re-run); prod home serves `index-NaMv9Ese.js`; strip shows three OPMCM rows plus the two standing entries, Get help / Give help end at 493 and 549 px, `?kind=news` empty. Dev e2e: `docs/e2e/2026-10/E2E-TEST-REPORT.md`. From this point the first correspondent's ten local updates (A-2) are authored on prod.
 
 ### Wave 3, docs and housekeeping (one lane, any time after Wave 1)
 
