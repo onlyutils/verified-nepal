@@ -22,7 +22,7 @@ for (const lang of ["ne", "en"]) {
   await b.viewport(360, 740);
   await b.goto(`${BASE}/`, 1200); await setPrefs(lang, null);
   await b.goto(`${BASE}/local-updates`, 6000);
-  const page = await b.ev(`(()=>{const h1=document.querySelector('main h1')?.innerText;const links=[...document.querySelectorAll('main a[href^="/articles/"]')];return {h1,title:document.title,n:links.length,ids:links.map(a=>a.getAttribute('href').split('/').pop()),badges:[...document.querySelectorAll('main')].map(m=>m.innerText).join(' ').match(/Checked|जाँच गरिएको|Official source|आधिकारिक स्रोत/g)?.length||0,ctas:[...document.querySelectorAll('main a,main button')].map(e=>e.innerText.trim()).filter(t=>/Get help|Give help|सहयोग माग्नुहोस्|सहयोग गर्नुहोस्/.test(t)),text:document.querySelector('main')?.innerText.slice(0,900)}})()`);
+  const page = await b.ev(`(()=>{const h1=document.querySelector('main h1')?.innerText;const links=[...document.querySelectorAll('main a[href^="/articles/"]')];return {h1,title:document.title,n:links.length,ids:links.map(a=>a.getAttribute('href').split('/').pop()),badges:[...document.querySelectorAll('main')].map(m=>m.innerText).join(' ').match(/Checked|जाँच गरिएको|Official source|आधिकारिक स्रोत/g)?.length||0,ctas:[...document.querySelectorAll('main a,main button')].map(e=>e.innerText.trim()).filter(t=>/Get help|Give help|सहयोग माग्नुहोस्|सहयोग दिनुहोस्/.test(t)),text:document.querySelector('main')?.innerText.slice(0,900)}})()`);
   const want = lang === "ne" ? "स्थानीय अपडेट" : "Local updates";
   check(`[${lang}] heading and document title`, page.h1 === want && page.title.includes(want), `h1=${page.h1} title=${page.title}`);
   check(`[${lang}] every API item is listed, each linking to /articles/:id`, apiItems.every((i) => page.ids.includes(i.id)), `${page.n} links for ${apiItems.length} items`);
@@ -71,7 +71,7 @@ await b.shot(`${SHOT}/lu-menu-1280.png`);
 // home: core promise and the strip link
 await b.viewport(360, 740);
 await b.goto(`${BASE}/`, 7000);
-const home = await b.ev(`(()=>{const q=(re)=>[...document.querySelectorAll('main a,main button')].find(e=>re.test(e.innerText.trim()));const g=q(/^Get help$/),v=q(/^Give help$/),s=q(/^See all local updates$/);const bottom=(e)=>e?Math.round(e.getBoundingClientRect().bottom):null;return {get:bottom(g),give:bottom(v),see:!!s,href:s?.getAttribute('href')||s?.closest('a')?.getAttribute('href')}})()`);
+const home = await b.ev(`(()=>{const q=(re)=>[...document.querySelectorAll('main a,main button')].find(e=>re.test(e.innerText.trim()));const g=q(/^Request help$/),v=q(/^Offer help$/),s=q(/^See all local updates$/);const bottom=(e)=>e?Math.round(e.getBoundingClientRect().bottom):null;return {get:bottom(g),give:bottom(v),see:!!s,href:s?.getAttribute('href')||s?.closest('a')?.getAttribute('href')}})()`);
 check("Home 360x740: Get help and Give help above the fold", home.get !== null && home.give !== null && home.get <= 740 && home.give <= 740, `bottoms ${home.get} / ${home.give}`);
 await b.shot(`${SHOT}/lu-home-360.png`);
 check("Home: Now strip has 'See all local updates' to /local-updates", home.see && home.href === "/local-updates", JSON.stringify(home));

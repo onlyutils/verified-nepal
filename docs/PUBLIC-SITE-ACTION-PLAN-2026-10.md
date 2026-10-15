@@ -79,7 +79,7 @@ VerifiedNepal is first a place where people register for help and people who can
 
 1. On `/` at 360x740 the hero and the five action cards (Find someone, Missing, Poster, Get help, Give help) stay first. The Now strip sits where the OPMCM block sits today, below the situation band and the relief map, never above the action cards.
 2. The primary nav keeps "Get help" and "Give help" in positions 2 and 3. The hero's two sentences end in those two actions and never mention local updates.
-3. Every page keeps one clear next action (a primary `Button`), and nothing new is added to the public site in Waves 0 to 2 except the strip rows and the local-update detail fields. No new public page before G-1.
+3. Every page keeps one clear next action (a primary `Button`), and nothing new is added to the public site in Waves 0 to 2 except the strip rows and the local-update detail fields. No new public page before G-1, with one owner exception: on 2026-10-15 the owner approved a plain list page at `/local-updates` (built and live on dev, linked first under "More" and from a "See all local updates" link on the Now strip). It has no locality picker, no filters and no counters; those stay gated by G-1.
 4. The Desk needs, offers, missing and centre queues are not touched by W2-E; the local-updates queue is one more tab.
 5. Minimal and trustworthy beats complete: if a deliverable makes a public page longer without giving a reader a next action, cut it and say so in the summary.
 6. Each public-facing item's e2e report carries one 360x740 screenshot of `/` with "Get help" and "Give help" above the fold, taken after the change.

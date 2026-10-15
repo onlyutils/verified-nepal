@@ -148,3 +148,25 @@ Not covered: real-device checks (iPhone Safari, older Android WebView), the sign
 Final header measurements on dev (commit ff0ba12; `scripts/header-heights.mjs`): at 360 px normal text the public header is 57 px tall signed out and signed in, in both languages, with the wordmark fully visible on two lines (no ellipsis); the Desk header is 57 px (it was 177 px in Nepali and 105 px in English after the first overflow fix, so the Desk now shows only the logo mark below the `sm` breakpoint, with the name kept for screen readers). At 320 px with 150% text no layout overflows horizontally; the header wraps to 157 px signed out, 229 px signed in and 235 px on the Desk.
 
 Regression caught while testing: the first overflow fix truncated the wordmark to "भेरिफाइड ..." and made the Desk header very tall at 360 px; both were fixed before this deploy.
+
+## Local updates page (`/local-updates`, dev build of commit 03000d4)
+
+Owner asked on 2026-10-15 for a separate page for local updates (they were reachable only from the Now strip and by direct link). Script: `scripts/local-updates-page.mjs` (`SHOT=<dir> node local-updates-page.mjs`). Signed out, headless Chrome at 360x740, 320x640 with 150% text, and 1280x800. Result: 24 of 24 checks pass.
+
+| Check | Result |
+|---|---|
+| `GET /dispatches?kind=news` | 4 published local updates on dev (ids `018b4da0…`, `89d8a726…`, `32506776…`, `9100295f…`) |
+| Crawler HTML for `/local-updates` | Title "Local updates · verifiedNepal", canonical `https://…/local-updates`; `sitemap.xml` lists the path |
+| Page, ne and en | Heading "स्थानीय अपडेट" / "Local updates"; all 4 API items listed, each linking to `/articles/:id`; each row carries a "Checked / जाँच गरिएको" badge; newest first; BS date and relative time per row; source line per row |
+| Next action | Closing card with Get help / Give help buttons (Nepali "सहयोग माग्नुहोस्" / "सहयोग दिनुहोस्") |
+| First row opens | `/articles/9100295f-…` detail page with its title |
+| Overflow at 320 px, 150% text | 0 px sideways scroll in ne and en |
+| Mobile menu | "Local updates" is first under More; Get help and Give help stay at positions 2 and 3 |
+| Desktop More dropdown | "Local updates" is first |
+| Home at 360x740 | "Request help" and "Offer help" end at 493 and 549 px (unchanged); Now strip shows "See all local updates" linking to `/local-updates`; clicking it opens the page |
+
+Screenshots: `screenshots/lu-page-360-ne.png`, `lu-page-360-en.png`, `lu-page-320-150-ne.png`, `lu-page-320-150-en.png`, `lu-menu-360.png`, `lu-menu-1280.png`, `lu-home-360.png`.
+
+Script fixes during the run: two checks failed first because of the script, not the page (it looked for "Get help" on the home hero, whose buttons read "Request help" and "Offer help", and missed the Nepali "सहयोग दिनुहोस्").
+
+Not covered: "Load more" (dev has only 4 published updates, so no cursor is returned; the pagination and retry paths were exercised by Codex locally against a stubbed response), real-device checks.
