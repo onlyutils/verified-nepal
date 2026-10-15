@@ -170,3 +170,15 @@ Screenshots: `screenshots/lu-page-360-ne.png`, `lu-page-360-en.png`, `lu-page-32
 Script fixes during the run: two checks failed first because of the script, not the page (it looked for "Get help" on the home hero, whose buttons read "Request help" and "Offer help", and missed the Nepali "सहयोग दिनुहोस्").
 
 Not covered: "Load more" (dev has only 4 published updates, so no cursor is returned; the pagination and retry paths were exercised by Codex locally against a stubbed response), real-device checks.
+
+### Prod dispatch 4: Local updates page (2026-10-15)
+
+`gh workflow run deploy-prod.yml --ref main` at commit 70d8b67 (frontend and Pages Functions only; the backend is unchanged since the ads dispatch). Run 38681777679 succeeded. Prod entry bundle `index-DkBkx6Q3.js` (prod and dev bundle hashes differ because their build variables differ).
+
+| Check on prod | Result |
+|---|---|
+| Crawler view of `/local-updates` | Title "Local updates · verifiedNepal", canonical `https://verifiednepal.com/local-updates`; `sitemap.xml` lists the path |
+| `/local-updates`, ne and en, 360 px and 320 px at 150% text | Heading, one-line description, empty state ("अहिलेसम्म कुनै स्थानीय अपडेट छैन" / "No local updates yet"), Get help and Give help buttons; 0 px sideways scroll in all four combinations (`screenshots/lu-prod-empty-360-ne.png`) |
+| Mobile menu | "Local updates" is first under More |
+| Home at 360x740 | "Request help" and "Offer help" end at 493 and 549 px; "See all local updates" is absent (correct: prod has no local updates yet, so the strip has none to link from) |
+| `GET /dispatches?kind=news` on prod | `{"items":[]}` until the first correspondent's items are published |
