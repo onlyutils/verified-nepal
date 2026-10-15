@@ -180,6 +180,11 @@ export const STATIC_PAGE_META: Record<string, ShareMeta> = {
     description: "Read moderated community writing on mountains and climate: editorial articles with a community voice, not an open forum.",
     image: "/brand/og-card.png",
   },
+  localUpdates: {
+    title: "Local updates · verifiedNepal",
+    description: "Read dated local notices from across Nepal, each naming its source and place, with a link to the full update.",
+    image: "/brand/og-card.png",
+  },
   privacy: {
     title: "Privacy and terms · verifiedNepal",
     description: "Read the terms and privacy policy: what information the volunteer-run site collects, why it is used, and how public records are handled.",

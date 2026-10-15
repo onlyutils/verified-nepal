@@ -79,6 +79,13 @@ export function NowStrip({ language }: { language: Language }) {
                 <Button type="button" className="w-full sm:w-auto" onClick={() => setShowAll(true)}>{t.nowSeeAll}</Button>
               </div>
             ) : null}
+            {rows.some((item) => item.kind === "local-update") ? (
+              <div className="px-5 pb-5">
+                <Button asChild variant="link" className="min-h-11 max-w-full justify-start px-0">
+                  <a href="/local-updates" className="break-words">{t.seeAllLocalUpdates}</a>
+                </Button>
+              </div>
+            ) : null}
             <ul className="divide-y border-t">
               {feed.standing.map((item) => (
                 <li key={item.id} className="px-5 py-2">

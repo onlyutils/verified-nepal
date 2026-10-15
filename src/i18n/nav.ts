@@ -2,6 +2,7 @@ export const navStrings = {
   en: {
     now: "Now",
     more: "More",
+    localUpdates: "Local updates",
     skipToMain: "Skip to main content",
     guides: "Guides",
     governance: "Governance",
@@ -10,6 +11,7 @@ export const navStrings = {
   ne: {
     now: "अहिले",
     more: "थप",
+    localUpdates: "स्थानीय अपडेट",
     skipToMain: "मुख्य सामग्रीमा जानुहोस्",
     guides: "मार्गदर्शन",
     governance: "शासन",
