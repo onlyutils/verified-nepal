@@ -32,6 +32,8 @@ jobs:
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
           VITE_FLOOD_MANIFEST_URL: ${{ vars.VITE_FLOOD_MANIFEST_URL }}
           VITE_OU_CLIENT_ID: ${{ vars.VITE_OU_CLIENT_ID }}
+          VITE_NEWS_API_BASE: ${{ vars.VITE_NEWS_API_BASE }}
+          VITE_NEWS_SITE_BASE: ${{ vars.VITE_NEWS_SITE_BASE }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           # dev-only: shows the email/password form for the fixture accounts in
           # docs/BETA-TESTING.md on /desk/login. Never set this repo variable for prod.
