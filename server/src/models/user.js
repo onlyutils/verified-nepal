@@ -115,17 +115,13 @@ export async function listUsersByRoles(ddb, tableName, roles) {
   return all;
 }
 
-export async function setUserRole(ddb, tableName, { actorSub, targetSub, role, districts, reporter }) {
+export async function setUserRole(ddb, tableName, { actorSub, targetSub, role, districts }) {
   const user = (await ddb.send(new GetCommand({ TableName: tableName, Key: { PK: `USER#${targetSub}`, SK: "PROFILE" } }))).Item;
   if (!user) throw err(404, "not found");
   if (actorSub === targetSub && user.role === "admin" && role !== undefined && role !== "admin")
     throw err(403, "self_demotion_not_allowed");
   if (role !== undefined) user.role = role;
   if (districts !== undefined) user.districts = districts;
-  if (reporter !== undefined) {
-    if (reporter === null) delete user.reporter;
-    else user.reporter = reporter;
-  }
   user.gsi2pk = `USER#${user.role}`;
   user.gsi2sk = user.createdAt || new Date().toISOString();
   if (!user.createdAt) user.createdAt = user.gsi2sk;
