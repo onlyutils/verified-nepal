@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-role_arn="arn:aws:iam::129264592326:role/OrganizationAccountAccessRole"
-session="$(aws sts assume-role --profile out-mgmt --region ap-south-1 --role-arn "$role_arn" --role-session-name verifiednepal-web-e2e --output json)"
+# Where the dev test settings live is deliberately not committed: point these at the AWS role that can read them.
+: "${E2E_AWS_ROLE_ARN:?set E2E_AWS_ROLE_ARN to the role that can read the dev e2e SSM parameters}"
+profile_args=()
+[[ -n "${E2E_AWS_PROFILE:-}" ]] && profile_args=(--profile "$E2E_AWS_PROFILE")
+session="$(aws sts assume-role "${profile_args[@]}" --region "${E2E_AWS_REGION:-ap-south-1}" --role-arn "$E2E_AWS_ROLE_ARN" --role-session-name verifiednepal-web-e2e --output json)"
 read -r AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN < <(
   python3 -c 'import json,sys; c=json.load(sys.stdin)["Credentials"]; print(c["AccessKeyId"],c["SecretAccessKey"],c["SessionToken"])' <<<"$session"
 )
@@ -12,7 +15,7 @@ names=(
   "/verifiednepal-e2e/dev/MACHINE_CLIENT_ID"
   "/verifiednepal-admin/dev/ADMIN_MACHINE_CLIENT_SECRET"
 )
-params="$(aws ssm get-parameters --region ap-south-1 --with-decryption --names "${names[@]}" --output json)"
+params="$(aws ssm get-parameters --region "${E2E_AWS_REGION:-ap-south-1}" --with-decryption --names "${names[@]}" --output json)"
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 
 while IFS=$'\t' read -r name value; do
