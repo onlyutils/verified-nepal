@@ -21,6 +21,9 @@ case "$ENV" in
   dev)
     PROJECT=verifiednepal-dev
     # Dev wiring comes from env (CI repo variables or a local, untracked .env).
+    # The news URLs are public, so they are pinned here like prod's instead of becoming repo variables.
+    export VITE_NEWS_API_BASE=https://api.news-dev.verifiednepal.com
+    export VITE_NEWS_SITE_BASE=https://news-dev.verifiednepal.com
     ;;
   prod)
     PROJECT=verifiednepal
