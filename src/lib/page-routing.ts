@@ -33,7 +33,6 @@ export function pageFromPath(path: string): AppPage {
   if (pathname.startsWith("/our-message")) return "ourMessage";
   if (pathname.startsWith("/report-incident")) return "reportIncident";
   if (pathname.startsWith("/incidents")) return "incidents";
-  if (pathname === "/local-updates") return "localUpdates";
   if (pathname.match(/^\/articles\/[^\/]+/)) return "dispatchDetail";
   if (pathname.startsWith("/articles")) return "dispatches";
   if (pathname.match(/^\/me\/articles\/[^\/]+\/edit/)) return "articleEdit";

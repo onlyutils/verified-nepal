@@ -3,7 +3,7 @@ import test from "node:test";
 import { centerMeta, climateMeta, dispatchJsonLd, dispatchMeta, projectMeta, STATIC_PAGE_META } from "./og-meta.ts";
 
 test("new static page metadata has titles and useful descriptions", () => {
-  const keys = ["floodImpact", "info", "howTo", "ourMessage", "articles", "localUpdates", "privacy", "ledger", "audit", "coverage", "incidents", "drones"];
+  const keys = ["floodImpact", "info", "howTo", "ourMessage", "articles", "privacy", "ledger", "audit", "coverage", "incidents", "drones"];
   for (const key of keys) {
     const meta = STATIC_PAGE_META[key];
     assert.ok(meta.title.endsWith("· verifiedNepal"));
@@ -12,14 +12,6 @@ test("new static page metadata has titles and useful descriptions", () => {
   }
 });
 
-test("local updates share metadata describes dated, sourced notices with the default image", () => {
-  const meta = STATIC_PAGE_META.localUpdates;
-  assert.equal(meta.title, "Local updates · verifiedNepal");
-  assert.equal(meta.image, "/brand/og-card.png");
-  assert.match(meta.description, /dated local notices/i);
-  assert.match(meta.description, /source/i);
-  assert.doesNotMatch(`${meta.title} ${meta.description}`, /\b(news|reporter|community-verified)\b/i);
-});
 
 test("dispatchMeta builds a title and a <=155-char excerpt with author, kept under the meta description limit", () => {
   const meta = dispatchMeta({

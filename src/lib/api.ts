@@ -972,14 +972,6 @@ export function lookupAdminUser(token: string, email: string): Promise<AdminUser
   return request<AdminUser>(`/admin/users/lookup?${q.toString()}`, { token });
 }
 
-export function setCorrespondent(token: string, sub: string, enabled: boolean): Promise<{ reporter?: { approvedAt?: string; localities?: Locality[]; nationalScope?: boolean } }> {
-  return request(`/admin/users/${encodeURIComponent(sub)}/role`, {
-    method: "POST",
-    token,
-    body: JSON.stringify({ reporter: enabled ? { localities: [], nationalScope: false } : null }),
-  });
-}
-
 export function setAdminUserRole(
   token: string,
   sub: string,
@@ -1602,18 +1594,6 @@ export function moderateProjectUpdate(
   });
 }
 
-export type DispatchKind = "article" | "news";
-export type NewsScope = "ward" | "municipality" | "district" | "national";
-export interface Locality {
-  district: string;
-  municipalityId: string;
-  ward?: number;
-}
-export interface LocalUpdateSettings {
-  dailyLimitEnabled: boolean;
-  dailyLimit: number;
-}
-
 export type DispatchTag = "climate" | "mountains" | "floods" | "landslides" | "glaciers" | "community" | "story";
 export const DISPATCH_TAGS: DispatchTag[] = ["climate", "mountains", "floods", "landslides", "glaciers", "community", "story"];
 
@@ -1627,13 +1607,6 @@ export interface ArticleCounters {
   shares: number;
 }
 export interface DispatchPublicItem extends Partial<ArticleCounters> {
-  kind?: DispatchKind;
-  scope?: NewsScope;
-  locality?: Locality;
-  happenedAt?: string;
-  sourceUrls?: string[];
-  sourceNote?: string;
-  language?: "en" | "ne";
   id: string;
   title: string | { en: string; ne?: string };
   excerpt: string | { en: string; ne?: string };
@@ -1649,13 +1622,6 @@ export interface DispatchListResponse {
 }
 
 export interface DispatchDetailResponse extends Partial<ArticleCounters> {
-  kind?: DispatchKind;
-  scope?: NewsScope;
-  locality?: Locality;
-  happenedAt?: string;
-  sourceUrls?: string[];
-  sourceNote?: string;
-  language?: "en" | "ne";
   id: string;
   title: string | { en: string; ne?: string };
   body: string | { en: string; ne?: string };
@@ -1668,13 +1634,6 @@ export interface DispatchDetailResponse extends Partial<ArticleCounters> {
 }
 
 export interface ModerationDispatchItem {
-  kind?: DispatchKind;
-  scope?: NewsScope;
-  locality?: Locality;
-  happenedAt?: string;
-  sourceUrls?: string[];
-  sourceNote?: string;
-  language?: "en" | "ne";
   id: string;
   title: { en: string; ne?: string } | string;
   body: { en: string; ne?: string } | string;
@@ -1690,30 +1649,18 @@ export interface ModerationDispatchResponse {
   items: ModerationDispatchItem[];
 }
 
-export function listDispatches(params: { tag?: string; cursor?: string; kind?: DispatchKind } = {}): Promise<DispatchListResponse> {
+export function listDispatches(params: { tag?: string; cursor?: string } = {}): Promise<DispatchListResponse> {
   const q = new URLSearchParams();
   if (params.tag) q.set("tag", params.tag);
   if (params.cursor) q.set("cursor", params.cursor);
-  if (params.kind) q.set("kind", params.kind);
   const suffix = q.toString() ? `?${q.toString()}` : "";
   return request<DispatchListResponse>(`/dispatches${suffix}`);
 }
 export function getDispatch(id: string): Promise<DispatchDetailResponse> {
   return request<DispatchDetailResponse>(`/dispatches/${encodeURIComponent(id)}`);
 }
-export function getModerationDispatches(token: string, params: { kind?: DispatchKind } = {}): Promise<ModerationDispatchResponse> {
-  const suffix = params.kind ? `?kind=${encodeURIComponent(params.kind)}` : "";
-  return request<ModerationDispatchResponse>(`/moderation/dispatches${suffix}`, { token });
-}
-export function getLocalUpdateSettings(token: string): Promise<LocalUpdateSettings> {
-  return request<LocalUpdateSettings>("/admin/settings/local-updates", { token });
-}
-export function putLocalUpdateSettings(token: string, body: LocalUpdateSettings): Promise<LocalUpdateSettings> {
-  return request<LocalUpdateSettings>("/admin/settings/local-updates", {
-    method: "PUT",
-    token,
-    body: JSON.stringify(body),
-  });
+export function getModerationDispatches(token: string): Promise<ModerationDispatchResponse> {
+  return request<ModerationDispatchResponse>("/moderation/dispatches", { token });
 }
 export function moderateDispatch(
   token: string,
@@ -2266,12 +2213,6 @@ export function getAdminClimate(token: string): Promise<AdminClimateStats> {
 // ---- Articles: signed-in authoring and engagement (spec 2026-09-03-articles-authoring-design) ----
 export type ArticleStatus = "draft" | "pending" | "published" | "rejected";
 export interface MyArticle extends ArticleCounters {
-  kind?: DispatchKind;
-  scope?: NewsScope;
-  locality?: Locality;
-  happenedAt?: string;
-  sourceUrls?: string[];
-  sourceNote?: string;
   id: string;
   status: ArticleStatus;
   title: string;
@@ -2290,20 +2231,14 @@ export interface MyArticleDetail extends MyArticle {
   place?: string;
 }
 export interface ArticleSaveBody {
-  scope?: NewsScope;
-  locality?: Locality;
-  happenedAt?: string;
-  sourceUrls?: string[];
-  sourceNote?: string;
   title?: string;
   blocks?: Block[];
   cover?: Cover | null; // null clears the cover
   tags?: DispatchTag[];
-  language?: "en" | "ne";
   displayName?: string;
   place?: string;
 }
-export function createArticle(token: string, body: ArticleSaveBody & { language: "en" | "ne"; kind?: DispatchKind }): Promise<{ id: string }> {
+export function createArticle(token: string, body: ArticleSaveBody & { language: "en" | "ne" }): Promise<{ id: string }> {
   return request<{ id: string }>("/me/articles", { method: "POST", token, body: JSON.stringify(body) });
 }
 export function listMyArticles(token: string): Promise<{ items: MyArticle[] }> {
@@ -2367,46 +2302,4 @@ export function postReach(payload: ReachPayload): Promise<void> {
 
 export function getAdminReach(token: string): Promise<AdminReachStats> {
   return request<AdminReachStats>("/admin/reach", { token });
-}
-
-export type AdSlotName = "localTop" | "articleEnd";
-export type AdTarget = { kind: "all" } | { kind: "district" | "municipality"; value: string };
-export interface PublicAd {
-  id: string;
-  slot: AdSlotName;
-  image: { url: string };
-  href: string;
-  label: { en: string; ne: string };
-}
-export interface AdBody {
-  slot: AdSlotName;
-  target: AdTarget;
-  image: { url: string; fileId: string };
-  href: string;
-  label: { en: string; ne: string };
-  startAt: string;
-  endAt: string;
-  note?: string;
-}
-export interface AdminAd extends AdBody {
-  id: string;
-  active: boolean;
-  note: string;
-  createdAt: string;
-  updatedAt: string;
-}
-export function getAd(slot: AdSlotName, district?: string, municipalityId?: string | number): Promise<{ ad: PublicAd | null }> {
-  return request(`/ads${qs({ slot, district, municipality: municipalityId })}`);
-}
-export function getAdminAds(token: string): Promise<{ items: AdminAd[] }> {
-  return request("/admin/ads", { token });
-}
-export function createAd(token: string, body: AdBody): Promise<AdminAd> {
-  return request("/admin/ads", { method: "POST", token, body: JSON.stringify(body) });
-}
-export function updateAd(token: string, id: string, body: AdBody): Promise<AdminAd> {
-  return request(`/admin/ads/${encodeURIComponent(id)}`, { method: "PUT", token, body: JSON.stringify(body) });
-}
-export function deleteAd(token: string, id: string): Promise<void> {
-  return request(`/admin/ads/${encodeURIComponent(id)}`, { method: "DELETE", token });
 }

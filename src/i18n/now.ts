@@ -12,7 +12,6 @@ export const nowStrings: Record<
     nowTitle: string;
     nowEmpty: string;
     nowSeeAll: string;
-    seeAllLocalUpdates: string;
     nowNoUpdates: string;
     loading: string;
     opmcm: string;
@@ -41,7 +40,6 @@ export const nowStrings: Record<
     nowTitle: "Now",
     nowEmpty: "Nothing new since {time}",
     nowSeeAll: "See all",
-    seeAllLocalUpdates: "See all local updates",
     nowNoUpdates: "No updates yet",
     loading: "Loading updates…",
     opmcm: "Prime Minister’s Office",
@@ -69,7 +67,6 @@ export const nowStrings: Record<
     nowTitle: "अहिले",
     nowEmpty: "{time} देखि कुनै नयाँ जानकारी छैन",
     nowSeeAll: "सबै हेर्नुहोस्",
-    seeAllLocalUpdates: "सबै स्थानीय अपडेट हेर्नुहोस्",
     nowNoUpdates: "अहिलेसम्म कुनै जानकारी आएको छैन",
     loading: "जानकारी लोड हुँदै छ…",
     opmcm: "प्रधानमन्त्री कार्यालय",

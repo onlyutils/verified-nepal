@@ -13,11 +13,8 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { articlesPublicStrings } from "@/i18n/articles-public";
 import { communityStrings } from "@/i18n/community";
 import { formatDateTime, formatNumber, localizedText } from "@/lib/format";
-import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
-import { localUpdateBodyText, localUpdatePlace, localUpdateShareCard } from "@/lib/now-items";
+import { formatRelativeTime } from "@/lib/format-date";
 import { ShareButton, TextShareRow } from "@/components/share-button";
-import { AdSlot } from "@/components/ad-slot";
-import { StatusBadge } from "@/components/status-badge";
 import { useGoogleAuth } from "@/lib/auth";
 import type { Language } from "@/lib/types";
 import { ArticleBody } from "@/articles/render";
@@ -135,11 +132,8 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       />
     );
 
-  const isLocalUpdate = item.kind === "news";
-  const contentLanguage = isLocalUpdate ? item.language || language : language;
-  const locality = localUpdatePlace(item.locality, language);
-  const title = localizedText(item.title, contentLanguage);
-  const timestamp = isLocalUpdate ? item.happenedAt : item.publishedAt;
+  const title = localizedText(item.title, language);
+  const timestamp = item.publishedAt;
   const url = `${window.location.origin}/articles/${encodeURIComponent(item.id)}`;
   const trackShare = () => {
     setShareCount((count) => count + 1);
@@ -189,27 +183,10 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
       </Button>
       <PageHeader
         className="[&_h1]:min-w-0 [&_h1]:[overflow-wrap:anywhere]"
-        eyebrow={isLocalUpdate ? t.localUpdate : t.eyebrow}
-        title={<span lang={contentLanguage} className="min-w-0 [overflow-wrap:anywhere]">{title}</span>}
-        description={`${t.by} ${item.author.displayName}${item.author.place ? ` · ${item.author.place}` : ""}${isLocalUpdate ? "" : ` · ${formatDateTime(item.publishedAt, language)} · ${formatRelativeTime(item.publishedAt, language)}`}`}
+        eyebrow={t.eyebrow}
+        title={<span className="min-w-0 [overflow-wrap:anywhere]">{title}</span>}
+        description={`${t.by} ${item.author.displayName}${item.author.place ? ` · ${item.author.place}` : ""} · ${formatDateTime(item.publishedAt, language)} · ${formatRelativeTime(item.publishedAt, language)}`}
       />
-      {isLocalUpdate ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {locality ? <Badge variant="secondary" className="min-w-0 max-w-full whitespace-normal [overflow-wrap:anywhere]">{locality}</Badge> : null}
-            <Badge variant="outline" lang={item.language || language}>{(item.language || language) === "ne" ? t.languageNe : t.languageEn}</Badge>
-            {/* ponytail: Native tooltip avoids another dependency; upgrade to the shared Tooltip when installed. */}
-            <span tabIndex={0} title={t.checkedTooltip} aria-label={`${t.checked}: ${t.checkedTooltip}`} className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <StatusBadge tone="success">{t.checked}</StatusBadge>
-            </span>
-          </div>
-          {item.happenedAt ? (
-            <p className="text-sm text-muted-foreground">
-              {t.happened} <time dateTime={item.happenedAt}>{formatBsDate(item.happenedAt, language)}</time> ({formatRelativeTime(item.happenedAt, language)})
-            </p>
-          ) : null}
-        </div>
-      ) : null}
       <div className="flex flex-wrap gap-2">
         {item.tags.map((tag) => (
           <Badge key={tag} variant="secondary">
@@ -233,34 +210,8 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
         </figure>
       ) : null}
       <div className="border-t pt-8 print:border-black">
-        <div lang={contentLanguage}><ArticleBody blocks={item.blocks} body={item.body} language={contentLanguage} /></div>
+        <div lang={language}><ArticleBody blocks={item.blocks} body={item.body} language={language} /></div>
       </div>
-      <AdSlot
-        key={item.id}
-        slot="articleEnd"
-        district={isLocalUpdate ? item.locality?.district : undefined}
-        municipalityId={isLocalUpdate ? item.locality?.municipalityId : undefined}
-        language={language}
-      />
-      {isLocalUpdate && (item.sourceUrls?.length || item.sourceNote) ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">{t.sources}</h2>
-          {item.sourceUrls?.length ? (
-            <ul className="flex flex-col gap-1">
-              {item.sourceUrls.map((sourceUrl, index) => (
-                <li key={`${index}-${sourceUrl}`}>
-                  {/^https?:\/\//i.test(sourceUrl) ? (
-                    <Button asChild variant="link" className="h-auto min-h-11 max-w-full whitespace-normal px-0 text-left">
-                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="break-all">{sourceUrl}</a>
-                    </Button>
-                  ) : <span className="break-all text-sm">{sourceUrl}</span>}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {item.sourceNote ? <p lang={contentLanguage} className="break-words text-sm text-muted-foreground">{item.sourceNote}</p> : null}
-        </section>
-      ) : null}
       <div
         className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y py-4 text-sm text-muted-foreground"
         aria-label={`${formatNumber(item.views ?? 0, language)} ${t.views}, ${formatNumber(likeCount, language)} ${t.likes}, ${formatNumber(shareCount, language)} ${t.shares}`}
@@ -293,15 +244,8 @@ export function DispatchDetail({ language, id }: { language: Language; id: strin
           </Button>
         ) : null}
       </div>
-      {isLocalUpdate ? (
-        <ShareButton
-          {...localUpdateShareCard({ id: item.id, title, place: locality, happenedAt: item.happenedAt, excerpt: localUpdateBodyText(item, contentLanguage) }, language)}
-          labels={{ download: t.downloadCard, share: t.shareCard, exportError: t.cardExportError }}
-          onShared={trackShare}
-        />
-      ) : null}
       <div className="flex flex-wrap gap-2 print:hidden">
-        <TextShareRow title={title} place={locality || item.author.place} timestamp={timestamp} url={url} language={language} onShare={trackShare} />
+        <TextShareRow title={title} place={item.author.place} timestamp={timestamp} url={url} language={language} onShare={trackShare} />
         <Button variant="outline" onClick={() => void copy()}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           {copied ? t.copied : t.copyLink}

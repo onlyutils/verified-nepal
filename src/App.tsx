@@ -46,7 +46,6 @@ const MePage = lazy(() => import("@/pages/me").then((m) => ({ default: m.MePage 
 const InfoHelp = lazy(() => import("@/pages/info-help").then((m) => ({ default: m.InfoHelp })));
 const ProjectsList = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsList })));
 const DispatchesPage = lazy(() => import("@/pages/dispatches").then((m) => ({ default: m.DispatchesPage })));
-const LocalUpdatesPage = lazy(() => import("@/pages/local-updates").then((m) => ({ default: m.LocalUpdatesPage })));
 const DispatchDetail = lazy(() => import("@/pages/dispatch-detail").then((m) => ({ default: m.DispatchDetail })));
 const ProjectDetail = lazy(() => import("@/pages/project-detail").then((m) => ({ default: m.ProjectDetail })));
 const ProjectRegister = lazy(() => import("@/pages/project-register").then((m) => ({ default: m.ProjectRegister })));
@@ -85,7 +84,6 @@ const pagePaths: Record<AppPage, string> = {
   drones: "/drones",
   audit: "/audit",
   dispatches: "/articles",
-  localUpdates: "/local-updates",
   dispatchDetail: "/articles/:id",
   dispatchWrite: "/articles",
   projects: "/projects",
@@ -134,7 +132,6 @@ export function pageTitle(page: AppPage, language: Language): string {
     drones: droneStrings[language].title,
     audit: (t as Record<string, string>).navAuditLabel ?? "Audit",
     dispatches: (t as Record<string, string>).dispatches ?? "Articles",
-    localUpdates: navStrings[language].localUpdates,
     dispatchDetail: (t as Record<string, string>).dispatches ?? "Articles",
     dispatchWrite: (t as Record<string, string>).dispatches ?? "Articles",
     projects: (t as Record<string, string>).projects ?? "Projects",
@@ -411,11 +408,6 @@ export function App() {
               {page === "dispatches" ? (
                 <ComponentErrorBoundary language={language}>
                   <DispatchesPage language={language} />
-                </ComponentErrorBoundary>
-              ) : null}
-              {page === "localUpdates" ? (
-                <ComponentErrorBoundary language={language}>
-                  <LocalUpdatesPage language={language} />
                 </ComponentErrorBoundary>
               ) : null}
               {page === "dispatchDetail" ? (

@@ -55,8 +55,8 @@ import {
   type CenterFlagInboxItem,
   type ClaimPrintItem,
   type FlagInboxItem,
-  type ModerationDispatchItem,
   type ModerationStoryItem,
+  type ModerationDispatchItem,
   type ModerationOrgItem,
   type ModerationProjectItem,
   type ModerationQueueItem,
@@ -89,7 +89,6 @@ export type DeskSection =
   | "flags"
   | "projects"
   | "dispatches"
-  | "local-updates"
   | "stories"
   | "orgs"
   | "distributions"
@@ -98,7 +97,6 @@ export type DeskSection =
   | "admin"
   | "climate"
   | "guides"
-  | "ads"
   | "reach";
 export type DeskConfirmAction =
   | { kind: "incident"; action: "approve" | "archive"; id: string }
@@ -114,7 +112,6 @@ const sections = new Set<DeskSection>([
   "flags",
   "projects",
   "dispatches",
-  "local-updates",
   "stories",
   "orgs",
   "distributions",
@@ -123,7 +120,6 @@ const sections = new Set<DeskSection>([
   "admin",
   "climate",
   "guides",
-  "ads",
   "reach",
 ]);
 
@@ -228,10 +224,6 @@ export function useDesk(language: Language) {
   const [stories, setStories] = useState<ModerationStoryItem[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
   const [storiesError, setStoriesError] = useState<string | null>(null);
-  const [localUpdates, setLocalUpdates] = useState<ModerationDispatchItem[]>([]);
-  const [localUpdatesLoading, setLocalUpdatesLoading] = useState(false);
-  const [localUpdatesError, setLocalUpdatesError] = useState<string | null>(null);
-  const [localUpdateBusy, setLocalUpdateBusy] = useState<string | null>(null);
 
   const [dispatches, setDispatches] = useState<ModerationDispatchItem[]>([]);
   const [dispatchesLoading, setDispatchesLoading] = useState(false);
@@ -535,47 +527,10 @@ export function useDesk(language: Language) {
       setPrintLoading(false);
     }
   }, [auth.idToken, language, printDistrict, printWard]);
-  const loadLocalUpdates = useCallback(async () => {
-    if (!auth.idToken) return;
-    setLocalUpdatesLoading(true);
-    setLocalUpdatesError(null);
-    try {
-      const response = await getModerationDispatches(auth.idToken, { kind: "news" });
-      const languages = auth.profile?.languages;
-      const districts = auth.profile?.districts ?? [];
-      setLocalUpdates(response.items
-        .filter((item) => auth.profile?.role === "admin" || !languages?.length || languages.includes(item.language || "en"))
-        .sort((a, b) => Number(districts.includes(b.locality?.district || "")) - Number(districts.includes(a.locality?.district || ""))));
-    } catch (cause) {
-      setLocalUpdatesError(apiErrorMessage(cause, language) || ds.localUpdatesError);
-    } finally {
-      setLocalUpdatesLoading(false);
-    }
-  }, [auth.idToken, auth.profile?.role, auth.profile?.languages, auth.profile?.districts, language, ds.localUpdatesError]);
-
-  const handleLocalUpdate = async (id: string, action: "publish" | "reject", reason?: string) => {
-    if (!auth.idToken || localUpdateBusy) return false;
-    setLocalUpdateBusy(id);
-    setLocalUpdatesError(null);
-    try {
-      await moderateDispatch(auth.idToken, id, { action, reason });
-      setLocalUpdates((current) => current.filter((item) => item.id !== id));
-      success(ds.localUpdatesSuccess);
-      return true;
-    } catch (cause) {
-      const code = cause instanceof ApiError ? (cause.body as { error?: string } | null)?.error : undefined;
-      setLocalUpdatesError(code === "own_item" ? ds.localUpdatesOwnError : apiErrorMessage(cause, language) || ds.localUpdatesError);
-      return false;
-    } finally {
-      setLocalUpdateBusy(null);
-    }
-  };
-
   const loadAdminModerators = useCallback(async () => {
     if (!auth.idToken) return;
     setAdminModeratorsLoading(true);
     try {
-      // ponytail: Use an indexed correspondent roster when the admin user list grows large.
       const users: AdminUser[] = [];
       let cursor: string | undefined;
       do {
@@ -583,8 +538,7 @@ export function useDesk(language: Language) {
         users.push(...response.items);
         cursor = response.cursor;
       } while (cursor);
-      setAdminModerators(users.filter((user) => user.role === "moderator" ||
-        Boolean((user as AdminUser & { reporter?: { approvedAt?: string } }).reporter?.approvedAt)));
+      setAdminModerators(users.filter((user) => user.role === "moderator"));
     } catch {
       setAdminModerators([]);
     } finally {
@@ -686,7 +640,6 @@ export function useDesk(language: Language) {
     if (activeSection === "projects") void loadProjects();
     if (activeSection === "posters") void loadPosters();
     if (activeSection === "dispatches") void loadDispatches();
-    if (activeSection === "local-updates") void loadLocalUpdates();
     if (activeSection === "stories") void loadStories();
     if (activeSection === "orgs") void loadOrgs(orgsStatus);
     if (activeSection === "distributions") void loadDistributions();
@@ -711,7 +664,6 @@ export function useDesk(language: Language) {
     loadReachStats,
     loadCenterFlags,
     loadDispatches,
-    loadLocalUpdates,
     loadStories,
     loadFlags,
     loadIncidentsAdmin,
@@ -1408,12 +1360,6 @@ export function useDesk(language: Language) {
     handleProject,
     handleProjectReject,
     handleProjectUpdate,
-    localUpdates,
-    localUpdatesLoading,
-    localUpdatesError,
-    localUpdateBusy,
-    loadLocalUpdates,
-    handleLocalUpdate,
     dispatches,
     dispatchesLoading,
     dispatchesError,

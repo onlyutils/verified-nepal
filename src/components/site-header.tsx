@@ -35,7 +35,6 @@ const primaryPages = [
   ["ledger", "ledgerTitle"],
 ] as const;
 const morePages = [
-  ["localUpdates", "localUpdates"],
   ["poster", "poster"],
   ["incidents", "incidents"],
   ["projects", "projects"],
@@ -194,7 +193,6 @@ export function SiteHeader({
 
 function navigationLabel(page: string, key: string, language: Language) {
   const t = labels[language] as Record<string, string>;
-  if (page === "localUpdates") return navStrings[language].localUpdates;
   if (page === "dropCenters") return centerStrings[language].navDropCenters;
   if (page === "climate") return climateStrings[language].navLabel;
   if (page === "ourMessage") return ourMessageStrings[language].navLabel;
