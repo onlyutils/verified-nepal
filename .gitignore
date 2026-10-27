@@ -13,5 +13,9 @@ docs/superpowers/
 .impeccable/
 .wrangler/
 
+# Playwright output can contain page captures from failed runs.
+test-results/
+playwright-report/
+
 # e2e screenshots are kept out of git (see the review artifact); findings and reports stay in
 docs/e2e/**/screenshots/
