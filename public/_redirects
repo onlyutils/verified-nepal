@@ -6,3 +6,8 @@
 
 # Cloudflare Pages does not support host-based sources in _redirects.
 # The www to apex redirect is configured as a Cloudflare Redirect Rule.
+
+/local-updates https://news.verifiednepal.com 301
+/local-updates/* https://news.verifiednepal.com 301
+/local https://news.verifiednepal.com/local 301
+/local/* https://news.verifiednepal.com/local/:splat 301

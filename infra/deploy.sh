@@ -27,6 +27,8 @@ case "$ENV" in
     # prod OnlyUtils client (confidential; secret lives in the Lambda, not here)
     export VITE_OU_CLIENT_ID=ou_client_34G33PBOq8T6BJCbya4I8
     export VITE_API_BASE=https://api.prod.verifiednepal.com
+    export VITE_NEWS_API_BASE=https://api.news.verifiednepal.com
+    export VITE_NEWS_SITE_BASE=https://news.verifiednepal.com
     # Flood-impact manifest: CI reads it from the GitHub `production` environment variable.
     : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
     export VITE_FLOOD_MANIFEST_URL
