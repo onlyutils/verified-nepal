@@ -167,6 +167,10 @@ page for the full policy.
 
 ## Contributing
 
+Run the browser end-to-end suite against the dev environment with
+`eval "$(e2e/load-env.sh)" && pnpm e2e`. Use `E2E_BASE_URL` to target a deployed
+copy instead. See [docs/e2e/README.md](docs/e2e/README.md) for setup details.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md). Corrections to data, translations,
 and accessibility fixes are especially welcome. Please never add unverified
 emergency numbers or unofficial donation channels — see the hard rules there.
