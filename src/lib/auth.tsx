@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE, getMe, type DashboardActivity } from "@/lib/api";
 import { clearTokens, isTokenExpired, loadTokens, refreshAccessToken, saveTokens, TOKENS_EVENT } from "@/lib/tokens";
-import type { Locality } from "./api";
 
 export interface DeskProfile {
   sub?: string;
@@ -12,11 +11,6 @@ export interface DeskProfile {
   districts?: string[];
   languages?: string[];
   national?: boolean;
-  reporter?: {
-    approvedAt?: string;
-    localities?: Locality[];
-    nationalScope?: boolean;
-  };
   guidelinesAckAt?: string;
   activity?: DashboardActivity;
 }

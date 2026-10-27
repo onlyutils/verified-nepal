@@ -21,7 +21,6 @@ export type Page =
   | "projectRegister"
   | "projectUpdate"
   | "dispatches"
-  | "localUpdates"
   | "dispatchDetail"
   | "dispatchWrite"
   | "registerOrg"

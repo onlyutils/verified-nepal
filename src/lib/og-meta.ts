@@ -4,16 +4,11 @@
 import countries from "../../public/data/climate/countries.json" with { type: "json" };
 import units from "./admin-units.json" with { type: "json" };
 import { districtLabels, type DistrictName } from "./districts.ts";
-import { articlesPublicStrings } from "../i18n/articles-public.ts";
 import { interpolate } from "./format.ts";
 
 type Localized = string | { en: string; ne?: string };
 
 export interface DispatchLike {
-  kind?: "article" | "news";
-  language?: "en" | "ne";
-  locality?: { district: string; municipalityId: string | number; ward?: number };
-  happenedAt?: string;
   title: Localized;
   body: Localized;
   author?: { displayName?: string; place?: string };
@@ -46,31 +41,8 @@ function text(value: Localized | undefined): string {
   return typeof value === "string" ? value : value.en || value.ne || "";
 }
 
-export function dispatchLocality(locality: DispatchLike["locality"], language: "en" | "ne"): string {
-  if (!locality) return "";
-  const municipality = units.find((unit) => String(unit.id) === String(locality.municipalityId) && unit.district === locality.district);
-  const district = districtLabels[locality.district as DistrictName]?.[language] || locality.district;
-  return [district, municipality ? (language === "ne" ? municipality.nameNe : municipality.name) : "",
-    locality.ward == null ? "" : `${articlesPublicStrings[language].ward} ${new Intl.NumberFormat(language === "ne" ? "ne-NP" : "en-GB").format(locality.ward)}`,
-  ].filter(Boolean).join(" · ");
-}
-
-function dispatchText(value: Localized, item: DispatchLike): string {
-  if (item.kind !== "news" || typeof value === "string") return text(value);
-  return (item.language === "ne" ? value.ne || value.en : value.en || value.ne) || "";
-}
-
 export function dispatchMeta(item: DispatchLike): ShareMeta {
-  const title = dispatchText(item.title, item).trim() || (item.kind === "news" ? articlesPublicStrings[item.language || "en"].localUpdate : "Article");
-  if (item.kind === "news") {
-    const locality = dispatchLocality(item.locality, item.language || "en");
-    const prefix = locality ? `${locality} — ` : "";
-    const description = `${prefix}${dispatchText(item.body, item).replace(/\s+/g, " ").trim().slice(0, Math.max(0, 155 - prefix.length))}`;
-    const image = item.cover?.url?.trim();
-    return image
-      ? { title: `${title} · verifiedNepal`, description, image, imageAlt: item.cover?.caption?.trim() || title }
-      : { title: `${title} · verifiedNepal`, description };
-  }
+  const title = text(item.title).trim() || "Article";
   const by = [item.author?.displayName, item.author?.place].filter(Boolean).join(", ");
   const suffix = by ? ` — By ${by}` : "";
   const excerpt = text(item.body)
@@ -85,14 +57,14 @@ export function dispatchMeta(item: DispatchLike): ShareMeta {
 }
 
 export function dispatchJsonLd(item: DispatchLike, canonical: string): Record<string, unknown> {
-  const title = dispatchText(item.title, item).trim() || (item.kind === "news" ? articlesPublicStrings[item.language || "en"].localUpdate : "Article");
+  const title = text(item.title).trim() || "Article";
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: title,
     mainEntityOfPage: canonical,
     url: canonical,
-    ...((item.kind === "news" ? item.happenedAt : item.createdAt) ? { datePublished: item.kind === "news" ? item.happenedAt : item.createdAt } : {}),
+    ...(item.createdAt ? { datePublished: item.createdAt } : {}),
     ...(item.updatedAt || item.createdAt ? { dateModified: item.updatedAt ?? item.createdAt } : {}),
     ...(item.cover?.url ? { image: item.cover.url } : {}),
     ...(item.author?.displayName ? { author: { "@type": "Person", name: item.author.displayName } } : {}),
@@ -102,7 +74,7 @@ export function dispatchJsonLd(item: DispatchLike, canonical: string): Record<st
       url: "https://verifiednepal.com/",
       logo: { "@type": "ImageObject", url: "https://verifiednepal.com/brand/logo-mark.svg" },
     },
-    inLanguage: item.kind === "news" ? item.language || "en" : "en",
+    inLanguage: "en",
   };
 }
 
@@ -178,11 +150,6 @@ export const STATIC_PAGE_META: Record<string, ShareMeta> = {
   articles: {
     title: "Articles · verifiedNepal",
     description: "Read moderated community writing on mountains and climate: editorial articles with a community voice, not an open forum.",
-    image: "/brand/og-card.png",
-  },
-  localUpdates: {
-    title: "Local updates · verifiedNepal",
-    description: "Read dated local notices from across Nepal, each naming its source and place, with a link to the full update.",
     image: "/brand/og-card.png",
   },
   privacy: {

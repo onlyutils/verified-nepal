@@ -3,7 +3,6 @@ import type { Language } from "@/lib/types";
 
 export const articlesPublicStrings = {
   en: {
-    localUpdate: "Local update",
     happened: "Happened",
     sources: "Sources",
     checked: "Checked",
@@ -50,7 +49,6 @@ export const articlesPublicStrings = {
     storyRoleOrg: "Organization",
   },
   ne: {
-    localUpdate: "स्थानीय अपडेट",
     happened: "घटना भएको मिति",
     sources: "स्रोतहरू",
     checked: "जाँच गरिएको",
