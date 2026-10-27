@@ -56,7 +56,6 @@ export async function handleMe(event, { fetchJwks, getDdb, env, fetchImpl }) {
         districts,
         guidelinesAckAt,
         lastSeen,
-        reporter: existing.reporter,
         activity: await getActivity(ddb, tableName, payload.sub, lastSeen),
       }),
     );
