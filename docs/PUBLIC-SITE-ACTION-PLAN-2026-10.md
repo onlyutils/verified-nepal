@@ -402,3 +402,8 @@ Stopped by the council and accepted here: AI writer, condolences, ad-manager rol
 ## 8. Success measure
 
 The strip exists to be cited. At day 28 after prod dispatch #2, from the Desk Reach tab and the ledger: number of strip rows that are local updates (target ten in one municipality), page views of `/` in Nepali vs English, clicks on strip rows, and whether anyone besides the owner has filed an item. If none of these move, stop at Wave 2 and revisit supply before building the locality layer. Nothing in G-1 to G-3 starts on a feeling.
+
+
+## Update — 2026-10-27
+
+Local updates and ads moved to the separate `verifiednepal-news` and `verifiednepal-admin` repositories. Public highlights remain on verifiednepal.com and link to news.verifiednepal.com.
