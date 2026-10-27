@@ -5,6 +5,8 @@ The Playwright suite runs in Chromium against the local Vite app at
 short-lived credentials into the shell from SSM, then run:
 
 ```sh
+export E2E_AWS_ROLE_ARN=<role that can read the dev e2e SSM parameters>
+export E2E_AWS_PROFILE=<optional AWS CLI profile used to assume it>
 eval "$(e2e/load-env.sh)" && pnpm e2e
 ```
 
