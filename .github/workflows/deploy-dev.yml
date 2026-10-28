@@ -3,9 +3,13 @@ name: deploy-dev
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
-
-permissions: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build without publishing to Cloudflare Pages
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-dev
@@ -14,6 +18,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,18 +29,20 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: ./infra/deploy.sh dev
+      - name: Set expected AWS account
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          # dev build wiring lives in repo variables, not in a committed .env
-          VITE_CHAT_WIDGET_SRC: ${{ vars.VITE_CHAT_WIDGET_SRC }}
-          VITE_CHAT_KEY: ${{ vars.VITE_CHAT_KEY }}
-          VITE_CHAT_API: ${{ vars.VITE_CHAT_API }}
-          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
-          VITE_FLOOD_MANIFEST_URL: ${{ vars.VITE_FLOOD_MANIFEST_URL }}
-          VITE_OU_CLIENT_ID: ${{ vars.VITE_OU_CLIENT_ID }}
-          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
-          # dev-only: shows the email/password form for the fixture accounts in
-          # docs/BETA-TESTING.md on /desk/login. Never set this repo variable for prod.
-          VITE_ENABLE_TEST_LOGIN: ${{ vars.VITE_ENABLE_TEST_LOGIN }}
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          account_id=$(printf '%s' "$AWS_ROLE_ARN" | cut -d: -f5)
+          if [[ ! "$account_id" =~ ^[0-9]{12}$ ]]; then
+            echo "AWS_ROLE_ARN must contain a 12-digit account id in field 5" >&2
+            exit 1
+          fi
+          printf 'EXPECT_ACCOUNT_ID=%s\n' "$account_id" >> "$GITHUB_ENV"
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+      - name: Deploy
+        run: infra/deploy.sh dev frontend ${{ inputs.dry_run && '--dry-run' || '' }}

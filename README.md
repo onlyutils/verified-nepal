@@ -104,6 +104,19 @@ cd server && pnpm install && pnpm test   # fully offline — fake JWKS/DynamoDB,
 
 See [`server/README.md`](server/README.md) for env vars and routes.
 
+## Deploying
+
+Dev settings and deploy credentials are loaded at deploy time from AWS SSM Parameter Store: `/verifiednepal-web/dev/frontend` and `/ci/verifiednepal-web/dev/deploy`. GitHub stores only `AWS_ROLE_ARN` for the `dev` environment; it holds no deploy secrets or frontend settings.
+
+In CI, open **Actions**, select the dev workflow, and choose **Run workflow**. Set `dry_run` to build and verify without publishing, or push to `main` for a deploy.
+
+Locally, set the expected dev account id and use the `onlyutils-dev` profile from `~/.aws/config` (which assumes `OrganizationAccountAccessRole` from out-mgmt):
+
+```bash
+export EXPECT_ACCOUNT_ID=<dev account id>
+AWS_PROFILE=onlyutils-dev infra/deploy.sh dev [frontend|backend] [--dry-run]
+```
+
 ## Repository layout
 
 ```

@@ -14,6 +14,89 @@
 # ONLY after owner approval.
 set -euo pipefail
 
+if [[ ${1:-} == dev ]]; then
+  shift
+  component=frontend
+  dry_run=false
+  if [[ $# -gt 0 && $1 != --dry-run ]]; then
+    component=$1
+    shift
+  fi
+  if [[ $# -gt 0 && $1 == --dry-run ]]; then
+    dry_run=true
+    shift
+  fi
+  if [[ $# -ne 0 ]]; then
+    printf 'usage: infra/deploy.sh dev [frontend|backend] [--dry-run]\n' >&2
+    exit 2
+  fi
+  case $component in
+    frontend|backend) ;;
+    *)
+      printf 'unknown dev component: %s\n' "$component" >&2
+      exit 2
+      ;;
+  esac
+
+  if [[ ! ${EXPECT_ACCOUNT_ID:-} =~ ^[0-9]{12}$ ]]; then
+    printf 'EXPECT_ACCOUNT_ID must be set to the expected 12-digit AWS account id\n' >&2
+    exit 2
+  fi
+
+  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+  repo_root=$(cd -- "$script_dir/.." && pwd)
+  cd "$repo_root"
+  export AWS_REGION=${AWS_REGION:-ap-south-1}
+  caller_account=$(aws sts get-caller-identity --query Account --output text)
+  if [[ $caller_account != "$EXPECT_ACCOUNT_ID" ]]; then
+    printf 'AWS caller account does not match EXPECT_ACCOUNT_ID\n' >&2
+    exit 1
+  fi
+  commit_sha=${GITHUB_SHA:-$(git rev-parse HEAD)}
+
+  if [[ $component == frontend ]]; then
+    . "$script_dir/load-env.sh" "/verifiednepal-web/dev/frontend"
+    . "$script_dir/load-env.sh" "/ci/verifiednepal-web/dev/deploy"
+    verify_response=$(curl --silent --show-error --fail \
+      --request GET \
+      --url https://api.cloudflare.com/client/v4/user/tokens/verify \
+      --header @<(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN"))
+    token_status=$(jq -r '.result.status // empty' <<<"$verify_response")
+    if [[ $token_status != active ]]; then
+      printf 'Cloudflare API token verification failed or token is not active\n' >&2
+      exit 1
+    fi
+    unset verify_response token_status
+
+    pnpm install --frozen-lockfile
+    pnpm typecheck
+    pnpm build
+    if [[ $dry_run == true ]]; then
+      printf 'DRY RUN: skipped wrangler pages deploy\n'
+    else
+      npx --yes wrangler@latest pages deploy dist \
+        --project-name verifiednepal-dev \
+        --branch main \
+        "--commit-hash=${commit_sha}"
+    fi
+  else
+    (cd server && pnpm install --frozen-lockfile && pnpm build)
+    if [[ $dry_run == true ]]; then
+      printf 'DRY RUN: skipped aws lambda update-function-code\n'
+      printf 'DRY RUN: skipped aws lambda wait function-updated-v2\n'
+    else
+      aws lambda update-function-code \
+        --function-name verifiednepal-dev-api \
+        --zip-file fileb://server/dist/lambda.zip \
+        --region "$AWS_REGION"
+      aws lambda wait function-updated-v2 \
+        --function-name verifiednepal-dev-api \
+        --region "$AWS_REGION"
+    fi
+  fi
+  exit 0
+fi
+
 ENV="${1:?usage: deploy.sh dev|prod}"
 cd "$(dirname "$0")/.."
 
