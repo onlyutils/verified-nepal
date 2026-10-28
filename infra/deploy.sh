@@ -1,175 +1,129 @@
 #!/usr/bin/env bash
-# Deploy verifiednepal to Cloudflare Pages (onlyutils account).
-#
-# Usage: ./infra/deploy.sh dev|prod
-#
-# Auth: the shared Cloudflare token lives in AWS SSM Parameter Store
-# (onlyutils out-mgmt account) — never in this repo. Requires the AWS CLI
-# with the out-mgmt profile and node/pnpm.
-#
-# One-time setup already done (2026-08-30): Pages projects created,
-# dev.verifiednepal.com custom domain + proxied CNAME in the
-# verifiednepal.com zone (f781a2cb8eae396308b3d57fb39cb172).
-# Prod (apex + www) is created by this script on first prod deploy but
-# ONLY after owner approval.
+# Deploy verifiednepal to Cloudflare Pages or Lambda.
+# Usage: infra/deploy.sh dev|prod [frontend|backend] [--dry-run]
 set -euo pipefail
 
-if [[ ${1:-} == dev ]]; then
+ENV="${1:?usage: infra/deploy.sh dev|prod [frontend|backend] [--dry-run]}"
+shift
+component=frontend
+dry_run=false
+if [[ $# -gt 0 && $1 != --dry-run ]]; then
+  component=$1
   shift
-  component=frontend
-  dry_run=false
-  if [[ $# -gt 0 && $1 != --dry-run ]]; then
-    component=$1
-    shift
-  fi
-  if [[ $# -gt 0 && $1 == --dry-run ]]; then
-    dry_run=true
-    shift
-  fi
-  if [[ $# -ne 0 ]]; then
-    printf 'usage: infra/deploy.sh dev [frontend|backend] [--dry-run]\n' >&2
-    exit 2
-  fi
-  case $component in
-    frontend|backend) ;;
-    *)
-      printf 'unknown dev component: %s\n' "$component" >&2
-      exit 2
-      ;;
-  esac
-
-  if [[ ! ${EXPECT_ACCOUNT_ID:-} =~ ^[0-9]{12}$ ]]; then
-    printf 'EXPECT_ACCOUNT_ID must be set to the expected 12-digit AWS account id\n' >&2
-    exit 2
-  fi
-
-  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-  repo_root=$(cd -- "$script_dir/.." && pwd)
-  cd "$repo_root"
-  export AWS_REGION=${AWS_REGION:-ap-south-1}
-  caller_account=$(aws sts get-caller-identity --query Account --output text)
-  if [[ $caller_account != "$EXPECT_ACCOUNT_ID" ]]; then
-    printf 'AWS caller account does not match EXPECT_ACCOUNT_ID\n' >&2
-    exit 1
-  fi
-  commit_sha=${GITHUB_SHA:-$(git rev-parse HEAD)}
-
-  if [[ $component == frontend ]]; then
-    . "$script_dir/load-env.sh" "/verifiednepal-web/dev/frontend"
-    . "$script_dir/load-env.sh" "/ci/verifiednepal-web/dev/deploy"
-    verify_response=$(curl --silent --show-error --fail \
-      --request GET \
-      --url https://api.cloudflare.com/client/v4/user/tokens/verify \
-      --header @<(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN"))
-    token_status=$(jq -r '.result.status // empty' <<<"$verify_response")
-    if [[ $token_status != active ]]; then
-      printf 'Cloudflare API token verification failed or token is not active\n' >&2
-      exit 1
-    fi
-    unset verify_response token_status
-
-    pnpm install --frozen-lockfile
-    pnpm typecheck
-    pnpm build
-    if [[ $dry_run == true ]]; then
-      printf 'DRY RUN: skipped wrangler pages deploy\n'
-    else
-      npx --yes wrangler@latest pages deploy dist \
-        --project-name verifiednepal-dev \
-        --branch main \
-        "--commit-hash=${commit_sha}"
-    fi
-  else
-    (cd server && pnpm install --frozen-lockfile && pnpm build)
-    if [[ $dry_run == true ]]; then
-      printf 'DRY RUN: skipped aws lambda update-function-code\n'
-      printf 'DRY RUN: skipped aws lambda wait function-updated-v2\n'
-    else
-      aws lambda update-function-code \
-        --function-name verifiednepal-dev-api \
-        --zip-file fileb://server/dist/lambda.zip \
-        --region "$AWS_REGION"
-      aws lambda wait function-updated-v2 \
-        --function-name verifiednepal-dev-api \
-        --region "$AWS_REGION"
-    fi
-  fi
-  exit 0
 fi
-
-ENV="${1:?usage: deploy.sh dev|prod}"
-cd "$(dirname "$0")/.."
-
-case "$ENV" in
-  dev)
-    PROJECT=verifiednepal-dev
-    # Dev wiring comes from env (CI repo variables or a local, untracked .env).
-    # The news URLs are public, so they are pinned here like prod's instead of becoming repo variables.
-    export VITE_NEWS_API_BASE=https://api.news-dev.verifiednepal.com
-    export VITE_NEWS_SITE_BASE=https://news-dev.verifiednepal.com
-    ;;
-  prod)
-    PROJECT=verifiednepal
-    # prod OnlyUtils client (confidential; secret lives in the Lambda, not here)
-    export VITE_OU_CLIENT_ID=ou_client_34G33PBOq8T6BJCbya4I8
-    export VITE_API_BASE=https://api.prod.verifiednepal.com
-    export VITE_NEWS_API_BASE=https://api.news.verifiednepal.com
-    export VITE_NEWS_SITE_BASE=https://news.verifiednepal.com
-    # Flood-impact manifest: CI reads it from the GitHub `production` environment variable.
-    : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
-    export VITE_FLOOD_MANIFEST_URL
-    export VITE_CHAT_WIDGET_SRC=https://onyutils-chat-widget.pages.dev/onyutils-chat.js
-    export VITE_CHAT_KEY=ou_chatpk_34G34ZplIA7A1WqqRT9ri
-    export VITE_CHAT_API=https://chat.onlyutils.com
-    # public Turnstile site key; one widget covers verifiednepal.com + dev + localhost
-    export VITE_TURNSTILE_SITE_KEY=0x4AAAAAAEkBp90mEl2o4Ebs
-    ;;
-  *) echo "unknown env: $ENV" >&2; exit 1 ;;
+if [[ $# -gt 0 && $1 == --dry-run ]]; then
+  dry_run=true
+  shift
+fi
+if [[ $# -ne 0 ]]; then
+  printf 'usage: infra/deploy.sh dev|prod [frontend|backend] [--dry-run]\n' >&2
+  exit 2
+fi
+case $ENV in
+  dev|prod) ;;
+  *) printf 'unknown env: %s\n' "$ENV" >&2; exit 2 ;;
+esac
+case $component in
+  frontend|backend) ;;
+  *) printf 'unknown %s component: %s\n' "$ENV" "$component" >&2; exit 2 ;;
 esac
 
-# --region is required: the out-mgmt profile's default region is wrong for
-# this parameter and the CLI fails silently otherwise (see onyutils
-# docs/operations.md §6).
-# CI (GitHub Actions) injects CLOUDFLARE_API_TOKEN from repo secrets; the
-# SSM fetch is the local-maintainer path only.
-if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
-  export CLOUDFLARE_API_TOKEN=$(aws ssm get-parameter --profile out-mgmt \
-    --name /onyutils/shared/cloudflare-api-token --with-decryption \
-    --region us-east-1 --query Parameter.Value --output text)
+if [[ ! ${EXPECT_ACCOUNT_ID:-} =~ ^[0-9]{12}$ ]]; then
+  printf 'EXPECT_ACCOUNT_ID must be set to the expected 12-digit AWS account id\n' >&2
+  exit 2
 fi
-# Account id is derived from the token, not committed to the repo.
-if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
-  export CLOUDFLARE_ACCOUNT_ID=$(curl -sf https://api.cloudflare.com/client/v4/accounts \
-    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" |
-    python3 -c 'import json,sys;print(json.load(sys.stdin)["result"][0]["id"])')
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+repo_root=$(cd -- "$script_dir/.." && pwd)
+cd "$repo_root"
+export AWS_REGION=${AWS_REGION:-ap-south-1}
+caller_account=$(aws sts get-caller-identity --query Account --output text)
+if [[ $caller_account != "$EXPECT_ACCOUNT_ID" ]]; then
+  printf 'AWS caller account does not match EXPECT_ACCOUNT_ID\n' >&2
+  exit 1
 fi
-test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "could not resolve Cloudflare account id" >&2; exit 1; }
 
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm build
+if [[ $ENV == dev ]]; then
+  project=verifiednepal-dev
+  lambda_function=verifiednepal-dev-api
+else
+  project=verifiednepal
+  lambda_function=verifiednepal-prod-api
+fi
 
-# Prod only: invoke Functions just on the routes that have one. Without this,
-# wrangler generates include:["/*"] (because _middleware.ts matches everything)
-# and every page view + asset fetch burns the free 100k/day Functions quota.
-# The middleware only adds noindex on non-prod hosts, so prod doesn't need it;
-# dev keeps /* so its X-Robots-Tag still covers every response.
-# Derived from functions/ so a new function can't silently drop out of prod.
-if [ "$ENV" = prod ]; then
-  python3 - <<'PY'
+if [[ $component == frontend ]]; then
+  . "$script_dir/load-env.sh" "/verifiednepal-web/$ENV/frontend"
+  . "$script_dir/load-env.sh" "/ci/verifiednepal-web/$ENV/deploy"
+  if [[ $ENV == prod ]]; then
+    if [[ -n ${VITE_ENABLE_TEST_LOGIN:-} ]]; then
+      printf 'refusing prod deploy: VITE_ENABLE_TEST_LOGIN must be unset or empty\n' >&2
+      exit 1
+    fi
+    : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
+    export VITE_FLOOD_MANIFEST_URL
+  fi
+
+  verify_response=$(curl --silent --show-error --fail \
+    --request GET \
+    --url https://api.cloudflare.com/client/v4/user/tokens/verify \
+    --header @<(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN"))
+  token_status=$(jq -r '.result.status // empty' <<<"$verify_response")
+  if [[ $token_status != active ]]; then
+    printf 'Cloudflare API token verification failed or token is not active\n' >&2
+    exit 1
+  fi
+  unset verify_response token_status
+
+  if [[ $ENV == dev ]]; then
+    commit_sha=${GITHUB_SHA:-$(git rev-parse HEAD)}
+  fi
+  pnpm install --frozen-lockfile
+  pnpm typecheck
+  pnpm build
+
+  # Prod invokes Functions only on routes that have one, preserving the
+  # existing quota behavior. Dev keeps its middleware coverage unchanged.
+  if [[ $ENV == prod ]]; then
+    python3 - <<'PY'
 import json, pathlib
 routes = []
 for f in sorted(pathlib.Path("functions").rglob("*.ts")):
     parts = f.relative_to("functions").with_suffix("").parts
-    if any(p.startswith("_") for p in parts):  # _middleware, _shared: not routes
+    if any(p.startswith("_") for p in parts):
         continue
     routes.append("/" + "/".join("*" if p.startswith("[") else p for p in parts))
 json.dump({"version": 1, "include": routes, "exclude": []}, open("dist/_routes.json", "w"), indent=2)
 print("prod _routes.json include:", routes)
 PY
+  fi
+
+  if [[ $dry_run == true ]]; then
+    printf 'DRY RUN: skipped wrangler pages deploy\n'
+  elif [[ $ENV == prod ]]; then
+    npx --yes wrangler@latest pages deploy dist --project-name "$project" \
+      --branch main --commit-dirty=true
+  else
+    npx --yes wrangler@latest pages deploy dist \
+      --project-name "$project" --branch main "--commit-hash=${commit_sha}"
+  fi
+else
+  (cd server && pnpm install --frozen-lockfile && pnpm build)
+  if [[ $dry_run == true ]]; then
+    printf 'DRY RUN: skipped aws lambda update-function-code\n'
+    printf 'DRY RUN: skipped aws lambda wait function-updated-v2\n'
+  else
+    aws lambda update-function-code \
+      --function-name "$lambda_function" \
+      --zip-file fileb://server/dist/lambda.zip \
+      --region "$AWS_REGION"
+    aws lambda wait function-updated-v2 \
+      --function-name "$lambda_function" \
+      --region "$AWS_REGION"
+  fi
 fi
 
-npx --yes wrangler@latest pages deploy dist --project-name "$PROJECT" \
-  --branch main --commit-dirty=true
-
-echo "Deployed to $PROJECT ($ENV)."
+if [[ $dry_run == true ]]; then
+  printf 'Dry run complete for %s %s.\n' "$ENV" "$component"
+else
+  printf 'Deployed %s %s.\n' "$component" "$project"
+fi
