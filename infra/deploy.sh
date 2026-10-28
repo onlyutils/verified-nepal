@@ -60,6 +60,14 @@ if [[ $component == frontend ]]; then
       exit 1
     fi
     : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
+    : "${VITE_API_BASE:?missing /verifiednepal-web/prod/frontend/VITE_API_BASE}"
+    : "${VITE_OU_CLIENT_ID:?missing /verifiednepal-web/prod/frontend/VITE_OU_CLIENT_ID}"
+    : "${VITE_NEWS_API_BASE:?missing /verifiednepal-web/prod/frontend/VITE_NEWS_API_BASE}"
+    : "${VITE_NEWS_SITE_BASE:?missing /verifiednepal-web/prod/frontend/VITE_NEWS_SITE_BASE}"
+    : "${VITE_CHAT_WIDGET_SRC:?missing /verifiednepal-web/prod/frontend/VITE_CHAT_WIDGET_SRC}"
+    : "${VITE_CHAT_KEY:?missing /verifiednepal-web/prod/frontend/VITE_CHAT_KEY}"
+    : "${VITE_CHAT_API:?missing /verifiednepal-web/prod/frontend/VITE_CHAT_API}"
+    : "${VITE_TURNSTILE_SITE_KEY:?missing /verifiednepal-web/prod/frontend/VITE_TURNSTILE_SITE_KEY}"
     export VITE_FLOOD_MANIFEST_URL
   fi
 

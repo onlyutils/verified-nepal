@@ -52,7 +52,6 @@ done
 
 if [[ ${GITHUB_ACTIONS:-false} == true ]]; then
   for _ssm_value in "${_ssm_values[@]}"; do
-    printf '::add-mask::%s\n' "$_ssm_value"
     while IFS= read -r _ssm_line || [[ -n $_ssm_line ]]; do
       if [[ -n $_ssm_line ]]; then
         printf '::add-mask::%s\n' "$_ssm_line"
