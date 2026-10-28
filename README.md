@@ -117,6 +117,16 @@ export EXPECT_ACCOUNT_ID=<dev account id>
 AWS_PROFILE=onlyutils-dev infra/deploy.sh dev [frontend|backend] [--dry-run]
 ```
 
+Prod settings and deploy credentials are loaded at deploy time from the prod AWS account's SSM Parameter Store: `/verifiednepal-web/prod/frontend` and `/ci/verifiednepal-web/prod/deploy`. GitHub stores only `AWS_ROLE_ARN` for the `production` environment.
+
+Locally, use the prod account profile and expected prod account id:
+
+```bash
+AWS_PROFILE=<prod account profile> EXPECT_ACCOUNT_ID=<prod account id> infra/deploy.sh prod <component> [--dry-run]
+```
+
+In CI, open **Actions**, select the prod workflow, and choose **Run workflow**. `dry_run` defaults to true; untick it to publish.
+
 ## Repository layout
 
 ```
