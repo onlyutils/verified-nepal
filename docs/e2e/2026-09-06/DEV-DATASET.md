@@ -1,6 +1,6 @@
 # Dev dataset — 2026-09-06
 
-Target: `verifiednepal-dev` (DynamoDB, ap-south-1, account 129264592326), OnlyUtils dev client `ou_client_34HIKupJ5afWl0DIoh7zi`. Nothing touched prod. Every record reads as real content. Identify records by the ids in `dev-dataset.json` and by the `*-beta-tester@verifiednepal.com` owner emails.
+Target: `verifiednepal-dev` (DynamoDB, ap-south-1, in the dev account that was retired on 2026-10-28), OnlyUtils dev client `ou_client_34HIKupJ5afWl0DIoh7zi`. Nothing touched prod. Every record reads as real content. Identify records by the ids in `dev-dataset.json` and by the `*-beta-tester@verifiednepal.com` owner emails.
 
 ## Counts
 
