@@ -3,10 +3,17 @@ name: deploy-backend-dev
 on:
   push:
     branches: [main]
-    paths: [server/**]
-  workflow_dispatch: {}
-
-permissions: {}
+    paths:
+      - "server/**"
+      - "infra/deploy.sh"
+      - "infra/load-env.sh"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build without publishing to Lambda
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-backend-dev
@@ -15,6 +22,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -23,20 +34,20 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: server/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-        working-directory: server
-      - run: pnpm build
-        working-directory: server
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Set expected AWS account
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          account_id=$(printf '%s' "$AWS_ROLE_ARN" | cut -d: -f5)
+          if [[ ! "$account_id" =~ ^[0-9]{12}$ ]]; then
+            echo "AWS_ROLE_ARN must contain a 12-digit account id in field 5" >&2
+            exit 1
+          fi
+          printf 'EXPECT_ACCOUNT_ID=%s\n' "$account_id" >> "$GITHUB_ENV"
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_LAMBDA_DEV_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_LAMBDA_DEV_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ap-south-1
-      # Deploy user is scoped to lambda:UpdateFunctionCode/GetFunction on this
-      # one function only (see verified-nepal-infra for the Terraform-managed
-      # infra this code runs on).
-      - run: |
-          aws lambda update-function-code \
-            --function-name verifiednepal-dev-api \
-            --zip-file fileb://server/dist/lambda.zip
-          aws lambda wait function-updated-v2 --function-name verifiednepal-dev-api
+      - name: Deploy
+        run: infra/deploy.sh dev backend ${{ inputs.dry_run && '--dry-run' || '' }}
