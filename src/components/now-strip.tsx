@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, ExternalLink, MessageCircle, Send } from "lucide-react";
-import { getLedger, listDispatches, postArticleShare, type DispatchPublicItem } from "@/lib/api";
+import { getLedger, postArticleShare } from "@/lib/api";
 import { useLiveData } from "@/lib/live";
 import type { Language } from "@/lib/types";
 import { formatRelativeTime } from "@/lib/format-date";
 import { normaliseNowItems, nowEmptyMessage, nowShareText, type NowItem, type NowLedgerItem } from "@/lib/now-items";
 import { nowStrings } from "@/i18n/now";
-import { articlesPublicStrings } from "@/i18n/articles-public";
 import { ShareButton } from "@/components/share-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,18 +17,13 @@ import { StatusBadge } from "@/components/status-badge";
 
 interface StripSources {
   ledger: NowLedgerItem[];
-  localUpdates: DispatchPublicItem[];
 }
 
 // Share the in-flight pair across StrictMode mounts; each source can succeed independently.
 let sourcesRequest: Promise<StripSources> | null = null;
 function loadSources() {
   if (!sourcesRequest) {
-    sourcesRequest = Promise.allSettled([getLedger({}), listDispatches({ kind: "news" })])
-      .then(([ledger, localUpdates]) => ({
-        ledger: ledger.status === "fulfilled" ? ledger.value.items : [],
-        localUpdates: localUpdates.status === "fulfilled" ? localUpdates.value.items : [],
-      }))
+    sourcesRequest = getLedger({}).then((ledger) => ({ ledger: ledger.items })).catch(() => ({ ledger: [] }))
       .finally(() => { sourcesRequest = null; });
   }
   return sourcesRequest;
@@ -38,7 +32,7 @@ function loadSources() {
 export function NowStrip({ language }: { language: Language }) {
   const official = useLiveData().officialUpdates;
   const t = nowStrings[language];
-  const [sources, setSources] = useState<StripSources>({ ledger: [], localUpdates: [] });
+  const [sources, setSources] = useState<StripSources>({ ledger: [] });
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const latestAt = useRef<string | null>(null);
@@ -77,13 +71,6 @@ export function NowStrip({ language }: { language: Language }) {
               <div className="p-5">
                 {/* ponytail: Expand the fetched rows here until G-1 permits a public Now archive. */}
                 <Button type="button" className="w-full sm:w-auto" onClick={() => setShowAll(true)}>{t.nowSeeAll}</Button>
-              </div>
-            ) : null}
-            {rows.some((item) => item.kind === "local-update") ? (
-              <div className="px-5 pb-5">
-                <Button asChild variant="link" className="min-h-11 max-w-full justify-start px-0">
-                  <a href="/local-updates" className="break-words">{t.seeAllLocalUpdates}</a>
-                </Button>
               </div>
             ) : null}
             <ul className="divide-y border-t">
@@ -170,13 +157,6 @@ function RowShare({ item, language }: { item: NowItem; language: Language }) {
   }
   return (
     <div className="flex flex-wrap items-start gap-2 print:hidden">
-      {item.kind === "local-update" && item.shareCard ? (
-        <ShareButton
-          {...item.shareCard}
-          labels={{ download: articlesPublicStrings[language].downloadCard, share: articlesPublicStrings[language].shareCard, exportError: articlesPublicStrings[language].cardExportError }}
-          onShared={() => { void postArticleShare(item.id.slice("local-update:".length)).catch(() => {}); }}
-        />
-      ) : null}
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" variant="outline" className="min-h-11 max-w-full px-3">
           <a href={`https://wa.me/?text=${encoded}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />{t.whatsapp}</a>

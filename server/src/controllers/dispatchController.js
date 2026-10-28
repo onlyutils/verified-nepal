@@ -6,12 +6,6 @@ import {
   validateArticleCover,
   validateArticleTags,
   validateArticleTitle,
-  validateLocality,
-  validateScope,
-  validateHappenedAt,
-  validateExpiresAt,
-  validateSourceUrls,
-  validateSourceNote,
 } from "../lib/validate.js";
 import {
   ALLOWED_ARTICLE_MEDIA_TYPES,
@@ -19,9 +13,6 @@ import {
   LANGUAGES,
   MAX_ARTICLE_IMAGE_SIZE,
   MAX_ARTICLE_VIDEO_SIZE,
-  DISPATCH_KINDS,
-  NEWS_BODY_MAX,
-  NEWS_SCOPES,
 } from "../constants.js";
 import { deletePointer, listPointers, putPointer } from "../models/mine.js";
 import { requestPresign } from "../models/media.js";
@@ -30,10 +21,8 @@ import {
   getDispatchById,
   listPendingDispatches,
   moderateDispatch,
-  dispatchKind,
 } from "../models/dispatch.js";
-import { toPublicDispatchListItem, toPublicDispatchDetail, localDispatchFields } from "../views/dispatch.js";
-import { getLocalUpdateSettings } from "../models/localUpdateSettings.js";
+import { toPublicDispatchListItem, toPublicDispatchDetail } from "../views/dispatch.js";
 import { pingIndexNow } from "../lib/indexnow.js";
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -51,7 +40,6 @@ function strictTitle(item) {
 
 function articleListView(item) {
   const out = {
-    ...localDispatchFields(item),
     id: item.id,
     status: item.status,
     title: currentTitle(item),
@@ -95,11 +83,6 @@ function applyAuthorFields(item, body, opts) {
   const language = body.language === undefined ? item.language : body.language;
   if (!LANGUAGES.includes(language)) throw err(400, 'language must be "en" or "ne"');
   if (body.title !== undefined) item.title = normalizeTitleObject(item, language, validateArticleTitle(body.title));
-  if (dispatchKind(item) === "news" && body.body !== undefined && body.blocks === undefined) {
-    const text = typeof body.body === "string" ? body.body : body.body?.[language];
-    if (typeof text !== "string") throw err(400, "body must be text in the selected language");
-    body = { ...body, blocks: [{ type: "paragraph", text }] };
-  }
   if (body.blocks !== undefined) item.blocks = validateArticleBlocks(body.blocks, { mediaPublicBase: envOf(opts).MEDIA_PUBLIC_BASE });
   if (body.cover !== undefined) {
     if (body.cover === null) delete item.cover;
@@ -115,24 +98,6 @@ function applyAuthorFields(item, body, opts) {
     if (body.place.trim()) item.author.place = body.place.trim();
     else delete item.author.place;
   }
-  if (body.kind !== undefined && body.kind !== dispatchKind(item)) throw err(400, "kind cannot be changed");
-  if (body.locality !== undefined) {
-    const locality = validateLocality(body.locality, { required: false });
-    if (locality) item.locality = locality;
-    else delete item.locality;
-  }
-  if (body.scope !== undefined) item.scope = validateScope(body.scope);
-  if (body.happenedAt !== undefined) item.happenedAt = validateHappenedAt(body.happenedAt);
-  if (body.expiresAt !== undefined) {
-    if (body.expiresAt === null) delete item.expiresAt;
-    else item.expiresAt = validateExpiresAt(body.expiresAt);
-  }
-  if (body.sourceUrls !== undefined) item.sourceUrls = validateSourceUrls(body.sourceUrls);
-  if (body.sourceNote !== undefined) {
-    const sourceNote = validateSourceNote(body.sourceNote);
-    if (sourceNote) item.sourceNote = sourceNote;
-    else delete item.sourceNote;
-  }
   item.language = language;
   item.body = {
     ...(item.body || {}),
@@ -143,53 +108,7 @@ function applyAuthorFields(item, body, opts) {
   };
 }
 
-function strictMissingNews(item) {
-  const missing = [];
-  const title = strictTitle(item);
-  if (typeof title !== "string" || !title.trim() || title.trim().length > 200) missing.push("title");
-  const blocks = Array.isArray(item.blocks) ? item.blocks : [];
-  const text = blocks
-    .filter((b) => b?.type === "paragraph")
-    .map((b) => (typeof b.text === "string" ? b.text : ""))
-    .join("\n\n");
-  if (!text.trim() || text.length > NEWS_BODY_MAX) missing.push("body");
-  if (blocks.some((b) => b?.type !== "paragraph" && b?.type !== "image")) missing.push("blocks");
-  blocks.forEach((block, index) => {
-    if (block?.type === "image" && (typeof block.source !== "string" || !block.source.trim())) missing.push(`block.source:${index}`);
-  });
-  if (!Array.isArray(item.tags) || item.tags.length !== 1 || !DISPATCH_TAGS.includes(item.tags[0])) missing.push("tags");
-  if (!item.locality?.district) missing.push("locality");
-  if (!NEWS_SCOPES.includes(item.scope)) missing.push("scope");
-  if (!item.happenedAt) missing.push("happenedAt");
-  if (!item.sourceUrls?.length && !item.sourceNote?.trim()) missing.push("source");
-  return missing;
-}
-
-// ponytail: count ownership pointers as specified for Wave 1; use a transactional per-author counter if concurrent creates need a strict ceiling.
-async function dailyLimitError(auth, nowIso) {
-  if (auth.role === "admin") return null;
-  const settings = await getLocalUpdateSettings(auth.ddb, auth.tableName);
-  if (!settings.dailyLimitEnabled) return null;
-  const now = Date.parse(nowIso);
-  const times = [];
-  for (const pointer of await listPointers(auth.ddb, auth.tableName, auth.payload.sub, { consistentRead: true })) {
-    if (pointer.kind !== "ARTICLE") continue;
-    const item = await getDispatchById(auth.ddb, auth.tableName, pointer.id, { consistentRead: true });
-    const ts = Date.parse(item?.createdAt);
-    if (item?.authorSub === auth.payload.sub && dispatchKind(item) === "news" && ts > now - 86400000 && ts <= now) times.push(ts);
-  }
-  if (times.length < settings.dailyLimit) return null;
-  times.sort((a, b) => a - b);
-  // If the admin lowered the limit, enough older creations must age out to fall below it.
-  return json(429, {
-    error: "daily_limit",
-    limit: settings.dailyLimit,
-    resetsAt: new Date(times[times.length - settings.dailyLimit] + 86400000).toISOString(),
-  });
-}
-
 function strictMissing(item) {
-  if (dispatchKind(item) === "news") return strictMissingNews(item);
   const missing = [];
   const title = strictTitle(item);
   if (typeof title !== "string" || !title.trim() || title.trim().length > 200) missing.push("title");
@@ -212,10 +131,6 @@ export async function handlePostArticle(event, opts) {
   const { auth } = opts;
   const body = parseBody(event);
   if (!body || typeof body !== "object" || !LANGUAGES.includes(body.language)) throw err(400, 'language must be "en" or "ne"');
-  const kind = body.kind === undefined ? "article" : body.kind;
-  if (!DISPATCH_KINDS.includes(kind)) throw err(400, `kind must be one of ${DISPATCH_KINDS.join(",")}`);
-  const reporter = auth.user?.reporter;
-  if (kind === "news" && !reporter?.approvedAt && auth.role !== "admin") return json(403, { error: "reporter_required" });
   const id = randomUUID();
   const now = new Date().toISOString();
   const item = {
@@ -223,7 +138,6 @@ export async function handlePostArticle(event, opts) {
     SK: "META",
     type: "DISPATCH",
     id,
-    kind,
     authorSub: auth.payload.sub,
     author: {
       displayName: typeof auth.payload.name === "string" ? auth.payload.name : "",
@@ -243,36 +157,7 @@ export async function handlePostArticle(event, opts) {
     createdAt: now,
     updatedAt: now,
   };
-  if (kind === "news") {
-    item.sourceUrls = [];
-    const home = reporter?.localities?.[0];
-    if (home) {
-      item.locality = validateLocality(home);
-      item.scope = home.ward ? "ward" : "municipality";
-    }
-    const paragraphs = Array.isArray(body.blocks)
-      ? body.blocks
-          .filter((block) => block?.type === "paragraph")
-          .map((block) => (typeof block.text === "string" ? block.text : ""))
-          .join("\n\n")
-      : typeof body.body === "string"
-        ? body.body
-        : body.body?.[body.language];
-    if (typeof paragraphs === "string" && paragraphs.length > NEWS_BODY_MAX) return json(400, { error: "invalid", missing: ["body"] });
-    applyAuthorFields(item, body, opts);
-    // Drafts may be incomplete, but creation always requires a date and a source.
-    const missing = strictMissingNews(item).filter(
-      (field) =>
-        ["happenedAt", "source"].includes(field) ||
-        ((body.blocks !== undefined || body.body !== undefined) &&
-          (field === "body" || field === "blocks" || field.startsWith("block.source:"))) ||
-        (body.tags !== undefined && field === "tags") ||
-        (body.title !== undefined && field === "title"),
-    );
-    if (missing.length) return json(400, { error: "invalid", missing });
-    const limited = await dailyLimitError(auth, now);
-    if (limited) return limited;
-  }
+  applyAuthorFields(item, body, opts);
   await auth.ddb.send(new PutCommand({ TableName: auth.tableName, Item: item }));
   await putPointer(auth.ddb, auth.tableName, { sub: auth.payload.sub, type: "ARTICLE", id, createdAt: now });
   return json(201, { id });
@@ -433,11 +318,8 @@ export async function handleGetDispatches(event, { getDdb, env }) {
   const cursorRaw = q.cursor ? String(q.cursor) : "";
   if (tagRaw && !DISPATCH_TAGS.includes(tagRaw)) throw err(400, `tag must be one of ${DISPATCH_TAGS.join(",")}`);
   if (!env.TABLE_NAME) throw err(500, "TABLE_NAME not configured");
-  const kind = q.kind === undefined ? "article" : String(q.kind);
-  if (!DISPATCH_KINDS.includes(kind)) throw err(400, `kind must be one of ${DISPATCH_KINDS.join(",")}`);
   const { sliced, hasMore, lastEvaluatedKey } = await queryPublishedDispatchesPage(getDdb(), env.TABLE_NAME, {
     tagRaw,
-    kind,
     cursorKey: decodeCursor(cursorRaw),
   });
   const body = { items: sliced.map(toPublicDispatchListItem) };
@@ -457,12 +339,9 @@ export async function handleGetDispatch(event, { getDdb, env }, id) {
 
 export async function handleGetModerationDispatches(event, opts) {
   const { auth } = opts;
-  const kind = getQuery(event).kind ?? "article";
-  if (!DISPATCH_KINDS.includes(kind)) throw err(400, `kind must be one of ${DISPATCH_KINDS.join(",")}`);
   return json(200, {
-    items: (await listPendingDispatches(auth.ddb, auth.tableName, { kind })).map((it) => ({
+    items: (await listPendingDispatches(auth.ddb, auth.tableName)).map((it) => ({
       ...stripInternal(it),
-      ...localDispatchFields(it),
     })),
   });
 }
@@ -477,7 +356,6 @@ export async function handlePostModerationDispatch(event, opts, id) {
   const item = await getDispatchById(auth.ddb, auth.tableName, id);
   if (!item) throw err(404, "not found");
   if (item.status !== "pending") throw err(400, "only pending items can be moderated");
-  if (dispatchKind(item) === "news" && item.authorSub === auth.payload.sub) throw err(403, "own_item");
   const actorName = auth.user?.name || auth.payload.name || "";
   const result = await moderateDispatch(auth.ddb, auth.tableName, { item, action, reason, actorSub: auth.payload.sub, actorName });
   if (action === "publish") await pingIndexNow([`/articles/${encodeURIComponent(id)}`], envOf(opts));

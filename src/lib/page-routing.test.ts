@@ -10,9 +10,6 @@ test("maps public and signed-in routes, while keeping unknown paths not found", 
     "/index.html": "dashboard",
     "/index.html/": "dashboard",
     "/get-help": "getHelp",
-    "/local-updates": "localUpdates",
-    "/local-updates/": "localUpdates",
-    "/local-updates/?x=1": "localUpdates",
     "/local-updates-extra": "notFound",
     "/local-updates/example": "notFound",
     "/articles": "dispatches",
@@ -41,13 +38,13 @@ test("extracts a status reference code from the pathname", () => {
 
 test("primary navigation routes and More grouping cover the secondary pages", () => {
   const primary = ["/", "/get-help", "/give-help", "/search", "/drop-centers", "/ledger"];
-  const more = ["/local-updates", "/poster", "/incidents", "/projects", "/articles", "/climate", "/our-message", "/info", "/drones"];
+  const more = ["/poster", "/incidents", "/projects", "/articles", "/climate", "/our-message", "/info", "/drones"];
   assert.deepEqual(
     primary.map((path) => pageFromPath(path)),
     ["dashboard", "getHelp", "giveHelp", "search", "dropCenters", "ledger"],
   );
   assert.deepEqual(
     more.map((path) => pageFromPath(path)),
-    ["localUpdates", "poster", "incidents", "projects", "dispatches", "climate", "ourMessage", "info", "drones"],
+    ["poster", "incidents", "projects", "dispatches", "climate", "ourMessage", "info", "drones"],
   );
 });

@@ -58,6 +58,8 @@ flowchart LR
     API --> DDB[(DynamoDB<br/>single table)]
     API -->|auth, media presign, chat| OU[OnlyUtils]
     FE -.chat widget.-> OU
+    NEWS[Local updates<br/>news.verifiednepal.com]
+    ADMIN[Staff portal<br/>admin.verifiednepal.com]
 ```
 
 The dashboard half (live figures, find-a-person, relief map) talks straight
@@ -66,7 +68,9 @@ mutual-aid half (needs, offers, orgs, projects, articles, stories,
 moderation) goes through `server/`, a single Lambda behind API Gateway, with
 [OnlyUtils](https://onlyutils.com) handling Google sign-in, media uploads and
 the chat widget. See [docs/FEATURES.md](docs/FEATURES.md) for how a need
-moves from submitted to fulfilled, and [server/README.md](server/README.md)
+moves from submitted to fulfilled. Local updates are published at
+[news.verifiednepal.com](https://news.verifiednepal.com); staff use
+[admin.verifiednepal.com](https://admin.verifiednepal.com). See [server/README.md](server/README.md)
 for the backend's routes and env vars.
 
 ## Data sources
@@ -162,6 +166,10 @@ sets no cookies and runs no analytics. See the in-app Privacy & Disclaimer
 page for the full policy.
 
 ## Contributing
+
+Run the browser end-to-end suite against the dev environment with
+`eval "$(e2e/load-env.sh)" && pnpm e2e`. Use `E2E_BASE_URL` to target a deployed
+copy instead. See [docs/e2e/README.md](docs/e2e/README.md) for setup details.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Corrections to data, translations,
 and accessibility fixes are especially welcome. Please never add unverified

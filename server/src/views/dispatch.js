@@ -1,28 +1,11 @@
-import { dispatchKind } from "../models/dispatch.js";
-
-export function localDispatchFields(it) {
-  const out = { kind: dispatchKind(it) };
-  if (it.language) out.language = it.language;
-  if (it.scope) out.scope = it.scope;
-  if (it.locality)
-    out.locality = {
-      district: it.locality.district,
-      municipalityId: it.locality.municipalityId,
-      ...(it.locality.ward ? { ward: it.locality.ward } : {}),
-    };
-  for (const key of ["happenedAt", "expiresAt", "sourceNote"]) if (it[key]) out[key] = it[key];
-  if (Array.isArray(it.sourceUrls)) out.sourceUrls = it.sourceUrls;
-  return out;
-}
-
 export function toPublicDispatchListItem(it) {
   const bodyText = (it.body && (it.body.en || it.body.ne)) || "";
   const excerpt = bodyText.slice(0, 200);
   const author = { displayName: it.author?.displayName || "" };
   if (it.author?.place) author.place = it.author.place;
   const out = {
-    ...localDispatchFields(it),
     id: it.id,
+    language: it.language,
     title: it.title,
     excerpt,
     author,
@@ -39,8 +22,8 @@ export function toPublicDispatchListItem(it) {
 
 export function toPublicDispatchDetail(item) {
   const publicItem = {
-    ...localDispatchFields(item),
     id: item.id,
+    language: item.language,
     title: item.title,
     body: item.body,
     author: { displayName: item.author?.displayName || "" },

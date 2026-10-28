@@ -1,8 +1,7 @@
 import { json, err, getQuery, parseBody, decodeCursor, encodeCursor } from "../lib/http.js";
-import { validateString, validateDistrict, validateLocality } from "../lib/validate.js";
+import { validateString, validateDistrict } from "../lib/validate.js";
 import { maskEmail } from "../lib/format.js";
 import { listUsersByRoles, getEmailPointer, getUserProfile, setUserRole } from "../models/user.js";
-import { getLocalUpdateSettings, putLocalUpdateSettings } from "../models/localUpdateSettings.js";
 import { getAdminStats } from "../models/stats.js";
 import { recordAudit } from "../models/audit.js";
 import { toAdminUserView } from "../views/user.js";
@@ -72,24 +71,12 @@ export async function handleAdminUsersRole(event, opts, targetSub) {
   let role = changesRole ? String(body.role).trim() : undefined;
   let districts;
   if (changesRole && !["helper", "moderator", "admin"].includes(role)) throw err(400, "role must be helper|moderator|admin");
-  if (!changesRole && body.reporter === undefined) throw err(400, "role or reporter required");
+  if (!changesRole) throw err(400, "role required");
   if (body.districts !== undefined) {
     if (!Array.isArray(body.districts)) throw err(400, "districts must be array");
     districts = body.districts.map((d) => validateDistrict(d, "districts[]"));
   } else if (changesRole) districts = [];
-  let reporter;
-  if (body.reporter !== undefined) {
-    if (body.reporter === null) reporter = null;
-    else {
-      const value = body.reporter;
-      if (typeof value !== "object" || Array.isArray(value) || !Array.isArray(value.localities) || typeof value.nationalScope !== "boolean")
-        throw err(400, "reporter requires localities and boolean nationalScope");
-      reporter = { localities: value.localities.map((locality) => validateLocality(locality)), nationalScope: value.nationalScope };
-      // The admin grants approval; client timestamps cannot forge its date. Explicit clearing revokes.
-      if (value.approvedAt !== null && value.approvedAt !== "") reporter.approvedAt = new Date().toISOString();
-    }
-  }
-  const user = await setUserRole(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, targetSub, role, districts, reporter });
+  const user = await setUserRole(auth.ddb, auth.tableName, { actorSub: auth.payload.sub, targetSub, role, districts });
   role = user.role;
   districts = user.districts;
   const actorName = auth.user?.name || auth.payload.name || "";
@@ -101,9 +88,9 @@ export async function handleAdminUsersRole(event, opts, targetSub) {
     targetType: "USER",
     targetId: targetSub,
     targetLabel,
-    reason: body.reporter !== undefined ? `role:${role},correspondent:${Boolean(user.reporter?.approvedAt)}` : `role:${role}`,
+    reason: `role:${role}`,
   });
-  return json(200, { role, districts, ...(user.reporter ? { reporter: user.reporter } : {}) });
+  return json(200, { role, districts });
 }
 
 export async function handleAdminStats(event, opts) {
@@ -117,22 +104,4 @@ export async function handleGetUserWork(event, opts, sub) {
   const { auth } = opts;
   if (auth.role !== "admin") throw err(403, "Forbidden");
   return json(200, await getWork(auth.ddb, auth.tableName, sub));
-}
-
-export async function handleGetLocalUpdateSettings(event, { auth }) {
-  if (auth.role !== "admin") throw err(403, "Forbidden");
-  return json(200, await getLocalUpdateSettings(auth.ddb, auth.tableName));
-}
-
-export async function handlePutLocalUpdateSettings(event, { auth }) {
-  if (auth.role !== "admin") throw err(403, "Forbidden");
-  const body = parseBody(event);
-  if (!body || typeof body !== "object" || Array.isArray(body)) throw err(400, "invalid body");
-  if (typeof body.dailyLimitEnabled !== "boolean") throw err(400, "dailyLimitEnabled must be boolean");
-  if (!Number.isInteger(body.dailyLimit) || body.dailyLimit < 1 || body.dailyLimit > 50)
-    throw err(400, "dailyLimit must be an integer from 1 to 50");
-  return json(
-    200,
-    await putLocalUpdateSettings(auth.ddb, auth.tableName, { dailyLimitEnabled: body.dailyLimitEnabled, dailyLimit: body.dailyLimit }),
-  );
 }

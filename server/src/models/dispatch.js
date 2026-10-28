@@ -1,62 +1,16 @@
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { buildAuditEntry, writeAudit, getTargetLabelForAudit } from "./audit.js";
 
-export function dispatchKind(item) {
-  return item?.kind === "news" ? "news" : "article";
-}
-
-export function localityGsiKey(district) {
-  return `DISPATCH#LOC#${district}`;
-}
-
-/** Only published items with a locality enter the locality index. Expiry is descriptive. */
 export function applyPublishKeys(item, nowIso) {
   item.status = "published";
   item.publishedAt = nowIso;
   item.gsi2pk = "DISPATCH#published";
   item.gsi2sk = nowIso;
-  if (item.locality?.district) {
-    item.gsi1pk = localityGsiKey(item.locality.district);
-    item.gsi1sk = nowIso;
-  } else {
-    delete item.gsi1pk;
-    delete item.gsi1sk;
-  }
+  delete item.gsi1pk;
+  delete item.gsi1sk;
 }
 
-export async function queryLocalDispatches(ddb, tableName, { district, limit = 50 }) {
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: tableName,
-      IndexName: "GSI1",
-      KeyConditionExpression: "gsi1pk = :pk",
-      ExpressionAttributeValues: { ":pk": localityGsiKey(district) },
-      ScanIndexForward: false,
-      Limit: limit,
-    }),
-  );
-  return (res.Items || []).filter((it) => it.status === "published");
-}
-
-// ponytail: national items share the published partition; use a dedicated GSI key if their volume exceeds a page.
-export async function queryNationalNews(ddb, tableName, { limit = 50 } = {}) {
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: tableName,
-      IndexName: "GSI2",
-      KeyConditionExpression: "gsi2pk = :pk",
-      ExpressionAttributeValues: { ":pk": "DISPATCH#published" },
-      ScanIndexForward: false,
-      Limit: limit,
-    }),
-  );
-  return (res.Items || []).filter(
-    (it) => it.status === "published" && dispatchKind(it) === "news" && ["nepal", "national", "province"].includes(it.scope),
-  );
-}
-
-// ponytail: kinds share the published partition; split GSI2 keys by kind if filtering becomes expensive.
-export async function queryPublishedDispatchesPage(ddb, tableName, { tagRaw, kind = "article", cursorKey }) {
+export async function queryPublishedDispatchesPage(ddb, tableName, { tagRaw, cursorKey }) {
   const limit = 20;
   const collected = [];
   let ExclusiveStartKey = cursorKey;
@@ -75,7 +29,7 @@ export async function queryPublishedDispatchesPage(ddb, tableName, { tagRaw, kin
     const items = res.Items || [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (dispatchKind(item) !== kind || (tagRaw && !item.tags?.includes(tagRaw))) continue;
+      if (tagRaw && !item.tags?.includes(tagRaw)) continue;
       collected.push(item);
       if (collected.length === limit) {
         // Resume at the last returned item, including all index keys, rather than skipping the rest of this DynamoDB page.
@@ -101,7 +55,7 @@ export async function getDispatchById(ddb, tableName, id, { consistentRead = fal
   ).Item;
 }
 
-export async function listPendingDispatches(ddb, tableName, { kind } = {}) {
+export async function listPendingDispatches(ddb, tableName) {
   const items = [];
   let ExclusiveStartKey;
   do {
@@ -115,7 +69,7 @@ export async function listPendingDispatches(ddb, tableName, { kind } = {}) {
         ...(ExclusiveStartKey ? { ExclusiveStartKey } : {}),
       }),
     );
-    items.push(...(res.Items || []).filter((it) => !kind || dispatchKind(it) === kind));
+    items.push(...(res.Items || []));
     ExclusiveStartKey = res.LastEvaluatedKey;
   } while (ExclusiveStartKey);
   items.sort((a, b) => (a.submittedAt || a.createdAt || "").localeCompare(b.submittedAt || b.createdAt || ""));

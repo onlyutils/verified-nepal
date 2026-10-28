@@ -21,12 +21,17 @@ case "$ENV" in
   dev)
     PROJECT=verifiednepal-dev
     # Dev wiring comes from env (CI repo variables or a local, untracked .env).
+    # The news URLs are public, so they are pinned here like prod's instead of becoming repo variables.
+    export VITE_NEWS_API_BASE=https://api.news-dev.verifiednepal.com
+    export VITE_NEWS_SITE_BASE=https://news-dev.verifiednepal.com
     ;;
   prod)
     PROJECT=verifiednepal
     # prod OnlyUtils client (confidential; secret lives in the Lambda, not here)
     export VITE_OU_CLIENT_ID=ou_client_34G33PBOq8T6BJCbya4I8
     export VITE_API_BASE=https://api.prod.verifiednepal.com
+    export VITE_NEWS_API_BASE=https://api.news.verifiednepal.com
+    export VITE_NEWS_SITE_BASE=https://news.verifiednepal.com
     # Flood-impact manifest: CI reads it from the GitHub `production` environment variable.
     : "${VITE_FLOOD_MANIFEST_URL:?set VITE_FLOOD_MANIFEST_URL (the prod published manifest URL)}"
     export VITE_FLOOD_MANIFEST_URL

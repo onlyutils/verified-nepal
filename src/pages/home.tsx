@@ -40,6 +40,7 @@ import { formatBsDate, formatRelativeTime } from "@/lib/format-date";
 import { fillTemplate, formatEditionDate } from "@/lib/edition";
 import { fetchFloodManifest, type FloodManifest } from "@/lib/flood-manifest";
 import { NowStrip } from "@/components/now-strip";
+import { LocalUpdatesHighlights } from "@/components/local-updates-highlights";
 import { floodReliefStrings } from "@/i18n/flood-relief";
 import { floodImpactStrings } from "@/i18n/flood-impact";
 import reliefData from "@/data/relief-centers.json";
@@ -256,6 +257,7 @@ export function Dashboard({ language, navigate }: { language: Language; navigate
       </section>
 
       <NowStrip language={language} />
+      <LocalUpdatesHighlights language={language} />
 
       <Stories language={language} />
 

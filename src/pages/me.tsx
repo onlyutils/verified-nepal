@@ -591,9 +591,6 @@ export function MePage({ language, navigate }: { language: Language; navigate: (
               </CardContent>
             </Card>
           </section>
-          <section id="local-updates">
-            <MyArticlesPage language={language} localOnly embedded />
-          </section>
           <section className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight">{t.storyTitle}</h2>
             <MyStories language={language} token={auth.idToken} eligible={!!data.storyRole} />
